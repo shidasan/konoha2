@@ -147,6 +147,26 @@ static KMETHOD TokenTyCheck_TEXT(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setConstValue(expr, TY_String, tk->text));
 }
 
+static KMETHOD TokenTyCheck_NULL(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	kToken *tk = expr->tkNUL;
+	if(req_ty == TY_var) req_ty = TY_Object;
+	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, 0, gma));
+}
+
+static KMETHOD TokenTyCheck_TRUE(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	RETURN_(kExpr_setNConstValue(expr, TY_Boolean, (uintptr_t)1));
+}
+
+static KMETHOD TokenTyCheck_FALSE(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	RETURN_(kExpr_setNConstValue(expr, TY_Boolean, (uintptr_t)0));
+}
+
 static KMETHOD TokenTyCheck_INT(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
@@ -899,10 +919,10 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 			KSETv(base->evalval.o, lsfp[0].o);
 			base->evalval.ivalue = lsfp[0].ivalue;
 			if(rtype == TY_String) {
-				fprintf(stdout, "EVAL=\"%s\"\n", S_totext(lsfp[0].s));
+				fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_totext(lsfp[0].s));
 			}
 			else {
-				fprintf(stdout, "EVAL=%ld\n", lsfp[0].ivalue);
+				fprintf(stdout, "TY=%s, EVAL=%ld\n", T_cid(rtype), lsfp[0].ivalue);
 			}
 		}
 	}
