@@ -150,8 +150,7 @@ static KMETHOD TokenTyCheck_TEXT(CTX, ksfp_t *sfp _RIX)
 static KMETHOD TokenTyCheck_NULL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
-	kToken *tk = expr->tkNUL;
-	if(req_ty == TY_var) req_ty = TY_Object;
+	if(req_ty == TY_var) req_ty = CLASS_Object;
 	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, 0, gma));
 }
 
