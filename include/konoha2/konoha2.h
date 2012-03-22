@@ -432,10 +432,10 @@ struct kp_api;
 		void (*reftrace)(CTX, struct kRawPtr*);\
 		void (*free)(CTX, struct kRawPtr*);\
 		int  (*compareTo)(struct kRawPtr*, struct kRawPtr*);\
-		void (*p)(CTX, kwb_t *, struct kp_api *);\
+		void (*p)(CTX, kwb_t *, int);\
+		struct kObject* (*fnull)(CTX, const struct kclass_t *);\
 		struct kString* (*getkey)(CTX, struct kRawPtr*);\
 		kuint_t (*hashCode)(CTX, struct kRawPtr*);\
-		struct kObject* (*defnull)(CTX, kcid_t);\
 		struct kclass_t* (*initdef)(CTX, struct kclass_t *)
 
 typedef struct KSTRUCT_DEF {
@@ -474,7 +474,7 @@ typedef struct kclass_t {
 	struct kString           *fullnameNUL;
 	struct kArray            *methods;
 	union {
-		struct kObject       *defobj;
+		struct kObject       *nulvalNUL;
 		struct kFunc         *deffunc;
 	};
 	struct kmap_t            *constNameMapSO;

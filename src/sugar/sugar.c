@@ -49,6 +49,7 @@ static kString *Skeyword_(CTX, keyword_t keyid);
 #include "tycheck.h"
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+#define _EXPR     .rule ="$expr"
 
 static ksyntaxdef_t SYNTAX[] = {
 	{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },

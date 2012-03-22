@@ -441,6 +441,9 @@ static kExpr *Stmt_newTerm(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 		kToken *tk0 = tls->tts[s];
 		*next = s + 1;
 		switch((int)tk0->tt) {
+			case TK_KEYWORD: {
+
+			}
 			case TK_SYMBOL:
 			case TK_USYMBOL:
 			case TK_TEXT:

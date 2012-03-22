@@ -161,6 +161,13 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 		}
 		if(syndef->ExprTyCheck != NULL) {
 			KINITv(syn->ExprTyCheck, new_kMethod(0, 0, 0, NULL, syndef->ExprTyCheck));
+			ksyntax_t *e = kLingo_syntax(_ctx, lgo, 1, 0);
+			if(syn->syntaxRule == NULL) {
+				KINITv(syn->syntaxRule, e->syntaxRule);
+			}
+			if(syn->StmtTyCheck == NULL) {
+				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
+			}
 		}
 //		if(syndef->CodeGen != NULL) {
 //			KINITv(syn->CodeGen, new_kMethod(0, 0, 0, NULL, syndef->CodeGen));

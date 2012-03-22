@@ -65,14 +65,14 @@ static kExpr *Expr_typed(CTX, kExpr *expr, kGamma *gma, int req_ty)
 		keyword_t keyid = tk->tt == TK_KEYWORD ? tk->keyid : KW_TK(tk->tt);
 		syn = kLingo_syntax(_ctx, gma->genv->lgo, keyid, 0);
 		if(syn == NULL || syn->ExprTyCheck == NULL) {
-			kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined type checker: %s %s", T_tt(tk->tt), kToken_s(tk));
+			kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined term type checker: %s %s", T_tt(tk->tt), kToken_s(tk));
 			return K_NULLEXPR;
 		}
 	}
 	else {
 		syn = expr->syn;
 		if(syn->ExprTyCheck == NULL) {
-			kerror(_ctx, ERR_, 0, 0, "undefined type checker: %s", syn->token);
+			kerror(_ctx, ERR_, 0, 0, "undefined expression type checker: %s", syn->token);
 			return K_NULLEXPR;
 		}
 	}
@@ -127,6 +127,7 @@ static kbool_t Stmt_tycheckExpr(CTX, kStmt *stmt, keyword_t nameid, kGamma *gma,
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, nameid);
 	if(expr != NULL && IS_Expr(expr)) {
 		kExpr *texpr = Expr_tycheck(_ctx, expr, gma, req_ty, pol);
+		DBG_P("req_ty=%s, texpr->ty=%s isnull=%d", T_cid(req_ty), T_cid(texpr->ty), (texpr == K_NULLEXPR));
 		if(texpr != K_NULLEXPR) {
 			if(texpr != expr) {
 				kObject_setObject(stmt, nameid, texpr);
@@ -483,7 +484,6 @@ static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
-
 static KMETHOD StmtTyCheck_nop(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNb_(1);
@@ -498,7 +498,8 @@ static KMETHOD StmtTyCheck_expr(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, gma);
 	kbool_t r = Stmt_tycheckExpr(_ctx, stmt, 1, gma, TY_var, _NOCHECK);
-	DBG_P("type checking $expr r=%d", r);
+	stmt->syn = SYN_EXPR;
+	stmt->build = TSTMT_EXPR;
 	RETURNb_(r);
 }
 
@@ -524,7 +525,7 @@ static kbool_t Block_tycheck(CTX, kBlock *bk, kGamma *gma)
 			if(syn == NULL) continue;
 			int estart = kerrno;
 			if(syn->StmtTyCheck == NULL) {
-				kerror(_ctx, ERR_, stmt->uline, 0, "undefined type checker: %s", syn->token);
+				kerror(_ctx, ERR_, stmt->uline, 0, "undefined statement type checker: %s", syn->token);
 				kStmt_toERR(stmt, estart);
 			}
 			else if(!Stmt_TyCheck(_ctx, syn, stmt, gma)) {
@@ -908,6 +909,7 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 	kjmpbuf_t lbuf = {};
 	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
 	if(ksetjmp(*base->evaljmpbuf) == 0) {
+		fprintf(stdout, "TY=%s, running EVAL..\n", T_cid(rtype));
 		if(base->evalty != TY_void) {
 			KSETv(lsfp[K_CALLDELTA+1].o, base->evalval.o);
 			lsfp[K_CALLDELTA+1].ivalue = base->evalval.ivalue;

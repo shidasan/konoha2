@@ -86,24 +86,11 @@ void konoha_ginit(int argc, const char **argv)
 
 }
 
-//#ifdef K_USING_THREAD
-//#ifdef CC_T_TLS
-//static CC_T_TLS  kcontext_t *curctx = NULL;
-//#else
-//static kthread_key_t ctxkey;
-//static kcontext_t *curctx = NULL;
-//#endif
-//#else
-//static kcontext_t *curctx = NULL;
-//#endif
-
 static void konoha_init(void)
 {
 	static int isInit = 0;
 	if(isInit == 0) {
 		isInit = 1;
-//		knh_opcode_check();
-//		knh_srand(0);
 	}
 }
 
@@ -116,8 +103,6 @@ static void konoha_init(void)
 //{
 //	ctx->stack->cstack_bottom = NULL;
 //}
-
-// ** context **
 
 /* ------------------------------------------------------------------------ */
 /* stack */
@@ -173,15 +158,14 @@ REF_t* kstack_tail(CTX, size_t size)
 	return tail;
 }
 
-static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t p)
+static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 {
 	if(_ctx->modshare[x] == NULL) {
 		_ctx->modshare[x] = d;
-		//_ctx->mod[x] = d->new_local(_ctx, d);
 		return 1;
 	}
 	else {
-		KREPORT(p, "already registered: %s", _ctx->modshare[x]->name);
+		KREPORT(pline, "already registered: %s", _ctx->modshare[x]->name);
 		return 0;
 	}
 }
@@ -314,7 +298,6 @@ void konoha_close(konoha_t konoha)
 // keval
 
 kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline);
-
 
 /* ------------------------------------------------------------------------ */
 

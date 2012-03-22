@@ -157,27 +157,10 @@ void kpromap_reftrace(CTX, kpromap_t *p)
 	END_REFTRACE();
 }
 
-//// Object
-//static void Object_setUnboxData(CTX, kObject *o, ksymbol_t key, ktype_t type, uintptr_t val)
-//{
-//
-//}
-//
-//static void Object_setObject(CTX, kObject *o, ksymbol_t key, ktype_t type, kObject *val)
-//{
-//
-//}
-//
-//static void Object_getUnboxData(CTX, kObject *o, ksymbol_t key)
-//{
-//
-//}
-//
-
 static size_t size64(size_t s)
 {
 	size_t base = sizeof(kObject);
-	while(base < s) { // TESTED
+	while(base < s) {
 		base *= 2;
 	}
 	return base;
@@ -188,6 +171,24 @@ static void DEFAULT_free(CTX, kRawPtr *o)
 	(void)_ctx;(void)o;
 }
 
+static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
+{
+	return ct->nulvalNUL;
+}
+
+static kObject* DEFAULT_fnullinit(CTX, const kclass_t *ct)
+{
+	assert(ct->nulvalNUL == NULL);
+	KINITv(((kclass_t*)ct)->nulvalNUL, new_kObject(ct, 0));
+	kObject_setNullObject(ct->nulvalNUL, 1);
+	((kclass_t*)ct)->fnull = DEFAULT_fnull;
+	return ct->nulvalNUL;
+}
+
+static kObject *CT_null(CTX, const kclass_t *ct)
+{
+	return ct->fnull(_ctx, ct);
+}
 
 static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 {
@@ -212,7 +213,8 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 		// function
 		ct->init = s->init;
 		ct->reftrace = s->reftrace;
-		ct->free = (s->free)? s->free : DEFAULT_free;
+		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
+		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
 		ct->initdef = s->initdef;
 		if(s->initdef != NULL) {
 			s->initdef(_ctx, ct);
@@ -284,8 +286,6 @@ const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body)
 	return ct;
 }
 
-// uri
-
 static uintptr_t strhash(const char *name, size_t len)
 {
 	uintptr_t i, hcode = 0;
@@ -294,8 +294,6 @@ static uintptr_t strhash(const char *name, size_t len)
 	}
 	return hcode;
 }
-
-
 
 static kuri_t uriget(CTX, const char *name, size_t len)
 {
@@ -412,6 +410,10 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 		return sym | mask;
 	}
 }
+
+
+
+
 
 // -------------------------------------------------------------------------
 
@@ -845,6 +847,7 @@ static void kshare_initklib2(klib2_t *l)
 	l->Knew_Param  = new_Param;
 	l->Knew_Method = new_Method;
 	l->KaddClassDef = addClassDef;
+	l->Knull = CT_null;
 //	l->KLingo_getcid = Lingo_getcid;
 //	l->KloadMethodData = Lingo_loadMethodData;
 }
@@ -907,23 +910,23 @@ void kshare_reftrace(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
 
-	kclass_t **ct = (kclass_t**)_ctx->share->ca.ClassTBL;
+	kclass_t **ctt = (kclass_t**)_ctx->share->ca.ClassTBL;
 	size_t i, size = _ctx->share->ca.size;
 	for(i = 0; i < size; i++) {
-		kclass_t *cls = ct[i];
+		kclass_t *ct = ctt[i];
 		{
 			BEGIN_REFTRACE(6);
-			KREFTRACEn(cls->typeNUL);
-			KREFTRACEv(cls->cparam);
-			KREFTRACEv(cls->name);
-			KREFTRACEn(cls->fullnameNUL);
-			KREFTRACEv(cls->methods);
+			KREFTRACEn(ct->typeNUL);
+			KREFTRACEv(ct->cparam);
+			KREFTRACEv(ct->name);
+			KREFTRACEn(ct->fullnameNUL);
+			KREFTRACEv(ct->methods);
 			/* TODO(imasahiro) cls->defnull is nullable? */
-			KREFTRACEn(cls->defnull);
+			KREFTRACEn(ct->nulvalNUL);
 			END_REFTRACE();
 		}
-		if (cls->constNameMapSO) kmap_reftrace(cls->constNameMapSO, keyval_reftrace);
-		if (cls->constPoolMapNO) kmap_reftrace(cls->constPoolMapNO, val_reftrace);
+		if (ct->constNameMapSO) kmap_reftrace(ct->constNameMapSO, keyval_reftrace);
+		if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
 	}
 
 	kmap_reftrace(share->symbolMapNN, key_reftrace);
