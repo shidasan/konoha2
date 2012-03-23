@@ -339,7 +339,7 @@ static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
 			kArray_add(CT_(cid)->methods, mtd);
 		} else {
 			if (lgo->methodsNULL == NULL) {
-				KSETv(lgo->methodsNULL, new_(Array, 8));
+				KINITv(lgo->methodsNULL, new_(Array, 8));
 			}
 			kArray_add(lgo->methodsNULL, mtd);
 		}

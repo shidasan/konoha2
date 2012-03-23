@@ -832,8 +832,6 @@ static const kclass_t *addClassDef(CTX, KCLASS_DEF *cdef)
 	return (const kclass_t*)ct;
 }
 
-void Lingo_loadMethodData(CTX, struct kLingo *nsN, const char **data);
-
 static void kshare_initklib2(klib2_t *l)
 {
 	l->Kuri    = uriget;
@@ -848,8 +846,6 @@ static void kshare_initklib2(klib2_t *l)
 	l->Knew_Method = new_Method;
 	l->KaddClassDef = addClassDef;
 	l->Knull = CT_null;
-//	l->KLingo_getcid = Lingo_getcid;
-//	l->KloadMethodData = Lingo_loadMethodData;
 }
 
 void kshare_init(CTX, kcontext_t *ctx)

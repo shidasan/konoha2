@@ -181,6 +181,8 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 // modshare[128] mod[128]
 // keval
 
+void MODEVAL_defMethods(CTX);
+
 static kcontext_t* new_context(const kcontext_t *_ctx)
 {
 	kcontext_t *newctx;
@@ -220,6 +222,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		MODCODE_init(_ctx, newctx);
 		MODEVAL_init(_ctx, newctx);
 		kshare_init_methods(_ctx);
+		MODEVAL_defMethods(_ctx);
 	}
 	return newctx;
 }

@@ -553,9 +553,34 @@ static void Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t plin
 	}
 }
 
-KMETHOD Lingo_loadPackage(CTX, ksfp_t *sfp _RIX)
+// void Lingo.importPackage(String pkgname);
+static KMETHOD Lingo_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
+	Lingo_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline);
+}
 
+// void Lingo.p(String msg);
+static KMETHOD Lingo_p(CTX, ksfp_t *sfp _RIX)
+{
+	kline_t uline = sfp[K_RTNIDX].uline;
+	fprintf(stdout, "uline=%ld, %s\n", uline, S_totext(sfp[1].s));
+}
+
+#define _Public kMethod_Public
+#define _Static kMethod_Static
+#define _F(F)   (intptr_t)(F)
+#define TY_Lingo  (CT_Lingo)->cid
+
+void MODEVAL_defMethods(CTX)
+{
+	int FN_msg = FN_("msg");
+	int FN_pkgname = FN_("pkgname");
+	intptr_t methoddata[] = {
+		_Public, _F(Lingo_p), TY_void, TY_Lingo, MN_("p"), 1, TY_String, FN_msg,
+		_Public, _F(Lingo_importPackage_), TY_void, TY_Lingo, MN_("importPackage"), 1, TY_String, FN_pkgname,
+		DEND,
+	};
+	kaddMethodDef(NULL, methoddata);
 }
 
 

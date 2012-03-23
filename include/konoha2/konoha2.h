@@ -335,7 +335,7 @@ typedef struct kshare_t {
 		struct kTypeMap           *tmr;\
 		struct kException         *e;\
 		struct kExceptionHandler  *hdr; \
-		struct kLingo         *ns;\
+		struct kLingo             *lgo;\
 		struct kRawPtr   *p; \
 		struct kObject *ox; \
 		struct kConverter         *conv;\

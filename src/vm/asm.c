@@ -633,10 +633,10 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 	size_t i, size = OPDATA[c->opcode].size;
 	const kushort_t *vmt = OPDATA[c->opcode].types;
 	if(pc_start == NULL) {
-		fprintf(stdout, "[%p:%d] %s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
+		fprintf(stdout, "[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
 	}
 	else {
-		fprintf(stdout, "[L%d:%d]: %s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
+		fprintf(stdout, "[L%d:%d]\t%s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
 	}
 	for(i = 0; i < size; i++) {
 		fprintf(stdout, " ");
@@ -651,7 +651,7 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 			}
 			break;
 		case VMT_R:
-			fprintf(stdout, "sfp[%d,r=%d)", (int)c->data[i]/2, (int)c->data[i]);
+			fprintf(stdout, "sfp[%d,r=%d]", (int)c->data[i]/2, (int)c->data[i]);
 			break;
 		case VMT_U:
 			fprintf(stdout, "u%lu", c->data[i]); break;
@@ -696,10 +696,12 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 	kMethod_setFunc(mtd, Fmethod_runVM);
 	KSETv(mtd->kcode, kcode);
 	(mtd)->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
-//	if(knh_isVerboseLang() && mtd->mn != MN_) {
-//		knh_write_Object(_ctx, KNH_STDOUT, UPCAST(mtd), FMT_dump);
-//		knh_write_EOL(_ctx, KNH_STDOUT);
-//	}
+	DBG_P("DUMP CODE");
+	kopl_t *pc = mtd->pc_start;
+	while(pc->opcode != OPCODE_RET) {
+		dumpOPCODE(_ctx, pc, mtd->pc_start);
+		pc++;
+	}
 }
 
 static void BUILD_compile(CTX, kMethod *mtd, kBasicBlock *bb, kBasicBlock *bbRET)
@@ -1931,6 +1933,7 @@ static void ErrStmt_asm(CTX, kStmt *stmt, int espidx)
 static void ExprStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
+	DBG_P("expr=%p", expr);
 	if(IS_Expr(expr)) {
 		EXPR_asm(_ctx, espidx, expr, espidx);
 	}

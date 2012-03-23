@@ -401,7 +401,6 @@ static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 		if(mtd == NULL) {
 			kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined method: %s.%s", T_cid(this_cid), S_totext(tkMN->text));
 		}
-		return;
 	}
 	L_RETURN:;
 	if(mtd != NULL) {
@@ -942,9 +941,11 @@ static ktype_t Stmt_checkReturnType(CTX, kStmt *stmt)
 	if(stmt->syn == SYN_EXPR) {
 		kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
 		DBG_ASSERT(expr != NULL);
-		stmt->syn = SYN_RETURN;
-		stmt->build = TSTMT_RETURN;
-		return expr->ty;
+		if(expr->ty != TY_void) {
+			stmt->syn = SYN_RETURN;
+			stmt->build = TSTMT_RETURN;
+			return expr->ty;
+		}
 	}
 	return TY_void;
 }
