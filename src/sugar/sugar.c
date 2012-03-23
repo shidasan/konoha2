@@ -559,6 +559,23 @@ static KMETHOD Lingo_importPackage_(CTX, ksfp_t *sfp _RIX)
 	Lingo_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline);
 }
 
+// boolean Lingo.load(String path);
+static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
+{
+	//kline_t pline = sfp[K_RTNIDX].uline;
+	FILE *fp = fopen(S_totext(sfp[1].s), "r");
+	if(fp != NULL) {
+		kline_t uline = uline_init(_ctx, S_totext(sfp[1].s), S_size(sfp[1].s), 1, 1);
+		kstatus_t status = Lingo_loadstream(_ctx, sfp[0].lgo, fp, uline);
+		fclose(fp);
+		RETURNb_(status == K_CONTINUE);
+	}
+	else {
+		fprintf(stderr, "script not found: %s\n", S_totext(sfp[1].s));
+		RETURNb_(0);
+	}
+}
+
 // void Lingo.p(String msg);
 static KMETHOD Lingo_p(CTX, ksfp_t *sfp _RIX)
 {
@@ -578,12 +595,11 @@ void MODEVAL_defMethods(CTX)
 	intptr_t methoddata[] = {
 		_Public, _F(Lingo_p), TY_void, TY_Lingo, MN_("p"), 1, TY_String, FN_msg,
 		_Public, _F(Lingo_importPackage_), TY_void, TY_Lingo, MN_("importPackage"), 1, TY_String, FN_pkgname,
+		_Public, _F(Lingo_loadScript_), TY_Boolean, TY_Lingo, MN_("loadScript"), 1, TY_String, FN_("path"),
 		DEND,
 	};
 	kaddMethodDef(NULL, methoddata);
 }
-
-
 
 #ifdef __cplusplus
 }
