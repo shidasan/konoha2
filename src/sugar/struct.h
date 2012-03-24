@@ -100,18 +100,22 @@ static ksyntax_t* kLingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
 {
 	kLingo *lgo = lgo0;
 	uintptr_t hcode = keyid;
+	ksyntax_t *parent = NULL;
 	while(lgo != NULL) {
 		if(lgo->syntaxMapNN != NULL) {
 			kmape_t *e = kmap_get(lgo->syntaxMapNN, hcode);
 			while(e != NULL) {
 				if(e->hcode == hcode) {
-					return (ksyntax_t*)e->uvalue;
+					parent = (ksyntax_t*)e->uvalue;
+					if(isnew && lgo0 != lgo) goto L_NEW;
+					return parent;
 				}
 				e = e->next;
 			}
 		}
 		lgo = lgo->parentNULL;
 	}
+	L_NEW:;
 	if(isnew == 1) {
 		if(lgo0->syntaxMapNN == NULL) {
 			lgo0->syntaxMapNN = kmap_init(0);
@@ -120,6 +124,16 @@ static ksyntax_t* kLingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
 		kmap_add(lgo0->syntaxMapNN, e);
 		ksyntax_t *syn = (ksyntax_t*)KNH_ZMALLOC(sizeof(ksyntax_t));
 		e->uvalue = (uintptr_t)syn;
+		if(parent != NULL) {
+			memcpy(syn, parent, sizeof(ksyntax_t));
+		}
+		else {
+			syn->keyid = keyid;
+			syn->ty  = CLASS_unknown;
+			syn->op1 = 0; /*MN_NONAME;*/
+			syn->op2 = 0; /*MN_NONAME;*/
+		}
+		//syn->parent = parent;
 		return syn;
 	}
 	return NULL;
@@ -133,15 +147,20 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 	while(syndef->name != NULL) {
 		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
 		ksyntax_t* syn = kLingo_syntax(_ctx, lgo, keyid, 1);
-		syn->keyid = keyid;
 		syn->token = syndef->name;
-		syn->ty = (syndef->type != 0) ? (syndef->type) : CLASS_unknown;
+		if(syndef->type != 0) {
+			syn->ty = syndef->type;
+		}
 		if(syndef->rule != NULL) {
 			KINITv(syn->syntaxRule, new_(Array, 0));
 			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRule);
 		}
 		if(syndef->op1 != NULL) {
-			syn->op1 = MN_NONAME;  // TODO
+			if (syndef->op1[0] == '*') {
+				syn->op1 = MN_NONAME;  // TODO
+			} else {
+				syn->op1 = ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
+			}
 		}
 		if(syndef->op2 != NULL) {
 			if (syndef->op2[0] == '*') {
@@ -168,10 +187,6 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
 			}
 		}
-//		if(syndef->CodeGen != NULL) {
-//			KINITv(syn->CodeGen, new_kMethod(0, 0, 0, NULL, syndef->CodeGen));
-//		}
-		//DBG_P("DEFINE SYNTAX: keyid=%d '%s'", keyid, syn->token);
 		DBG_ASSERT(syn == kLingo_syntax(_ctx, lgo, keyid, 0));
 		syndef++;
 	}

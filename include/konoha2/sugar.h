@@ -76,6 +76,10 @@ typedef ksymbol_t keyword_t;
 
 #define FN_this      FN_("this")
 
+struct kLingo;
+struct ksyntaxdef_t;
+#define kLingo_defineSyntax(L, S)  kevalshare->KLingo_defineSyntax(_ctx, L, S)
+
 typedef struct {
 	kmodshare_t h;
 	const kclass_t *cToken;
@@ -114,6 +118,8 @@ typedef struct {
 	struct ksyntax_t *syn_break;
 	struct ksyntax_t *syn_typedecl;
 
+	void (*KLingo_defineSyntax)(CTX, struct kLingo*, struct ksyntaxdef_t *);
+
 } kevalshare_t;
 
 typedef struct {
@@ -133,22 +139,23 @@ typedef struct {
 } kevalmod_t;
 
 #define FLAG_METHOD_LAZYCOMPILE (0)
-static inline kflag_t kflag_set(kflag_t flag, int idx)
-{
-	kflag_t mask = 1ULL << idx;
-	return flag | mask;
-}
-static inline kflag_t kflag_unset(kflag_t flag, int idx)
-{
-	kflag_t mask = 1ULL << idx;
-	return flag ^ mask;
-}
 
-static inline int kflag_test(kflag_t flag, int idx)
-{
-	kflag_t mask = 1ULL << idx;
-	return (flag & mask) == mask;
-}
+//static inline kflag_t kflag_set(kflag_t flag, int idx)
+//{
+//	kflag_t mask = 1ULL << idx;
+//	return flag | mask;
+//}
+//static inline kflag_t kflag_unset(kflag_t flag, int idx)
+//{
+//	kflag_t mask = 1ULL << idx;
+//	return flag ^ mask;
+//}
+//
+//static inline int kflag_test(kflag_t flag, int idx)
+//{
+//	kflag_t mask = 1ULL << idx;
+//	return (flag & mask) == mask;
+//}
 
 #define kflag_clear(flag)  (flag) = 0
 
@@ -217,7 +224,6 @@ typedef struct ksyntax_t {
 	kMethod  *StmtAdd;
 	kMethod  *ExprTyCheck;
 	kMethod  *StmtTyCheck;
-	kMethod  *CodeGen;
 	// binary
 	kshort_t priority;   kshort_t right;//
 	kmethodn_t op2;      // a if b
@@ -225,7 +231,7 @@ typedef struct ksyntax_t {
 	ktype_t    ty;       kshort_t dummy;
 } ksyntax_t ;
 
-typedef struct {
+typedef struct ksyntaxdef_t {
 	int keyid;
 	const char *name;
 	size_t      namelen;
@@ -237,7 +243,6 @@ typedef struct {
 	knh_Fmethod StmtAdd;
 	knh_Fmethod StmtTyCheck;
 	knh_Fmethod ExprTyCheck;
-	knh_Fmethod CodeGen;
 } ksyntaxdef_t;
 
 typedef struct kLingo kLingo;

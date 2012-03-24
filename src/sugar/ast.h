@@ -347,9 +347,9 @@ static kbool_t Stmt_makeTree(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	keyword_t keyid = Stmt_stmttype(_ctx, stmt, tls, s, e);
 	ksyntax_t *syn = kLingo_syntax(_ctx, Stmt_ns(_ctx, stmt), keyid, 0);
 	int ret = 0;
-	if (keyid == KW_DECLMETHOD) {
-		kevalmod->flags = kflag_set(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE);
-	}
+//	if (keyid == KW_DECLMETHOD) {
+//		kevalmod->flags = kflag_set(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE);
+//	}
 	if(syn != NULL && syn->syntaxRule != NULL) {
 //		DBG_P("trying matching %s", syn->token);
 		e = matchSyntaxRule(_ctx, stmt, syn->syntaxRule, stmt->uline, tls, s, e, 0);

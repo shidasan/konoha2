@@ -51,50 +51,55 @@ static kString *Skeyword_(CTX, keyword_t keyid);
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 #define _EXPR     .rule ="$expr"
 
-static ksyntaxdef_t SYNTAX[] = {
-	{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
-	{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
-	{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
-	{ TOKEN("$type"),  .StmtAdd = StmtAdd_type, },
-	{ TOKEN("$cname"), .StmtAdd = StmtAdd_cname, },
-	{ TOKEN("$name"),  .StmtAdd = StmtAdd_name, .ExprTyCheck = ExprTyCheck_invoke, },
-	{ TOKEN("$params"),  .StmtAdd = StmtAdd_params, .StmtTyCheck = StmtTyCheck_declParams, },
-	{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
-	{ TOKEN("/"), .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
-	{ TOKEN("%"), .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("*"), .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("+"), .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call},
-	{ TOKEN("-"), .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("<"), .op2 = "opLT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("<="), .op2 = "opLTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN(">"), .op2 = "opGT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN(">="), .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("=="), .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("!="), .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-	{ TOKEN("&&"), .op2 = "*", .priority_op2 = 1024, .right = 1, },
-	{ TOKEN("||"), .op2 = "*", .priority_op2 = 2048, .right = 1, },
-	{ TOKEN("!"),  .op1 = "opNOT", },
-	{ TOKEN(":"), .priority_op2 = 3072, },
-	{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
-	{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
-	{ TOKEN("void"), .type = TY_void, .rule ="$type [$cname '.'] $name $params [$block]", .StmtTyCheck = StmtTyCheck_declMethod},
-	{ TOKEN("var"), .type = TY_var, .rule ="$type $expr", },
-	{ TOKEN("int"), .type = TY_Int, },
-	//	{ TOKEN("dynamic"), .type = TY_dynamic, },
-	{ TOKEN("null"), .ExprTyCheck = TokenTyCheck_NULL,},
-	{ TOKEN("true"),  .ExprTyCheck = TokenTyCheck_TRUE,},
-	{ TOKEN("false"), .ExprTyCheck = TokenTyCheck_FALSE,},
-	{ TOKEN("if"), .rule ="'if' '(' $expr ')' then: $block ['else' else: $block]", .StmtTyCheck = StmtTyCheck_if, },
-	{ TOKEN("else"), .rule = "'else' else: $block" },
-	{ TOKEN("break"), .rule ="'break' [$expr]", .StmtTyCheck = StmtTyCheck_nop },
-	{ TOKEN("return"), .rule ="'return' [$expr]", .StmtTyCheck = StmtTyCheck_return, },
-	{ TOKEN("TK_SYMBOL"), .keyid = KW_TK(TK_SYMBOL), .ExprTyCheck = TokenTyCheck_SYMBOL, },
-	{ TOKEN("TK_USYMBOL"), .keyid = KW_TK(TK_USYMBOL), .ExprTyCheck = TokenTyCheck_USYMBOL, },
-	{ TOKEN("TK_TEXT"), .keyid = KW_TK(TK_TEXT), .ExprTyCheck = TokenTyCheck_TEXT, },
-	{ TOKEN("TK_INT"), .keyid = KW_TK(TK_INT), .ExprTyCheck = TokenTyCheck_INT, },
-	{ TOKEN("TK_FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
-	{ .name = NULL, },
-};
+static void defineDefaultSyntax(CTX, kLingo *lgo)
+{
+	ksyntaxdef_t SYNTAX[] = {
+		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
+		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
+		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
+		{ TOKEN("$type"),  .StmtAdd = StmtAdd_type, },
+		{ TOKEN("$cname"), .StmtAdd = StmtAdd_cname, },
+		{ TOKEN("$name"),  .StmtAdd = StmtAdd_name, .ExprTyCheck = ExprTyCheck_invoke, },
+		{ TOKEN("$params"),  .StmtAdd = StmtAdd_params, .StmtTyCheck = StmtTyCheck_declParams, },
+		{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
+		{ TOKEN("/"), .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
+		{ TOKEN("%"), .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("*"), .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("+"), .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call},
+		{ TOKEN("-"), .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("<"), .op2 = "opLT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("<="), .op2 = "opLTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN(">"), .op2 = "opGT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN(">="), .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("=="), .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("!="), .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("&&"), .op2 = "*", .priority_op2 = 1024, .right = 1, },
+		{ TOKEN("||"), .op2 = "*", .priority_op2 = 2048, .right = 1, },
+		{ TOKEN("!"),  .op1 = "opNOT", },
+		{ TOKEN(":"), .priority_op2 = 3072, },
+		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
+		{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
+		{ TOKEN("void"), .type = TY_void, .rule ="$type [$cname '.'] $name $params [$block]", .StmtTyCheck = StmtTyCheck_declMethod},
+		{ TOKEN("var"), .type = TY_var, .rule ="$type $expr", },
+		{ TOKEN("boolean"), .type = TY_Boolean, },
+		{ TOKEN("int"), .type = TY_Int, },
+		//	{ TOKEN("dynamic"), .type = TY_dynamic, },
+		{ TOKEN("null"), .ExprTyCheck = TokenTyCheck_NULL,},
+		{ TOKEN("true"),  .ExprTyCheck = TokenTyCheck_TRUE,},
+		{ TOKEN("false"), .ExprTyCheck = TokenTyCheck_FALSE,},
+		{ TOKEN("if"), .rule ="'if' '(' $expr ')' then: $block ['else' else: $block]", .StmtTyCheck = StmtTyCheck_if, },
+		{ TOKEN("else"), .rule = "'else' else: $block" },
+		{ TOKEN("break"), .rule ="'break' [$expr]", .StmtTyCheck = StmtTyCheck_nop },
+		{ TOKEN("return"), .rule ="'return' [$expr]", .StmtTyCheck = StmtTyCheck_return, },
+		{ TOKEN("$SYMBOL"), .keyid = KW_TK(TK_SYMBOL), .ExprTyCheck = TokenTyCheck_SYMBOL, },
+		{ TOKEN("$USYMBOL"), .keyid = KW_TK(TK_USYMBOL), .ExprTyCheck = TokenTyCheck_USYMBOL, },
+		{ TOKEN("$TEXT"), .keyid = KW_TK(TK_TEXT), .ExprTyCheck = TokenTyCheck_TEXT, },
+		{ TOKEN("$INT"), .keyid = KW_TK(TK_INT), .ExprTyCheck = TokenTyCheck_INT, },
+		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+		{ .name = NULL, },
+	};
+	Lingo_defineSyntax(_ctx, lgo, SYNTAX);
+}
 
 /* ------------------------------------------------------------------------ */
 /* kevalmod_t global functions */
@@ -240,7 +245,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 
 	KINITv(base->aBuffer, new_(Array, 0));
 
-	Lingo_defineSyntax(_ctx, base->rootlgo, SYNTAX);
+	defineDefaultSyntax(_ctx, base->rootlgo);
 
 	base->kw_dot = KW_(".");
 	base->kw_comma = KW_(",");
