@@ -27,7 +27,6 @@
 #define STRUCTNAME(C) \
 	.structname = #C,\
 	.cid = CLASS_newid,\
-	.cflag = 0,\
 	.cstruct_size = sizeof(k##C)\
 
 

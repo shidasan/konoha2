@@ -2032,12 +2032,6 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 /* ------------------------------------------------------------------------ */
 /* [datatype] */
 
-#define STRUCTNAME(C) \
-	.structname = #C,\
-	.cid = CLASS_newid,\
-	.cflag = 0,\
-	.cstruct_size = sizeof(k##C)\
-
 static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;

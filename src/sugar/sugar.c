@@ -106,9 +106,6 @@ static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
 		INIT_GCSTACK();
 		kArray *tls = kevalmod->tokens;
 		size_t pos = kArray_size(tls);
-		if(uline == 0) {
-
-		}
 		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
 		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), lgo);
 		kArray_clear(tls, pos);
@@ -469,7 +466,7 @@ static const char* packname(const char *str)
 	return (p == NULL) ? str : (const char*)p+1;
 }
 
-static kpackage_def PKGDEFNULL = {
+static KPACKDEF PKGDEFNULL = {
 	.konoha_checksum = 0,
 	.name = "*stub",
 	.version = "0.0",
@@ -481,7 +478,7 @@ static kpackage_def PKGDEFNULL = {
 	.konoha_revision = 0,
 };
 
-static kpackage_def *Lingo_openGlueHandler(CTX, kLingo *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
+static KPACKDEF *Lingo_openGlueHandler(CTX, kLingo *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
 {
 	char *p = strrchr(pathbuf, '.');
 	snprintf(p, bufsiz - (p  - pathbuf), "%s", K_OSDLLEXT);
@@ -491,7 +488,7 @@ static kpackage_def *Lingo_openGlueHandler(CTX, kLingo *lgo, char *pathbuf, size
 		snprintf(funcbuf, sizeof(funcbuf), "%s_init", packname(pname));
 		Fpackageinit f = (Fpackageinit)dlsym(lgo->gluehdr, funcbuf);
 		if(f != NULL) {
-			kpackage_def *packdef = f();
+			KPACKDEF *packdef = f();
 			return (packdef != NULL) ? packdef : &PKGDEFNULL;
 		}
 		else {
@@ -538,9 +535,9 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 		INIT_GCSTACK();
 		kLingo *lgo = new_(Lingo, kevalshare->rootlgo);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
-		kpackage_def *packdef = Lingo_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
+		KPACKDEF *packdef = Lingo_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
 		if(packdef->initPackage != NULL) {
-			packdef->initPackage(_ctx, lgo, pline);
+			packdef->initPackage(_ctx, lgo, 0, NULL, pline);
 		}
 		if(Lingo_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE) {
 			if(packdef->initPackage != NULL) {
@@ -587,38 +584,41 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 	return pack;
 }
 
-static void Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t pline)
+static kbool_t Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t pline)
 {
+	kbool_t res = 0;
 	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
 	if(pack != NULL) {
 		if(pack->packdef->initLingo != NULL) {
-			pack->packdef->initLingo(_ctx, lgo, pline);
+			res = pack->packdef->initLingo(_ctx, lgo, pline);
 		}
-		if(pack->export_script != 0) {
+		if(res && pack->export_script != 0) {
 			kString *fname = S_uri(pack->export_script);
 			kline_t uline = pack->export_script | (kline_t)1;
 			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {
-				Lingo_loadstream(_ctx, lgo, fp, uline);
+				res = (Lingo_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE);
 				fclose(fp);
 			}
 			else {
 				kreportf(ERR_, pline, "script not found: %s", S_text(fname));
+				res = 0;
 			}
 		}
-		if(pack->packdef->setupLingo != NULL) {
-			pack->packdef->setupLingo(_ctx, lgo, pline);
+		if(res && pack->packdef->setupLingo != NULL) {
+			res = pack->packdef->setupLingo(_ctx, lgo, pline);
 		}
 	}
+	return res;
 }
 
-// void Lingo.importPackage(String pkgname);
+// boolean Lingo.importPackage(String pkgname);
 static KMETHOD Lingo_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
-	Lingo_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline);
+	RETURNb_(Lingo_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline));
 }
 
-// boolean Lingo.load(String path);
+// boolean Lingo.loadScript(String path);
 static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t pline = sfp[K_RTNIDX].uline;
@@ -653,7 +653,7 @@ void MODEVAL_defMethods(CTX)
 	int FN_pkgname = FN_("pkgname");
 	intptr_t methoddata[] = {
 		_Public, _F(Lingo_p), TY_void, TY_Lingo, MN_("p"), 1, TY_String, FN_msg,
-		_Public, _F(Lingo_importPackage_), TY_void, TY_Lingo, MN_("importPackage"), 1, TY_String, FN_pkgname,
+		_Public, _F(Lingo_importPackage_), TY_Boolean, TY_Lingo, MN_("importPackage"), 1, TY_String, FN_pkgname,
 		_Public, _F(Lingo_loadScript_), TY_Boolean, TY_Lingo, MN_("loadScript"), 1, TY_String, FN_("path"),
 		DEND,
 	};

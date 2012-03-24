@@ -68,7 +68,10 @@ static inline kString* S_fn_(CTX, ksymbol_t sym)
 static const char* Tsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 {
 	int index = MN_UNMASK(sym);
-	if(index < kArray_size(_ctx->share->symbolList)) {
+	if(MN_isTOCID(sym)) {
+		snprintf(buf, bufsiz, "to%s", T_cid(index));
+	}
+	else if(index < kArray_size(_ctx->share->symbolList)) {
 		const char *name = S_text(_ctx->share->symbolList->strings[index]);
 		if(MN_isISBOOL(sym)) {
 			snprintf(buf, bufsiz, "is%s", name);

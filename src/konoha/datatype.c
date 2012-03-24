@@ -1002,7 +1002,7 @@ void kshare_free(CTX, kcontext_t *ctx)
 #include "methods.h"
 
 #define _Public kMethod_Public
-#define _Static kMethod_Static
+#define _Const kMethod_Const
 #define _F(F)   (intptr_t)(F)
 
 void kshare_init_methods(CTX)
@@ -1020,6 +1020,8 @@ void kshare_init_methods(CTX)
 		_Public, _F(Int_opLTE), TY_Int, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opGT), TY_Int, TY_Int, MN_("opGT"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opGTE), TY_Int, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
+		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
+		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
 		DEND,
 	};
 	kaddMethodDef(NULL, methoddata);

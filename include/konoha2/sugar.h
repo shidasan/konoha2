@@ -152,33 +152,39 @@ static inline int kflag_test(kflag_t flag, int idx)
 
 #define kflag_clear(flag)  (flag) = 0
 
+#define K_CHECKSUM 1
+#define K_REVISON  1
+
+#define KPACKNAME(N, V) \
+	.name = N, .version = V, .konoha_checksum = K_CHECKSUM, .konoha_revision = K_REVISON
+
+#define KPACKLIB(N, V) \
+	.libname = N, .libversion = V
+
 typedef struct {
 	int konoha_checksum;
 	const char *name;
 	const char *version;
+	const char *libname;
+	const char *libversion;
 	const char *note;
-	kbool_t (*initPackage)(CTX,    struct kLingo *, kline_t);
-	kbool_t (*setupPackage)(CTX,   struct kLingo *, kline_t);
+	kbool_t (*initPackage)(CTX, struct kLingo *, int, const char**, kline_t);
+	kbool_t (*setupPackage)(CTX, struct kLingo *, kline_t);
 	kbool_t (*initLingo)(CTX,  struct kLingo *, kline_t);
 	kbool_t (*setupLingo)(CTX, struct kLingo *, kline_t);
 	int konoha_revision;
-} kpackage_def;
+} KPACKDEF_;
 
-typedef kpackage_def* (*Fpackageinit)(void);
+typedef const KPACKDEF_ KPACKDEF;
+typedef KPACKDEF* (*Fpackageinit)(void);
 
 typedef struct {
 	kpkg_t               pid;
 	kString             *name;
 	struct kLingo       *lgo;
-	kpackage_def        *packdef;
+	KPACKDEF            *packdef;
 	kline_t              export_script;
 } kpackage_t;
-
-#define INIT_GCSTACK()         size_t gcstack_ = kArray_size(_ctx->stack->gcstack)
-#define PUSH_GCSTACK(o)        kArray_add(_ctx->stack->gcstack, o)
-#define RESET_GCSTACK()        kArray_clear(_ctx->stack->gcstack, gcstack_)
-
-// int Stmt.add(Int symbol, Array tls, int s, int e);
 
 #define VAR_StmtAdd(STMT, NAME, TLS, S, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\

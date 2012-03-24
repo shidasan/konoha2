@@ -411,12 +411,21 @@ typedef kushort_t       kmethodn_t;
 #define MN_ISBOOL     KFLAG_H0
 #define MN_GETTER     KFLAG_H1
 #define MN_SETTER     KFLAG_H2
+#define MN_TOCID      (KFLAG_H0|KFLAG_H1)
+#define MN_ASCID      (KFLAG_H0|KFLAG_H1|KFLAG_H2)
+
 #define MN_isISBOOL(mn)   ((mn & MN_ISBOOL) == MN_ISBOOL)
 #define MN_toISBOOL(mn)   (mn | MN_ISBOOL)
 #define MN_isGETTER(mn)   ((mn & MN_GETTER) == MN_GETTER)
 #define MN_toGETTER(mn)   (mn | MN_GETTER)
 #define MN_isSETTER(mn)   ((mn & MN_SETTER) == MN_SETTER)
 #define MN_toSETTER(mn)   (mn | MN_SETTER)
+
+#define MN_to(cid)        (cid | MN_TOCID)
+#define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
+#define MN_as(cid)        (cid | MN_ASCID)
+#define MN_isASCID(mn)    ((mn & MN_ASCID) == MN_ASCID)
+
 
 typedef struct kfield_t {
 	kflag_t    flag  ;
@@ -449,6 +458,11 @@ typedef struct KSTRUCT_DEF {
 } KSTRUCT_DEF;
 
 typedef const KSTRUCT_DEF KCLASS_DEF;
+
+#define STRUCTNAME(C) \
+	.structname = #C,\
+	.cid = CLASS_newid,\
+	.cstruct_size = sizeof(k##C)\
 
 struct kString;
 struct kRawPtr;
@@ -791,20 +805,24 @@ typedef struct kMethod kMethod;
 #define kMethod_FastCall             ((uintptr_t)(1<<9))
 #define kMethod_TypedCall            ((uintptr_t)(1<<10))
 #define kMethod_InterfaceMapping     ((uintptr_t)(1<<11))
-#define kMethod_SemanticMapping      ((uintptr_t)(1<<12))
+#define kMethod_Coercion             ((uintptr_t)(1<<12))
 
 #define kMethod_isPublic(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Public))
-#define kMethod_setPublic(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Public,B)
+//#define kMethod_setPublic(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Public,B)
 #define kMethod_isVirtual(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Virtual))
-#define kMethod_setVirtual(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Virtual,B)
+//#define kMethod_setVirtual(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Virtual,B)
 #define kMethod_isHidden(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Hidden))
 #define kMethod_setHidden(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Hidden,B)
 #define kMethod_isStatic(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Static))
 #define kMethod_setStatic(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Static,B)
 #define kMethod_isConst(o)      (TFLAG_is(uintptr_t, (o)->flag,kMethod_Const))
-#define kMethod_setConst(o,B)   TFLAG_set(uintptr_t, (o)->flag,kMethod_Const,B)
+//#define kMethod_setConst(o,B)   TFLAG_set(uintptr_t, (o)->flag,kMethod_Const,B)
 #define kMethod_isVirtual(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Virtual))
 #define kMethod_setVirtual(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Virtual,B)
+
+#define kMethod_isConverter(mtd)    MN_isTOCID(mtd->mn)
+#define kMethod_isInterface(mtd)    MN_isASCID(mtd->mn)
+#define kMethod_isCoercion(mtd)    (TFLAG_is(uintptr_t, (mtd)->flag,kMethod_Coercion))
 
 //#define kMethod_isOverload(o)  (TFLAG_is(uintptr_t,DP(o)->flag,kMethod_Overload))
 //#define kMethod_setOverload(o,b) TFLAG_set(uintptr_t,DP(o)->flag,kMethod_Overload,b)
@@ -1086,6 +1104,11 @@ typedef struct klib2_t {
 #else
 #define OBJECT_SET(var, val) var = (typeof(var))(val)
 #endif /* defined(_MSC_VER) */
+
+
+#define INIT_GCSTACK()         size_t gcstack_ = kArray_size(_ctx->stack->gcstack)
+#define PUSH_GCSTACK(o)        kArray_add(_ctx->stack->gcstack, o)
+#define RESET_GCSTACK()        kArray_clear(_ctx->stack->gcstack, gcstack_)
 
 #define KINITv(VAR, VAL)   OBJECT_SET(VAR, VAL)
 #define KSETv(VAR, VAL)    OBJECT_SET(VAR, VAL)
