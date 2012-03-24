@@ -107,7 +107,7 @@ static ITRNEXT SQLITE3_next(CTX, ksfp_t *sfp, fsqlite3_next fnext _RIX)
 		if(qconn == NULL) {
 			ITREND_();
 		}
-		sqlite3_prepare(qconn, S_totext(query), S_size(query), &stmt, NULL);
+		sqlite3_prepare(qconn, S_text(query), S_size(query), &stmt, NULL);
 		DP(itr)->m.nptr = &(DP(itr)->m);
 		DP(itr)->m.nfree = SQLITE3_qfree;
 		DP(itr)->m.qconn = qconn;

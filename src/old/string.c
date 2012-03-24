@@ -367,7 +367,7 @@ static void knh_String_checkASCII(kString *o)
 {
 	unsigned char ch = 0;
 	long len = S_size(o);
-	const kchar_t *p = (const kchar_t *) S_totext(o);
+	const kchar_t *p = (const kchar_t *) S_text(o);
 #ifdef K_USING_FASTESTFASTMODE /* written by ide */
 	int len = S_size(o), n = (len + 3) / 4;
 	/* Duff's device */
@@ -653,7 +653,7 @@ static int strregex_regexec(CTX, kregex_t *reg, const char *str, size_t nmatch, 
 {
 	size_t e = 0;
 	kString *ptn = (kString*)reg;
-	const char *po = strstr(str, S_totext(ptn));
+	const char *po = strstr(str, S_text(ptn));
 	if(po != NULL) {
 		p[e].rm_so = po - str;
 		p[e].rm_eo = p[e].rm_so + S_size(ptn);

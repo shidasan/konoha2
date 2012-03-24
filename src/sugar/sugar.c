@@ -106,6 +106,9 @@ static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
 		INIT_GCSTACK();
 		kArray *tls = kevalmod->tokens;
 		size_t pos = kArray_size(tls);
+		if(uline == 0) {
+
+		}
 		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
 		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), lgo);
 		kArray_clear(tls, pos);
@@ -172,11 +175,27 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 	}
 }
 
+static void pack_reftrace(CTX, kmape_t *p)
+{
+	kpackage_t *pack = (kpackage_t*)p->uvalue;
+	BEGIN_REFTRACE(2);
+	KREFTRACEn(pack->name);
+	KREFTRACEn(pack->lgo);
+	END_REFTRACE();
+}
+
+static void pack_free(CTX, void *p)
+{
+	KNH_FREE(p, sizeof(kpackage_t));
+}
+
 static void kevalshare_reftrace(CTX, struct kmodshare_t *baseh)
 {
 	kevalshare_t *base = (kevalshare_t*)baseh;
-	BEGIN_REFTRACE(2);
+	kmap_reftrace(base->packageMapNO, pack_reftrace);
+	BEGIN_REFTRACE(3);
 	KREFTRACEv(base->keywordList);
+	KREFTRACEv(base->packageList);
 	KREFTRACEv(base->aBuffer);
 	END_REFTRACE();
 }
@@ -185,6 +204,7 @@ static void kevalshare_free(CTX, struct kmodshare_t *baseh)
 {
 	kevalshare_t *base = (kevalshare_t*)baseh;
 	kmap_free(base->keywordMapNN, NULL);
+	kmap_free(base->packageMapNO, pack_free);
 	KNH_FREE(baseh, sizeof(kevalshare_t));
 }
 
@@ -202,6 +222,8 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 
 	KINITv(base->keywordList, new_(Array, 32));
 	base->keywordMapNN = kmap_init(0);
+	KINITv(base->packageList, new_(Array, 8));
+	base->packageMapNO = kmap_init(0);
 
 	ksetModule(MOD_EVAL, (kmodshare_t*)base, 0);
 	base->cLingo = kaddClassDef(&LingoDef);
@@ -237,7 +259,7 @@ static const char *Pkeyword_(CTX, keyword_t keyid)
 {
 	kArray *a = kevalshare->keywordList;
 	if(keyid < kArray_size(a)) {
-		return S_totext(a->strings[keyid]);
+		return S_text(a->strings[keyid]);
 	}
 	return "unknown keyword";
 }
@@ -256,7 +278,7 @@ static ksymbol_t keyword_get(CTX, const char *name, size_t len, uintptr_t hcode,
 	kmap_t  *symmap = kevalshare->keywordMapNN;
 	kmape_t *e = kmap_get(symmap, hcode);
 	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_totext(e->skey), name, len) == 0) {
+		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
 //			DBG_P("GET keyword='%s', hcode=%ld, symbol=%d", name, hcode, (ksymbol_t)e->uvalue);
 			return (ksymbol_t)e->uvalue;
 		}
@@ -389,31 +411,43 @@ static kstatus_t Lingo_loadstream(CTX, kLingo *ns, FILE *fp, kline_t uline)
 
 static kline_t uline_init(CTX, const char *path, size_t len, int line, int isreal)
 {
-	return kuri(path, len) | (kushort_t)line;
+	kline_t uline = line;
+	if(isreal) {
+		char buf[256];
+		char *ptr = realpath(path, buf);
+		uline |= kuri((const char*)buf, strlen(ptr));
+		if(ptr != buf && ptr != NULL) {
+			free(ptr);
+		}
+	}
+	else {
+		uline |= kuri(path, len);
+	}
+	return uline;
 }
 
 static kstatus_t Lingo_loadscript(CTX, kLingo *lgo, const char *path, size_t len, kline_t pline)
 {
 	kstatus_t status = K_BREAK;
-	kline_t uline = 1;
 	if(path[0] == '-' && path[1] == 0) {
+		kline_t uline = KURI("<stdin>") | 1;
 		status = Lingo_loadstream(_ctx, lgo, stdin, uline);
 	}
 	else {
 		FILE *fp = fopen(path, "r");
 		if(fp != NULL) {
-			uline = uline_init(_ctx, path, len, 1, 1);
+			kline_t uline = uline_init(_ctx, path, len, 1, 1);
 			status = Lingo_loadstream(_ctx, lgo, fp, uline);
 			fclose(fp);
 		}
 		else {
-			fprintf(stderr, "script not found: %s", path);
+			kreportf(ERR_, pline, "script not found: %s", path);
 		}
 	}
 	return status;
 }
 
-kstatus_t loadscript(CTX, const char *path, size_t len, kline_t pline)
+kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline)
 {
 	if (kevalmod == NULL) {
 		kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
@@ -426,38 +460,72 @@ kstatus_t loadscript(CTX, const char *path, size_t len, kline_t pline)
 	return result;
 }
 
-static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
+// ---------------------------------------------------------------------------
+// package
+
+static const char* packname(const char *str)
 {
-	return "";
+	char *p = strrchr(str, '.');
+	return (p == NULL) ? str : (const char*)p+1;
 }
 
-static kline_t scripturi(CTX, const char *fname)
-{
-	return 0;
-}
+static kpackage_def PKGDEFNULL = {
+	.konoha_checksum = 0,
+	.name = "*stub",
+	.version = "0.0",
+	.note = "this is stub",
+	.initPackage = NULL,
+	.setupPackage = NULL,
+	.initLingo = NULL,
+	.setupLingo = NULL,
+	.konoha_revision = 0,
+};
 
-static kpackage_def *Lingo_openGlueHandler(CTX, kLingo *lgo, const char *fname, kline_t pline)
+static kpackage_def *Lingo_openGlueHandler(CTX, kLingo *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
 {
-	const char *p = strrchr(fname, '/');
-	if(p != NULL) {
-		size_t len = (p - fname) + 1;
-		char buf[len + 40];
-		memcpy(buf, fname, len);
-		memcpy(buf + len, "glue" K_OSDLLEXT, sizeof("glue" K_OSDLLEXT));
-		DBG_P("dylib path = '%s'", buf);
-		lgo->gluehdr = dlopen(buf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);
-		if(lgo->gluehdr != NULL) {
-			Fpackageinit f = (Fpackageinit)dlsym(lgo->gluehdr, "packageinit");
-			if(f != NULL) {
-				kpackage_def *packdef = f();
-				if(packdef != NULL && packdef->initPackage != NULL) {
-					packdef->initPackage(_ctx, lgo, pline);
-				}
-				return packdef;
-			}
+	char *p = strrchr(pathbuf, '.');
+	snprintf(p, bufsiz - (p  - pathbuf), "%s", K_OSDLLEXT);
+	lgo->gluehdr = dlopen(pathbuf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);
+	if(lgo->gluehdr != NULL) {
+		char funcbuf[80];
+		snprintf(funcbuf, sizeof(funcbuf), "%s_init", packname(pname));
+		Fpackageinit f = (Fpackageinit)dlsym(lgo->gluehdr, funcbuf);
+		if(f != NULL) {
+			kpackage_def *packdef = f();
+			return (packdef != NULL) ? packdef : &PKGDEFNULL;
+		}
+		else {
+			kreportf(WARN_, pline, "package loader: %s has no %s function", pathbuf, funcbuf);
 		}
 	}
-	return NULL;
+	else {
+		kreportf(DEBUG_, pline, "package loader: %s has no glue library: %s", pname, pathbuf);
+	}
+	return &PKGDEFNULL;
+}
+
+static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
+{
+	char *path = getenv("KONOHA_PACKAGEPATH"), *local = "";
+	const char *fname = S_text(pkgname);
+	if(path == NULL) {
+		path = getenv("HOME");
+		local = "/.konoha2/package";
+	}
+	snprintf(buf, bufsiz, "%s%s/%s/%s_glue.k", path, local, fname, packname(fname));
+	return (const char*)buf;
+}
+
+static kline_t scripturi(CTX, char *pathbuf, size_t bufsiz, const char *pname)
+{
+	char *p = strrchr(pathbuf, '/');
+	snprintf(p, bufsiz - (p  - pathbuf), "/%s_exports.k", packname(pname));
+	FILE *fp = fopen(pathbuf, "r");
+	if(fp != NULL) {
+		fclose(fp);
+		return kuri(pathbuf, strlen(pathbuf)) | 1;
+	}
+	return 0;
 }
 
 static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
@@ -469,24 +537,27 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 	if(fp != NULL) {
 		INIT_GCSTACK();
 		kLingo *lgo = new_(Lingo, kevalshare->rootlgo);
-		kpackage_def *packdef = Lingo_openGlueHandler(_ctx, lgo, path, pline);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
+		kpackage_def *packdef = Lingo_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
+		if(packdef->initPackage != NULL) {
+			packdef->initPackage(_ctx, lgo, pline);
+		}
 		if(Lingo_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE) {
-			if(packdef != NULL && packdef->initPackage != NULL) {
+			if(packdef->initPackage != NULL) {
 				packdef->setupPackage(_ctx, lgo, pline);
 			}
 			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t));
 			KINITv(pack->name, pkgname);
 			KINITv(pack->lgo, lgo);
 			pack->packdef = packdef;
-			pack->export_script = scripturi(_ctx, path);
+			pack->export_script = scripturi(_ctx, fbuf, sizeof(fbuf), S_text(pkgname));
 			return pack;
 		}
 		fclose(fp);
 		RESET_GCSTACK();
 	}
 	else {
-		fprintf(stderr, "package not found: %s", path);
+		kreportf(ERR_, pline, "package not found: %s path=%s", S_text(pkgname), path);
 	}
 	return NULL;
 }
@@ -495,10 +566,10 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 {
 	kmap_t *kmp = kevalshare->packageMapNO;
 	size_t len = S_size(pkgname);
-	uintptr_t hcode = strhash(S_totext(pkgname), len);
+	uintptr_t hcode = strhash(S_text(pkgname), len);
 	kmape_t *e = kmap_get(kmp, hcode);
 	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_totext(e->skey), S_totext(pkgname), len) == 0) {
+		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), S_text(pkgname), len) == 0) {
 			return (kpackage_t*)e->pvalue;
 		}
 		e = e->next;
@@ -516,18 +587,6 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 	return pack;
 }
 
-static kString* Suri(CTX, kline_t uri)
-{
-	kline_t n = (uri >> (sizeof(kshort_t) * 8));
-	if(n < kArray_size(kevalshare->packageList)) {
-		return kevalshare->packageList->strings[n];
-	}
-	DBG_P("unknown uri=%d", n);
-	return TS_EMPTY;
-}
-
-#define S_uri(I)  Suri(_ctx, I)
-
 static void Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t pline)
 {
 	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
@@ -538,13 +597,13 @@ static void Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t plin
 		if(pack->export_script != 0) {
 			kString *fname = S_uri(pack->export_script);
 			kline_t uline = pack->export_script | (kline_t)1;
-			FILE *fp = fopen(S_totext(fname), "r");
+			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {
 				Lingo_loadstream(_ctx, lgo, fp, uline);
 				fclose(fp);
 			}
 			else {
-				fprintf(stderr, "script not found: %s", S_totext(fname));
+				kreportf(ERR_, pline, "script not found: %s", S_text(fname));
 			}
 		}
 		if(pack->packdef->setupLingo != NULL) {
@@ -562,16 +621,16 @@ static KMETHOD Lingo_importPackage_(CTX, ksfp_t *sfp _RIX)
 // boolean Lingo.load(String path);
 static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
 {
-	//kline_t pline = sfp[K_RTNIDX].uline;
-	FILE *fp = fopen(S_totext(sfp[1].s), "r");
+	kline_t pline = sfp[K_RTNIDX].uline;
+	FILE *fp = fopen(S_text(sfp[1].s), "r");
 	if(fp != NULL) {
-		kline_t uline = uline_init(_ctx, S_totext(sfp[1].s), S_size(sfp[1].s), 1, 1);
+		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
 		kstatus_t status = Lingo_loadstream(_ctx, sfp[0].lgo, fp, uline);
 		fclose(fp);
 		RETURNb_(status == K_CONTINUE);
 	}
 	else {
-		fprintf(stderr, "script not found: %s\n", S_totext(sfp[1].s));
+		kreportf(ERR_, pline, "script not found: %s", S_text(sfp[1].s));
 		RETURNb_(0);
 	}
 }
@@ -580,7 +639,7 @@ static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Lingo_p(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t uline = sfp[K_RTNIDX].uline;
-	fprintf(stdout, "uline=%ld, %s\n", uline, S_totext(sfp[1].s));
+	fprintf(stdout, "uline=%ld, %s\n", uline, S_text(sfp[1].s));
 }
 
 #define _Public kMethod_Public

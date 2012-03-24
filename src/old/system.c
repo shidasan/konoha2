@@ -275,7 +275,7 @@ const char* knh_getmnname(CTX, kmethodn_t mn)
 	if(mn < MN_OPSIZE) {
 		return knh_getopname(mn);
 	}
-	return S_totext(knh_getFieldName(_ctx, mn));
+	return S_text(knh_getFieldName(_ctx, mn));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -290,7 +290,7 @@ kuri_t knh_getURI(CTX, kbytes_t t)
 		idx = kArray_size(_ctx->share->urns);
 		knh_DictSet_set(_ctx, ctx->share->urnDictSet, s, idx);
 		kArray_add(ctx->share->urns, s);
-		KNH_NTRACE2(_ctx, "konoha:newuri", K_OK, KNH_LDATA(LOG_s("urn", S_totext(s)), LOG_i("uri", idx)));
+		KNH_NTRACE2(_ctx, "konoha:newuri", K_OK, KNH_LDATA(LOG_s("urn", S_text(s)), LOG_i("uri", idx)));
 	}
 	else {
 		idx = knh_DictSet_valueAt(_ctx->share->urnDictSet, idx);

@@ -782,7 +782,7 @@ kString* knh_PtrMap_getS(CTX, kPtrMap *pm, const char *k, size_t len)
 void knh_PtrMap_addS(CTX, kPtrMap *pm, kString *v)
 {
 	knh_kmap_t *kmap = (knh_kmap_t*)pm->mapptr;
-	const char *k = S_totext(v);
+	const char *k = S_text(v);
 	size_t len = S_size(v);
 	kuint_t hcode = knh_hash(0, k, len);
 	knh_kmape_t *e = new_kmape(_ctx, kmap, hcode);

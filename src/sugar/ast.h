@@ -61,7 +61,7 @@ kBlock *new_Block(CTX, kArray *tls, int s, int e, kLingo* ns)
 static void checkKeyword(CTX, kLingo *ns, kToken *tk)
 {
 	if(tk->tt == TK_SYMBOL || tk->tt == TK_OPERATOR) {
-		keyword_t keyid = keyword(_ctx, S_totext(tk->text), S_size(tk->text), FN_NONAME);
+		keyword_t keyid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NONAME);
 		if(keyid != FN_NONAME) {
 			ksyntax_t *syn = kLingo_syntax(_ctx, ns, keyid, 0);
 			if(syn != NULL) {
@@ -77,7 +77,7 @@ static kbool_t kToken_toBRACE(CTX, kToken *tk)
 		INIT_GCSTACK();
 		kArray *a = new_(Array, 0);
 		PUSH_GCSTACK(a);
-		ktokenize(_ctx, S_totext(tk->text), tk->uline, _TOPLEVEL, a);
+		ktokenize(_ctx, S_text(tk->text), tk->uline, _TOPLEVEL, a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->lpos = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
@@ -178,7 +178,7 @@ static int Stmt_addAnnotation(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		if(tk->tt != TK_METANAME) break;
 		if(i+1 < e) {
 			char buf[128];
-			snprintf(buf, sizeof(buf), "@%s", S_totext(tk->text));
+			snprintf(buf, sizeof(buf), "@%s", S_text(tk->text));
 			keyword_t keyid = keyword(_ctx, (const char*)buf, S_size(tk->text)+1, FN_NEWID);
 			kToken *tk1 = tls->tts[i+1];
 			kObject *value = UPCAST(K_TRUE);
@@ -530,7 +530,7 @@ static kExpr* Stmt_newExpr(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 		ksyntax_t *syn = NULL;
 		int idx = Stmt_findBinaryOp(_ctx, stmt, tls, s, e, &syn);
 		if(idx != -1) {
-			DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, %s**", s, idx, e, S_totext(tls->tts[idx]->text));
+			DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, %s**", s, idx, e, S_text(tls->tts[idx]->text));
 			if(syn->keyid == KW_COMMA) {
 				kExpr *expr = new_ConsExpr(_ctx, syn, 1, tls->tts[idx]);
 				return Stmt_addExprParams(_ctx, stmt, expr, tls, s, e);
@@ -548,7 +548,7 @@ static kExpr* Stmt_newExpr(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 			}
 		}
 //		if(Stmt_isUninaryOp(_ctx, stmt, tls->tts[s])) {
-//			DBG_P("** Found UninaryOp: %s **", S_totext(tls->tts[s]->text));
+//			DBG_P("** Found UninaryOp: %s **", S_text(tls->tts[s]->text));
 //			return Stmt_newUninaryExpr(_ctx, stmt, tls, s, e, next);
 //		}
 		return Stmt_newExprLeft(_ctx, stmt, tls, s, e, next);

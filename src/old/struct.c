@@ -410,7 +410,7 @@ static void Object_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packsp
 	packspi->pack_beginmap(_ctx, pkr, field_count + 1);
 	packspi->pack_string(_ctx, pkr, "ks:class", knh_strlen("ks:class"));
 	packspi->pack_putc(_ctx, pkr, ':');
-	packspi->pack_string(_ctx, pkr, S_totext(ct->sname), S_size(ct->sname));
+	packspi->pack_string(_ctx, pkr, S_text(ct->sname), S_size(ct->sname));
 	packspi->pack_putc(_ctx, pkr, ',');
 
 	for (i = 0; i < ct->fsize; i++) {
@@ -423,7 +423,7 @@ static void Object_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packsp
 			packspi->pack_putc(_ctx, pkr, ',');
 		}
 		key = knh_getFieldName(_ctx, field->fn);
-		packspi->pack_string(_ctx, pkr, S_totext(key), S_size(key));
+		packspi->pack_string(_ctx, pkr, S_text(key), S_size(key));
 		packspi->pack_putc(_ctx, pkr, ':');
 		if (TY_isUnbox(type)) {
 			pack_unbox(_ctx, pkr, type, v + i, packspi);
@@ -585,7 +585,7 @@ void knh_ClassTBL_setObjectCSPI(CTX, kclass_t *ct)
 		}
 	}
 	if(c <= 4) {
-		DBG_P("%s: SIZE OF OBJECT FIELD: %d", S_totext(ct->lname), c);
+		DBG_P("%s: SIZE OF OBJECT FIELD: %d", S_text(ct->lname), c);
 		knh_setClassDef(_ctx, ct, ObjectNDef + c);
 	}
 	else {
@@ -817,7 +817,7 @@ static kuint_t Date_hashCode(CTX, kRawPtr *o)
 static void Date_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packspi)
 {
 //	kDate *s = (kDate *)o;
-//	packspi->pack_string(_ctx, pkr, S_totext(s), S_size(s));
+//	packspi->pack_string(_ctx, pkr, S_text(s), S_size(s));
 }
 
 static const kclass_t DateDef = {
@@ -893,7 +893,7 @@ static kuint_t String_hashCode(CTX, kRawPtr *o)
 static void String_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packspi)
 {
 	kString *s = (kString *)o;
-	packspi->pack_string(_ctx, pkr, S_totext(s), S_size(s));
+	packspi->pack_string(_ctx, pkr, S_text(s), S_size(s));
 }
 
 static const kclass_t StringDef = {
@@ -1582,7 +1582,7 @@ static int Class_compareTo(kRawPtr *o, kRawPtr *o2)
 {
 	kClass *c = (kClass*)o;
 	kClass *c2 = (kClass*)o2;
-	return knh_strcmp(S_totext(c->ct->lname), S_totext(c2->ct->lname));
+	return knh_strcmp(S_text(c->ct->lname), S_text(c2->ct->lname));
 }
 
 static kString *Class_getkey(CTX,ksfp_t *sfp)
@@ -1964,7 +1964,7 @@ static void Exception_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 				c = 0;
 			}
 			knh_write_EOL(_ctx, w);
-			knh_printf(_ctx, w, "  at %s", S_totext(s));
+			knh_printf(_ctx, w, "  at %s", S_text(s));
 			prev = S_tobytes(s);
 			prev = knh_bytes_first(prev, knh_bytes_rindex(prev, '('));
 		}
@@ -2261,7 +2261,7 @@ static void Path_init(CTX, kRawPtr *o)
 {
 	kPath *pth = (kPath*)o;
 	KINITv(pth->urn, TS_EMPTY);
-	pth->ospath = S_totext(pth->urn);
+	pth->ospath = S_text(pth->urn);
 	pth->asize = 0;
 	pth->dpi = knh_getDefaultPathStreamDPI();
 }
@@ -2613,7 +2613,7 @@ static void Assurance_checkin(CTX, ksfp_t *sfp, kRawPtr *o)
 	g->sfp = sfp;
 	g->stime = (knh_getTimeMilliSecond() / 1000);
 	KNH_NTRACE2(_ctx, "konoha:checkin", K_OK, KNH_LDATA(LOG_i("id", g->aid),
-				LOG_s("case", S_totext(g->msg))));
+				LOG_s("case", S_text(g->msg))));
 	Assurance_setCheckedIn(g, 1);
 }
 
@@ -2624,13 +2624,13 @@ static void Assurance_checkout(CTX, kRawPtr *o, int isFailed)
 	intptr_t t = (knh_getTimeMilliSecond() / 1000) - g->stime;
 	if(isFailed) {
 		KNH_NTRACE2(_ctx, "konoha:assure", K_FAILED, KNH_LDATA(LOG_i("id", g->aid),
-					LOG_s("case", S_totext(g->msg)), LOG_i("elapsed_time:s", t)));
-		knh_logprintf("ac", 0, "FAILED @%s", S_totext(g->msg));
+					LOG_s("case", S_text(g->msg)), LOG_i("elapsed_time:s", t)));
+		knh_logprintf("ac", 0, "FAILED @%s", S_text(g->msg));
 	}
 	else {
 		KNH_NTRACE2(_ctx, "konoha:assure", K_NOTICE, KNH_LDATA(LOG_i("id", g->aid),
-					LOG_s("case", S_totext(g->msg)), LOG_i("elapsed_time:s", t)));
-		knh_logprintf("ac", 0, "PASSED @%s", S_totext(g->msg));
+					LOG_s("case", S_text(g->msg)), LOG_i("elapsed_time:s", t)));
+		knh_logprintf("ac", 0, "PASSED @%s", S_text(g->msg));
 	}
 	Assurance_setCheckedIn(g, 0);
 }
@@ -2853,10 +2853,10 @@ static void StmtExpr_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 				kString *k = knh_DictMap_keyAt(DP(stmt)->metaDictCaseMap, i);
 				kString *v = (kString*)knh_DictMap_valueAt(DP(stmt)->metaDictCaseMap, i);
 				if(k == v) {
-					knh_printf(_ctx, w, "@%s ", S_totext(k));
+					knh_printf(_ctx, w, "@%s ", S_text(k));
 				}
 				else {
-					knh_printf(_ctx, w, "@%s(%O) ", S_totext(k), v);
+					knh_printf(_ctx, w, "@%s(%O) ", S_text(k), v);
 				}
 			}
 		}

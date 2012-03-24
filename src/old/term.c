@@ -1473,7 +1473,7 @@ static kTerm *new_TokenTerm(CTX, kToken *tk)
 	case TK_TYPE:      tm->tt = TT_PROPN;  break;
 	}
 	if(tm->tt == TT_ERR) {
-		kerror(_ctx, 0, tk->uline, tk->lpos, "unknown token %s", S_totext(tk->text));
+		kerror(_ctx, 0, tk->uline, tk->lpos, "unknown token %s", S_text(tk->text));
 	}
 	return tm;
 }
@@ -1536,7 +1536,7 @@ static int TokenArray_parseTerm(CTX, kArray *a, int s, kTerm *tkB, int closech)
 				return 0;
 			}
 		case ')': case ']': case '}':
-			kerror(_ctx, 0, tk->uline, tk->lpos, "mismatched %s", S_totext(tk->text));
+			kerror(_ctx, 0, tk->uline, tk->lpos, "mismatched %s", S_text(tk->text));
 			return 0;
 		case '_':
 			TermBlock_add(_ctx, tkB, new_(Term));
@@ -1559,7 +1559,7 @@ static void Term_toBRACE(CTX, kTerm *tk, int isEXPANDING)
 {
 	if(S_size(tk->text) > 0) {
 		INIT_GCSTACK(_ctx);
-		kArray *a = new_TokenArray(_ctx, S_totext((tk)->text), tk->uline);
+		kArray *a = new_TokenArray(_ctx, S_text((tk)->text), tk->uline);
 		KSETv((tk)->data, K_NULL);
 		TT_(tk) = TT_BRACE;
 		TokenArray_parseTerm(_ctx, a, 0, tk, -1);
@@ -1581,7 +1581,7 @@ static void Term_toBRACE(CTX, kTerm *tk, int isEXPANDING)
         if(S_size(tk->text) > 0) {
                 ksfp_t *lsfp = knh_stack_local(_ctx, 1);
                 int sfpidx_ = lsfp - ctx->stack;
-                LOCAL_NEW(_ctx, lsfp, 0, kInputStream*, in, new_BytesInputStream(_ctx, S_totext((tk)->text), S_size((tk)->text)));
+                LOCAL_NEW(_ctx, lsfp, 0, kInputStream*, in, new_BytesInputStream(_ctx, S_text((tk)->text), S_size((tk)->text)));
                 KSETv((tk)->data, K_NULL);
                 TT_(tk) = TT_BRACE;
                 kline_t uline = tk->uline;
@@ -2343,12 +2343,12 @@ static void _REGEX(CTX, kStmtExpr *stmt, tkitr_t *itr, kTerm *tk)
 	}
 	re->reg = re->spi->regmalloc(_ctx, (tk)->text);
 	if(ITR_is(itr, TT_NAME)) {
-		opt = S_totext((ITR_nextTK(itr))->text);
+		opt = S_text((ITR_nextTK(itr))->text);
 		knh_Regex_setGlobalOption(_ctx, re, opt);
 	}
 	cflags = re->spi->parse_cflags(_ctx, opt);
-	if(re->spi->regcomp(_ctx, re->reg, S_totext(re->pattern), cflags) != 0) {
-		kStmtExproERR(_ctx, stmt, ERROR_RegexCompilation(_ctx, tk, re->spi->name, S_totext((tk)->text)));
+	if(re->spi->regcomp(_ctx, re->reg, S_text(re->pattern), cflags) != 0) {
+		kStmtExproERR(_ctx, stmt, ERROR_RegexCompilation(_ctx, tk, re->spi->name, S_text((tk)->text)));
 	}
 	else {
 		re->eflags = re->spi->parse_eflags(_ctx, opt);
@@ -2578,7 +2578,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 			STT_(stmt) = STT_FUNCTION;
 			if(ITR_is(itr, TT_FUNCNAME) || ITR_is(itr, TT_UFUNCNAME)) {
 				kTerm *tkN = ITR_nextTK(itr);
-				WARN_Ignored(_ctx, _("function name"), CLASS_unknown, S_totext(tkN->text));
+				WARN_Ignored(_ctx, _("function name"), CLASS_unknown, S_text(tkN->text));
 			}
 			if(ITR_is(itr, TT_PARENTHESIS) && ITR_isN(itr, +1, TT_CODE)) {
 				tkCUR = new_Term(_ctx, TT_DOC);
@@ -3287,7 +3287,7 @@ static void _CODE(CTX, kStmtExpr *stmt, tkitr_t *itr)
 	}
 	if(ITR_is(itr, TT_CODE)) {
 		if(hasCODE) {
-			WARN_Ignored(_ctx, "block", CLASS_unknown, S_totext(ITR_nextTK(itr)->text));
+			WARN_Ignored(_ctx, "block", CLASS_unknown, S_text(ITR_nextTK(itr)->text));
 		}
 		else {
 			_CODEDOC(_ctx, stmt, itr);
@@ -3627,7 +3627,7 @@ static kStmtExpr *new_StmtSTMT1(CTX, tkitr_t *itr)
 				ITR_next(mitr);
 				if(ITR_is(mitr, TT_UFUNCNAME)) {
 					kTerm *tkUF = ITR_tk(mitr); TT_(tkUF) = TT_FUNCNAME;
-					WarningMethodName(_ctx, S_totext(tkUF->text));
+					WarningMethodName(_ctx, S_text(tkUF->text));
 				}
 				if(ITR_is(mitr, TT_FUNCNAME)) {
 					stmt = new_StmtMETA(_ctx, STT_METHOD, itr, 0, _METHOD, NULL);
@@ -3640,7 +3640,7 @@ static kStmtExpr *new_StmtSTMT1(CTX, tkitr_t *itr)
 			}
 			if(ITR_is(mitr, TT_UFUNCNAME) && !Term_isDOT(ITR_tk(mitr))) {
 				kTerm *tkUF = ITR_tk(mitr); TT_(tkUF) = TT_FUNCNAME;
-				WarningMethodName(_ctx, S_totext(tkUF->text));
+				WarningMethodName(_ctx, S_text(tkUF->text));
 				stmt = new_StmtMETA(_ctx, STT_METHOD, itr, 0, _METHOD, NULL);
 				break;
 			}
@@ -3772,7 +3772,7 @@ kStmtExpr *knh_InputStream_parseStmt(CTX, kInputStream *in, kline_t *ul)
 kStmtExpr *knh_Term_parseStmt(CTX, kline_t uline, kTerm *tk)
 {
 	BEGIN_LOCAL(_ctx, lsfp, 1);
-	//DBG_P("uline=%d, tk->uline=%d src='''%s'''", (kshort_t)uline, (kshort_t)tk->uline, S_totext(tk->text));
+	//DBG_P("uline=%d, tk->uline=%d src='''%s'''", (kshort_t)uline, (kshort_t)tk->uline, S_text(tk->text));
 	kcodemod->uline = tk->uline;
 	kStmtExpr *rVALUE = new_Stmt2(_ctx, STT_BLOCK, NULL);
 	KSETv(lsfp[0].o, rVALUE);

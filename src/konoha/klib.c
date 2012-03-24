@@ -6,6 +6,7 @@
  */
 
 #include <konoha2/konoha2.h>
+#include <konoha2/klib.h>
 #include "../gc/gc_api.h"
 
 static void karray_init(CTX, karray_t *m, size_t max, size_t w)
@@ -270,6 +271,66 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 
 // -------------------------------------------------------------------------
 
+#define CTX_isTERM()     1
+
+static const char* T_BEGIN(CTX, int pe)
+{
+	if(CTX_isTERM()) {
+		switch(pe) {
+			case 0/*ERROR*/: return "\x1b[1m\x1b[31m";
+			case 1/*WARNING*/: return "\x1b[1m\x1b[31m";
+			case 2/*INFO*/: return "\x1b[1m";
+			default:/*DEBUG*/ return "";
+		}
+	}
+	return "";
+}
+
+static const char* T_END(CTX, int pe)
+{
+	return CTX_isTERM() ? "\x1b[0m" : "";
+}
+
+static void Kreport(CTX, int level, const char *msg)
+{
+	fflush(stdout);
+	fputs(T_BEGIN(_ctx, level), stdout);
+	fputs(" - ", stdout);
+	fputs(msg, stdout);
+	fputs(T_END(_ctx, level), stdout);
+	fputs("\n", stdout);
+}
+
+static const char *T_ERR(int level)
+{
+	switch(level) {
+		case 0/*ERROR*/: return "(error)";
+		case 1/*WARNING*/: return "(warning)";
+		case 2/*INFO, NOTICE*/: return "(info)";
+		default/*DEBUG*/: return "(debug)";
+	}
+}
+
+static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap , fmt);
+	fflush(stdout);
+	fputs(T_BEGIN(_ctx, level), stdout);
+	if(pline != 0) {
+		const char *file = S_text(S_uri(pline));
+		fprintf(stdout, " - (%s:%d) %s " , filename(file), (kushort_t)pline, T_ERR(level));
+	}
+	else {
+		fprintf(stdout, " - %s " , T_ERR(level));
+	}
+	vfprintf(stdout, fmt, ap);
+	fputs(T_END(_ctx, level), stdout);
+	fprintf(stdout, "\n");
+	va_end(ap);
+}
+
+
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)
 {
 	va_list ap;
@@ -303,5 +364,7 @@ void klib2_init(klib2_t *l)
 	l->Kmap_get      = Kmap_getentry;
 	l->Kmap_add      = Kmap_add;
 	l->Kmap_remove   = Kmap_remove;
+	l->Kreport       = Kreport;
+	l->Kreportf      = Kreportf;
 	l->Kp            = Kdbg_p;
 }

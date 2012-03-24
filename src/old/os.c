@@ -320,7 +320,7 @@ kPath* new_CurrentPath(CTX)
 #endif
 	kPath *pth = new_(Path);
 	KSETv(pth->urn, new_kString(buf, knh_strlen(buf), SPOL_POOL));
-	pth->ospath = S_totext(pth->urn);
+	pth->ospath = S_text(pth->urn);
 	if(ptr != buf && ptr != NULL) {
 		free(ptr);
 	}

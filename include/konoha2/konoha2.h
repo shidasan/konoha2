@@ -172,7 +172,7 @@ typedef kushort_t                 kuri_t;
 #define URI_EVAL                  ((kuri_t)0)
 #define URI_UNMASK(uri)           (uri)
 
-#define URI__(uri) S_totext(knh_getURN(_ctx, uri))
+#define URI__(uri) S_text(knh_getURN(_ctx, uri))
 #define FILENAME__(uri) knh_sfile(URI__(uri))
 
 typedef uintptr_t                 kline_t;
@@ -708,7 +708,7 @@ struct kString {
 
 #define S_tobytep(s)          (&(s)->str)
 #define S_tobytes(s)          ((s)->str)
-#define S_totext(s)           ((s)->str.text)
+#define S_text(s)           ((s)->str.text)
 #define S_size(s)             ((s)->str.len)
 #define S_equals(s, b)        knh_bytes_equals(S_tobytes(s), b)
 #define S_startsWith(s, b)    knh_bytes_startsWith_(S_tobytes(s), b)
@@ -986,6 +986,8 @@ typedef struct klib2_t {
 	void    (*KloadMethodData)(CTX, struct kLingo *, intptr_t *d);
 
 	void  (*KCodeGen)(CTX, struct kMethod *, struct kBlock *);
+	void (*Kreport)(CTX, int level, const char *msg);
+	void (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
 } klib2_t;
 
@@ -1057,11 +1059,20 @@ typedef struct klib2_t {
 #define new_kMethod(F,C,M,P,FF)  (KPI)->Knew_Method(_ctx, F, C, M, P, FF)
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 
-#define KCLASS(cid)              S_totext(CT(cid)->name)
+#define KCLASS(cid)              S_text(CT(cid)->name)
 #define kLingo_getcid(NS, S, L, C)  (KPI)->KLingo_getcid(_ctx, NS, S, L, C)
 #define ksetModule(N,D,P)        (KPI)->KsetModule(_ctx, N, D, P)
 #define kaddClassDef(DEF)        (KPI)->KaddClassDef(_ctx, DEF)
 #define kaddMethodDef(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)
+
+#define CRIT_  0
+#define ERR_   0
+#define WARN_  1
+#define INFO_  2
+#define DEBUG_ 3
+
+#define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
+#define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)
 
 // gc
 
@@ -1137,7 +1148,6 @@ REF_t *kstack_tail(CTX, size_t min);
 #define KNH_ASSERT(a)    assert(a)
 #define DBG_ASSERT(a)    assert(a)
 #define DBG_P(fmt, ...)  _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__)
-#define KREPORT(p, fmt, ...)   fprintf(stderr, fmt "\n", ## __VA_ARGS__)
 
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)

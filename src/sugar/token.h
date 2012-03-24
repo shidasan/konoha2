@@ -204,7 +204,7 @@ static void addSymbol(CTX, tenv_t *tenv, size_t s, size_t e)
 {
 	if(s < e) {
 		kString *text = new_kString(tenv->source + s, (e-s), SPOL_ASCII|SPOL_POOL);
-		int topch = S_totext(text)[0];
+		int topch = S_text(text)[0];
 		ktoken_t ttype = (isupper(topch)) ? TK_USYMBOL : TK_SYMBOL;
 		if(!isalpha(topch)) ttype = TK_OPERATOR;
 		kToken *tk = new_Token(_ctx, ttype, tenv->uline, lpos(tenv, tenv->source + s), text);
@@ -381,7 +381,7 @@ static int addOperator(CTX, tenv_t *tenv, int tok_start)
 		kString *text = new_kString(s, (pos-1)-tok_start, SPOL_ASCII|SPOL_POOL);
 		kToken *tk = new_Token(_ctx, TK_OPERATOR, tenv->uline, lpos(tenv, s), text);
 		if(S_size(text) == 1) {
-			tk->topch = S_totext(text)[0];
+			tk->topch = S_text(text)[0];
 		}
 		addToken(_ctx, tenv, tk);
 	}
@@ -587,7 +587,7 @@ static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 	dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
-		if(tk->tt == tt && S_totext(tk->text)[0] == closech) return i;
+		if(tk->tt == tt && S_text(tk->text)[0] == closech) return i;
 	}
 	DBG_ASSERT(i != e);  // Must not happen
 	return e;
@@ -602,7 +602,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == TK_TEXT || tk->tt == TK_STEXT) {
-			const char *t = S_totext(tk->text);
+			const char *t = S_text(tk->text);
 			if(t[0] == '(') {
 				int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, ')');
 				tk->tt = AST_PARENTHESIS;
@@ -625,7 +625,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 				i = ne;
 			}
 			else {
-				keyword_t keyid = keyword(_ctx, S_totext(tk->text), S_size(tk->text), FN_NEWID);
+				keyword_t keyid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
 				tk->keyid = keyid;
 				tk->tt = TK_KEYWORD;
 				nameid = keyid;
@@ -635,7 +635,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 		}
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
 			if(i > 0 && tls->tts[i-1]->topch == '$') {
-				snprintf(nbuf, sizeof(nbuf), "$%s", S_totext(tk->text));
+				snprintf(nbuf, sizeof(nbuf), "$%s", S_text(tk->text));
 				keyword_t keyid = keyword(_ctx, (const char*)nbuf, strlen(nbuf), FN_NEWID);
 				tk->tt = TK_OPERATOR;
 				tk->keyid = keyid;
@@ -649,7 +649,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 			if(i + 1 < e && tls->tts[i+1]->topch == ':') {
 				kToken *tk = tls->tts[i];
 				i++;
-				nameid = keyword(_ctx, S_totext(tk->text), S_size(tk->text), FN_NEWID);
+				nameid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
 				continue;
 			}
 		}

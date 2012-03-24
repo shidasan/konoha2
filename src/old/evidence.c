@@ -403,7 +403,7 @@ static kbool_t method_isPermissionAllowed(CTX, kMethod *mtd)
 		if (a != NULL) {
 			int i;
 			for (i = 0; i < kArray_size(a); i++) {
-				const char *s = S_totext((kString*)kArray_n(a, i));
+				const char *s = S_text((kString*)kArray_n(a, i));
 				if (strstr(s, CWB_tobytes(cwb).text) != NULL
 					|| strstr(s, "all") != NULL) {
 					// this method is allowed to be executed by this role
@@ -445,14 +445,14 @@ void loadPolicy(CTX)
 		kDictMap *dmap = ctx->share->securityDictMap;
 		kString *line = knh_InputStream_readLine(_ctx, is);
 		while (IS_NOTNULL(line)) {
-			//fprintf(stderr, "line=%s\n", S_totext(line));
+			//fprintf(stderr, "line=%s\n", S_text(line));
 			if (S_equals(line, STEXT("[")) || S_equals(line, STEXT("]"))) {
 				/* ignore */
 			} else {
 				kString *key = NULL;
 				kArray *a = new_Array(_ctx, CLASS_String, 0);
 				const char *idx = NULL;
-				char *p = strstr(S_totext(line), "\"name\": \"");
+				char *p = strstr(S_text(line), "\"name\": \"");
 				if (p != NULL) {
 					p += 9; // == strlen("\"name\": \"")
 					idx = strchr((const char *)p, '"');

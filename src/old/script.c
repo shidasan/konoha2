@@ -47,7 +47,7 @@ kLingo* new_Lingo(CTX, kLingo *parent)
 	KINITv(ns->parentNULL, parent);
 	KSETv(DP(ns)->nsname, DP(parent)->nsname);
 	KSETv(ns->path, parent->path);
-	//LANG_LOG("ns=%p, rpath='%s'", ns, S_totext(ns->path->urn));
+	//LANG_LOG("ns=%p, rpath='%s'", ns, S_text(ns->path->urn));
 	return ns;
 }
 
@@ -304,7 +304,7 @@ static void INCLUDE_file(CTX, kStmtExpr *stmt)
 		}
 		kPath *pth = (kPath*)tkNN(stmt,0)->data;
 		if(!knh_Lingo_include(_ctx, K_GMANS, pth)) {
-			kStmtExproERR(_ctx, stmt, ERROR_NotFound(_ctx, "include path:", S_totext(pth->urn)));
+			kStmtExproERR(_ctx, stmt, ERROR_NotFound(_ctx, "include path:", S_text(pth->urn)));
 		}
 		else {
 			knh_Stmt_done(_ctx, stmt);
@@ -503,7 +503,7 @@ static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
 		if(TT_(tkNN(stmt, n)) == TT_OR) return 0;
 		n++;
 	}
-	kStmtExproERR(_ctx, stmt, ERROR_NotFound(_ctx, "package", S_totext((tkPKG)->text)));
+	kStmtExproERR(_ctx, stmt, ERROR_NotFound(_ctx, "package", S_text((tkPKG)->text)));
 	return 0;
 }
 
@@ -838,7 +838,7 @@ static void CLASS_decl(CTX, kStmtExpr *stmt)
 	kclass_t *ct = CLASSNAME_decl(_ctx, stmt, tkC, tkE);
 	if(STT_(stmt) == STT_ERR) return;
 	if(knh_StmtMETA_is(_ctx, stmt, "Native")) {
-		knh_loadNativeClass(_ctx, S_totext((tkC)->text), ct);
+		knh_loadNativeClass(_ctx, S_text((tkC)->text), ct);
 	}
 	if(ct->protoNULL == NULL && (ct->bcid == CLASS_Object || ct->bcid == CLASS_CppObject)) {
 		kObject *nulval = new_hObject_(_ctx, ct);
@@ -1004,7 +1004,7 @@ kstatus_t knh_InputStream_load(CTX, kInputStream *in, kline_t uline)
 		}
 	} while(BA_size(ba) > 0 && status == K_CONTINUE);
 	if(!knh_isCompileOnly(_ctx)) {
-		KNH_NTRACE2(_ctx, "konoha:load", K_NOTICE, KNH_LDATA(LOG_s("urn", S_totext(in->path->urn))));
+		KNH_NTRACE2(_ctx, "konoha:load", K_NOTICE, KNH_LDATA(LOG_s("urn", S_text(in->path->urn))));
 	}
 	return status;
 }
@@ -1034,7 +1034,7 @@ kstatus_t knh_InputStream_load(CTX, kInputStream *in, kline_t uline)
 		}
 	} while(BA_size(ba) > 0 && status == K_CONTINUE);
 	if(!knh_isCompileOnly(_ctx)) {
-		KNH_NTRACE2(_ctx, "konoha:load", K_NOTICE, KNH_LDATA(LOG_s("urn", S_totext(in->path->urn))));
+		KNH_NTRACE2(_ctx, "konoha:load", K_NOTICE, KNH_LDATA(LOG_s("urn", S_text(in->path->urn))));
 	}
 	END_LOCAL(_ctx, lsfp);
 	return status;

@@ -171,7 +171,7 @@ static KMETHOD TokenTyCheck_INT(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	kToken *tk = expr->tkNUL;
-	long long n = strtoll(S_totext(tk->text), NULL, 0);
+	long long n = strtoll(S_text(tk->text), NULL, 0);
 	RETURN_(kExpr_setNConstValue(expr, TY_Int, (uintptr_t)n));
 }
 
@@ -186,7 +186,7 @@ static KMETHOD TokenTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 static kExpr* tycheckVariable(CTX, kExpr *expr, kGamma *gma)
 {
 	kToken *tk = expr->tkNUL;
-	ksymbol_t fn = ksymbol(S_totext(tk->text), S_size(tk->text), FN_NONAME, SYMPOL_NAME);
+	ksymbol_t fn = ksymbol(S_text(tk->text), S_size(tk->text), FN_NONAME, SYMPOL_NAME);
 	int i;
 	gmabuf_t *genv = gma->genv;
 	for(i = genv->lvarsize - 1; i >= 0; i--) {
@@ -220,7 +220,7 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	kToken *tk = expr->tkNUL;
-	kObject *v = Lingo_getSymbolValueNULL(_ctx, gma->genv->lgo, S_totext(tk->text), S_size(tk->text));
+	kObject *v = Lingo_getSymbolValueNULL(_ctx, gma->genv->lgo, S_text(tk->text), S_size(tk->text));
 	kExpr *texpr;
 	if(v == NULL) {
 		kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined symbol: %s", kToken_s(tk));
@@ -377,21 +377,21 @@ static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 	}
 	if(tkMN->tt == TK_SYMBOL || tkMN->tt == TK_USYMBOL) {
 		tkMN->tt = TK_MN;
-		tkMN->mn = ksymbol(S_totext(tkMN->text), S_size(tkMN->text), FN_NEWID, SYMPOL_METHOD);
+		tkMN->mn = ksymbol(S_text(tkMN->text), S_size(tkMN->text), FN_NEWID, SYMPOL_METHOD);
 	}
-	DBG_P("finding %s.%s", T_cid(this_cid), S_totext(tkMN->text));
+	DBG_P("finding %s.%s", T_cid(this_cid), S_text(tkMN->text));
 	if(tkMN->tt == TK_KEYWORD) {
 		if(kArray_size(expr->consNUL) == 3) {
 			mtd = kLingo_getMethodNULL(ns, this_cid, expr->syn->op2);
 			if(mtd == NULL) {
-				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined binary operator: %s of %s", S_totext(tkMN->text), T_cid(this_cid));
+				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined binary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
 			}
 			goto L_RETURN;
 		}
 		if(kArray_size(expr->consNUL) == 2) {
 			mtd = kLingo_getMethodNULL(ns, this_cid, expr->syn->op1);
 			if(mtd == NULL) {
-				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined uninary operator: %s of %s", S_totext(tkMN->text), T_cid(this_cid));
+				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined uninary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
 			}
 			goto L_RETURN;
 		}
@@ -399,7 +399,7 @@ static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 	if(tkMN->tt == TK_MN) {
 		mtd = kLingo_getMethodNULL(ns, this_cid, tkMN->mn);
 		if(mtd == NULL) {
-			kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined method: %s.%s", T_cid(this_cid), S_totext(tkMN->text));
+			kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined method: %s.%s", T_cid(this_cid), S_text(tkMN->text));
 		}
 	}
 	L_RETURN:;
@@ -433,7 +433,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 		kToken *tk = cons->exprs[0]->tkNUL;
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
 			tk->tt = TK_MN;
-			tk->symbol = ksymbol(S_totext(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_METHOD);
+			tk->symbol = ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_METHOD);
 		}
 		if(tk->tt == TK_MN) {
 			kMethod *mtd = NULL;
@@ -450,7 +450,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 				mtd = kLingo_getStaticMethodNULL(gma->genv->lgo, tk->mn);
 			}
 			if(mtd == NULL) {
-				kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined function/method: %s", S_totext(tk->text));
+				kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined function/method: %s", S_text(tk->text));
 				RETURN_(K_NULLEXPR);
 			} else {
 				KSETv(cons->methods[0], mtd);
@@ -674,7 +674,7 @@ static kcid_t Stmt_getmn(CTX, kStmt *stmt, kLingo *ns, keyword_t keyid, kmethodn
 	}
 	else {
 		DBG_ASSERT(IS_String(tk->text));
-		return ksymbol(S_totext(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_METHOD);
+		return ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_METHOD);
 	}
 }
 
@@ -771,10 +771,10 @@ static kbool_t Expr_setParam(CTX, kExpr *expr, int n, kparam_t *p)
 	if(!IS_Token(tkOP) || tkOP->tt != TK_KEYWORD || tkOP->keyid != KW_COLON) goto L_ERROR;
 	if(tkN == NULL || !IS_Token(tkN) || tkN->tt != TK_SYMBOL) goto L_ERROR;
 	if(!IS_Token(tkT) || tkT->tt != TK_TYPE) goto L_ERROR;
-	ksymbol_t fn = ksymbol(S_totext(tkN->text), S_size(tkN->text), FN_NEWID, SYMPOL_NAME);
+	ksymbol_t fn = ksymbol(S_text(tkN->text), S_size(tkN->text), FN_NEWID, SYMPOL_NAME);
 	for(i = 0; i < n; i++) {
 		if(p[i].fn == fn) {
-			kerror(_ctx, ERR_, tkN->uline, tkN->lpos, "duplicated definition: %s", S_totext(tkN->text));
+			kerror(_ctx, ERR_, tkN->uline, tkN->lpos, "duplicated definition: %s", S_text(tkN->text));
 			return 0;
 		}
 	}
@@ -818,10 +818,10 @@ static KMETHOD StmtTyCheck_declParams(CTX, ksfp_t *sfp _RIX)
 
 static kBlock* Method_newBlock(CTX, kMethod *mtd, kString *source, kline_t uline)
 {
-	const char *script = S_totext(source);
+	const char *script = S_text(source);
 	if(IS_NULL(source) || script[0] == 0) {
 		DBG_ASSERT(IS_Token(mtd->tcode));
-		script = S_totext(mtd->tcode->text);
+		script = S_text(mtd->tcode->text);
 		uline = mtd->tcode->uline;
 	}
 	kArray *tls = kevalmod->tokens;
@@ -907,7 +907,7 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 	kjmpbuf_t lbuf = {};
 	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
 	if(ksetjmp(*base->evaljmpbuf) == 0) {
-		fprintf(stdout, "TY=%s, running EVAL..\n", T_cid(rtype));
+		DBG_P("TY=%s, running EVAL..", T_cid(rtype));
 		if(base->evalty != TY_void) {
 			KSETv(lsfp[K_CALLDELTA+1].o, base->evalval.o);
 			lsfp[K_CALLDELTA+1].ivalue = base->evalval.ivalue;
@@ -918,7 +918,7 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 			KSETv(base->evalval.o, lsfp[0].o);
 			base->evalval.ivalue = lsfp[0].ivalue;
 			if(rtype == TY_String) {
-				fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_totext(lsfp[0].s));
+				fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_text(lsfp[0].s));
 			}
 			else {
 				fprintf(stdout, "TY=%s, EVAL=%ld\n", T_cid(rtype), lsfp[0].ivalue);

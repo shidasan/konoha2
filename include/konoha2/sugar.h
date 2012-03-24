@@ -89,7 +89,7 @@ typedef struct {
 	struct kmap_t         *keywordMapNN;
 	struct kArray         *packageList;
 	struct kmap_t         *packageMapNO;
-	struct kLingo     *rootlgo;
+	struct kLingo         *rootlgo;
 	struct kArray         *aBuffer;
 
 	struct kToken *nullToken;

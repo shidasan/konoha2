@@ -540,7 +540,7 @@ static void share_free(CTX, kshare_t *share)
 	for(i = 0; i < share->sizeClassTBL; i++) {
 		kclass_t *ct = varClassTBL(i);
 		if(ct->constPoolMapNULL) {
-			knh_PtrMap_stat(_ctx, ct->constPoolMapNULL, S_totext(ct->sname));
+			knh_PtrMap_stat(_ctx, ct->constPoolMapNULL, S_text(ct->sname));
 			ct->constPoolMapNULL = NULL;
 		}
 	}

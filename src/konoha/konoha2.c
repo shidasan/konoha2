@@ -165,7 +165,7 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 		return 1;
 	}
 	else {
-		KREPORT(pline, "already registered: %s", _ctx->modshare[x]->name);
+		kreportf(ERR_, pline, "already registered: %s", _ctx->modshare[x]->name);
 		return 0;
 	}
 }
@@ -301,6 +301,7 @@ void konoha_close(konoha_t konoha)
 // keval
 
 kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline);
+kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
 
 /* ------------------------------------------------------------------------ */
 
@@ -378,15 +379,6 @@ static int checkstmt(const char *t, size_t len)
 	return 1;
 }
 
-//static kstatus_t shell_command(const char *cmd, size_t len)
-//{
-//	kbytes_t t = {{cmd}, knh_strlen(cmd)};
-//	if(B_equals(t, "quit") || B_equals(t, "exit") || B_equals(t, "bye")) {
-//		return K_BREAK;
-//	}
-//	return K_CONTINUE;
-//}
-
 static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
 {
 	int line = 1;
@@ -427,22 +419,20 @@ static void shell(CTX)
 {
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
-	kline_t uline = 1;
+	kline_t uline = KURI("(shell)") | 1;
+	void *handler = dlopen("libreadline" K_OSDLLEXT, RTLD_LAZY);
+	void *f = (handler != NULL) ? dlsym(handler, "readline") : NULL;
+	kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;
+	f = (handler != NULL) ? dlsym(handler, "add_history") : NULL;
+	kadd_history = (f != NULL) ? (int (*)(const char*))f : add_history;
+	fprintf(stdout, "konoha 2.0 (alpha) (%s)\n", __DATE__); // FIXME
 	while(1) {
 		kstatus_t status = readstmt(_ctx, &wb, (kushort_t*)&uline);
 		if(status == K_CONTINUE && kwb_size(&wb) > 0) {
 			status = MODEVAL_eval(_ctx, kwb_top(&wb, 1), kwb_size(&wb), uline);
-			//		knh_OutputStream_flush(_ctx, ctx->out);
-			//		if(_ctx->isEvaled == 1) {
-			//			CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
-			//			knh_write_Object(_ctx, cwb->w, ctx->evaled, FMT_dump);
-			//			knh_showSecurityAlert(_ctx, cwb->w);
-			//			if(CWB_size(cwb) !=0) {
-			//				shell_display(_ctx, shell_status, CWB_totext(_ctx, cwb));
-			//			}
-			//			CWB_close(_ctx, cwb);
-			//			WCTX(_ctx)->isEvaled = 0;
-			//		}
+			if(status != K_FAILED) {
+
+			}
 		}
 		kwb_free(&wb);
 		if(status == K_BREAK) {
@@ -453,8 +443,6 @@ static void shell(CTX)
 	return;
 }
 
-extern kstatus_t loadscript(CTX, const char *path, size_t len, kline_t pline);
-
 int konoha_main(konoha_t konoha, int argc, const char **argv)
 {
 	int ret = 0;
@@ -462,15 +450,10 @@ int konoha_main(konoha_t konoha, int argc, const char **argv)
 	//argc = argc - n;
 	//argv = argv + n;
 	if(argc == 1) {
-		void *handler = dlopen("libreadline" K_OSDLLEXT, RTLD_LAZY);
-		void *f = (handler != NULL) ? dlsym(handler, "readline") : NULL;
-		kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;
-		f = (handler != NULL) ? dlsym(handler, "add_history") : NULL;
-		kadd_history = (f != NULL) ? (int (*)(const char*))f : add_history;
 		shell((CTX_t)konoha);
 	}
 	else {
-		if(loadscript((CTX_t)konoha, argv[1], strlen(argv[1]), 0) == K_CONTINUE/* && !knh_isCompileOnly(_ctx)*/) {
+		if(MODEVAL_loadscript((CTX_t)konoha, argv[1], strlen(argv[1]), 0) == K_CONTINUE/* && !knh_isCompileOnly(_ctx)*/) {
 			//ret = knh_runMain(_ctx, argc, argv);
 			//if(isInteractiveMode) {
 			//	konoha_shell(_ctx, NULL);

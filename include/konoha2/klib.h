@@ -17,5 +17,24 @@ static inline uintptr_t strhash(const char *name, size_t len)
 	return hcode;
 }
 
+// --------------------------------------------------------------------------
+
+static inline const char* filename(const char *str)
+{
+	char *p = strrchr(str, '/');
+	return (p == NULL) ? str : (const char*)p+1;
+}
+
+#define S_uri(I)  Suri(_ctx, I)
+static inline kString* Suri(CTX, kline_t uri)
+{
+	kline_t n = (uri >> (sizeof(kshort_t) * 8));
+	if(n < kArray_size(_ctx->share->uriList)) {
+		return _ctx->share->uriList->strings[n];
+	}
+	DBG_P("unknown uri=%d", n);
+	abort();
+	return TS_EMPTY;
+}
 
 #endif /* KONOHA2_INLINELIBS_H_ */

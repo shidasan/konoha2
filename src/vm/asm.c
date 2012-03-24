@@ -660,7 +660,7 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 		case VMT_F:
 			fprintf(stdout, "function(%p)", c->p[i]); break;
 		case VMT_CID:
-			fprintf(stdout, "CT(%s)", S_totext(((kclass_t*)c->data[i])->name)); break;
+			fprintf(stdout, "CT(%s)", S_text(((kclass_t*)c->data[i])->name)); break;
 //		case VMT_HCACHE: {
 //			kcachedata_t *hc = (kcachedata_t*)&(c->p[i]);
 //			knh_write_cname(_ctx, w, hc->cid);

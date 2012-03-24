@@ -1066,7 +1066,7 @@ typedef struct kException {
 
 kException *new_Error(CTX, int idx, kString *str)
 {
-	KTODO(S_totext(str));
+	KTODO(S_text(str));
 	return NULL;
 }
 

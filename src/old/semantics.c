@@ -583,7 +583,7 @@ void knh_loadScriptURNAliasData(CTX, knh_StringData_t *data)
 	while(d->name != NULL) {
 		kString *s =(kString*)knh_DictMap_get(_ctx,  mapptr, B(d->name));
 		if(IS_NOTNULL(s) && !S_equals(s, B(d->value))) {
-			KNH_SYSLOG(_ctx, LOG_WARNING, _("overriding alias %s %s as %s"), d->name, S_totext(s), d->value);
+			KNH_SYSLOG(_ctx, LOG_WARNING, _("overriding alias %s %s as %s"), d->name, S_text(s), d->value);
 		}
 		d++;
 	}
@@ -685,15 +685,15 @@ kcid_t knh_addSpecializedType(CTX, kcid_t cid, kcid_t supcid, kSemantics *u)
 	if(cid == CLASS_newid) {
 		cid = new_ClassId(_ctx);
 	}
-	knh_snprintf(bufcn, sizeof(bufcn), KNH_SEMANTICS_FMT, CLASS__(bcid), S_totext(DP(u)->urn));
+	knh_snprintf(bufcn, sizeof(bufcn), KNH_SEMANTICS_FMT, CLASS__(bcid), S_text(DP(u)->urn));
 	knh_setClassName(_ctx, cid, new_S(_ctx, B(bufcn), NULL));
 	{
 		kclass_t *t = varClassTBL(cid);
 		if((DP(u)->tag)->size > 0) {
-			knh_snprintf(bufcn, sizeof(bufcn), "%s:%s", CLASS__(bcid), S_totext(DP(u)->tag));
+			knh_snprintf(bufcn, sizeof(bufcn), "%s:%s", CLASS__(bcid), S_text(DP(u)->tag));
 			KSETv(t->sname, new_S(_ctx, B(bufcn), NULL));
 		}
-		DBG_P("added %d, '%s'", cid, S_totext(t->lname));
+		DBG_P("added %d, '%s'", cid, S_text(t->lname));
 
 		t->bcid   = bcid;
 		t->supcid = bcid;

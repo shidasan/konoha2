@@ -124,7 +124,7 @@ static KMETHOD Object_newMAP(CTX, ksfp_t *sfp _RIX)
 //			kfieldinfo_t *cf = knh_Class_fieldAt(_ctx, cid, idx);
 //			ktype_t type = ktype_tocid(_ctx, cf->type, cid);
 //			if(type == TY_void) continue;
-//			DBG_P("[%d] %s %s", (int)(idx), T__(type), S_totext(v[i].s));
+//			DBG_P("[%d] %s %s", (int)(idx), T__(type), S_text(v[i].s));
 //			ObjectField_setValue(_ctx, of, idx, type, v[i+1].o);
 //		}
 //	}
@@ -756,8 +756,8 @@ static KMETHOD String_new(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Regex_new(CTX, ksfp_t *sfp _RIX)
 {
 	kRegex *re = (kRegex*)sfp[0].o;
-	const char *ptn = S_totext(sfp[1].s);
-	const char *opt = IS_NULL(sfp[2].o) ? "" : S_totext(sfp[2].s);
+	const char *ptn = S_text(sfp[1].s);
+	const char *opt = IS_NULL(sfp[2].o) ? "" : S_text(sfp[2].s);
 	knh_Regex_setGlobalOption(_ctx, re, opt);
 	KSETv(re->pattern, sfp[1].s);
 	re->spi = knh_getRegexSPI();
@@ -812,7 +812,7 @@ static KMETHOD String_equals(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD String_startsWith(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_(knh_strncmp(S_totext(sfp[0].s), S_totext(sfp[1].s), S_size(sfp[1].s)) == 0);
+	RETURNb_(knh_strncmp(S_text(sfp[0].s), S_text(sfp[1].s), S_size(sfp[1].s)) == 0);
 	//RETURNb_(knh_bytes_startsWith_(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s))); older
 }
 
@@ -850,7 +850,7 @@ static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
 {
 	long loc = -1;
 	kbytes_t base = S_tobytes(sfp[0].s);
-	char *p = strstr(base.text, S_totext(sfp[1].s));
+	char *p = strstr(base.text, S_text(sfp[1].s));
 	if (p != NULL) {
 		loc = p - base.text;
 		if(!String_isASCII(sfp[0].s)) {
@@ -900,7 +900,7 @@ static void LOG_regex(CTX, ksfp_t *sfp, int res, kRegex *re, const char *str)
 {
 	char ebuf[512] = {0};
 	if (re->spi->regerror(res, re->reg, ebuf, 512) > 0) {
-		KNH_NTRACE2(_ctx, "regex", K_FAILED, KNH_LDATA(LOG_s("driver", re->spi->name), LOG_s("pattern", S_totext(re->pattern)), LOG_s("text", str), LOG_msg(ebuf)));
+		KNH_NTRACE2(_ctx, "regex", K_FAILED, KNH_LDATA(LOG_s("driver", re->spi->name), LOG_s("pattern", S_text(re->pattern)), LOG_s("text", str), LOG_msg(ebuf)));
 	}
 }
 
@@ -982,7 +982,7 @@ static KMETHOD String_search(CTX, ksfp_t *sfp _RIX)
 	kindex_t loc = -1;
 	if(!IS_NULL(re) && S_size(re->pattern) > 0) {
 		kregmatch_t pmatch[2]; // modified by @utrhira
-		const char *str = S_totext(sfp[0].s);  // necessary
+		const char *str = S_text(sfp[0].s);  // necessary
 		int res = re->spi->regexec(_ctx, re->reg, str, 1, pmatch, re->eflags);
 		if(res == 0) {
 			loc = pmatch[0].rm_so;
@@ -1007,7 +1007,7 @@ static KMETHOD String_match(CTX, ksfp_t *sfp _RIX)
 	kRegex *re = sfp[1].re;
 	kArray *a = NULL;
 	if(IS_NOTNULL(re) && S_size(re->pattern) > 0) {
-		const char *str = S_totext(s0);  // necessary
+		const char *str = S_text(s0);  // necessary
 		const char *base = str;
 		const char *eos = base + S_size(s0);
 		size_t nmatch = re->spi->regnmatchsize(_ctx, re->reg);
@@ -1051,7 +1051,7 @@ static KMETHOD String_replace(CTX, ksfp_t *sfp _RIX)
 	kString *s = s0;
 	if(IS_NOTNULL(re) && S_size(re->pattern) > 0) {
 		CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
-		const char *str = S_totext(s0);  // necessary
+		const char *str = S_text(s0);  // necessary
 		const char *base = str;
 		const char *eos = str + S_size(s0); // end of str
 		kregmatch_t pmatch[KREGEX_MATCHSIZE+1];
@@ -1091,7 +1091,7 @@ static KMETHOD String_split(CTX, ksfp_t *sfp _RIX)
 	kRegex *re = sfp[1].re;
 	kArray *a = NULL;
 	if (IS_NOTNULL(re) && S_size(re->pattern) > 0) {
-		const char *str = S_totext(s0);  // necessary
+		const char *str = S_text(s0);  // necessary
 		const char *eos = str + S_size(s0);
 		kregmatch_t pmatch[KREGEX_MATCHSIZE+1];
 		if (str < eos) {
@@ -1241,7 +1241,7 @@ static KMETHOD String_encode(CTX, ksfp_t *sfp _RIX)
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kConverter *c = sfp[1].conv;
 	//fprintf(stderr, "%s, c=%p, c->dpi=%p, c->dpi->enc=****\n", CLASS__(c->h.cid), c, c->dpi);
-	c->dpi->enc(_ctx, c->conv, S_totext(sfp[0].s), S_size(sfp[0].s), cwb->ba);
+	c->dpi->enc(_ctx, c->conv, S_text(sfp[0].s), S_size(sfp[0].s), cwb->ba);
 	kBytes *ba = new_Bytes(_ctx, NULL, CWB_size(cwb));
 	knh_Bytes_write(_ctx, ba, CWB_tobytes(cwb));
 	CWB_close(_ctx, cwb);
@@ -1268,7 +1268,7 @@ static KMETHOD String_convert(CTX, ksfp_t *sfp _RIX)
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kConverter *c = sfp[1].conv;
 	if (!IS_NULL(c)) {
-		c->dpi->sconv(_ctx, c->conv, S_totext(sfp[0].s), S_size(sfp[0].s), cwb->ba);
+		c->dpi->sconv(_ctx, c->conv, S_text(sfp[0].s), S_size(sfp[0].s), cwb->ba);
 	}
 	RETURN_(CWB_newString(_ctx, cwb, 0));
 }
@@ -1294,7 +1294,7 @@ static KMETHOD Regex_opHAS(CTX, ksfp_t *sfp _RIX)
 {
 	kRegex *re = sfp[0].re;
 	kregmatch_t pmatch[2]; // modified by @utrhira
-	const char *str = S_totext(sfp[1].s);
+	const char *str = S_text(sfp[1].s);
 	int res = re->spi->regexec(_ctx, re->reg, str, 1, pmatch, re->eflags);
 	RETURNb_(res == 0);
 }
@@ -1372,7 +1372,7 @@ static TYPEMAP Bytes_InputStream(CTX, ksfp_t *sfp _RIX)
 static KMETHOD String_Regex(CTX, ksfp_t *sfp _RIX)
 {
 	kRegex *re = new_(Regex);
-	const char *ptn = S_totext(sfp[0].s);
+	const char *ptn = S_text(sfp[0].s);
 	KSETv(re->pattern, sfp[0].s);
 	re->reg = re->spi->regmalloc(_ctx, sfp[0].s);
 	re->spi->regcomp(_ctx, re->reg, ptn, 0);
@@ -2076,7 +2076,7 @@ static KMETHOD Map_open(CTX, ksfp_t *sfp _RIX)
 	DBG_P("reqt = %s", CLASS__(ct->cid));
 	if(ct->bcid != CLASS_Map) ct = ClassTBL(CLASS_Map);
 	if(spi == NULL) {
-		LANG_LOG("unknown Map driver: %s", S_totext(sfp[1].s));
+		LANG_LOG("unknown Map driver: %s", S_text(sfp[1].s));
 		goto L_RETURN;
 	}
 	spi = spi->config(_ctx, ct->p1, ct->p2);
@@ -2086,7 +2086,7 @@ static KMETHOD Map_open(CTX, ksfp_t *sfp _RIX)
 	}
 	kDictMap *opt = knh_toDictMap(_ctx, sfp[2].m, 1/*isCreation*/);
 	KSETv(sfp[2].o, opt);
-	kmapptr_t *mapptr = spi->init(_ctx, 0, S_totext(sfp[1].s), opt);
+	kmapptr_t *mapptr = spi->init(_ctx, 0, S_text(sfp[1].s), opt);
 	if(mapptr != NULL) {
 		m = (kMap*)new_Object_init2(_ctx, ct);
 		m->mapptr = mapptr;
@@ -2323,7 +2323,7 @@ static KMETHOD Float_opGTE(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD String_opHAS(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_(strstr(S_totext(sfp[0].s), S_totext(sfp[1].s)) != NULL);
+	RETURNb_(strstr(S_text(sfp[0].s), S_text(sfp[1].s)) != NULL);
 }
 
 ///* ------------------------------------------------------------------------ */
@@ -3034,7 +3034,7 @@ static KMETHOD InputStream_new(CTX, ksfp_t *sfp _RIX)
 {
 	kInputStream *in = sfp[0].in;
 	kPath *pth = sfp[1].pth;
-	const char *mode = IS_NULL(sfp[2].s) ? "r" : S_totext(sfp[2].s);
+	const char *mode = IS_NULL(sfp[2].s) ? "r" : S_text(sfp[2].s);
 	KSETv(in->path, pth);
 	kio_t *io2 = pth->dpi->io2openNULL(_ctx, pth, mode, knh_toDictMap(_ctx, sfp[3].m, 0/*isCreation*/));
 	if(io2 != NULL) {
@@ -3110,7 +3110,7 @@ static KMETHOD OutputStream_new(CTX, ksfp_t *sfp _RIX)
 {
 	kOutputStream *w = sfp[0].w;
 	kPath *pth = sfp[1].pth;
-	const char *mode = IS_NULL(sfp[2].s) ? "w" : S_totext(sfp[2].s);
+	const char *mode = IS_NULL(sfp[2].s) ? "w" : S_text(sfp[2].s);
 	KSETv(w->path, pth);
 	kio_t *io2 = pth->dpi->io2openNULL(_ctx, pth, mode, knh_toDictMap(_ctx, sfp[3].m, 0/*isCeation*/));
 	if(io2 != NULL) {
@@ -3269,7 +3269,7 @@ static KMETHOD String_format(CTX, ksfp_t *sfp _RIX)
 	kbytes_t fmt = S_tobytes(arg[0].s);
 	if(fmt.utext[0] == '%' && fmt.utext[fmt.len-1] == 's') {
 		char buf[256];
-		knh_snprintf(buf, sizeof(buf), fmt.text, S_totext(sfp[0].s));
+		knh_snprintf(buf, sizeof(buf), fmt.text, S_text(sfp[0].s));
 		RETURN_(new_kString(buf, knh_strlen(buf), _ALWAYS|_ASCII));
 	}
 	if(fmt.len != 0) {
@@ -3386,11 +3386,11 @@ static KMETHOD View_addView(CTX, ksfp_t *sfp _RIX)
 				path->dpi = dpi;
 			}
 			else {
-				THROW_Undefined(_ctx, sfp, "driver", S_totext(dtype));
+				THROW_Undefined(_ctx, sfp, "driver", S_text(dtype));
 			}
 		}
 //		if(!dpi->existsSPI(_ctx, path)) {
-//			THROW_NotFound(_ctx, sfp, "path", S_totext(path->urn));
+//			THROW_NotFound(_ctx, sfp, "path", S_text(path->urn));
 //		}
 		kView *view = new_(View);
 		KSETv(view->conf, conf);
@@ -3608,9 +3608,9 @@ static KMETHOD System_exec(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_DEOS_TRACE
 	char cmd[1024];
-	knh_snprintf(cmd, sizeof(cmd), "%s=%s %s", K_DEOS_TRACE, ctx->trace, S_totext(sfp[1].s));
+	knh_snprintf(cmd, sizeof(cmd), "%s=%s %s", K_DEOS_TRACE, ctx->trace, S_text(sfp[1].s));
 #else
-	const char *cmd = S_totext(sfp[1].s);
+	const char *cmd = S_text(sfp[1].s);
 #endif
 	//NOTE_(_ctx, "fork command='%s'", cmd);
 #ifdef K_USING_POSIX_
@@ -3647,7 +3647,7 @@ static KMETHOD System_exec(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD System_eval(CTX, ksfp_t *sfp _RIX)
 {
-//	fprintf(stderr, "TESTING: '%s'\n", 	S_totext(sfp[1].s));
+//	fprintf(stderr, "TESTING: '%s'\n", 	S_text(sfp[1].s));
 //	fprintf(stderr, "RETURN VALUE: '%s'\n", CLASS__(sfp[4].c->cid));
 	kScript *scr = ctx->gma->scr;
 	kLingo *ns = K_GMANS;
@@ -3663,9 +3663,9 @@ static KMETHOD System_eval(CTX, ksfp_t *sfp _RIX)
 	KSETv(((kcontext_t*)ctx)->evaled, K_NULL);
 	KSETv(((kcontext_t*)ctx)->e, K_NULL);
 #ifdef K_USING_SUGAR
-	knh_beval2(_ctx, S_totext(sfp[1].s), 1);
+	knh_beval2(_ctx, S_text(sfp[1].s), 1);
 #else
-	kInputStream *bin = new_BytesInputStream(_ctx, S_totext(sfp[1].s), S_size(sfp[1].s));
+	kInputStream *bin = new_BytesInputStream(_ctx, S_text(sfp[1].s), S_size(sfp[1].s));
 	knh_beval(_ctx, bin, 1);
 #endif
 	scr = ctx->gma->scr;
@@ -3700,7 +3700,7 @@ static KMETHOD System_eval(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD System_readLine(CTX, ksfp_t *sfp _RIX)
 {
-	const char *line = ctx->spi->readline(S_totext(sfp[1].s));
+	const char *line = ctx->spi->readline(S_text(sfp[1].s));
 	kString *s = new_String(_ctx, line);
 	free((void*)line);
 	RETURN_(s);

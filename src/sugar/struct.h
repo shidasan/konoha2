@@ -209,7 +209,7 @@ static uintptr_t casehash(const char *name, size_t len)
 
 //static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 //{
-//	uintptr_t hcode = casehash(S_totext(skey), S_size(skey));
+//	uintptr_t hcode = casehash(S_text(skey), S_size(skey));
 //	kmape_t *e = kmap_newentry(kmp, hcode);
 //	KINITv(e->skey, skey);
 //	e->uvalue = uvalue;
@@ -221,7 +221,7 @@ static uintptr_t casehash_get(CTX, kmap_t *kmp, const char *name, size_t len, ui
 	uintptr_t hcode = casehash(name, len);
 	kmape_t *e = kmap_get(kmp, hcode);
 	while(e != NULL) {
-		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_totext(e->skey), name, len) == 0) {
+		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_text(e->skey), name, len) == 0) {
 			return e->uvalue;
 		}
 	}
@@ -398,7 +398,7 @@ static const char *kToken_s(kToken *tk)
 	case AST_PARENTHESIS: return "(... )";
 	case AST_BRACE: return "{... }";
 	case AST_BRANCET: return "[... ]";
-	default: 	return S_totext(tk->text);
+	default: 	return S_text(tk->text);
 	}
 }
 
@@ -446,7 +446,7 @@ static void dumpToken(CTX, kToken *tk)
 		fprintf(stdout, "%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, Tsymbol(_ctx, buf, sizeof(buf), tk->mn));
 	}
 	else if((int)tk->tt <= TK_TYPE) {
-		fprintf(stdout, "%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_totext(tk->text));
+		fprintf(stdout, "%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_text(tk->text));
 	}
 	else {
 		fprintf(stdout, "%s\n", T_tt(tk->tt));
@@ -575,14 +575,14 @@ void dumpExpr(CTX, int n, int nest, kExpr *expr)
 				dumpIndent(nest+1);
 				if(O_ct(o) == CT_Token) {
 					kToken *tk = (kToken*)o;
-					fprintf(stdout, "[%d] O: %s ", i, S_totext(o->h.ct->name));
+					fprintf(stdout, "[%d] O: %s ", i, S_text(o->h.ct->name));
 					dumpToken(_ctx, tk);
 				}
 				else if(o == K_NULL) {
 					fprintf(stdout, "[%d] O: null\n", i);
 				}
 				else {
-					fprintf(stdout, "[%d] O: %s\n", i, S_totext(o->h.ct->name));
+					fprintf(stdout, "[%d] O: %s\n", i, S_text(o->h.ct->name));
 				}
 			}
 		}
@@ -779,11 +779,11 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
 	if(expr != NULL) {
 		if(IS_Expr(expr) && Expr_isTerm(expr)) {
-			return S_totext(expr->tkNUL->text);
+			return S_text(expr->tkNUL->text);
 		}
 		else if(IS_Token(expr)) {
 			kToken *tk = (kToken*)expr;
-			if(IS_String(tk->text)) return S_totext(tk->text);
+			if(IS_String(tk->text)) return S_text(tk->text);
 		}
 	}
 	return def;

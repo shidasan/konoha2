@@ -202,7 +202,7 @@ const char *SAFET__(CTX, ktype_t type)
 	if(type == TY_void) return "void";
 	if(type == TY_var)  return "var";
 	if(cid < ctx->share->sizeClassTBL) {
-		return S_totext(ClassTBL(cid)->sname);
+		return S_text(ClassTBL(cid)->sname);
 	}
 	else {
 		static char unsafebuf[20];
@@ -214,7 +214,7 @@ const char *SAFET__(CTX, ktype_t type)
 const char *SAFECLASS__(CTX, kcid_t cid)
 {
 	if(cid < ctx->share->sizeClassTBL) {
-		return S_totext(ClassTBL(cid)->lname);
+		return S_text(ClassTBL(cid)->lname);
 	}
 	else {
 		return "unknown";
@@ -2152,7 +2152,7 @@ static kbool_t knh_Lingo_dataCheck(CTX, kLingo *ns, kcid_t cid, ksfp_t *sfp)
 	kString *key = sfp[0].s;
 	kObject *value = sfp[1].o;
 	kmethodn_t mn = knh_getmn(_ctx, S_tobytes(key), MN_NEWID);
-	DBG_P("key=%s", S_totext(key));
+	DBG_P("key=%s", S_text(key));
 	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, cid, MN_toSETTER(mn));
 	if(mtd == NULL) {
 		mtd = knh_Lingo_addXSetter(_ctx, ns, ClassTBL(cid), O_cid(value), MN_toSETTER(mn));
@@ -2263,7 +2263,7 @@ static TYPEMAP Object_Map(CTX, ksfp_t *sfp _RIX)
 			kMethod *mtd = ct->methods->methods[i];
 			if(knh_Method_psize(mtd) == 0 && (MN_isGETTER(mtd->mn) || MN_isISBOOL(mtd->mn))) {
 				kString *key = knh_getFieldName(_ctx, FN_UNMASK(mtd->mn));
-				DBG_P("key=%s", S_totext(key));
+				DBG_P("key=%s", S_text(key));
 				KSETv(lsfp[thisidx].o, sfp[0].o);
 				KNH_SCALL(_ctx, lsfp, rtnidx, mtd, 0);
 				ktype_t rtype = knh_Method_rtype(_ctx, mtd, this_cid);
@@ -2369,7 +2369,7 @@ kObject *knh_Lingo_newObject(CTX, kLingo *ns, kString *path, kcid_t tcid)
 	Object *value = NULL;
 	if(ct == NULL) {
 		if(tcid == CLASS_Boolean) return K_FALSE;
-		LANG_LOG("link not found: %s as %s", S_totext(path), CLASS__(tcid));
+		LANG_LOG("link not found: %s as %s", S_text(path), CLASS__(tcid));
 		return KNH_NULVAL(tcid);
 	}
 	else {
@@ -2425,7 +2425,7 @@ static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 	kmethodn_t mn = knh_getmn(_ctx, S_tobytes(sfp[1].s), MN_NONAME);
 	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, NULL, O_cid(sfp[0].o), mn);
 	if(mtd == NULL) {
-		LANG_LOG("Object.invokeMethod: no such method %s.%s", S_totext(O_ct(sfp[0].o)->lname), S_totext(sfp[1].s));
+		LANG_LOG("Object.invokeMethod: no such method %s.%s", S_text(O_ct(sfp[0].o)->lname), S_text(sfp[1].s));
 		RETURN_(K_NULL);
 	}
 	size_t i, psize = knh_Method_psize(mtd), rtnidx = K_RIX;
@@ -2455,7 +2455,7 @@ static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 			knh_TypeMap_exec(_ctx, tmr, esp, &sfp[i+1] - esp);
 			continue;
 		}
-		LANG_LOG("Object.invokeMethod: type error %s.%s(#%d)", S_totext(O_ct(sfp[0].o)->lname), MN__(mn), i+1);
+		LANG_LOG("Object.invokeMethod: type error %s.%s(#%d)", S_text(O_ct(sfp[0].o)->lname), MN__(mn), i+1);
 		RETURN_(K_NULL);
 	}
 	KNH_SCALL(_ctx, sfp, rtnidx, mtd, psize);
@@ -2466,12 +2466,12 @@ static kbool_t ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, kString
 	ksymbol_t fn = knh_getmn(_ctx, S_tobytes(name), FN_NEWID);  // FIXME: NOIZE
 	kMethod *mtd = knh_ClassTBL_findMethodNULL(_ctx, ct, MN_toSETTER(fn), 0);
 	if(mtd != NULL) {
-		LANG_LOG("already defined setter: %s.%s", S_totext(ct->lname), S_totext(name));
+		LANG_LOG("already defined setter: %s.%s", S_text(ct->lname), S_text(name));
 		return 0;
 	}
 	mtd = knh_ClassTBL_findMethodNULL(_ctx, ct, (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_isGETTER(fn), 0);
 	if(mtd != NULL) {
-		LANG_LOG("already defined getter: %s.%s", S_totext(ct->lname), S_totext(name));
+		LANG_LOG("already defined getter: %s.%s", S_text(ct->lname), S_text(name));
 		return 0;
 	}
 	knh_ClassTBL_addXField(_ctx, ct, type, fn);
@@ -2545,7 +2545,7 @@ static KMETHOD Class_query(CTX, ksfp_t *sfp _RIX)
 	for(i = 0; i < csize; i++) {
 		kcid_t cid = (kcid_t)i;
 		const kclass_t *ct = ClassTBL(cid);
-		DBG_P("lname=%s", S_totext(ct->lname));
+		DBG_P("lname=%s", S_text(ct->lname));
 		if(!knh_bytes_startsWith_(S_tobytes(ct->lname), q)) continue;
 		kArray_add(ca, new_Type(_ctx, cid));
 	}

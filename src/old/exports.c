@@ -117,7 +117,7 @@ static void loadStringClassConst(CTX, kcid_t cid, const knh_StringData_t *data)
 static void setProperty(CTX, const char *name, const char *data)
 {
 	char pname[256];
-	const char *nsn = S_totext(DP(_ctx->gma->scr->ns)->nsname);
+	const char *nsn = S_text(DP(_ctx->gma->scr->ns)->nsname);
 	knh_snprintf(pname, sizeof(pname), "%s.%s", nsn, name);
 	knh_DictMap_set(_ctx, ctx->share->props, new_String(_ctx, pname), new_T(data));
 }
@@ -125,7 +125,7 @@ static void setProperty(CTX, const char *name, const char *data)
 static void setIntProperty(CTX, const char *name, kint_t data)
 {
 	char pname[256];
-	const char *nsn = S_totext(DP(_ctx->gma->scr->ns)->nsname);
+	const char *nsn = S_text(DP(_ctx->gma->scr->ns)->nsname);
 	knh_snprintf(pname, sizeof(pname), "%s.%s", nsn, name);
 	knh_DictMap_set(_ctx, ctx->share->props, new_String(_ctx, pname), new_Int(_ctx, data));
 }
@@ -133,7 +133,7 @@ static void setIntProperty(CTX, const char *name, kint_t data)
 static void setFloatProperty(CTX, const char *name, kfloat_t data)
 {
 	char pname[256];
-	const char *nsn = S_totext(DP(_ctx->gma->scr->ns)->nsname);
+	const char *nsn = S_text(DP(_ctx->gma->scr->ns)->nsname);
 	knh_snprintf(pname, sizeof(pname), "%s.%s", nsn, name);
 	knh_DictMap_set(_ctx, ctx->share->props, new_String(_ctx, pname), new_Float(_ctx, data));
 }

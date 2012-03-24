@@ -562,7 +562,7 @@ static knh_Fmethod GammaBuilder_loadMethodFunc(CTX, kcid_t cid, kmethodn_t mn, i
 {
 	DBG_ASSERT_cid(cid);
 	char buf[80];
-	const char *cname = S_totext(ClassTBL(cid)->sname);
+	const char *cname = S_text(ClassTBL(cid)->sname);
 	if(MN_isFMT(mn)) {
 		knh_snprintf(buf, sizeof(buf), "%s__%s", cname, FN__(MN_toFN(mn)));
 	}
@@ -1588,7 +1588,7 @@ static kTerm *DECL3_typing(CTX, kStmtExpr *stmt, size_t n, ktype_t reqt, kflag_t
 		}
 		if(itype == TY_var) {
 			if(!allowDynamic) {
-				return ERROR_MustBe(_ctx, "typed", S_totext(tkN->text));
+				return ERROR_MustBe(_ctx, "typed", S_text(tkN->text));
 			}
 		}
 		else {
@@ -1904,7 +1904,7 @@ static kTerm *LETM_typing(CTX, kStmtExpr *stmt)
 	const kclass_t *ct = ClassTBL(tplcid);
 	if(ct->cparam->psize < tsize) {
 		kTerm *tkN = tkNN(stmt, ct->cparam->psize);
-		WARN_TooMany(_ctx, "variables", S_totext(tkN->text));
+		WARN_TooMany(_ctx, "variables", S_text(tkN->text));
 		for(i = ct->cparam->psize;i < msize; i++) {
 			TT_(tkNN(stmt, i)) = TT_ASIS;
 		}
@@ -2236,7 +2236,7 @@ static kTerm *new_TermCODE(CTX, kTerm *tkD)
 	TT_(tk) = TT_CODE;
 	KSETv(tk->data, tkD->data);
 	tk->uline = tkD->uline;
-	DBG_P("compiling '''%s'''", S_totext(tkD->text));
+	DBG_P("compiling '''%s'''", S_text(tkD->text));
 	return tk;
 }
 
@@ -3030,7 +3030,7 @@ static kTerm *OPR_setMethod(CTX, kStmtExpr *stmt, kcid_t mtd_cid, kmethodn_t mn,
 	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	if(mtd == NULL) {
 		if(mtd_cid != CLASS_Tdynamic) {
-			return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_totext(tkNN(stmt, 0)->text) : knh_getopname(mn));
+			return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_text(tkNN(stmt, 0)->text) : knh_getopname(mn));
 		}
 		Stmt_boxAll(_ctx, stmt, 2, DP(stmt)->size, T_dyn);
 		Term_setMethod(_ctx, tkNN(stmt, 0), mn, mtd);
@@ -3322,7 +3322,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 		if(mtd == NULL) {
 			if(mtd_cid != CLASS_Tdynamic) {
-				return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_totext(tkOP->text) : knh_getopname(mn));
+				return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_text(tkOP->text) : knh_getopname(mn));
 			}
 			Stmt_boxAll(_ctx, stmt, 2, DP(stmt)->size, T_dyn);
 			Term_setMethod(_ctx, tkOP, mn, mtd);
@@ -4359,7 +4359,7 @@ L_CheckScope:;
 	if(StmtMETHOD_isFFI(stmtM)) {
 		kDictMap *mdata = (kDictMap*)tkNN(stmtM, 4)->data;
 		if(!knh_Method_ffi(_ctx, mtd, K_GMANS, mdata)) {
-			return ERROR_WrongFFILink(_ctx, S_totext(tkNN(stmtM, 4)->text));
+			return ERROR_WrongFFILink(_ctx, S_text(tkNN(stmtM, 4)->text));
 		}
 		return knh_Stmt_done(_ctx, stmtM);
 	}
@@ -4626,7 +4626,7 @@ static kTerm* CLASS_typing(CTX, kStmtExpr *stmt)
 			}
 			knh_Bytes_write(_ctx, cwb->ba, STEXT(") {"));
 			for(i = 0; i < DP(stmtP)->size; i += 3) {
-				const char *t = S_totext(tkNN(stmtP, i+1)->text);
+				const char *t = S_text(tkNN(stmtP, i+1)->text);
 				knh_printf(_ctx, cwb->w, "this.%s=%s; ", t, t);
 			}
 			knh_Bytes_write(_ctx, cwb->ba, STEXT("}"));
@@ -4941,7 +4941,7 @@ static void METHOD_asm(CTX, kStmtExpr *stmt)
 	if(TT_(tkNN(stmt, 4)) == TT_DOC) {
 		KSETv(DP(mtd)->tsource, tkNN(stmt, 4/*source*/));
 //		DBG_P("@@ stmt_line =%d, stmt_code=%d", (kshort_t)stmt->uline, (kshort_t)tkNN(stmt, 4)->uline);
-//		DBG_P("source='''%s'''", S_totext(tkNN(stmt, 4/*source*/)->text));
+//		DBG_P("source='''%s'''", S_text(tkNN(stmt, 4/*source*/)->text));
 	}
 	if(TT_(tkNN(stmt, 5)) == TT_CODE) {  // source code should be parsed just before asm
 //		DBG_P("@@ stmt_line =%d, stmt_code=%d", (kshort_t)stmt->uline, (kshort_t)tkNN(stmt, 5)->uline);

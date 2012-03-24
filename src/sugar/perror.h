@@ -36,61 +36,40 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* [perror] */
 
-#define ERR_   0
-#define WARN_  1
-#define INFO_  2
-#define DEBUG_ 3
+#define S_cid(X)  S_cid_(_ctx, X)
+#define T_cid(X)  S_text(S_cid(X))
 
-#define CTX_isTERM()     1
-
-//static const char* TERM_BBOLD(CTX)
-//{
-//	return CTX_isTERM() ? "\x1b[1m" : "";
-//}
-//
-//static const char* TERM_EBOLD(CTX)
-//{
-//	return CTX_isTERM() ? "\x1b[0m" : "";
-//}
-
-static const char* TERM_BNOTE(CTX, int pe)
+static inline kString* S_cid_(CTX, ktype_t ty)
 {
-	if(CTX_isTERM()) {
-		if(pe <= ERR_) {
-			return "\x1b[1m\x1b[31m";
-		}
-		else if(pe == WARN_) {
-			return "\x1b[1m\x1b[35m";
-		}
-		return "\x1b[1m\x1b[34m";
+	return CT_(ty)->name;
+}
+
+#define S_ty(X)  S_ty_(_ctx, X)
+#define T_ty(X)  S_text(S_ty(X))
+
+static inline kString* S_ty_(CTX, ktype_t ty)
+{
+	return CT_(ty)->name;
+}
+
+#define S_fn(fn)   S_fn_(_ctx, fn)
+#define T_fn(fn)   S_text(S_fn(fn))
+static inline kString* S_fn_(CTX, ksymbol_t sym)
+{
+	int index = MN_UNMASK(sym);
+	if(index < kArray_size(_ctx->share->symbolList)) {
+		return _ctx->share->symbolList->strings[index];
 	}
-	return "";
+	DBG_P("undefined symbol sym=%d", sym);
+	return TS_EMPTY;
 }
 
-static const char* TERM_ENOTE(CTX, int pe)
-{
-	return CTX_isTERM() ? "\x1b[0m" : "";
-}
-
-#define T_cid(X)  T_cid_(_ctx, X)
-#define T_ty(X)   T_ty_(_ctx, X)
 #define T_mn(B, X)  Tsymbol(_ctx, B, sizeof(B), X)
-
-static const char* T_cid_(CTX, ktype_t ty)
-{
-	return S_totext(CT_(ty)->name);
-}
-
-static const char* T_ty_(CTX, ktype_t ty)
-{
-	return S_totext(CT_(ty)->name);
-}
-
 static const char* Tsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 {
 	int index = MN_UNMASK(sym);
 	if(index < kArray_size(_ctx->share->symbolList)) {
-		const char *name = S_totext(_ctx->share->symbolList->strings[index]);
+		const char *name = S_text(_ctx->share->symbolList->strings[index]);
 		if(MN_isISBOOL(sym)) {
 			snprintf(buf, bufsiz, "is%s", name);
 			buf[2] = toupper(buf[2]);
@@ -116,29 +95,26 @@ static const char* Tsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 /* ------------------------------------------------------------------------ */
 /* [perror] */
 
-static void kvperror(CTX, const char *msg, kline_t uline, int lpos, const char *fmt, va_list ap)
+static void kvperror(CTX, int pe, const char *msg, kline_t uline, int lpos, const char *fmt, va_list ap)
 {
 	kevalmod_t *base = kevalmod;
 	kwb_t wb;
 	kwb_init(&base->cwb, &wb);
 	kwb_write(&wb, msg, strlen(msg));
 	if(uline > 0) {
-//		kuri_t uri = ULINE_uri(uline);
-		uintptr_t line = ULINE_line(uline);
-		const char *file = "*eval*";
-//		knh_write_ascii(_ctx, w, knh_sfile(FILENAME__(uri)));
+		const char *file = S_text(S_uri(uline));
 		if(lpos != -1) {
-			kwb_printf(&wb, "(%s:%d+%d) " , file, (int)line, (int)lpos);
+			kwb_printf(&wb, "(%s:%d+%d) " , filename(file), (kushort_t)uline, (int)lpos+1);
 		}
 		else {
-			kwb_printf(&wb, "(%s:%d) " , file, (int)line);
+			kwb_printf(&wb, "(%s:%d) " , filename(file), (kushort_t)uline);
 		}
 	}
 	kwb_vprintf(&wb, fmt, ap);
 	msg = kwb_top(&wb, 1);
 	kString *emsg = new_kString(msg, strlen(msg), 0);
 	kArray_add(base->errors, emsg);
-	fprintf(stderr, "%s - %s%s\n", TERM_BNOTE(_ctx, 0), S_totext(emsg), TERM_ENOTE(_ctx, 0));
+	kreport(pe, S_text(emsg));
 }
 
 static void kerror(CTX, int level, kline_t uline, int lpos, const char *fmt, ...)
@@ -167,7 +143,7 @@ static void kerror(CTX, int level, kline_t uline, int lpos, const char *fmt, ...
 	if(isPRINT) {
 		va_list ap;
 		va_start(ap, fmt);
-		kvperror(_ctx, emsg, uline, lpos, fmt, ap);
+		kvperror(_ctx, level, emsg, uline, lpos, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -186,7 +162,7 @@ static kString* Kstrerror(CTX, int eno)
 	size_t i;
 	for(i = eno; i < kArray_size(base->errors); i++) {
 		kString *emsg = base->errors->strings[i];
-		if(strstr(S_totext(emsg), "(error)") != NULL) {
+		if(strstr(S_text(emsg), "(error)") != NULL) {
 			return emsg;
 		}
 	}
@@ -213,7 +189,7 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //	char buf[256] = {0};
 //	if(t.len < 256) {
 //		memcpy(buf, t.buf, t.len);
-//		kerror(_ctx, INFO_, uline, lpos, "rewrite '%s' to '%s'", buf, S_totext(alias));
+//		kerror(_ctx, INFO_, uline, lpos, "rewrite '%s' to '%s'", buf, S_text(alias));
 //	}
 //}
 //
@@ -239,7 +215,7 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //static kExpr* ERROR_UnexpectedToken(CTX, kToken *tk, const char *token)
 //{
 //	if(IS_String(tk->text)) {
-//		kerror(_ctx, ERR_, tk->uline, tk->lpos, "unexpected %s; %s is expected", S_totext(tk->text), token);
+//		kerror(_ctx, ERR_, tk->uline, tk->lpos, "unexpected %s; %s is expected", S_text(tk->text), token);
 //	}
 //	else {
 //		kerror(_ctx, ERR_, tk->uline, tk->lpos, "unexpected token; %s is expected", token);
@@ -249,7 +225,7 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //
 //static void ERROR_UndefinedToken(CTX, kToken *tk, const char *whatis)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined %s: %s", whatis, S_totext(tk->text));
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined %s: %s", whatis, S_text(tk->text));
 //}
 //
 //
@@ -261,19 +237,19 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //
 //static kbool_t ERROR_TokenError(CTX, kToken *tk)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: token '%s' is unavailable", S_totext(tk->text));
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: token '%s' is unavailable", S_text(tk->text));
 //	return 0;
 //}
 //
 //static kbool_t ERROR_TokenMustBe(CTX, kToken *tk, const char *token)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: '%s' must be %s", S_totext(tk->text), token);
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: '%s' must be %s", S_text(tk->text), token);
 //	return 0;
 //}
 //
 //static kExpr *ERROR_TokenUndefinedMethod(CTX, kToken *tk, kcid_t cid)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined method: %T.%s", cid, S_totext(tk->text));
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined method: %T.%s", cid, S_text(tk->text));
 //	return NULL;
 //}
 //
@@ -290,12 +266,12 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //
 //void WARN_TokenMuchBetter(CTX, kToken *tk, const char *token)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is much better than %s", S_totext(tk->text), token);
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is much better than %s", S_text(tk->text), token);
 //}
 //
 //void WARN_TokenOverflow(CTX, kToken *tk)
 //{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is overflow", S_totext(tk->text));
+//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is overflow", S_text(tk->text));
 //}
 
 

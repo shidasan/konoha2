@@ -103,8 +103,8 @@ KNHAPI2(kPath*) new_Path(CTX, kString *path)
 	KSETv(pth->urn, path);
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	knh_buff_addospath(_ctx, cwb->ba, cwb->pos, 0, S_tobytes(path));
-	if(knh_strcmp(S_totext(path), CWB_totext(_ctx, cwb)) == 0) {
-		pth->ospath = S_totext(path);
+	if(knh_strcmp(S_text(path), CWB_totext(_ctx, cwb)) == 0) {
+		pth->ospath = S_text(path);
 		pth->asize = 0;
 	}
 	else {
@@ -631,8 +631,8 @@ static void FILE_ospath(CTX, kPath *path, kLingo *ns)
 	else {
 		knh_buff_addospath(_ctx, cwb->ba, cwb->pos, 0, knh_bytes_next(urn, ':'));
 	}
-	if(knh_strcmp(S_totext(path->urn), CWB_totext(_ctx, cwb)) == 0) {
-		path->ospath = S_totext(path->urn);
+	if(knh_strcmp(S_text(path->urn), CWB_totext(_ctx, cwb)) == 0) {
+		path->ospath = S_text(path->urn);
 		path->asize = 0;
 	}
 	else {
@@ -676,7 +676,7 @@ static kbool_t CURL_exists(CTX, kPath *path)
 {
 	kbool_t res = 0;
 	CURL *curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, S_totext(path->urn));
+	curl_easy_setopt(curl, CURLOPT_URL, S_text(path->urn));
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
 	curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
 	CURLcode code = curl_easy_perform(curl);
@@ -727,7 +727,7 @@ static int CURL_open(CTX, kPath *path, const char *mode, kDictMap *conf)
 	curl_t *cp = knh_malloc(_ctx, sizeof(curl_t));
 	memset(cp, 0, sizeof(curl_t));
 	cp->curl = curl_easy_init();
-	curl_easy_setopt(cp->curl, CURLOPT_URL, S_totext(path->urn));
+	curl_easy_setopt(cp->curl, CURLOPT_URL, S_text(path->urn));
 	curl_easy_setopt(cp->curl, CURLOPT_WRITEDATA, cp);
 	curl_easy_setopt(cp->curl, CURLOPT_VERBOSE, 0L);
 	curl_easy_setopt(cp->curl, CURLOPT_WRITEFUNCTION, write_callback);
@@ -950,7 +950,7 @@ KNHAPI2(kInputStream*) new_InputStream(CTX, kio_t *io2, kPath *path)
 	in->io2 = io2;
 	if(path != NULL) {
 		KSETv(in->path, path);
-		io2->DBG_NAME = S_totext(path->urn);
+		io2->DBG_NAME = S_text(path->urn);
 		if(io2 == NULL) {
 			io2 = path->dpi->io2openNULL(_ctx, path, "r", NULL);
 			if(io2 == NULL) {
@@ -974,7 +974,7 @@ KNHAPI2(kOutputStream*) new_OutputStream(CTX,  kio_t *io2, kPath *path)
 	w->io2 = io2;
 	if(path != NULL) {
 		KSETv(w->path, path);
-		io2->DBG_NAME = S_totext(path->urn);
+		io2->DBG_NAME = S_text(path->urn);
 		if(io2 == NULL) {
 			io2 = path->dpi->io2openNULL(_ctx, path, "a", NULL);
 			if(io2 == NULL) {
@@ -1566,7 +1566,7 @@ static KMETHOD OutputStream_setCharset(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD System_addHistory(CTX, ksfp_t *sfp _RIX)
 {
-	ctx->spi->add_history(S_totext(sfp[1].s));
+	ctx->spi->add_history(S_text(sfp[1].s));
 	RETURNvoid_();
 }
 

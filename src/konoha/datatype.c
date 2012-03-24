@@ -234,7 +234,7 @@ static uintptr_t casehash(const char *name, size_t len)
 
 static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 {
-	uintptr_t hcode = casehash(S_totext(skey), S_size(skey));
+	uintptr_t hcode = casehash(S_text(skey), S_size(skey));
 	kmape_t *e = kmap_newentry(kmp, hcode);
 	KINITv(e->skey, skey);
 	e->uvalue = uvalue;
@@ -246,7 +246,7 @@ static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 //	uintptr_t hcode = casehash(name, len);
 //	kmape_t *e = kmap_get(kmp, hcode);
 //	while(e != NULL) {
-//		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_totext(e->skey), name, len) == 0) {
+//		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_text(e->skey), name, len) == 0) {
 //			return e->uvalue;
 //		}
 //	}
@@ -256,7 +256,7 @@ static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 void CT_setName(CTX, kclass_t *ct, kString *name)
 {
 	DBG_ASSERT(ct->name == NULL);
-	DBG_P("name='%s'", S_totext(name));
+	DBG_P("name='%s'", S_text(name));
 	KINITv(ct->name, name);
 	if(ct->nsid == 0) {
 		casehash_add(_ctx, _ctx->share->classnameMapNN, name, ct->cid);
@@ -295,13 +295,13 @@ static uintptr_t strhash(const char *name, size_t len)
 	return hcode;
 }
 
-static kuri_t uriget(CTX, const char *name, size_t len)
+static kuri_t Kuri(CTX, const char *name, size_t len)
 {
 	kmap_t *kmp = _ctx->share->uriMapNN;
 	uintptr_t hcode = strhash(name, len);
 	kmape_t *e = kmap_get(kmp, hcode);
 	while(e != NULL) {
-		if(e->hcode == hcode && S_size(e->skey) == len && strncmp(S_totext(e->skey), name, len) == 0) {
+		if(e->hcode == hcode && S_size(e->skey) == len && strncmp(S_text(e->skey), name, len) == 0) {
 			return (kuri_t)e->uvalue;
 		}
 	}
@@ -322,7 +322,7 @@ static ksymbol_t ksymbol_gethcode(CTX, const char *name, size_t len, uintptr_t h
 	kmap_t  *symmap = _ctx->share->symbolMapNN;
 	kmape_t *e = kmap_get(symmap, hcode);
 	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_totext(e->skey), name, len) == 0) {
+		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
 //			DBG_P("GET symbol='%s', hcode=%ld, symbol=%d", name, hcode, (ksymbol_t)e->uvalue);
 			return (ksymbol_t)e->uvalue;
 		}
@@ -542,7 +542,7 @@ static void String_checkASCII(kString *s)
 {
 	unsigned char ch = 0;
 	long len = S_size(s), n = (len + 3) / 4;
-	const unsigned char*p = (const unsigned char *)S_totext(s);
+	const unsigned char*p = (const unsigned char *)S_text(s);
 	switch(len % 4) {  	/* Duff's device written by ide */
 		case 0: do{ ch |= *p++;
 		case 3:     ch |= *p++;
@@ -834,7 +834,7 @@ static const kclass_t *addClassDef(CTX, KCLASS_DEF *cdef)
 
 static void kshare_initklib2(klib2_t *l)
 {
-	l->Kuri    = uriget;
+	l->Kuri    = Kuri;
 	l->Ksymbol = Ksymbol;
 	l->Knew_Object = new_Object;
 	l->KObject_getObjectNULL = Object_getObjectNULL;
@@ -995,7 +995,7 @@ void kshare_free(CTX, kcontext_t *ctx)
 //
 //static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
 //{
-//	fprintf(stderr, "%s\n", S_totext(sfp[1].s));
+//	fprintf(stderr, "%s\n", S_text(sfp[1].s));
 //}
 
 /* operator */
