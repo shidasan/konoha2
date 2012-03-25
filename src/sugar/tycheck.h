@@ -612,13 +612,11 @@ static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
-	kbool_t r = true;
-	if(expr != NULL) {
-		if (gma->genv->mtd == NULL) {
-			kerror(_ctx, ERR_, stmt->uline, 0, "do not use return stmt in top level");
-		} else {
-			r = Stmt_tycheckExpr(_ctx, stmt, 1, gma, gma->genv->mtd->pa->rtype, _NOCHECK/*TODO*/);
-		}
+	kbool_t r = 0;
+	if (gma->genv->mtd == NULL) {
+		kerror(_ctx, ERR_, stmt->uline, 0, "do not use return stmt in top level");
+	} else if ((r = Stmt_tycheckExpr(_ctx, stmt, KW_EXPR, gma, gma->genv->mtd->pa->rtype, 0))) {
+		stmt->build = TSTMT_RETURN;
 	}
 	RETURNb_(r);
 }

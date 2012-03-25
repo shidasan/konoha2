@@ -698,8 +698,11 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 	(mtd)->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
 	DBG_P("DUMP CODE");
 	kopl_t *pc = mtd->pc_start;
-	while(pc->opcode != OPCODE_RET) {
+	while(1) {
 		dumpOPCODE(_ctx, pc, mtd->pc_start);
+		if (pc->opcode == OPCODE_RET) {
+			break;
+		}
 		pc++;
 	}
 }
@@ -1977,7 +1980,7 @@ static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
 static void BLOCK_asm(CTX, kBlock *bk)
 {
 	int i, espidx = bk->esp->index;
-	DBG_ASSERT(bk->esp->build == TEXPR_LOCAL);
+	//DBG_ASSERT(bk->esp->build == TEXPR_LOCAL);
 	for(i = 0; i < kArray_size(bk->blockS); i++) {
 		kStmt *stmt = bk->blockS->stmts[i];
 		if(stmt->syn == NULL) continue;
