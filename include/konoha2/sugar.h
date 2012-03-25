@@ -120,6 +120,7 @@ typedef struct {
 
 	void (*KLingo_defineSyntax)(CTX, struct kLingo*, struct ksyntaxdef_t *);
 
+
 } kevalshare_t;
 
 typedef struct {
