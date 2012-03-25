@@ -177,8 +177,8 @@ static int BUILD_asmJMPF(CTX, klr_JMPF_t *op)
 			opP->opcode = OPfJEQC + ((opP)->opcode - OPfEQC);
 			return swap;
 		}
-		break;
 #endif
+		break;
 	}
 	BasicBlock_add(_ctx, bb, kcodemod->uline, (kopl_t*)op, 0);
 	return swap;

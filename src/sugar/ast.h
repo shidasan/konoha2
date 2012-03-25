@@ -96,7 +96,7 @@ static int makeTree(CTX, kLingo *ns, kArray *tls, ktoken_t tt, int s, int e, int
 	KSETv(tkp->sub, new_(Array, 0));
 	for(i = s + 1; i < e; i++) {
 		kToken *tk = tls->tts[i];
-		DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
+		//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
 		if(tk->topch == '(') {
 			i = makeTree(_ctx, ns, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
 		if(tk->topch == '[') {
