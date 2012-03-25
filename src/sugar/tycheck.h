@@ -324,40 +324,6 @@ static kExpr *Cons_tycheckParams(CTX, kExpr *expr, ktype_t cid, kGamma *gma, kty
 	return K_NULLEXPR;
 }
 
-//static KMETHOD ExprTyCheck_BinaryOp(CTX, ksfp_t *sfp _RIX)
-//{
-//	VAR_ExprTyCheck(expr, gma, req_ty);
-//	DBG_P("binop: size=%d", kArray_size(expr->consNUL));
-//	kExpr  *texpr = K_NULLEXPR;
-//	kToken *opr = expr->consNUL->tts[0];
-//	kExpr  *lhs = expr->consNUL->exprs[1];
-//	kExpr  *rhs = expr->consNUL->exprs[2];
-//
-//	assert(opr->tt == TK_KEYWORD);
-//	lhs = Expr_tycheck(_ctx, lhs, gma, TY_var, _NOCHECK);
-//	rhs = Expr_tycheck(_ctx, rhs, gma, TY_var, _NOCHECK);
-//	{
-//		kLingo *ns = kevalshare->rootlgo;
-//		ksyntax_t *syn = kLingo_syntax(_ctx, ns, opr->keyid, 0);
-//		kMethod   *mtd = Lingo_getMethodNULL(_ctx, ns, lhs->ty/*TODO*/, syn->op2);
-//		if (mtd != NULL) {
-//			kArray *a = expr->consNUL;
-//			texpr = expr;
-//			texpr->ty = mtd->pa->rtype;
-//			texpr->build = TEXPR_CALL;
-//			opr->mn = mtd->mn;
-//			KSETv(expr->consNUL->tts[0], mtd);
-//			kArray_add(a, K_NULL);
-//			KSETv(a->tts[3], a->tts[2]);
-//			KSETv(a->tts[2], a->tts[1]);
-//			KSETv(a->tts[1], K_NULL);
-//		}
-//	}
-//	if (texpr == K_NULLEXPR) {
-//		kerror(_ctx, ERR_, opr->tt, opr->uline, "call chenji to finish this");
-//	}
-//	RETURN_(texpr);
-//}
 
 static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 {
@@ -901,32 +867,23 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 	BEGIN_LOCAL(lsfp, K_CALLDELTA);
 	kevalmod_t *base = kevalmod;
 	kstatus_t result = K_CONTINUE;
-	kjmpbuf_t lbuf = {};
-	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
-	if(ksetjmp(*base->evaljmpbuf) == 0) {
-		DBG_P("TY=%s, running EVAL..", T_cid(rtype));
-		if(base->evalty != TY_void) {
-			KSETv(lsfp[K_CALLDELTA+1].o, base->evalval.o);
-			lsfp[K_CALLDELTA+1].ivalue = base->evalval.ivalue;
+	DBG_P("TY=%s, running EVAL..", T_cid(rtype));
+	if(base->evalty != TY_void) {
+		KSETv(lsfp[K_CALLDELTA+1].o, base->evalval.o);
+		lsfp[K_CALLDELTA+1].ivalue = base->evalval.ivalue;
+	}
+	KCALL(lsfp, 0, mtd, 0);
+	if(rtype != TY_void) {
+		base->evalty = rtype;
+		KSETv(base->evalval.o, lsfp[0].o);
+		base->evalval.ivalue = lsfp[0].ivalue;
+		if(rtype == TY_String) {
+			fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_text(lsfp[0].s));
 		}
-		KCALL(lsfp, 0, mtd, 0);
-		if(rtype != TY_void) {
-			base->evalty = rtype;
-			KSETv(base->evalval.o, lsfp[0].o);
-			base->evalval.ivalue = lsfp[0].ivalue;
-			if(rtype == TY_String) {
-				fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_text(lsfp[0].s));
-			}
-			else {
-				fprintf(stdout, "TY=%s, EVAL=%ld\n", T_cid(rtype), lsfp[0].ivalue);
-			}
+		else {
+			fprintf(stdout, "TY=%s, EVAL=%ld\n", T_cid(rtype), lsfp[0].ivalue);
 		}
 	}
-	else {
-		base->evalty = TY_void;
-		result = K_FAILED;
-	}
-	memcpy(base->evaljmpbuf, &lbuf, sizeof(kjmpbuf_t));
 	END_LOCAL();
 	return result;
 }
@@ -979,25 +936,43 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kLingo *lgo)
 	return result;
 }
 
+#define EVALJMP_FAILED        1
+#define EVALJMP_SKIP          2
+
+static void Kraise(CTX, int isContinue)
+{
+	kevalmod_t *base = kevalmod;
+	klongjmp(*base->evaljmpbuf, isContinue ? EVALJMP_SKIP : EVALJMP_FAILED);
+}
+
 static kstatus_t Block_eval(CTX, kBlock *bk)
 {
-	size_t i;
-	kBlock *bk1 = kevalmod->singleBlock;
 	INIT_GCSTACK();
+	BEGIN_LOCAL(lsfp, 0);
+	kBlock *bk1 = kevalmod->singleBlock;
 	kMethod *mtd = new_kMethod(kMethod_Static, 0, 0, K_NULLPARAM, NULL);
 	PUSH_GCSTACK(mtd);
-	DBG_ASSERT(kArray_size(bk1->blockS));
+	kevalmod_t *base = kevalmod;
 	kstatus_t result = K_CONTINUE;
-	for(i = 0; i < kArray_size(bk->blockS); i++) {
-		KSETv(bk1->blockS->list[0], bk->blockS->list[i]);
-		KSETv(bk1->lgo, bk->lgo);
-		result = SingleBlock_eval(_ctx, bk1, mtd, bk->lgo);
-		kflag_clear(kevalmod->flags);
-		if(result == K_FAILED) break;
-		if(result == K_BREAK) {
-			result = K_CONTINUE; break;
+	kjmpbuf_t lbuf = {};
+	int i, jmpresult;
+	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
+	if((jmpresult = ksetjmp(*base->evaljmpbuf)) == 0) {
+		for(i = 0; i < kArray_size(bk->blockS); i++) {
+			KSETv(bk1->blockS->list[0], bk->blockS->list[i]);
+			KSETv(bk1->lgo, bk->lgo);
+			result = SingleBlock_eval(_ctx, bk1, mtd, bk->lgo);
+			//kflag_clear(kevalmod->flags);
+			if(result == K_FAILED) break;
 		}
 	}
+	else {
+		DBG_P("Catch eval exception jmpresult=%d", jmpresult);
+		base->evalty = TY_void;
+		result = jmpresult == EVALJMP_SKIP ? K_BREAK : K_FAILED;
+	}
+	memcpy(base->evaljmpbuf, &lbuf, sizeof(kjmpbuf_t));
+	END_LOCAL();
 	RESET_GCSTACK();
 	return result;
 }

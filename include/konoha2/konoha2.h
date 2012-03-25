@@ -910,7 +910,7 @@ typedef struct kRawPtr {
 #define Method_isKonohaCode(mtd) (0)
 
 #define BEGIN_LOCAL(V,N) \
-	ksfp_t *V = _ctx->esp, *esp_ = _ctx->esp;\
+	ksfp_t *V = _ctx->esp, *esp_ = _ctx->esp; (void)V;\
 
 #define END_LOCAL() ((kcontext_t*)_ctx)->esp = esp_;
 
@@ -954,6 +954,9 @@ typedef struct kScript {
 
 /* ----------------------------------------------------------------------- */
 // klib2
+
+struct kLingo;
+struct ksyntaxdef_t;
 
 typedef struct klib2_t {
 	void* (*Kmalloc)(CTX, size_t);
@@ -1006,7 +1009,12 @@ typedef struct klib2_t {
 	void  (*KCodeGen)(CTX, struct kMethod *, struct kBlock *);
 	void (*Kreport)(CTX, int level, const char *msg);
 	void (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
+	void (*Kraise)(CTX, int isContinue);     // module
+
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
+
+	void (*KLingo_defineSyntax)(CTX, struct kLingo*, struct ksyntaxdef_t *);
+
 } klib2_t;
 
 #define K_NULL            (_ctx->share->constNull)
@@ -1091,7 +1099,7 @@ typedef struct klib2_t {
 
 #define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)
-
+#define kraise(isContinue)             (KPI)->Kraise(_ctx, isContinue)
 // gc
 
 #define KTODO(MSG) do { fprintf(stderr, "TODO: %s\n", MSG);abort(); } while (0)

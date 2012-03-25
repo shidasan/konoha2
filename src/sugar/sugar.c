@@ -41,6 +41,7 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk);
 //
 static const char *Pkeyword_(CTX, keyword_t keyid);
 static kString *Skeyword_(CTX, keyword_t keyid);
+static void Kraise(CTX, int isContinue);
 
 #include "perror.h"
 #include "struct.h"
@@ -106,6 +107,7 @@ static void defineDefaultSyntax(CTX, kLingo *lgo)
 
 static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
 {
+	kstatus_t result;
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
 	{
 		INIT_GCSTACK();
@@ -114,10 +116,10 @@ static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
 		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
 		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), lgo);
 		kArray_clear(tls, pos);
-		Block_eval(_ctx, bk);
+		result = Block_eval(_ctx, bk);
 		RESET_GCSTACK();
 	}
-	return K_CONTINUE;
+	return result;
 }
 
 kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline)
@@ -221,6 +223,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	klib2_t *l = ctx->lib2;
 	l->KLingo_getcid   = Lingo_getcid;
 	l->KloadMethodData = Lingo_loadMethodData;
+	l->Kraise = Kraise;
 
 	KINITv(base->keywordList, new_(Array, 32));
 	base->keywordMapNN = kmap_init(0);
@@ -560,6 +563,7 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 	}
 	else {
 		kreportf(ERR_, pline, "package not found: %s path=%s", S_text(pkgname), path);
+		kraise(0);
 	}
 	return NULL;
 }
@@ -606,7 +610,7 @@ static kbool_t Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t p
 				fclose(fp);
 			}
 			else {
-				kreportf(ERR_, pline, "script not found: %s", S_text(fname));
+				kreportf(WARN_, pline, "script not found: %s", S_text(fname));
 				res = 0;
 			}
 		}

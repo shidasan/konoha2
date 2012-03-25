@@ -118,9 +118,6 @@ typedef struct {
 	struct ksyntax_t *syn_break;
 	struct ksyntax_t *syn_typedecl;
 
-	void (*KLingo_defineSyntax)(CTX, struct kLingo*, struct ksyntaxdef_t *);
-
-
 } kevalshare_t;
 
 typedef struct {
