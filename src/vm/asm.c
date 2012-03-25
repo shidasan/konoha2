@@ -1990,7 +1990,7 @@ static void BLOCK_asm(CTX, kBlock *bk)
 		case TSTMT_EXPR:   ExprStmt_asm(_ctx, stmt, espidx);  break;
 		case TSTMT_BLOCK:  BlockStmt_asm(_ctx, stmt, espidx); break;
 		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, espidx); return;
-		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     return;
+		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     break;
 		default: UndefinedStmt_asm(_ctx, stmt, espidx); break;
 		}
 	}

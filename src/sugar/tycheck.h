@@ -611,7 +611,6 @@ static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
-	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
 	kbool_t r = 0;
 	if (gma->genv->mtd == NULL) {
 		kerror(_ctx, ERR_, stmt->uline, 0, "do not use return stmt in top level");
