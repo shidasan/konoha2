@@ -129,11 +129,6 @@ int parse_opt(int argc, char *argv[])
 // -------------------------------------------------------------------------
 // ** main **
 
-int konoha_debug = 0;  // global variables
-
-// -------------------------------------------------------------------------
-// ** main **
-
 int main(int argc, const char *argv[])
 {
 	int ret = 0;

@@ -1200,4 +1200,7 @@ extern void kpromap_free(CTX, struct kpromap_t *p);
 extern void kpromap_reftrace(CTX, struct kpromap_t *p);
 extern void kshare_init_methods(CTX);
 
+/* for debug mode */
+extern int konoha_debug;
+
 #endif /* KONOHA2_H_ */

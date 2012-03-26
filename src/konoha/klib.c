@@ -9,8 +9,6 @@
 #include <konoha2/klib.h>
 #include "../gc/gc_api.h"
 
-extern int konoha_debug;
-
 static void karray_init(CTX, karray_t *m, size_t max, size_t w)
 {
 	DBG_ASSERT(max != 0);
@@ -332,7 +330,11 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	va_end(ap);
 }
 
+// -------------------------------------------------------------------------
+/* debug mode */
+int konoha_debug;
 
+// -------------------------------------------------------------------------
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)
 {
 	if(konoha_debug) {

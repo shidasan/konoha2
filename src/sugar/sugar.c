@@ -35,8 +35,6 @@
 extern "C" {
 #endif
 
-extern int konoha_debug;
-
 // MOD_CODE
 void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk);
 

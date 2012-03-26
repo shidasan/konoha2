@@ -53,8 +53,6 @@
 extern "C" {
 #endif
 
-extern int konoha_debug;
-
 #if defined(GCDEBUG) && !defined(GCSTAT)
 #define GCSTAT 1
 #endif
