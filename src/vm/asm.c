@@ -2119,7 +2119,6 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kArray_clear(kcodemod->insts, 0);
 		RESET_GCSTACK();
 	}
-
 	klib2_t *l = ctx->lib2;
 	l->KMethod_setFunc = Method_setFunc;
 }

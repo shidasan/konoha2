@@ -888,7 +888,6 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 	return result;
 }
 
-
 static ktype_t Stmt_checkReturnType(CTX, kStmt *stmt)
 {
 	if(stmt->syn == SYN_EXPR) {

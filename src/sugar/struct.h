@@ -230,7 +230,7 @@ static uintptr_t casehash(const char *name, size_t len)
 //	kmap_add(kmp, e);
 //}
 
-static uintptr_t casehash_get(CTX, kmap_t *kmp, const char *name, size_t len, uintptr_t def)
+static uintptr_t casehash_getuint(CTX, kmap_t *kmp, const char *name, size_t len, uintptr_t def)
 {
 	uintptr_t hcode = casehash(name, len);
 	kmape_t *e = kmap_get(kmp, hcode);
@@ -248,7 +248,7 @@ static kcid_t Lingo_getcid(CTX, kLingo *lgo, const char *name, size_t len, kcid_
 	//while(nsN != NULL) {
 	//	nsN = nsN->parentNULL;
 	//}
-	cid = (kcid_t)casehash_get(_ctx, _ctx->share->classnameMapNN, name, len, def);
+	cid = (kcid_t)casehash_getuint(_ctx, _ctx->share->classnameMapNN, name, len, def);
 	return cid;
 }
 

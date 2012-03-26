@@ -303,9 +303,15 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 			return 1;
 		}
 	}
-//	else if(tk->tt == TK_USYMBOL) {
-//		kcid_t ty = kNameSpace_getcid(lgo, S_text(tk->text), S_size(tk->text));
-//	}
+	else if(tk->tt == TK_USYMBOL) {
+		kcid_t ty = kLingo_getcid(lgo, S_text(tk->text), S_size(tk->text), CLASS_unknown);
+		if(ty != CLASS_unknown) {
+			tk->tt = TK_TYPE;
+			tk->ty = ty;
+			*next = s + 1;
+			return 1;
+		}
+	}
 	return 0;
 }
 
