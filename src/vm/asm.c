@@ -1319,13 +1319,13 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 //	CALL_asm(_ctx, stmt, espidx);
 //}
 
+/* ------------------------------------------------------------------------ */
+
 static kObject* BUILD_addConstPool(CTX, kObject *o)
 {
 	kArray_add(kcodemod->constPools, o);
 	return o;
 }
-
-/* ------------------------------------------------------------------------ */
 
 static void CALL_asm(CTX, int a, kExpr *expr, int espidx);
 static void AND_asm(CTX, int a, kExpr *expr, int espidx);
@@ -1814,23 +1814,6 @@ static void THROW_asm(CTX, kStmtExpr *stmt)
 	ASM(THROW, SFP_(start));
 }
 
-static void RETURN_asm(CTX, kStmtExpr *stmt)
-{
-	ASM_FINALLY(_ctx);
-	size_t size = DP(stmt)->size;
-	if(size == 1) {
-		Tn_asm(_ctx, stmt, 0, DP(stmt)->espidx);
-		ASM_PMOV(_ctx, TY_isUnbox(Tn_type(stmt, 0)), K_RTNIDX, DP(stmt)->espidx);
-	}
-	if(IS_StmtExpr(DP(stmt)->stmtPOST)) {
-		DP(DP(stmt)->stmtPOST)->espidx = DP(stmt)->espidx + 1;
-		EXPR_asm(_ctx, DP(stmt)->stmtPOST, DP(stmt)->espidx + 1);
-	}
-	if(!Stmt_isImplicit(stmt)) {
-		ASM_RET(_ctx, stmt);
-	}
-}
-
 
 static void ASSERT_asm(CTX, kStmtExpr *stmt)
 {
@@ -1878,7 +1861,6 @@ static void ErrStmt_asm(CTX, kStmt *stmt, int espidx)
 static void ExprStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
-	DBG_P("expr=%p", expr);
 	if(IS_Expr(expr)) {
 		EXPR_asm(_ctx, espidx, expr, espidx);
 	}
@@ -1980,12 +1962,10 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
-//	bb->bottom = 0;
 	bb->capacity = 0;
 	bb->code = NULL;
 	bb->id = 0;
 	bb->incoming = 0;
-//	bb->listNC  = NULL;
 	bb->nextNC  = NULL;
 	bb->jumpNC  = NULL;
 	bb->opbuf = NULL;
@@ -2139,6 +2119,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kArray_clear(kcodemod->insts, 0);
 		RESET_GCSTACK();
 	}
+
 	klib2_t *l = ctx->lib2;
 	l->KMethod_setFunc = Method_setFunc;
 }
