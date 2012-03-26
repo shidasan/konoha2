@@ -514,7 +514,7 @@ static kbool_t Block_tycheck(CTX, kBlock *bk, kGamma *gma)
 //	kToken *tk = (kToken*) bk;
 //	if (tk->tt == TK_CODE) {
 //		kToken_toBRACE(_ctx, tk);
-//		bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), Stmt_ns(_ctx, stmt));
+//		bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_lgo(stmt));
 //		kObject_setObject(stmt, name, bk);
 //	}
 //	return bk;
@@ -536,7 +536,7 @@ static kBlock *Stmt_getBlockNULL(CTX, kStmt *stmt, ksymbol_t nameid)
 				kToken_toBRACE(_ctx, tk);
 			}
 			if (tk->tt == AST_BRACE) {
-				bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), Stmt_ns(_ctx, stmt));
+				bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_lgo(stmt));
 				kObject_setObject(stmt, nameid, bk);
 			}
 		}

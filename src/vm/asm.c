@@ -38,6 +38,8 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* kcode */
 
+extern int konoha_debug;
+
 #define DP(O)           (O)
 static void EXPR_asm(CTX, int a, kExpr *expr, int espidx);
 
@@ -696,14 +698,16 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 	kMethod_setFunc(mtd, Fmethod_runVM);
 	KSETv(mtd->kcode, kcode);
 	(mtd)->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
-	DBG_P("DUMP CODE");
-	kopl_t *pc = mtd->pc_start;
-	while(1) {
-		dumpOPCODE(_ctx, pc, mtd->pc_start);
-		if (pc->opcode == OPCODE_RET) {
-			break;
+	if(konoha_debug) {
+		DBG_P("DUMP CODE");
+		kopl_t *pc = mtd->pc_start;
+		while(1) {
+			dumpOPCODE(_ctx, pc, mtd->pc_start);
+			if (pc->opcode == OPCODE_RET) {
+				break;
+			}
+			pc++;
 		}
-		pc++;
 	}
 }
 

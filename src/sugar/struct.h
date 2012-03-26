@@ -455,45 +455,51 @@ static const char *T_tt(ktoken_t t)
 
 static void dumpToken(CTX, kToken *tk)
 {
-	if(tk->tt == TK_MN) {
-		char buf[256];
-		fprintf(stdout, "%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, Tsymbol(_ctx, buf, sizeof(buf), tk->mn));
-	}
-	else if((int)tk->tt <= TK_TYPE) {
-		fprintf(stdout, "%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_text(tk->text));
-	}
-	else {
-		fprintf(stdout, "%s\n", T_tt(tk->tt));
+	if(konoha_debug) {
+		if(tk->tt == TK_MN) {
+			char buf[256];
+			DUMP_P("%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, Tsymbol(_ctx, buf, sizeof(buf), tk->mn));
+		}
+		else if((int)tk->tt <= TK_TYPE) {
+			DUMP_P("%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_text(tk->text));
+		}
+		else {
+			DUMP_P("%s\n", T_tt(tk->tt));
+		}
 	}
 }
 
 static void dumpIndent(int nest)
 {
-	int i;
-	for(i = 0; i < nest; i++) {
-		fputc(' ', stdout); fputc(' ', stdout);
+	if(konoha_debug) {
+		int i;
+		for(i = 0; i < nest; i++) {
+			DUMP_P("  ");
+		}
 	}
 }
 
 static void dumpTokenArray(CTX, int nest, kArray *a, int s, int e)
 {
-	if(nest == 0) fprintf(stdout, "\n");
-	while(s < e) {
-		kToken *tk = a->tts[s];
-		dumpIndent(nest);
-		if(AST_PARENTHESIS <= (int)tk->tt && (int)tk->tt <= AST_TYPE) {
-			fprintf(stdout, "%c\n", tk->topch);
-			dumpTokenArray(_ctx, nest+1, tk->sub, 0, kArray_size(tk->sub));
+	if(konoha_debug) {
+		if(nest == 0) DUMP_P("\n");
+		while(s < e) {
+			kToken *tk = a->tts[s];
 			dumpIndent(nest);
-			fprintf(stdout, "%c\n", tk->closech);
+			if(AST_PARENTHESIS <= (int)tk->tt && (int)tk->tt <= AST_TYPE) {
+				DUMP_P("%c\n", tk->topch);
+				dumpTokenArray(_ctx, nest+1, tk->sub, 0, kArray_size(tk->sub));
+				dumpIndent(nest);
+				DUMP_P("%c\n", tk->closech);
+			}
+			else {
+				DUMP_P("TK(%d) ", s);
+				dumpToken(_ctx, tk);
+			}
+			s++;
 		}
-		else {
-			fprintf(stdout, "TK(%d) ", s);
-			dumpToken(_ctx, tk);
-		}
-		s++;
+		if(nest == 0) DUMP_P("====\n");
 	}
-	if(nest == 0) fprintf(stdout, "====\n");
 }
 
 /* --------------- */
@@ -564,39 +570,41 @@ static kExpr* Expr_add(CTX, kExpr *expr, void *e)
 
 void dumpExpr(CTX, int n, int nest, kExpr *expr)
 {
-	if(nest == 0) fprintf(stdout, "\n");
-	dumpIndent(nest);
-	if(Expr_isTerm(expr)) {
-		fprintf(stdout, "[%d] T: %s %s", n, T_tt(expr->tkNUL->tt), kToken_s(expr->tkNUL));
-		if(expr->ty != TY_var) {
+	if(konoha_debug) {
+		if(nest == 0) DUMP_P("\n");
+		dumpIndent(nest);
+		if(Expr_isTerm(expr)) {
+			DUMP_P("[%d] T: %s %s", n, T_tt(expr->tkNUL->tt), kToken_s(expr->tkNUL));
+			if(expr->ty != TY_var) {
 
-		}
-		fprintf(stdout, "\n");
-	}
-	else {
-		int i;
-		fprintf(stdout, "[%d] C: build=%d, size=%ld", n, expr->build, kArray_size(expr->consNUL));
-		if(expr->ty != TY_var) {
-
-		}
-		fprintf(stdout, "\n");
-		for(i=0; i < kArray_size(expr->consNUL); i++) {
-			kObject *o = expr->consNUL->list[i];
-			if(O_ct(o) == CT_Expr) {
-				dumpExpr(_ctx, i, nest+1, (kExpr*)o);
 			}
-			else {
-				dumpIndent(nest+1);
-				if(O_ct(o) == CT_Token) {
-					kToken *tk = (kToken*)o;
-					fprintf(stdout, "[%d] O: %s ", i, S_text(o->h.ct->name));
-					dumpToken(_ctx, tk);
-				}
-				else if(o == K_NULL) {
-					fprintf(stdout, "[%d] O: null\n", i);
+			DUMP_P("\n");
+		}
+		else {
+			int i;
+			DUMP_P("[%d] C: build=%d, size=%ld", n, expr->build, kArray_size(expr->consNUL));
+			if(expr->ty != TY_var) {
+
+			}
+			DUMP_P("\n");
+			for(i=0; i < kArray_size(expr->consNUL); i++) {
+				kObject *o = expr->consNUL->list[i];
+				if(O_ct(o) == CT_Expr) {
+					dumpExpr(_ctx, i, nest+1, (kExpr*)o);
 				}
 				else {
-					fprintf(stdout, "[%d] O: %s\n", i, S_text(o->h.ct->name));
+					dumpIndent(nest+1);
+					if(O_ct(o) == CT_Token) {
+						kToken *tk = (kToken*)o;
+						DUMP_P("[%d] O: %s ", i, S_text(o->h.ct->name));
+						dumpToken(_ctx, tk);
+					}
+					else if(o == K_NULL) {
+						DUMP_P("[%d] O: null\n", i);
+					}
+					else {
+						DUMP_P("[%d] O: %s\n", i, S_text(o->h.ct->name));
+					}
 				}
 			}
 		}
@@ -704,7 +712,7 @@ static void _dumpToken(CTX, void *arg, kprodata_t *d)
 {
 	if((d->key & OBJECT_MASK) == OBJECT_MASK) {
 		keyword_t key = ~OBJECT_MASK & d->key;
-		fprintf(stdout, "key='%s': ", T_kw(key));
+		DUMP_P("key='%s': ", T_kw(key));
 		if(IS_Token(d->oval)) {
 			dumpToken(_ctx, (kToken*)d->oval);
 		} else if (IS_Expr(d->oval)) {
@@ -715,20 +723,30 @@ static void _dumpToken(CTX, void *arg, kprodata_t *d)
 
 static void dumpStmtKeyValue(CTX, kStmt *stmt)
 {
-	kpromap_each(_ctx, stmt->h.proto, NULL, _dumpToken);
+	if(konoha_debug) {
+		kpromap_each(_ctx, stmt->h.proto, NULL, _dumpToken);
+	}
 }
 
 static void dumpStmt(CTX, kStmt *stmt)
 {
-	if(stmt->syn == NULL) {
-		fprintf(stdout, "STMT (DONE)\n");
+	if(konoha_debug) {
+		if(stmt->syn == NULL) {
+			DUMP_P("STMT (DONE)\n");
+		}
+		else {
+			DUMP_P("STMT %s {\n", stmt->syn->token);
+			dumpStmtKeyValue(_ctx, stmt);
+			DUMP_P("\n}\n");
+		}
+		fflush(stdout);
 	}
-	else {
-		fprintf(stdout, "STMT %s {\n", stmt->syn->token);
-		dumpStmtKeyValue(_ctx, stmt);
-		fprintf(stdout, "\n}\n");
-	}
-	fflush(stdout);
+}
+
+#define kStmt_lgo(STMT)   Stmt_lgo(_ctx, STMT)
+static kLingo *Stmt_lgo(CTX, kStmt *stmt)
+{
+	return stmt->parentNULL != NULL ? stmt->parentNULL->lgo : kevalshare->rootlgo;
 }
 
 #define kStmt_done(STMT)  Stmt_done(_ctx, STMT)

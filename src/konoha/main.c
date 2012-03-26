@@ -129,9 +129,17 @@ int parse_opt(int argc, char *argv[])
 // -------------------------------------------------------------------------
 // ** main **
 
+int konoha_debug = 0;  // global variables
+
+// -------------------------------------------------------------------------
+// ** main **
+
 int main(int argc, const char *argv[])
 {
 	int ret = 0;
+	if(getenv("KONOHA_DEBUG") != NULL) {
+		konoha_debug = 1;
+	}
 	konoha_ginit(argc, argv);
 	konoha_t konoha = konoha_open();
 	ret = konoha_main(konoha, argc, argv);

@@ -194,11 +194,6 @@ static int Stmt_addAnnotation(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	return i;
 }
 
-static kLingo *Stmt_ns(CTX, kStmt *stmt)
-{
-	return kevalshare->rootlgo;
-}
-
 static int Stmt_addSugarSyntax(CTX, ksyntax_t *syn, kStmt *stmt, ksymbol_t name, kArray *tls, int s, int e)
 {
 	BEGIN_LOCAL(lsfp, 8);
@@ -244,7 +239,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			continue;
 		}
 		else if(rule->tt == TK_OPERATOR) {
-			ksyntax_t *syn = kLingo_syntax(_ctx, Stmt_ns(_ctx, stmt), rule->keyid, 0);
+			ksyntax_t *syn = kLingo_syntax(_ctx, kStmt_lgo(stmt), rule->keyid, 0);
 			if(syn == NULL || syn->StmtAdd == NULL) {
 				kerror(_ctx, ERR_, tk->uline, tk->lpos, "unknown sugar %s", T_kw(rule->keyid));
 				return -1;
@@ -289,19 +284,18 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 
 static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 {
-	kLingo *ns = Stmt_ns(_ctx, stmt);
+	kLingo *lgo = kStmt_lgo(stmt);
 	kToken *tk = tls->tts[s];
 	while(tk->tt == TK_NONE) {
 		s++;
 		tk = tls->tts[s];
 	}
-	//dumpToken(_ctx, tk);
 	if(tk->tt == TK_TYPE) {
 		*next = s + 1;
 		return 1;
 	}
 	else if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = kLingo_syntax(_ctx, ns, tk->keyid, 0);
+		ksyntax_t *syn = kLingo_syntax(_ctx, lgo, tk->keyid, 0);
 		if(syn->ty != CLASS_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = syn->ty;
@@ -309,6 +303,9 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 			return 1;
 		}
 	}
+//	else if(tk->tt == TK_USYMBOL) {
+//		kcid_t ty = kNameSpace_getcid(lgo, S_text(tk->text), S_size(tk->text));
+//	}
 	return 0;
 }
 
@@ -345,7 +342,7 @@ static kbool_t Stmt_makeTree(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	dumpTokenArray(_ctx, 0, tls, s, e);
 	keyword_t keyid = Stmt_stmttype(_ctx, stmt, tls, s, e);
-	ksyntax_t *syn = kLingo_syntax(_ctx, Stmt_ns(_ctx, stmt), keyid, 0);
+	ksyntax_t *syn = kLingo_syntax(_ctx, kStmt_lgo(stmt), keyid, 0);
 	int ret = 0;
 //	if (keyid == KW_DECLMETHOD) {
 //		kevalmod->flags = kflag_set(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE);
@@ -385,7 +382,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 static kbool_t Stmt_isUninaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = kLingo_syntax(_ctx, Stmt_ns(_ctx, stmt), tk->keyid, 0);
+		ksyntax_t *syn = kLingo_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
 		if(syn != NULL && syn->op1 != 0) return 1;
 	}
 	return 0;
@@ -409,7 +406,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == TK_KEYWORD) {
-			ksyntax_t *syn = kLingo_syntax(_ctx, Stmt_ns(_ctx, stmt), tk->keyid, 0);
+			ksyntax_t *syn = kLingo_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
 			if(syn != NULL && syn->op2 != 0) {
 				//DBG_P("operator: %s priotiry=%d", Pkeyword(syn->keyid), syn->priority);
 				if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {
@@ -645,7 +642,7 @@ static KMETHOD StmtAdd_block(CTX, ksfp_t *sfp _RIX)
 		s++;
 	}
 	else if(tk->tt == AST_BRACE) {
-		kBlock *bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), Stmt_ns(_ctx, stmt));
+		kBlock *bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_lgo(stmt));
 		kObject_setObject(stmt, name, bk);
 		s++;
 	}

@@ -53,6 +53,8 @@
 extern "C" {
 #endif
 
+extern int konoha_debug;
+
 #if defined(GCDEBUG) && !defined(GCSTAT)
 #define GCSTAT 1
 #endif
@@ -734,8 +736,10 @@ static void Kfree(CTX, void *p, size_t s)
 
 void klib2_check_malloced_size(void)
 {
-	fprintf(stderr, "klib:memory leaked=%ld\n", klib2_malloced);
-	fprintf(stderr, "sys :memory leaked=%ld\n", malloced_size);
+	if(konoha_debug) {
+		DUMP_P("\nklib:memory leaked=%ld\n", klib2_malloced);
+		DUMP_P("sys :memory leaked=%ld\n", malloced_size);
+	}
 }
 
 void klib2_GCAPI_init(klib2_t *l)

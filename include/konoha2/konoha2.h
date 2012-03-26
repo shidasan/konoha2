@@ -1179,13 +1179,14 @@ REF_t *kstack_tail(CTX, size_t min);
 #define KNH_ASSERT(a)    assert(a)
 #define DBG_ASSERT(a)    assert(a)
 #define DBG_P(fmt, ...)  _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__)
+#define DUMP_P(fmt, ...)  fprintf(stderr, fmt, ## __VA_ARGS__)
 
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)
 #define likely(x)     __builtin_expect(!!(x), 1)
 #endif /*unlikely*/
 
-/* Konoha API */
+///* Konoha API */
 extern void konoha_ginit(int argc, const char **argv);
 extern konoha_t konoha_open(void);
 extern void konoha_close(konoha_t konoha);
@@ -1198,10 +1199,5 @@ extern void kshare_free(CTX, kcontext_t *ctx);
 extern void kpromap_free(CTX, struct kpromap_t *p);
 extern void kpromap_reftrace(CTX, struct kpromap_t *p);
 extern void kshare_init_methods(CTX);
-
-/* module.c */
-extern void module_load(CTX, kcontext_t *ctx, char *libname, char *module_name);
-extern const kclass_t *class_load(CTX, char *libname, char *class_name);
-extern knh_Fmethod method_load(CTX, char *libname, kMethod *mtd);
 
 #endif /* KONOHA2_H_ */

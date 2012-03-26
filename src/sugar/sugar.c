@@ -35,6 +35,8 @@
 extern "C" {
 #endif
 
+extern int konoha_debug;
+
 // MOD_CODE
 void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk);
 
@@ -125,9 +127,9 @@ static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
 kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline)
 {
 	DBG_ASSERT(script[len] == 0);
-	//DBG_(if(knh_isVerboseLang()) {
-	fprintf(stderr, "\n>>>----\n'%s'\n------\n", script);
-	//});
+	if(konoha_debug) {
+		DUMP_P("\n>>>----\n'%s'\n------\n", script);
+	}
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
 	return Lingo_eval(_ctx, kevalshare->rootlgo, script, uline);
 }
