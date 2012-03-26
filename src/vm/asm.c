@@ -48,8 +48,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx);
 kBasicBlock* new_BasicBlockLABEL(CTX)
 {
 	kBasicBlock *bb = new_(BasicBlock, 0);
-	bb->listNC = kcodemod->insts;
-	DP(bb)->id = kArray_size(bb->listNC);
+	bb->id = kArray_size(kcodemod->insts);
 	kArray_add(kcodemod->insts, bb);
 	return bb;
 }
@@ -87,37 +86,27 @@ kBasicBlock* new_BasicBlockLABEL(CTX)
 #define SFP_(sfpidx)   ((sfpidx) * 2)
 #define RIX_(rix)      rix
 
-static void BasicBlock_expand(CTX, kBasicBlock *bb, size_t newsize)
-{
-	kopl_t* newbuf = (kopl_t*)KNH_ZMALLOC(sizeof(kopl_t) * newsize);
-	memcpy(newbuf, DP(bb)->opbuf, DP(bb)->capacity * sizeof(kopl_t));
-	KNH_FREE(DP(bb)->opbuf, DP(bb)->capacity * sizeof(kopl_t));
-	DP(bb)->opbuf = newbuf;
-	DP(bb)->capacity = newsize;
-}
+//static void BasicBlock_expand(CTX, kBasicBlock *bb, size_t newsize)
+//{
+//	kopl_t* newbuf = (kopl_t*)KNH_ZMALLOC(sizeof(kopl_t) * newsize);
+//	memcpy(newbuf, bb->opbuf, bb->capacity * sizeof(kopl_t));
+//	KNH_FREE(bb->opbuf, bb->capacity * sizeof(kopl_t));
+//	bb->opbuf = newbuf;
+//	bb->capacity = newsize;
+//}
 
 static void BasicBlock_add(CTX, kBasicBlock *bb, kushort_t line, kopl_t *op, size_t size)
 {
-	if(DP(bb)->capacity == 0) {
-		DP(bb)->opbuf = (kopl_t*)KNH_ZMALLOC(sizeof(kopl_t));
-		DP(bb)->capacity = 1;
+	if(bb->capacity == 0) {
+		KARRAY_INIT(bb->opbuf, 1, kopl_t);
 	}
-	else if(DP(bb)->capacity == 1) {
-		BasicBlock_expand(_ctx, bb, 4);
+	else if(bb->size == bb->capacity) {
+		KARRAY_EXPAND(bb->opbuf, 4, kopl_t);
 	}
-	else if(DP(bb)->size == DP(bb)->capacity) {
-		BasicBlock_expand(_ctx, bb, DP(bb)->capacity * 2);
-	}
-	{
-		kopl_t *pc = DP(bb)->opbuf + DP(bb)->size;
-		memcpy(pc, op, size == 0 ? sizeof(kopl_t) : size);
-#ifdef K_USING_RCGC
-		kopl_reftrace(_ctx, op FTRDATA);
-		knh_traverse_refs(_ctx, RCinc);
-#endif
-		pc->line = line;
-		DP(bb)->size += 1;
-	}
+	kopl_t *pc = bb->opbuf + bb->size;
+	memcpy(pc, op, size == 0 ? sizeof(kopl_t) : size);
+	pc->line = line;
+	bb->size += 1;
 }
 
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize)
@@ -132,15 +121,15 @@ static int BUILD_asmJMPF(CTX, klr_JMPF_t *op)
 	kBasicBlock *bb = kcodemod->bbNC;
 	DBG_ASSERT(op->opcode == OPCODE_JMPF);
 	int swap = 0;
-	while(DP(bb)->size > 0) {
+	while(bb->size > 0) {
 #ifdef _CLASSICVM
-		kopl_t *opP = DP(bb)->opbuf + (DP(bb)->size - 1);
+		kopl_t *opP = bb->opbuf + (bb->size - 1);
 		if(opP->opcode == OPbNOT) {
 			kopbNOT_t *opN = (kopbNOT_t*)opP;
 //			DBG_P("REWRITE JMPF index %d => %d", op->a, opN->a);
 			op->a = opN->a;
 			swap = (swap == 0) ? 1 : 0;
-			DP(bb)->size -= 1;
+			bb->size -= 1;
 			continue;
 		}
 		if(OPiEQ <= opP->opcode && opP->opcode <= OPiGTE && HAS_OPCODE(iJEQ)) {
@@ -191,8 +180,8 @@ static int BUILD_asmJMPF(CTX, klr_JMPF_t *op)
 
 static inline kopcode_t BasicBlock_opcode(kBasicBlock *bb)
 {
-	if(DP(bb)->size == 0) return OPCODE_NOP;
-	return DP(bb)->opbuf->opcode;
+	if(bb->size == 0) return OPCODE_NOP;
+	return bb->opbuf->opcode;
 }
 
 //#define BB(bb)   T_opcode(BasicBlock_opcode(bb))
@@ -200,7 +189,7 @@ static inline kopcode_t BasicBlock_opcode(kBasicBlock *bb)
 //static void dumpBB(kBasicBlock *bb, const char *indent)
 //{
 //	size_t i;
-////	DBG_P("%sid=%i, size=%d", indent, DP(bb)->id, DP(bb)->size);
+////	DBG_P("%sid=%i, size=%d", indent, bb->id, bb->size);
 //	if(bb->nextNC != NULL) {
 ////		DBG_P("%s\tnext=%d", indent, DP(bb->nextNC)->id);
 //		if(indent[0] == 0) dumpBB(bb->nextNC, "\t");
@@ -209,8 +198,8 @@ static inline kopcode_t BasicBlock_opcode(kBasicBlock *bb)
 ////		DBG_P("%s\tjump=%d", indent, DP(bb->jumpNC)->id);
 //		if(indent[0] == 0) dumpBB(bb->jumpNC, "\t");
 //	}
-//	for(i = 0; i < DP(bb)->size; i++) {
-//		kopl_t *op = DP(bb)->opbuf + i;
+//	for(i = 0; i < bb->size; i++) {
+//		kopl_t *op = bb->opbuf + i;
 ////		DBG_P("%s\t opcode=%s", indent, T_opcode(op->opcode));
 //		(void)op;
 //	}
@@ -240,7 +229,7 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 		}
 		if(bb->nextNC == NULL) {
 			if(DP(bbJ)->incoming == 1 ) {
-				//DBG_P("REMOVED %d JMP TO %d", DP(bb)->id, DP(bbJ)->id);
+				//DBG_P("REMOVED %d JMP TO %d", bb->id, DP(bbJ)->id);
 				bb->nextNC = bbJ;
 				bb->jumpNC = NULL;
 				goto L_NEXT;
@@ -255,16 +244,16 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 	L_NEXT:;
 	if(bb->nextNC != NULL) {
 		kBasicBlock *bbN = bb->nextNC;
-		if(DP(bbN)->size == 0 && bbN->nextNC != NULL && bbN->jumpNC == NULL) {
-			//DBG_P("DIRECT NEXT id=%d to NEXT id=%d", DP(bbN)->id, DP(bbN->nextNC)->id);
-			DP(bbN)->incoming -= 1;
+		if(bbN->size == 0 && bbN->nextNC != NULL && bbN->jumpNC == NULL) {
+			//DBG_P("DIRECT NEXT id=%d to NEXT id=%d", bbN->id, DP(bbN->nextNC)->id);
+			bbN->incoming -= 1;
 			bb->nextNC = bbN->nextNC;
 			DP(bb->nextNC)->incoming += 1;
 			goto L_NEXT;
 		}
-		if(DP(bbN)->size == 0 && bbN->nextNC == NULL && bbN->jumpNC != NULL) {
-			//DBG_P("DIRECT NEXT id=%d to JUMP id=%d", DP(bbN)->id, DP(bbN->jumpNC)->id);
-			DP(bbN)->incoming -= 1;
+		if(bbN->size == 0 && bbN->nextNC == NULL && bbN->jumpNC != NULL) {
+			//DBG_P("DIRECT NEXT id=%d to JUMP id=%d", bbN->id, DP(bbN->jumpNC)->id);
+			bbN->incoming -= 1;
 			bb->nextNC = NULL;
 			bb->jumpNC = bbN->jumpNC;
 			DP(bb->jumpNC)->incoming += 1;
@@ -275,38 +264,40 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 	}
 }
 
-static void BasicBlock_freebuf(CTX, kBasicBlock *bb)
-{
-	KNH_FREE(DP(bb)->opbuf, sizeof(kopl_t) * DP(bb)->capacity);
-	DP(bb)->capacity = 0;
-	DP(bb)->size = 0;
-	DP(bb)->opbuf = NULL;
-}
+//static void BasicBlock_freebuf(CTX, kBasicBlock *bb)
+//{
+//	KNH_FREE(bb->opbuf, sizeof(kopl_t) * bb->capacity);
+//	bb->capacity = 0;
+//	bb->size = 0;
+//	bb->opbuf = NULL;
+//}
 
 static void BasicBlock_join(CTX, kBasicBlock *bb, kBasicBlock *bbN)
 {
-	//DBG_P("join %d(%s) size=%d and %d(%s) size=%d", DP(bb)->id, BB(bb), DP(bb)->size, DP(bbN)->id, BB(bbN), DP(bbN)->size);
+	//DBG_P("join %d(%s) size=%d and %d(%s) size=%d", bb->id, BB(bb), bb->size, bbN->id, BB(bbN), bbN->size);
 	bb->nextNC = bbN->nextNC;
 	bb->jumpNC = bbN->jumpNC;
-	if(DP(bbN)->size == 0) {
+	if(bbN->size == 0) {
 		return;
 	}
-	if(DP(bb)->size == 0) {
-		DBG_ASSERT(DP(bb)->capacity == 0);
-		DP(bb)->opbuf = DP(bbN)->opbuf;
-		DP(bb)->capacity = DP(bbN)->capacity;
-		DP(bb)->size = DP(bbN)->size;
-		DP(bbN)->opbuf = NULL;
-		DP(bbN)->capacity = 0;
-		DP(bbN)->size = 0;
+	if(bb->size == 0) {
+		DBG_ASSERT(bb->capacity == 0);
+		bb->opbuf = bbN->opbuf;
+		bb->capacity = bbN->capacity;
+		bb->size = bbN->size;
+		bbN->opbuf = NULL;
+		bbN->capacity = 0;
+		bbN->size = 0;
 		return;
 	}
-	if(DP(bb)->capacity < DP(bb)->size + DP(bbN)->size) {
-		BasicBlock_expand(_ctx, bb, DP(bb)->size + DP(bbN)->size);
+	if(bb->capacity < bb->size + bbN->size) {
+		KARRAY_EXPAND(bb->opbuf, bb->size + bbN->size, kopl_t);
+		//BasicBlock_expand(_ctx, bb, bb->size + bbN->size);
 	}
-	memcpy(DP(bb)->opbuf + DP(bb)->size, DP(bbN)->opbuf, sizeof(kopl_t) * DP(bbN)->size);
-	DP(bb)->size += DP(bbN)->size;
-	BasicBlock_freebuf(_ctx, bbN);
+	memcpy(bb->opbuf + bb->size, bbN->opbuf, sizeof(kopl_t) * bbN->size);
+	bb->size += bbN->size;
+	KARRAY_FREE(bbN->opbuf, kopl_t);
+//	BasicBlock_freebuf(_ctx, bbN);
 }
 
 static void BasicBlock_strip1(CTX, kBasicBlock *bb)
@@ -328,7 +319,7 @@ static void BasicBlock_strip1(CTX, kBasicBlock *bb)
 	}
 	if(bb->nextNC != NULL) {
 		kBasicBlock *bbN = bb->nextNC;
-		if(DP(bbN)->incoming == 1 && BasicBlock_opcode(bbN) != OPCODE_RET) {
+		if(bbN->incoming == 1 && BasicBlock_opcode(bbN) != OPCODE_RET) {
 			BasicBlock_join(_ctx, bb, bbN);
 			BasicBlock_setVisited(bb, 1);
 			goto L_TAIL;
@@ -344,17 +335,17 @@ static void BasicBlock_strip1(CTX, kBasicBlock *bb)
 
 static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 {
-	size_t i, bbsize = DP(bb)->size;
-	for(i = 0; i < DP(bb)->size; i++) {
-		kopl_t *op = DP(bb)->opbuf + i;
+	size_t i, bbsize = bb->size;
+	for(i = 0; i < bb->size; i++) {
+		kopl_t *op = bb->opbuf + i;
 		if(op->opcode == OPCODE_NOP) {
 			bbsize--;
 		}
 	}
 #ifdef _CLASSICVM
-	for(i = 1; i < DP(bb)->size; i++) {
-		kopl_t *opP = DP(bb)->opbuf + (i - 1);
-		kopl_t *op = DP(bb)->opbuf + i;
+	for(i = 1; i < bb->size; i++) {
+		kopl_t *opP = bb->opbuf + (i - 1);
+		kopl_t *op = bb->opbuf + i;
 		if((op->opcode == OPfCAST || op->opcode == OPiCAST) && opP->opcode == OPNMOV) {
 			kopfCAST_t *opCAST = (kopfCAST_t*)op;
 			kopNMOV_t *opNMOV = (kopNMOV_t*)opP;
@@ -374,8 +365,8 @@ static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 			kopNSET_t *op2 = (kopNSET_t*)op;
 			if(op1->a + K_NEXTIDX != op2->a) continue;
 			if(sizeof(uintptr_t) == sizeof(kuint_t)) {
-				kopNSET_t *op3 = (kopNSET_t*)(DP(bb)->opbuf + i + 1);
-				kopNSET_t *op4 = (kopNSET_t*)(DP(bb)->opbuf + i + 2);
+				kopNSET_t *op3 = (kopNSET_t*)(bb->opbuf + i + 1);
+				kopNSET_t *op4 = (kopNSET_t*)(bb->opbuf + i + 2);
 				if(op3->opcode != OPNSET || op2->a + K_NEXTIDX != op3->a) goto L_NSET2;
 				if(op4->opcode == OPNSET && op3->a + K_NEXTIDX == op4->a) {
 					kopNSET4_t *opNSET = (kopNSET4_t*)opP;
@@ -404,8 +395,8 @@ static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 			kopOSET_t *op2 = (kopOSET_t*)op;
 			if(op1->a + K_NEXTIDX != op2->a) continue;
 			{
-				kopOSET_t *op3 = (kopOSET_t*)(DP(bb)->opbuf + i + 1);
-				kopOSET_t *op4 = (kopOSET_t*)(DP(bb)->opbuf + i + 2);
+				kopOSET_t *op3 = (kopOSET_t*)(bb->opbuf + i + 1);
+				kopOSET_t *op4 = (kopOSET_t*)(bb->opbuf + i + 2);
 				if(op3->opcode != OPOSET || op2->a + K_NEXTIDX != op3->a) goto L_OSET2;
 				if(op4->opcode == OPOSET && op3->a + K_NEXTIDX == op4->a) {
 					kopOSET4_t *opOSET = (kopOSET4_t*)opP;
@@ -469,22 +460,22 @@ static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 		}
 	}
 #endif
-	if(bbsize < DP(bb)->size) {
-		kopl_t *opD = DP(bb)->opbuf;
-		for(i = 0; i < DP(bb)->size; i++) {
-			kopl_t *opS = DP(bb)->opbuf + i;
+	if(bbsize < bb->size) {
+		kopl_t *opD = bb->opbuf;
+		for(i = 0; i < bb->size; i++) {
+			kopl_t *opS = bb->opbuf + i;
 			if(opS->opcode == OPCODE_NOP) continue;
 			if(opD != opS) {
 				*opD = *opS;
 			}
 			opD++;
 		}
-		DP(bb)->size = bbsize;
+		bb->size = bbsize;
 	}
-	return DP(bb)->size; /*bbsize*/;
+	return bb->size; /*bbsize*/;
 }
 
-#define BB_(bb)   (bb != NULL) ? DP(bb)->id : -1
+#define BB_(bb)   (bb != NULL) ? bb->id : -1
 
 static size_t BasicBlock_size(CTX, kBasicBlock *bb, size_t c)
 {
@@ -524,7 +515,7 @@ static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **
 	BasicBlock_setVisited(bb, 0);
 	DBG_ASSERT(!BasicBlock_isVisited(bb));
 //	DBG_P("BB%d: asm nextNC=BB%d, jumpNC=BB%d", BB_(bb), BB_(bb->nextNC), BB_(bb->jumpNC));
-	if(DP(bb)->code != NULL) {
+	if(bb->code != NULL) {
 		//DBG_P("BB%d: already copied", BB_(bb));
 		return dst;
 	}
@@ -535,16 +526,16 @@ static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **
 		prev[0]->jumpNC = NULL;
 		prev[0]->nextNC = bb;
 	}
-	DP(bb)->code = dst;
-	if(DP(bb)->size > 0) {
-		memcpy(dst, DP(bb)->opbuf, sizeof(kopl_t) * DP(bb)->size);
+	bb->code = dst;
+	if(bb->size > 0) {
+		memcpy(dst, bb->opbuf, sizeof(kopl_t) * bb->size);
 		if(bb->jumpNC != NULL) {
-			DP(bb)->opjmp = (dst + (DP(bb)->size - 1));
-//			DBG_ASSERT(kOPhasjump(DP(bb)->opjmp->opcode));
+			bb->opjmp = (dst + (bb->size - 1));
+//			DBG_ASSERT(kOPhasjump(bb->opjmp->opcode));
 		}
 #ifdef _CLASSICVM
 		size_t i;
-		for(i = 0; i < DP(bb)->size; i++) {
+		for(i = 0; i < bb->size; i++) {
 			kopl_t *op = dst + i;
 			if(op->opcode == OPVCALL) {
 				if(BasicBlock_isStackChecked(bb)) {
@@ -569,8 +560,9 @@ static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **
 //			DBG_P("BB%d: [%ld] %s", BB_(bb), i, T_opcode(op->opcode));
 		}
 #endif
-		dst = dst + DP(bb)->size;
-		BasicBlock_freebuf(_ctx, bb);
+		dst = dst + bb->size;
+		KARRAY_FREE(bb->opbuf, kopl_t);
+		//BasicBlock_freebuf(_ctx, bb);
 		prev[0] = bb;
 	}
 	if(bb->nextNC != NULL) {
@@ -582,7 +574,7 @@ static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **
 		dst = BasicBlock_copy(_ctx, dst, bb->nextNC, prev);
 	}
 	if(bb->jumpNC != NULL) {
-		//DBG_P("BB%d: JUMP=%d", DP(bb)->id, BB_(bb->jumpNC));
+		//DBG_P("BB%d: JUMP=%d", bb->id, BB_(bb->jumpNC));
 //		if(BasicBlock_isStackChecked(bb) && DP(bb->jumpNC)->incoming == 1) {
 //			BasicBlock_setStackChecked(bb->jumpNC, 1);
 //		}
@@ -597,9 +589,9 @@ static void BasicBlock_setjump(kBasicBlock *bb)
 		BasicBlock_setVisited(bb, 1);
 		if(bb->jumpNC != NULL) {
 			kBasicBlock *bbJ = bb->jumpNC;
-			klr_JMP_t *j = (klr_JMP_t*)DP(bb)->opjmp;
+			klr_JMP_t *j = (klr_JMP_t*)bb->opjmp;
 			j->jumppc = DP(bbJ)->code;
-			//DBG_P("jump from id=%d to id=%d %s jumppc=%p", DP(bb)->id, DP(bbJ)->id, T_opcode(j->opcode), DP(bbJ)->code);
+			//DBG_P("jump from id=%d to id=%d %s jumppc=%p", bb->id, DP(bbJ)->id, T_opcode(j->opcode), DP(bbJ)->code);
 			bb->jumpNC = NULL;
 			if(!BasicBlock_isVisited(bbJ)) {
 				BasicBlock_setVisited(bbJ, 1);
@@ -803,8 +795,8 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 //#ifdef K_USING_SAFEPOINT
 //	kBasicBlock *bb = kcodemod->bbNC;
 //	size_t i;
-//	for(i = 0; i < DP(bb)->size; i++) {
-//		kopl_t *op = DP(bb)->opbuf + i;
+//	for(i = 0; i < bb->size; i++) {
+//		kopl_t *op = bb->opbuf + i;
 //		if(op->opcode == OPSAFEPOINT) return;
 //	}
 //	ASM(SAFEPOINT, SFP_(espidx));
@@ -943,8 +935,8 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 #ifdef OPCHKIDX
 	long i;
 	kBasicBlock *bb = kcodemod->bbNC;
-	for(i = (long)DP(bb)->size - 1; i >= 0; i--) {
-		kopCHKIDX_t *op = (kopCHKIDX_t*)(DP(bb)->opbuf + i);
+	for(i = (long)bb->size - 1; i >= 0; i--) {
+		kopCHKIDX_t *op = (kopCHKIDX_t*)(bb->opbuf + i);
 		kOPt opcode = op->opcode;
 		if(opcode == OPCHKIDXC && op->a == aidx && op->n == nidx) {
 			return;
@@ -960,8 +952,8 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 #ifdef OPCHKIDX
 	kBasicBlock *bb = kcodemod->bbNC;
 	long i;
-	for(i = (long)DP(bb)->size - 1; i >= 0; i--) {
-		kopCHKIDXC_t *op = (kopCHKIDXC_t*)(DP(bb)->opbuf + i);
+	for(i = (long)bb->size - 1; i >= 0; i--) {
+		kopCHKIDXC_t *op = (kopCHKIDXC_t*)(bb->opbuf + i);
 		kOPt opcode = op->opcode;
 		if(opcode == OPCHKIDXC && op->a == aidx) {
 			if(op->n < (kuint_t) n) op->n = n;
@@ -1551,56 +1543,6 @@ static inline void Tn_asmBLOCK(CTX, kStmtExpr *stmt, size_t n)
 	BLOCK_asm(_ctx, stmtNN(stmt, n));
 }
 
-static void ASM_PMOV(CTX, int isUNBOX, int a, int b)
-{
-	kBasicBlock *bb = kcodemod->bbNC;
-	if(DP(bb)->size > 0) {
-		kopl_t *opP = DP(bb)->opbuf + (DP(bb)->size - 1);
-		kopTR_t *opTR = (kopTR_t*)opP;
-		int defidx = opTR->a;
-		if(isUNBOX) {
-			int r0 = NC_(a), r1 = NC_(b);
-			if(r1 == defidx) {
-				kOPt opcode = opP->opcode;
-				DBG_P("r0=%d, r1=%d, def=%d", r0, r1, defidx);
-				if((OPbNOT <= opcode && opcode <= OPfGTEC)
-				  || (OPiCAST <= opcode && opcode <= OPfCAST)
-				  || (OPBGETIDX <= opcode && opcode <= OPNSETIDXC)
-				  || (OPNSET == opcode)) {
-					opTR->a = r0;
-					return ;
-				}
-			}
-			ASM(NMOV, r0, r1);
-		}
-		else {
-			int r0 = OC_(a), r1 = OC_(b);
-			if(r1 == defidx) {
-				kOPt opcode = opP->opcode;
-				DBG_P("r0=%d, r1=%d, def=%d", r0, r1, defidx);
-				if(opcode == OPTR) {
-					opTR->a = r0;
-					opTR->rix = (r0 - opTR->b) / 2;
-					return ;
-				}
-				if((OPOGETIDX <= opcode && opcode <= OPOSETIDXC)) {
-					opTR->a = r0;
-					return ;
-				}
-			}
-			ASM(OMOV, r0, r1);
-		}
-	}
-	else {
-		if(isUNBOX) {
-			ASM(NMOV, NC_(a), NC_(b));
-		}
-		else {
-			ASM(OMOV, OC_(a), OC_(b));
-		}
-	}
-}
-
 static void LET_asm(CTX, kStmtExpr *stmt)
 {
 	kTerm *tkL = tkNN(stmt, 1);
@@ -2042,12 +1984,12 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
-	bb->bottom = 0;
+//	bb->bottom = 0;
 	bb->capacity = 0;
 	bb->code = NULL;
 	bb->id = 0;
 	bb->incoming = 0;
-	bb->listNC  = NULL;
+//	bb->listNC  = NULL;
 	bb->nextNC  = NULL;
 	bb->jumpNC  = NULL;
 	bb->opbuf = NULL;

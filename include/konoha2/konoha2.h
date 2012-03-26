@@ -1032,9 +1032,9 @@ typedef struct klib2_t {
 #define KNH_ZMALLOC(size)      (KPI)->Kzmalloc(_ctx, size)
 #define KNH_FREE(p, size)      (KPI)->Kfree(_ctx, p, size)
 
-#define KARRAY_INIT(VAR, init, STRUCT)      (KPI)->Karray_init(_ctx, &(VAR), init, sizeof(STRUCT))
-#define KARRAY_EXPAND(VAR, min, STRUCT)     (KPI)->Karray_expand(_ctx, &(VAR), min, sizeof(STRUCT))
-#define KARRAY_FREE(VAR, STRUCT)            (KPI)->Karray_free(_ctx, &(VAR), sizeof(STRUCT))
+#define KARRAY_INIT(VAR, init, STRUCT)      (KPI)->Karray_init(_ctx, (karray_t*)&(VAR), init, sizeof(STRUCT))
+#define KARRAY_EXPAND(VAR, min, STRUCT)     (KPI)->Karray_expand(_ctx, (karray_t*)&(VAR), min, sizeof(STRUCT))
+#define KARRAY_FREE(VAR, STRUCT)            (KPI)->Karray_free(_ctx, (karray_t*)&(VAR), sizeof(STRUCT))
 
 
 #define kwb_init(M,W)            (KPI)->Kwb_init(M,W)
@@ -1184,6 +1184,7 @@ REF_t *kstack_tail(CTX, size_t min);
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)
 #define likely(x)     __builtin_expect(!!(x), 1)
+
 #endif /*unlikely*/
 
 ///* Konoha API */

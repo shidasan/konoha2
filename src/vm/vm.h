@@ -137,13 +137,12 @@ typedef struct kBasicBlock kBasicBlock;
 
 struct kBasicBlock {
 	kObjectHeader h;
-	struct kArray *listNC;
+	kushort_t id;     kushort_t incoming;
+	kopl_t   *opbuf;
+	size_t    size;
+	size_t    capacity;
 	struct kBasicBlock *nextNC;
 	struct kBasicBlock *jumpNC;
-	kushort_t id;     kushort_t incoming;
-	kopl_t *opbuf;
-	kushort_t size;   kushort_t capacity;
-	kushort_t bottom; kushort_t top;
 	kopl_t *code;
 	kopl_t *opjmp;
 };
