@@ -160,7 +160,6 @@ struct kKonohaCode {
 	kline_t   uri;
 };
 
-
 //-------------------------------------------------------------------------
 
 #define rshift(rbp, x_) (rbp+(x_))
@@ -1039,51 +1038,6 @@ struct kKonohaCode {
 
 #define KLR_NOP(ctx)
 #endif
-
-/* ------------------------------------------------------------------------ */
-/* ************************************************************************ */
-/*---  vm runtime functions ---*/
-void knh_throw(CTX, ksfp_t *sfp, ksfpidx_t start)
-{
-	KTODO("");
-}
-
-void CTX_setThrowingException(CTX, struct kException *e)
-{
-	KTODO("");
-}
-
-void THROW_Halt(CTX, ksfp_t *sfp, const char *msg)
-{
-	KTODO(msg);
-}
-
-/* adhoc fix */
-typedef struct kException {
-	void *p;
-} kException;
-
-kException *new_Error(CTX, int idx, kString *str)
-{
-	KTODO(S_text(str));
-	return NULL;
-}
-
-ksfp_t *knh_stack_initexpand(CTX, ksfp_t *sfp, size_t n)
-{
-	KTODO("");
-	return NULL;
-}
-
-void knh_checkSafePoint(CTX, ksfp_t *sfp, const char *file, int line)
-{
-	KTODO("");
-}
-
-void KNH_DIE(const char *fmt, ...)
-{
-	KTODO("");
-}
 
 #ifdef __cplusplus
 }

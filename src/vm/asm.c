@@ -86,15 +86,6 @@ kBasicBlock* new_BasicBlockLABEL(CTX)
 #define SFP_(sfpidx)   ((sfpidx) * 2)
 #define RIX_(rix)      rix
 
-//static void BasicBlock_expand(CTX, kBasicBlock *bb, size_t newsize)
-//{
-//	kopl_t* newbuf = (kopl_t*)KNH_ZMALLOC(sizeof(kopl_t) * newsize);
-//	memcpy(newbuf, bb->opbuf, bb->capacity * sizeof(kopl_t));
-//	KNH_FREE(bb->opbuf, bb->capacity * sizeof(kopl_t));
-//	bb->opbuf = newbuf;
-//	bb->capacity = newsize;
-//}
-
 static void BasicBlock_add(CTX, kBasicBlock *bb, kushort_t line, kopl_t *op, size_t size)
 {
 	if(bb->capacity == 0) {
@@ -627,34 +618,34 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 	size_t i, size = OPDATA[c->opcode].size;
 	const kushort_t *vmt = OPDATA[c->opcode].types;
 	if(pc_start == NULL) {
-		fprintf(stdout, "[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
+		DUMP_P("[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
 	}
 	else {
-		fprintf(stdout, "[L%d:%d]\t%s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
+		DUMP_P("[L%d:%d]\t%s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
 	}
 	for(i = 0; i < size; i++) {
-		fprintf(stdout, " ");
+		DUMP_P(" ");
 		switch(vmt[i]) {
 		case VMT_VOID: break;
 		case VMT_ADDR:
 			if(pc_start == NULL) {
-				fprintf(stdout, "%p", c->p[i]);
+				DUMP_P("%p", c->p[i]);
 			}
 			else {
-				fprintf(stdout, "L%d", (int)((kopl_t*)c->p[i] - pc_start));
+				DUMP_P("L%d", (int)((kopl_t*)c->p[i] - pc_start));
 			}
 			break;
 		case VMT_R:
-			fprintf(stdout, "sfp[%d,r=%d]", (int)c->data[i]/2, (int)c->data[i]);
+			DUMP_P("sfp[%d,r=%d]", (int)c->data[i]/2, (int)c->data[i]);
 			break;
 		case VMT_U:
-			fprintf(stdout, "u%lu", c->data[i]); break;
+			DUMP_P("u%lu", c->data[i]); break;
 		case VMT_I:
-			fprintf(stdout, "i%ld", c->data[i]); break;
+			DUMP_P("i%ld", c->data[i]); break;
 		case VMT_F:
-			fprintf(stdout, "function(%p)", c->p[i]); break;
+			DUMP_P("function(%p)", c->p[i]); break;
 		case VMT_CID:
-			fprintf(stdout, "CT(%s)", S_text(((kclass_t*)c->data[i])->name)); break;
+			DUMP_P("CT(%s)", S_text(((kclass_t*)c->data[i])->name)); break;
 //		case VMT_HCACHE: {
 //			kcachedata_t *hc = (kcachedata_t*)&(c->p[i]);
 //			knh_write_cname(_ctx, w, hc->cid);
@@ -675,10 +666,10 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 //		}
 		}/*switch*/
 	}
-	fprintf(stdout, "\n");
+	DUMP_P("\n");
 }
 
-KMETHOD Fmethod_runVM(CTX, ksfp_t *sfp _RIX)
+static KMETHOD Fmethod_runVM(CTX, ksfp_t *sfp _RIX)
 {
 	DBG_ASSERT(K_RIX == K_RTNIDX);
 	DBG_ASSERT(IS_Method(sfp[K_MTDIDX].mtdNC));
@@ -1441,8 +1432,13 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
 	}
 	else {
-//		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd/*, FIXME CT_Method*/);
-		ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd);
+		if(mtd->fcall_1 != Fmethod_runVM) {
+			ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd);
+		}
+		else {
+			ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
+			ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
+		}
 	}
 }
 
@@ -2000,7 +1996,7 @@ static void BasicBlock_free(CTX, kRawPtr *o)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
 	if(bb->capacity > 0) {
-		KNH_FREE(bb->opbuf, bb->capacity * sizeof(kopl_t));
+		KARRAY_FREE(bb->opbuf, kopl_t);
 	}
 }
 
