@@ -117,7 +117,7 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 
 static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
 {
-	const kclass_t *cFloat = kaddClassDef(&FloatDef);
+	const kclass_t *cFloat = kaddClassDef(lgo->pid, 0, &FloatDef);
 	kcid_t TY_Float = cFloat->cid;
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
