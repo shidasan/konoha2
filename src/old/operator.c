@@ -799,32 +799,6 @@ static KMETHOD String_opEXISTS(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Const method Boolean String.equals(String s);
-
-static KMETHOD String_equals(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNb_((S_size(sfp[0].s) == S_size(sfp[1].s) &&
-		knh_bytes_strcmp(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s)) == 0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method Boolean String.startsWith(String s);
-
-static KMETHOD String_startsWith(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNb_(knh_strncmp(S_text(sfp[0].s), S_text(sfp[1].s), S_size(sfp[1].s)) == 0);
-	//RETURNb_(knh_bytes_startsWith_(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s))); older
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method Boolean String.endsWith(String s);
-
-static KMETHOD String_endsWith(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNb_(knh_bytes_endsWith_(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s)));
-}
-
-/* ------------------------------------------------------------------------ */
 //## @Const method String String.concat(Object value, ...);
 //## @Const method String String.opADD(dynamic value);
 
@@ -841,47 +815,6 @@ static KMETHOD String_concat(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	RETURN_(CWB_newString(_ctx, cwb, 0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method Int String.indexOf(String s);
-
-static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
-{
-	long loc = -1;
-	kbytes_t base = S_tobytes(sfp[0].s);
-	char *p = strstr(base.text, S_text(sfp[1].s));
-	if (p != NULL) {
-		loc = p - base.text;
-		if(!String_isASCII(sfp[0].s)) {
-			base.len = (size_t)loc;
-			loc = knh_bytes_mlen(base);
-		}
-	}
-	RETURNi_(loc);
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method Int String.lastIndexOf(String s);
-
-static KMETHOD String_lastIndexOf(CTX, ksfp_t *sfp _RIX)
-{
-	kbytes_t base = S_tobytes(sfp[0].s);
-	if (IS_NULL(sfp[1].o)) RETURNi_(-1);
-	kbytes_t delim = S_tobytes(sfp[1].s);
-	kindex_t loc = base.len - delim.len;
-	if(delim.len == 0) loc--;
-	for(; loc >= 0; loc--) {
-		if(base.utext[loc] == delim.utext[0]) {
-			kbytes_t sub = {{base.text + loc}, delim.len};
-			if(knh_bytes_strcmp(sub, delim) == 0) break;
-		}
-	}
-	if (loc >= 0 && !String_isASCII(sfp[0].s)) {
-		base.len = (size_t)loc;
-		loc = knh_bytes_mlen(base);
-	}
-	RETURNi_(loc);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1271,20 +1204,6 @@ static KMETHOD String_convert(CTX, ksfp_t *sfp _RIX)
 		c->dpi->sconv(_ctx, c->conv, S_text(sfp[0].s), S_size(sfp[0].s), cwb->ba);
 	}
 	RETURN_(CWB_newString(_ctx, cwb, 0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method String String.trim();
-
-static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[0].s;
-	kbytes_t t = S_tobytes(s);
-	kbytes_t t2 = bytes_trim(t);
-	if(t.len > t2.len) {
-		s = new_kString(t2.text, t2.len, _SUB(s));
-	}
-	RETURN_(s);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2318,14 +2237,6 @@ static KMETHOD Float_opGTE(CTX, ksfp_t *sfp _RIX)
 /* ------------------------------------------------------------------------ */
 /* [opHAS] */
 
-/* ------------------------------------------------------------------------ */
-//## @Const method Boolean String.opHAS(String s);
-
-static KMETHOD String_opHAS(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNb_(strstr(S_text(sfp[0].s), S_text(sfp[1].s)) != NULL);
-}
-
 ///* ------------------------------------------------------------------------ */
 ////## method Boolean Range.opHAS(dynamic v);
 //
@@ -2594,38 +2505,6 @@ static KMETHOD Float_opDIV(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Const method String String.opSUB(String s);
-
-static KMETHOD String_opSUB(CTX, ksfp_t *sfp _RIX)
-{
-	kbytes_t base = S_tobytes(sfp[0].s);
-	kbytes_t t = S_tobytes(sfp[1].s);
-	kchar_t c = t.utext[0];
-	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
-	size_t i;
-	for(i = 0; i < base.len; i++) {
-		if(base.utext[i] == c) {
-			size_t j;
-			for(j = 1; j < t.len; j++) {
-				if(base.utext[i+j] != t.utext[j]) break;
-			}
-			if(j == t.len) {
-				i += t.len - 1;
-				continue;
-			}
-		}
-		kwb_putc(cwb->ba, base.utext[i]);
-	}
-	if(base.len == CWB_size(cwb)) {
-		CWB_close(_ctx, cwb);
-		RETURN_(sfp[0].o);
-	}
-	else {
-		RETURN_(CWB_newString(_ctx, cwb, 0));
-	}
-}
-
-/* ------------------------------------------------------------------------ */
 //## @Const method Boolean Boolean.opNOT();
 
 static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)
@@ -2711,18 +2590,6 @@ KMETHOD Tuple_getSize(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## method @Const Int String.getSize();
-
-static KMETHOD String_getSize(CTX, ksfp_t *sfp _RIX)
-{
-	size_t size = IS_bString(sfp[0].s) ? S_size(sfp[0].s) : 0;
-	if(!String_isASCII(sfp[0].s)) {
-		size = knh_bytes_mlen(S_tobytes(sfp[0].s));
-	}
-	RETURNi_(size);
-}
-
-/* ------------------------------------------------------------------------ */
 //## method Int Map.getSize();
 
 KMETHOD Map_getSize(CTX, ksfp_t *sfp _RIX)
@@ -2766,25 +2633,6 @@ static KMETHOD Bytes_setAll(CTX, ksfp_t *sfp _RIX)
 		ba->bu.ubuf[i] = n;
 	}
 	RETURNvoid_();
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method String String.get(Int n);
-
-static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
-{
-	kbytes_t base = S_tobytes(sfp[0].s);
-	kString *s;
-	if(String_isASCII(sfp[0].s)) {
-		size_t n = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), S_size(sfp[0].s));
-		s = new_kString(base.text + n, 1, _ALWAYS|_ASCII);
-	}
-	else {
-		size_t off = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), knh_bytes_mlen(base));
-		kbytes_t sub = knh_bytes_mofflen(base, off, 1);
-		s = new_kString(sub.text, sub.len, _ALWAYS|_CHARSIZE(sub.len));
-	}
-	RETURN_(s);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2847,76 +2695,6 @@ static KMETHOD Bytes_opTO(CTX, ksfp_t *sfp _RIX)
 	size_t s, e;
 	_rangeTO(_ctx, sfp, (sfp[0].ba)->bu.len, &s, &e);
 	RETURN_(new_BytesRANGE(_ctx, sfp[0].ba, s, e));
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method String String.substring(Int offset, Int length);
-
-static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s;
-	kbytes_t base = S_tobytes(sfp[0].s);
-	kbytes_t t;
-	if(String_isASCII(sfp[0].s)) {
-		size_t offset = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), base.len);
-		t = knh_bytes_last(base, offset);
-		if(sfp[2].ivalue != 0) {
-			size_t len = (size_t)sfp[2].ivalue;
-			if(len < t.len) t = knh_bytes_first(t, len);
-		}
-	}
-	else { // multibytes
-		size_t mlen = knh_bytes_mlen(base);
-		size_t offset = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), mlen);
-		size_t length = sfp[2].ivalue == 0  ? (mlen - offset) : (size_t)sfp[2].ivalue;
-		t = knh_bytes_mofflen(base, offset, length);
-	}
-	s = new_kString(t.text, t.len, _SUBCHAR(sfp[0].s));
-	RETURN_(s);
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method String String.opUNTIL(Int s, Int e);
-
-static KMETHOD String_opUNTIL(CTX, ksfp_t *sfp _RIX)
-{
-	kbytes_t t = S_tobytes(sfp[0].s);
-	if(sfp[2].ivalue != 0) {
-		if(!String_isASCII(sfp[0].s)) {
-			size_t mlen = knh_bytes_mlen(t);
-			size_t offset = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), mlen);
-			size_t length = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), mlen) - offset;
-			t = knh_bytes_mofflen(t, offset, length);
-			RETURN_(new_kString(t.text, t.len, 0));
-		}
-		else {
-			size_t offset = Int_to(size_t, sfp[1]);
-			sfp[2].ivalue = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), (sfp[0].s)->str.len) - offset;
-		}
-	}
-	String_substring(_ctx, sfp, K_RIX);
-}
-
-/* ------------------------------------------------------------------------ */
-//## @Const method String String.opTO(Int s, Int e);
-
-static KMETHOD String_opTO(CTX, ksfp_t *sfp _RIX)
-{
-	kbytes_t t = S_tobytes(sfp[0].s);
-	if(sfp[2].ivalue != 0) {
-		if(!String_isASCII(sfp[0].s)) {
-			size_t mlen = knh_bytes_mlen(t);
-			size_t offset = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), mlen);
-			size_t length = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), mlen) - offset + 1;
-			t = knh_bytes_mofflen(t, offset, length);
-			RETURN_(new_kString(t.text, t.len, 0));
-		}
-		else {
-			size_t offset = Int_to(size_t, sfp[1]);
-			sfp[2].ivalue = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), (sfp[0].s)->str.len) - offset + 1;
-		}
-	}
-	String_substring(_ctx, sfp, K_RIX);
 }
 
 /* ------------------------------------------------------------------------ */

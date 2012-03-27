@@ -143,7 +143,6 @@ macro(create_package_project PKGNAME)
 			${KONOHA_INCLUDE_DIRS}
 			${_PACKAGE_INCLUDE_DIR})
 	include_directories(${_INCLUDE_DIRS})
-	add_definitions(-D_SETUP)
 	add_library(${_PACKAGE_NAME} SHARED ${PACKAGE_SOURCE_CODE})
 	set_target_properties(${_PACKAGE_NAME} PROPERTIES PREFIX "")
 	target_link_libraries(${_PACKAGE_NAME} konoha ${PACKAGE_EXTRA_LIBRARY})
@@ -167,6 +166,8 @@ endmacro(add_konoha_package)
 #foreach(dir ${dirs})
 #	add_subdirectory(${dir})
 #endforeach()
+
+add_subdirectory(package/konoha.string)
 
 # test cases
 enable_testing()
