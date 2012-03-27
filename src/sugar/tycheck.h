@@ -63,7 +63,7 @@ static kExpr *Expr_typed(CTX, kExpr *expr, kGamma *gma, int req_ty)
 	if(Expr_isTerm(expr)) {
 		kToken *tk = expr->tkNUL;
 		keyword_t keyid = tk->tt == TK_KEYWORD ? tk->keyid : KW_TK(tk->tt);
-		syn = kLingo_syntax(_ctx, gma->genv->lgo, keyid, 0);
+		syn = Lingo_syntax(_ctx, gma->genv->lgo, keyid, 0);
 		if(syn == NULL || syn->ExprTyCheck == NULL) {
 			kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined term type checker: %s %s", T_tt(tk->tt), kToken_s(tk));
 			return K_NULLEXPR;
