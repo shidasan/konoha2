@@ -249,7 +249,7 @@ static kcid_t Lingo_getcid(CTX, kLingo *lgo, const char *name, size_t len, kcid_
 	//	nsN = nsN->parentNULL;
 	//}
 	cid = (kcid_t)casehash_getuint(_ctx, _ctx->share->classnameMapNN, name, len, def);
-	return cid;
+	return (cid != CLASS_unknown && CT_(cid)->nsid == 0) ? cid : def;
 }
 
 /* Lingo/Class/Method */
@@ -274,8 +274,7 @@ static kMethod* CT_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn)
 
 #define kLingo_getMethodNULL(ns, cid, mn)     Lingo_getMethodNULL(_ctx, ns, cid, mn)
 #define kLingo_getStaticMethodNULL(ns, mn)   Lingo_getStaticMethodNULL(_ctx, ns, mn)
-
-kMethod* Lingo_getMethodNULL(CTX, kLingo *lgo, kcid_t cid, kmethodn_t mn)
+static kMethod* Lingo_getMethodNULL(CTX, kLingo *lgo, kcid_t cid, kmethodn_t mn)
 {
 	while(lgo != NULL) {
 		if(lgo->methodsNULL != NULL) {
@@ -307,15 +306,27 @@ static kMethod* Lingo_getStaticMethodNULL(CTX, kLingo *lgo, kmethodn_t mn)
 	return NULL;
 }
 
+#define kLingo_getCastMethodNULL(ns, cid, tcid)     Lingo_getCastMethodNULL(_ctx, ns, cid, tcid)
+static kMethod* Lingo_getCastMethodNULL(CTX, kLingo *lgo, kcid_t cid, kcid_t tcid)
+{
+	kMethod *mtd = Lingo_getMethodNULL(_ctx, lgo, cid, MN_to(tcid));
+	if(mtd != NULL) {
+		mtd = Lingo_getMethodNULL(_ctx, lgo, cid, MN_as(tcid));
+	}
+	return mtd;
+}
+
 #define kLingo_addMethod(NS,MTD,UL)  Lingo_addMethod(_ctx, NS, MTD, UL)
 
 static kbool_t Lingo_addMethod(CTX, kLingo *lgo, kMethod *mtd, kline_t pline)
 {
-	kMethod *mtdOLD = Lingo_getMethodNULL(_ctx, lgo, mtd->cid, mtd->mn);
-	if(mtdOLD != NULL) {
-		char mbuf[128];
-		kerror(_ctx, ERR_, pline, -1, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
-		return 0;
+	if(pline != 0) {
+		kMethod *mtdOLD = Lingo_getMethodNULL(_ctx, lgo, mtd->cid, mtd->mn);
+		if(mtdOLD != NULL) {
+			char mbuf[128];
+			kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+			return 0;
+		}
 	}
 	if(kMethod_isPublic(mtd)) {
 		const kclass_t *ct = CT_(mtd->cid);
@@ -333,6 +344,7 @@ static kbool_t Lingo_addMethod(CTX, kLingo *lgo, kMethod *mtd, kline_t pline)
 static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
 {
 	intptr_t *d = data;
+	kParam *prev = NULL;
 	while(d[0] != -1) {
 		uintptr_t flag = (uintptr_t)d[0];
 		knh_Fmethod f = (knh_Fmethod)d[1];
@@ -347,7 +359,18 @@ static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
 			p[i].fn = (ksymbol_t)d[1];
 			d += 2;
 		}
-		kParam *pa = new_kParam(rtype, psize, p);
+		if(prev != NULL) {
+			if (prev->rtype == rtype && prev->psize == psize) {
+				for(i = 0; i < psize; i++) {
+					if(p[i].ty != prev->p[i].ty || p[i].fn != prev->p[i].fn) {
+						prev = NULL;
+						break;
+					}
+				}
+			}
+			else prev = NULL;
+		}
+		kParam *pa = (prev == NULL) ? new_kParam(rtype, psize, p) : prev;
 		kMethod *mtd = new_kMethod(flag, cid, mn, pa, f);
 		if(lgo == NULL || kMethod_isPublic(mtd)) {
 			kArray_add(CT_(cid)->methods, mtd);
@@ -357,6 +380,7 @@ static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
 			}
 			kArray_add(lgo->methodsNULL, mtd);
 		}
+		prev = pa;
 	}
 }
 

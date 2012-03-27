@@ -231,12 +231,12 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->packageMapNO = kmap_init(0);
 
 	ksetModule(MOD_EVAL, (kmodshare_t*)base, 0);
-	base->cLingo = kaddClassDef(&LingoDef);
-	base->cToken = kaddClassDef(&TokenDef);
-	base->cExpr  = kaddClassDef(&ExprDef);
-	base->cStmt  = kaddClassDef(&StmtDef);
-	base->cBlock = kaddClassDef(&BlockDef);
-	base->cGamma = kaddClassDef(&GammaDef);
+	base->cLingo = kaddClassDef(1, 1, &LingoDef);
+	base->cToken = kaddClassDef(1, 1, &TokenDef);
+	base->cExpr  = kaddClassDef(1, 1, &ExprDef);
+	base->cStmt  = kaddClassDef(1, 1, &StmtDef);
+	base->cBlock = kaddClassDef(1, 1, &BlockDef);
+	base->cGamma = kaddClassDef(1, 1, &GammaDef);
 
 	KINITv(base->rootlgo, new_(Lingo, NULL));
 	KINITv(base->nullToken, new_(Token, NULL));
@@ -258,6 +258,11 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->kw_params = KW_("$params");
 	base->kw_then = KW_("then");
 	base->kw_else = KW_("else");
+
+	base->keyword = keyword;
+	base->Stmt_getBlock = Stmt_getBlock;
+	base->Stmt_tyCheckExpr = Stmt_tyCheckExpr;
+	base->Block_tyCheckAll = Block_tyCheckAll;
 }
 
 static const char *Pkeyword_(CTX, keyword_t keyid)

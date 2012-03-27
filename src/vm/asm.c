@@ -2097,8 +2097,8 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 	base->h.free     = kcodeshare_free;
 
 	ksetModule(MOD_CODE, &base->h, 0);
-	base->cBasicBlock = kaddClassDef(&BasicBlockDef);
-	base->cKonohaCode = kaddClassDef(&KonohaCodeDef);
+	base->cBasicBlock = kaddClassDef(1, 1, &BasicBlockDef);
+	base->cKonohaCode = kaddClassDef(1, 1, &KonohaCodeDef);
 	kcodeshare_setup(_ctx, &base->h);
 	{
 		INIT_GCSTACK();

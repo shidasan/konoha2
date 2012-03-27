@@ -823,12 +823,14 @@ static void initStructData(CTX)
 	}
 }
 
-static const kclass_t *addClassDef(CTX, KCLASS_DEF *cdef)
+static const kclass_t *addClassDef(CTX, kpkg_t pkgid, kpkg_t nsid, KCLASS_DEF *cdef)
 {
 	kclass_t *ct = new_CT(_ctx, cdef);
 	const char *name = ct->s->structname;
 	kString *cname = new_kString(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT);
 	CT_setName(_ctx, ct, cname);
+	ct->pkgid = pkgid;
+	ct->nsid  = nsid;
 	return (const kclass_t*)ct;
 }
 

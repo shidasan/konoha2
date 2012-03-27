@@ -39,16 +39,16 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 // Block
 
-static int selectStmtLine(CTX, kLingo *ns, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
+static int selectStmtLine(CTX, kLingo *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e);
 
-kBlock *new_Block(CTX, kArray *tls, int s, int e, kLingo* ns)
+kBlock *new_Block(CTX, kArray *tls, int s, int e, kLingo* lgo)
 {
-	kBlock *bk = new_(Block, ns);
+	kBlock *bk = new_(Block, lgo);
 	PUSH_GCSTACK(bk);
 	int i = s, indent = 0, atop = kArray_size(tls);
 	while(i < e) {
-		i = selectStmtLine(_ctx, ns, &indent, tls, i, e, tls);
+		i = selectStmtLine(_ctx, lgo, &indent, tls, i, e, tls);
 		int asize = kArray_size(tls);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize);
@@ -116,7 +116,7 @@ static int makeTree(CTX, kLingo *ns, kArray *tls, ktoken_t tt, int s, int e, int
 	return e;
 }
 
-static int selectStmtLine(CTX, kLingo *ns, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
+static int selectStmtLine(CTX, kLingo *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
 {
 	int i = s;
 	for(; i < e; i++) {
@@ -127,7 +127,7 @@ static int selectStmtLine(CTX, kLingo *ns, int *indent, kArray *tls, int s, int 
 				tk1->tt = TK_METANAME;
 				kArray_add(tlsdst, tk1);
 				if(i + 2 < e && tls->tts[i+2]->topch == '(') {
-					i = makeTree(_ctx, ns, tls, AST_PARENTHESIS, i+2, e, ')', tlsdst);
+					i = makeTree(_ctx, lgo, tls, AST_PARENTHESIS, i+2, e, ')', tlsdst);
 				}
 				else {
 					i++;
@@ -142,13 +142,13 @@ static int selectStmtLine(CTX, kLingo *ns, int *indent, kArray *tls, int s, int 
 	for(; i < e ; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->topch == '{') {
-			i = makeTree(_ctx, ns, tls, AST_BRACE, i, e, '}', tlsdst); continue;
+			i = makeTree(_ctx, lgo, tls, AST_BRACE, i, e, '}', tlsdst); continue;
 		}
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, ns, tls, AST_BRANCET, i, e, ']', tlsdst); continue;
+			i = makeTree(_ctx, lgo, tls, AST_BRANCET, i, e, ']', tlsdst); continue;
 		}
 		if(tk->topch == '(') {
-			i = makeTree(_ctx, ns, tls, AST_PARENTHESIS, i, e, ')', tlsdst); continue;
+			i = makeTree(_ctx, lgo, tls, AST_PARENTHESIS, i, e, ')', tlsdst); continue;
 		}
 		if(tk->topch == ';') {
 			i++; break;
@@ -162,7 +162,7 @@ static int selectStmtLine(CTX, kLingo *ns, int *indent, kArray *tls, int s, int 
 			if(tk->lpos <= *indent) break;
 			continue;
 		}
-		checkKeyword(_ctx, ns, tk);
+		checkKeyword(_ctx, lgo, tk);
 		kArray_add(tls, tk);
 	}
 	return i;
@@ -642,7 +642,6 @@ static KMETHOD StmtAdd_block(CTX, ksfp_t *sfp _RIX)
 	INIT_GCSTACK();
 	VAR_StmtAdd(stmt, name, tls, s, e);
 	kToken *tk = tls->tts[s];
-//	kToken_toBRACE(_ctx, tk);
 	if(tk->tt == TK_CODE) {
 		kObject_setObject(stmt, name, tk);
 		s++;
@@ -653,12 +652,15 @@ static KMETHOD StmtAdd_block(CTX, ksfp_t *sfp _RIX)
 		s++;
 	}
 	else {
-		s = -1;
+		DBG_P("block1, s=%d, e=%d", s, e);
+		kBlock *bk = new_Block(_ctx, tls, s, e, kStmt_lgo(stmt));
+		kObject_setObject(stmt, name, bk);
+		e = s;
+		// s = -1; // ERROR
 	}
 	RESET_GCSTACK();
 	RETURNi_(s);
 }
-
 
 /* ------------------------------------------------------------------------ */
 

@@ -31,110 +31,6 @@ typedef ksymbol_t keyword_t;
 #define T_kw(X)   Pkeyword_(_ctx, X)
 #define Skeyword(X)   Skeyword_(_ctx, X)
 
-#define kevalmod    ((kevalmod_t*)_ctx->mod[MOD_EVAL])
-#define kevalshare  ((kevalshare_t*)_ctx->modshare[MOD_EVAL])
-#define CT_Token    kevalshare->cToken
-#define CT_Expr     kevalshare->cExpr
-#define CT_Stmt     kevalshare->cStmt
-#define CT_Block    kevalshare->cBlock
-#define CT_Lingo    kevalshare->cLingo
-#define CT_Gamma    kevalshare->cGamma
-
-#define IS_Token(O)  ((O)->h.ct == CT_Token)
-#define IS_Expr(O)  ((O)->h.ct == CT_Expr)
-#define IS_Stmt(O)  ((O)->h.ct == CT_Stmt)
-#define IS_Block(O)  ((O)->h.ct == CT_Block)
-#define IS_Gamma(O)  ((O)->h.ct == CT_Gamma)
-
-#define K_NULLTOKEN  kevalshare->nullToken
-#define K_NULLEXPR   kevalshare->nullExpr
-#define K_NULLBLOCK  kevalshare->nullBlock
-
-#define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
-#define KW_EXPR     1
-#define KW_BLOCK    2
-#define KW_DOT      kevalshare->kw_dot
-#define KW_COMMA    kevalshare->kw_comma
-#define KW_COLON    kevalshare->kw_colon
-#define KW_DECLMETHOD  kevalshare->kw_declmethod
-#define KW_DECLTYPE    kevalshare->kw_decltype
-#define KW_PARAMS      kevalshare->kw_params
-#define KW_THEN        kevalshare->kw_then
-#define KW_ELSE        kevalshare->kw_else
-
-#define TK_SHIFT    10000
-#define KW_TK(N)    (((keyword_t)N)+TK_SHIFT)
-
-#define SYN_ERR      kevalshare->syn_err
-#define SYN_EXPR     kevalshare->syn_expr
-#define SYN_CALL     kevalshare->syn_call
-#define SYN_INVOKE   kevalshare->syn_invoke
-#define SYN_PARAMS   kevalshare->syn_params
-#define SYN_RETURN   kevalshare->syn_return
-#define SYN_BREAK    kevalshare->syn_break
-#define SYN_TYPEDECL kevalshare->syn_typedecl
-
-#define FN_this      FN_("this")
-
-struct kLingo;
-struct ksyntaxdef_t;
-#define kLingo_defineSyntax(L, S)  kevalshare->KLingo_defineSyntax(_ctx, L, S)
-
-typedef struct {
-	kmodshare_t h;
-	const kclass_t *cToken;
-	const kclass_t *cExpr;
-	const kclass_t *cStmt;
-	const kclass_t *cBlock;
-	const kclass_t *cLingo;
-	const kclass_t *cGamma;
-	//
-	struct kArray         *keywordList;
-	struct kmap_t         *keywordMapNN;
-	struct kArray         *packageList;
-	struct kmap_t         *packageMapNO;
-	struct kLingo         *rootlgo;
-	struct kArray         *aBuffer;
-
-	struct kToken *nullToken;
-	struct kExpr  *nullExpr;
-	struct kBlock *nullBlock;
-
-	keyword_t kw_dot;
-	keyword_t kw_comma;
-	keyword_t kw_colon;
-	keyword_t kw_declmethod;
-	keyword_t kw_decltype;
-	keyword_t kw_params;
-	keyword_t kw_then;
-	keyword_t kw_else;
-
-	struct ksyntax_t *syn_err;
-	struct ksyntax_t *syn_expr;
-	struct ksyntax_t *syn_call;
-	struct ksyntax_t *syn_invoke;
-	struct ksyntax_t *syn_params;
-	struct ksyntax_t *syn_return;
-	struct ksyntax_t *syn_break;
-	struct ksyntax_t *syn_typedecl;
-
-} kevalshare_t;
-
-typedef struct {
-	kmod_t h;
-	struct kArray *tokens;
-	karray_t       cwb;
-	struct kArray *errors;
-	struct kBlock *singleBlock;
-	struct kGamma *gma;
-	struct kArray *lvarlst;
-	struct kArray *definedMethods;
-	kshort_t iseval;
-	ktype_t evalty;
-	ksfp_t  evalval;
-	kjmpbuf_t* evaljmpbuf;
-	kflag_t flags;
-} kevalmod_t;
 
 #define FLAG_METHOD_LAZYCOMPILE (0)
 
@@ -362,6 +258,7 @@ struct kExpr {
 #define TSTMT_BLOCK          2
 #define TSTMT_RETURN         3
 #define TSTMT_IF             4
+#define TSTMT_LOOP           5
 
 typedef struct kStmt kStmt;
 struct kStmt {
@@ -418,6 +315,118 @@ struct kGamma {
 	struct gmabuf_t *genv;
 };
 
+/* ------------------------------------------------------------------------ */
+
+#define kevalmod    ((kevalmod_t*)_ctx->mod[MOD_EVAL])
+#define kevalshare  ((kevalshare_t*)_ctx->modshare[MOD_EVAL])
+#define CT_Token    kevalshare->cToken
+#define CT_Expr     kevalshare->cExpr
+#define CT_Stmt     kevalshare->cStmt
+#define CT_Block    kevalshare->cBlock
+#define CT_Lingo    kevalshare->cLingo
+#define CT_Gamma    kevalshare->cGamma
+
+#define IS_Token(O)  ((O)->h.ct == CT_Token)
+#define IS_Expr(O)  ((O)->h.ct == CT_Expr)
+#define IS_Stmt(O)  ((O)->h.ct == CT_Stmt)
+#define IS_Block(O)  ((O)->h.ct == CT_Block)
+#define IS_Gamma(O)  ((O)->h.ct == CT_Gamma)
+
+#define K_NULLTOKEN  kevalshare->nullToken
+#define K_NULLEXPR   kevalshare->nullExpr
+#define K_NULLBLOCK  kevalshare->nullBlock
+
+#define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
+#define KW_EXPR     1
+#define KW_BLOCK    2
+#define KW_DOT      kevalshare->kw_dot
+#define KW_COMMA    kevalshare->kw_comma
+#define KW_COLON    kevalshare->kw_colon
+#define KW_DECLMETHOD  kevalshare->kw_declmethod
+#define KW_DECLTYPE    kevalshare->kw_decltype
+#define KW_PARAMS      kevalshare->kw_params
+#define KW_THEN        kevalshare->kw_then
+#define KW_ELSE        kevalshare->kw_else
+
+#define TK_SHIFT    10000
+#define KW_TK(N)    (((keyword_t)N)+TK_SHIFT)
+
+#define SYN_ERR      kevalshare->syn_err
+#define SYN_EXPR     kevalshare->syn_expr
+#define SYN_CALL     kevalshare->syn_call
+#define SYN_INVOKE   kevalshare->syn_invoke
+#define SYN_PARAMS   kevalshare->syn_params
+#define SYN_RETURN   kevalshare->syn_return
+#define SYN_BREAK    kevalshare->syn_break
+#define SYN_TYPEDECL kevalshare->syn_typedecl
+
+#define FN_this      FN_("this")
+
+struct kLingo;
+struct ksyntaxdef_t;
+#define kLingo_defineSyntax(L, S)  kevalshare->KLingo_defineSyntax(_ctx, L, S)
+
+typedef struct {
+	kmodshare_t h;
+	const kclass_t *cToken;
+	const kclass_t *cExpr;
+	const kclass_t *cStmt;
+	const kclass_t *cBlock;
+	const kclass_t *cLingo;
+	const kclass_t *cGamma;
+	//
+	struct kArray         *keywordList;
+	struct kmap_t         *keywordMapNN;
+	struct kArray         *packageList;
+	struct kmap_t         *packageMapNO;
+	struct kLingo         *rootlgo;
+	struct kArray         *aBuffer;
+
+	struct kToken *nullToken;
+	struct kExpr  *nullExpr;
+	struct kBlock *nullBlock;
+
+	keyword_t kw_dot;
+	keyword_t kw_comma;
+	keyword_t kw_colon;
+	keyword_t kw_declmethod;
+	keyword_t kw_decltype;
+	keyword_t kw_params;
+	keyword_t kw_then;
+	keyword_t kw_else;
+
+	struct ksyntax_t *syn_err;
+	struct ksyntax_t *syn_expr;
+	struct ksyntax_t *syn_call;
+	struct ksyntax_t *syn_invoke;
+	struct ksyntax_t *syn_params;
+	struct ksyntax_t *syn_return;
+	struct ksyntax_t *syn_break;
+	struct ksyntax_t *syn_typedecl;
+
+	// export
+	keyword_t (*keyword)(CTX, const char*, size_t, ksymbol_t);
+	kbool_t (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
+	kBlock* (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
+	kbool_t (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
+
+} kevalshare_t;
+
+typedef struct {
+	kmod_t h;
+	struct kArray *tokens;
+	karray_t       cwb;
+	struct kArray *errors;
+	struct kBlock *singleBlock;
+	struct kGamma *gma;
+	struct kArray *lvarlst;
+	struct kArray *definedMethods;
+	kshort_t iseval;
+	ktype_t evalty;
+	ksfp_t  evalval;
+	kjmpbuf_t* evaljmpbuf;
+	kflag_t flags;
+} kevalmod_t;
 
 ///* ------------------------------------------------------------------------ */
 ///* Sugar API */

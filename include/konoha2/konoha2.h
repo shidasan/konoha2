@@ -345,14 +345,11 @@ typedef struct kshare_t {
 		struct kConverter         *conv;\
 		struct kContext           *cx;\
 		struct kScript            *scr;\
-		struct kAssurance         *as;\
 		struct kToken             *tk;\
 		struct kStmt              *stmt;\
 		struct kExpr              *expr;\
 		struct kBlock             *bk;\
-		struct kLang              *lang;\
 		struct kGamma             *gma;\
-		struct knh_Build_t             *bui;\
 		kint_t     dummy_ivalue;\
 		kfloat_t   dummy_fvalue \
 
@@ -476,10 +473,10 @@ typedef uintptr_t kmagicflag_t;
 
 typedef struct kclass_t {
 	KCLASSSPI;
-	kcid_t cid;           kflag_t    cflag;
+	kcid_t   cid;         kflag_t  cflag;
 	kcid_t   bcid;        kcid_t   supcid;
 	kcid_t   p1;          kcid_t   p2;
-	kpkg_t pkgid;       kpkg_t nsid;
+	kpkg_t   pkgid;       kpkg_t   nsid;
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
@@ -824,8 +821,8 @@ typedef struct kMethod kMethod;
 #define kMethod_isVirtual(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Virtual))
 #define kMethod_setVirtual(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Virtual,B)
 
-#define kMethod_isConverter(mtd)    MN_isTOCID(mtd->mn)
-#define kMethod_isInterface(mtd)    MN_isASCID(mtd->mn)
+#define kMethod_isTransCast(mtd)    MN_isTOCID(mtd->mn)
+#define kMethod_isCast(mtd)         MN_isASCID(mtd->mn)
 #define kMethod_isCoercion(mtd)    (TFLAG_is(uintptr_t, (mtd)->flag,kMethod_Coercion))
 
 //#define kMethod_isOverload(o)  (TFLAG_is(uintptr_t,DP(o)->flag,kMethod_Overload))
@@ -1005,7 +1002,7 @@ typedef struct klib2_t {
 	void (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
 
 	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
-	const kclass_t* (*KaddClassDef)(CTX, KCLASS_DEF *);
+	const kclass_t* (*KaddClassDef)(CTX, kpkg_t, kpkg_t, KCLASS_DEF *);
 
 	kcid_t  (*KLingo_getcid)(CTX, struct kLingo *, const char *, size_t, kcid_t def);
 	void    (*KloadMethodData)(CTX, struct kLingo *, intptr_t *d);
@@ -1092,7 +1089,7 @@ typedef struct klib2_t {
 #define KCLASS(cid)              S_text(CT(cid)->name)
 #define kLingo_getcid(NS, S, L, C)  (KPI)->KLingo_getcid(_ctx, NS, S, L, C)
 #define ksetModule(N,D,P)        (KPI)->KsetModule(_ctx, N, D, P)
-#define kaddClassDef(DEF)        (KPI)->KaddClassDef(_ctx, DEF)
+#define kaddClassDef(P, N, DEF)        (KPI)->KaddClassDef(_ctx, P, N, DEF)
 #define kaddMethodDef(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)
 
 #define CRIT_  0
