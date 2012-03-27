@@ -90,13 +90,28 @@ check_type_size(double   SIZEOF_DOUBLE)
 
 check_include_files(dlfcn.h HAVE_DLFCN_H)
 
+FIND_FILE(HAS_DOTGIT .git PATHS "${CMAKE_CURRENT_SOURCE_DIR}")
+if("${HAS_DOTGIT}" MATCHES ".git")
+	find_package(Git)
+	if(GIT_EXECUTABLE)
+		execute_process(
+				COMMAND ${GIT_EXECUTABLE} rev-parse -q --short=8 HEAD
+			OUTPUT_VARIABLE GIT_SHA1
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+				)
+	set(K_REVISION "0x${GIT_SHA1}")
+	set(K_REVISION_PREFIX "git:")
+	endif(GIT_EXECUTABLE)
+else()
 find_package(Subversion)
 if(Subversion_FOUND)
 	set(_PATH)
 	get_filename_component(_PATH ${CMAKE_CURRENT_SOURCE_DIR} REALPATH)
 	Subversion_WC_INFO(${_PATH} ER)
 	set(K_REVISION ${ER_WC_REVISION})
+	set(K_REVISION_PREFIX "svn:")
 endif(Subversion_FOUND)
+endif()
 
 add_definitions(-DHAVE_CONFIG_H)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
@@ -114,6 +129,44 @@ set(ExtraLibs ${ExtraLibs} konoha2)
 add_executable(konoha2_bin src/konoha/main.c)
 target_link_libraries(konoha2_bin ${ExtraLibs})
 set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
+
+# package
+macro(create_package_project PKGNAME)
+	project(${PKGNAME})
+	set(CMAKE_BUILD_TYPE ${KONOHA_BUILD_TYPE})
+	set(_PACKAGE_NAME    ${PROJECT_NAME})
+	set(_PACKAGE_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+	set(_PACKAGE_STRING  ${CMAKE_PROJECT_NAME}-${_PACKAGE_VERSION})
+	set(_KONOHA_PACKAGE_DIR konoha2/package/${KONOHA_VERSION}/konoha.${PROJECT_NAME})
+	set(_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+			${CMAKE_CURRENT_SOURCE_DIR}/include  ${CMAKE_CURRENT_BINARY_DIR}
+			${KONOHA_INCLUDE_DIRS}
+			${_PACKAGE_INCLUDE_DIR})
+	include_directories(${_INCLUDE_DIRS})
+	add_definitions(-D_SETUP)
+	add_library(${_PACKAGE_NAME} SHARED ${PACKAGE_SOURCE_CODE})
+	set_target_properties(${_PACKAGE_NAME} PROPERTIES PREFIX "")
+	target_link_libraries(${_PACKAGE_NAME} konoha ${PACKAGE_EXTRA_LIBRARY})
+	install(TARGETS ${_PACKAGE_NAME} DESTINATION ${_KONOHA_PACKAGE_DIR})
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PACKAGE_SCRIPT_CODE} DESTINATION ${_KONOHA_PACKAGE_DIR})
+endmacro(create_package_project)
+
+macro(add_konoha_package PKGNAME)
+	set(__BUILD true)
+	foreach(arg ${ARGN})
+		if (NOT ${arg})
+			set(__BUILD false)
+		endif (NOT ${arg})
+	endforeach(arg ${ARGN})
+	if (__BUILD)
+		create_package_project(${PKGNAME})
+	endif (__BUILD)
+endmacro(add_konoha_package)
+
+#file(GLOB dirs "${CMAKE_CURRENT_SOURCE_DIR}/package/konoha.*")
+#foreach(dir ${dirs})
+#	add_subdirectory(${dir})
+#endforeach()
 
 # test cases
 enable_testing()
