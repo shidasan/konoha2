@@ -84,6 +84,14 @@ check_type_size(double   SIZEOF_DOUBLE)
 
 check_include_files(dlfcn.h HAVE_DLFCN_H)
 
+find_package(Subversion)
+if(Subversion_FOUND)
+	set(_PATH)
+	get_filename_component(_PATH ${CMAKE_CURRENT_SOURCE_DIR} REALPATH)
+	Subversion_WC_INFO(${_PATH} ER)
+	set(K_REVISION "svn:${ER_WC_REVISION}")
+endif(Subversion_FOUND)
+
 add_definitions(-DHAVE_CONFIG_H)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
 		${CMAKE_CURRENT_BINARY_DIR}/config.h)

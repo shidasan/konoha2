@@ -39,6 +39,10 @@
 #define K_OSDLLEXT        ".dylib"
 #endif
 
+#ifndef K_REVISION
+#define K_REVISION  1
+#endif
+
 //#include"konoha2/konoha_config.h"
 
 #include <stdio.h>

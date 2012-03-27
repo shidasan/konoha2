@@ -156,12 +156,10 @@ typedef struct {
 //}
 
 #define kflag_clear(flag)  (flag) = 0
-
 #define K_CHECKSUM 1
-#define K_REVISON  1
 
 #define KPACKNAME(N, V) \
-	.name = N, .version = V, .konoha_checksum = K_CHECKSUM, .konoha_revision = K_REVISON
+	.name = N, .version = V, .konoha_checksum = K_CHECKSUM, .konoha_revision = K_REVISION
 
 #define KPACKLIB(N, V) \
 	.libname = N, .libversion = V

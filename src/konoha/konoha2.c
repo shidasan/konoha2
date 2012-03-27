@@ -425,7 +425,7 @@ static void shell(CTX)
 	kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;
 	f = (handler != NULL) ? dlsym(handler, "add_history") : NULL;
 	kadd_history = (f != NULL) ? (int (*)(const char*))f : add_history;
-	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d,%s)\n", 0, __DATE__); // FIXME
+	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d,%s)\n", K_REVISION, __DATE__);
 	fprintf(stdout, "[gcc %s]\n", __VERSION__);
 	while(1) {
 		kstatus_t status = readstmt(_ctx, &wb, (kushort_t*)&uline);
