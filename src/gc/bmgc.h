@@ -460,7 +460,7 @@ DEF_BM_OP0_(12, 0);
 	COND(BITMAP_L1_SIZE(N) > 0, 1, 0),\
 	COND(BITMAP_L2_SIZE(N) > 0, 1, 0)}
 #define _MASK_NULL {}
-static const size_t BITMAP_DEFAULT_MASK[][SEGMENT_LEVEL] = {
+static const bool BITMAP_DEFAULT_MASK[][SEGMENT_LEVEL] = {
 	_MASK_NULL,
 	_MASK_NULL,
 	_MASK_NULL,
@@ -806,7 +806,7 @@ void kmemlocal_free(CTX, kcontext_t *ctx)
 #define C_STACK_TOP(ctx) ((void**) &ctx)
 #endif
 
-kbool_t knh_isObject(CTX, kObject *o);
+static kbool_t knh_isObject(CTX, kObject *o);
 
 static void cstack_mark(CTX)
 {
@@ -904,7 +904,7 @@ static void ostack_free(CTX, knh_ostack_t *ostack)
 	wctx->memlocal->queue_log2 = ostack->capacity_log2;
 }
 
-kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
+static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
 {
 	size_t ref_size = tail - _ctx->memlocal->ref_buf;
 	if(unlikely(_ctx->memlocal->ref_capacity < size + ref_size)) {
@@ -923,16 +923,16 @@ kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
 	return tail;
 }
 
-void knh_sizerefs(CTX, kObject** tail)
-{
-	_ctx->memlocal->ref_size = (tail - _ctx->memlocal->ref_buf);
-}
-
-void knh_setrefs(CTX, kObject** list, size_t size)
-{
-	_ctx->memlocal->refs = list;
-	_ctx->memlocal->ref_size = size;
-}
+//void knh_sizerefs(CTX, kObject** tail)
+//{
+//	_ctx->memlocal->ref_size = (tail - _ctx->memlocal->ref_buf);
+//}
+//
+//void knh_setrefs(CTX, kObject** list, size_t size)
+//{
+//	_ctx->memlocal->refs = list;
+//	_ctx->memlocal->ref_size = size;
+//}
 
 
 static HeapManager *BMGC_init(CTX)
@@ -1856,7 +1856,7 @@ static void bitmapMarkingGC(CTX, HeapManager *mng)
 /* ------------------------------------------------------------------------ */
 /* [Object] */
 
-kbool_t knh_isObject(CTX, kObject *o)
+static kbool_t knh_isObject(CTX, kObject *o)
 {
 	HeapManager *mng = (HeapManager*) GCDATA(_ctx);
 

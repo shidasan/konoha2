@@ -50,10 +50,12 @@ endif()
 
 SET(CMAKE_C_FLAGS         "-Wall")
 SET(CMAKE_CXX_FLAGS       "-Wall")
-SET(CMAKE_C_FLAGS_RELEASE "-O2 -g")
-SET(CMAKE_C_FLAGS_DEBUG   "-O0 -g3")
+SET(CMAKE_C_FLAGS_RELEASE   "-Wall -O2 -g")
 SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -g")
-SET(CMAKE_CXX_FLAGS_DEBUG   "-Wall -O0 -g3")
+SET(CMAKE_C_FLAGS_DEBUG     "-O0 -g3")
+SET(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
+SET(CMAKE_C_FLAGS_SMALL     "-Os -g0")
+SET(CMAKE_CXX_FLAGS_SMALL   "-Os -g0")
 
 set(RUNTIME
 	src/konoha/datatype.c
@@ -89,7 +91,7 @@ if(Subversion_FOUND)
 	set(_PATH)
 	get_filename_component(_PATH ${CMAKE_CURRENT_SOURCE_DIR} REALPATH)
 	Subversion_WC_INFO(${_PATH} ER)
-	set(K_REVISION "svn:${ER_WC_REVISION}")
+	set(K_REVISION ${ER_WC_REVISION})
 endif(Subversion_FOUND)
 
 add_definitions(-DHAVE_CONFIG_H)

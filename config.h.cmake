@@ -17,7 +17,7 @@
 #cmakedefine K_CONFIG_OS "${K_CONFIG_OS}"
 
 /* build revision */
-#cmakedefine K_REVISION "${K_REVISION}"
+#cmakedefine K_REVISION  ${K_REVISION}
 
 /* dll extension */
 #cmakedefine K_OSDLLEXT "${K_OSDLLEXT}"
