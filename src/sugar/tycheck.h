@@ -203,6 +203,12 @@ static KMETHOD TokenTyCheck_NULL(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, 0, gma));
 }
 
+static KMETHOD TokenTyCheck_TYPE(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, expr->tkNUL->ty, 0, 0, gma));
+}
+
 static KMETHOD TokenTyCheck_TRUE(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);

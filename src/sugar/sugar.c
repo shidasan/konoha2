@@ -96,6 +96,7 @@ static void defineDefaultSyntax(CTX, kLingo *lgo)
 		{ TOKEN("$USYMBOL"), .keyid = KW_TK(TK_USYMBOL), .ExprTyCheck = TokenTyCheck_USYMBOL, },
 		{ TOKEN("$TEXT"), .keyid = KW_TK(TK_TEXT), .ExprTyCheck = TokenTyCheck_TEXT, },
 		{ TOKEN("$INT"), .keyid = KW_TK(TK_INT), .ExprTyCheck = TokenTyCheck_INT, },
+		{ TOKEN("$TYPE"), .keyid = KW_TK(TK_TYPE), .ExprTyCheck = TokenTyCheck_TYPE, },
 		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
