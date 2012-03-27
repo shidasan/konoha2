@@ -1179,15 +1179,17 @@ REF_t *kstack_tail(CTX, size_t min);
 	return; \
 } while (0)
 
+#ifndef K_NODEBUG
 #define KNH_ASSERT(a)    assert(a)
 #define DBG_ASSERT(a)    assert(a)
 #define DBG_P(fmt, ...)  _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__)
 #define DUMP_P(fmt, ...)  fprintf(stderr, fmt, ## __VA_ARGS__)
-
-//#define KNH_ASSERT(a)
-//#define DBG_ASSERT(a)
-//#define DBG_P(fmt, ...)
-//#define DUMP_P(fmt, ...)
+#else
+#define KNH_ASSERT(a)
+#define DBG_ASSERT(a)
+#define DBG_P(fmt, ...)
+#define DUMP_P(fmt, ...)
+#endif
 
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)

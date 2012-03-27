@@ -57,6 +57,10 @@ SET(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
 SET(CMAKE_C_FLAGS_SMALL     "-Os -g0")
 SET(CMAKE_CXX_FLAGS_SMALL   "-Os -g0")
 
+if(${CMAKE_BUILD_TYPE} STREQUAL "Small")
+	set(K_NODEBUG 1)
+endif()
+
 set(RUNTIME
 	src/konoha/datatype.c
 	src/konoha/klib.c
