@@ -513,7 +513,8 @@ typedef struct kclass_t {
 #define CLASS_Array             ((kcid_t)6)
 #define CLASS_Param             ((kcid_t)7)
 #define CLASS_Method            ((kcid_t)8)
-#define CLASS_Tdynamic          ((kcid_t)9)
+#define CLASS_System            ((kcid_t)9)
+#define CLASS_Tdynamic          ((kcid_t)10)
 
 #define CT_Object               CT_(CLASS_Object)
 #define CT_Boolean              CT_(CLASS_Boolean)
@@ -873,6 +874,20 @@ struct kMethod {
 };
 
 /* ------------------------------------------------------------------------ */
+//## @Singleton class System Object;
+
+#define CFLAG_System              kClass_Singleton
+#define OFLAG_System              MAGICFLAG(0)
+#define TY_System                 CLASS_System
+#define IS_System(o)              (O_cid(o) == CLASS_System)
+
+typedef struct kSystem kSystem;
+
+struct kSystem {
+	kObjectHeader h;
+};
+
+/* ------------------------------------------------------------------------ */
 //## class Tdynamic Object;
 
 #define CFLAG_Tdynamic              0
@@ -926,32 +941,6 @@ typedef struct kRawPtr {
 		tsfp[K_MTDIDX].mtdNC = NULL;\
 	} \
 
-/* ------------------------------------------------------------------------ */
-//## @Singleton @Struct class System Object;
-
-#define CFLAG_System              0
-#define OFLAG_System              MAGICFLAG(0)
-#define TY_System                 CLASS_System
-#define IS_System(o)              (O_cid(o) == CLASS_System)
-
-typedef struct kSystem kSystem;
-
-struct kSystem {
-	kObjectHeader h;
-};
-
-/* ------------------------------------------------------------------------ */
-//## class Script Object;
-
-#define CFLAG_Script              0
-#define OFLAG_Script              MAGICFLAG(0)
-#define TY_Script                 CLASS_Script
-#define IS_Script(o)              (O_cid(o) == CLASS_Script)
-
-typedef struct kScript {
-	kObjectHeader h;
-	kpromap_t *slots;
-} kScript;
 
 /* ----------------------------------------------------------------------- */
 // klib2

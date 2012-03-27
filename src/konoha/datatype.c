@@ -786,7 +786,6 @@ static KCLASS_DEF TdynamicDef = {
 // ---------------
 // System
 
-#define CLASS_System            ((kcid_t)10)
 #define CT_System               CT_(CLASS_System)
 
 static KCLASS_DEF SystemDef = {
@@ -806,8 +805,8 @@ static KCLASS_DEF *DATATYPES[] = {
 	&ArrayDef,
 	&ParamDef,
 	&MethodDef,
-	&TdynamicDef,
 	&SystemDef,
+	&TdynamicDef,
 	NULL,
 };
 
