@@ -81,8 +81,10 @@ set(VM
 
 set(PACKAGES
 	konoha.string
+	konoha.float
 	konoha.loop
 	sugar
+	posix.process
 )
 
 find_library(HAVE_LIBDL NAMES dl)

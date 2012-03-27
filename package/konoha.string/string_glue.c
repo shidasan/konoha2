@@ -40,13 +40,9 @@
 #define TODO()
 #endif/*K_USING_DEBUG*/
 
-#define _ALWAYS SPOL_POOL
-#define _NEVER  SPOL_POOL
-#define _ASCII  SPOL_ASCII
-#define _UTF8   SPOL_UTF8
-#define _SUB(s0) (S_isASCII(s0) ? _ASCII|_ALWAYS : _ALWAYS)
-#define _SUBCHAR(s0) (S_isASCII(s0) ? _ASCII : 0)
-#define _CHARSIZE(len) (len==1 ? _ASCII : _UTF8)
+#define _SUB(s0) (S_isASCII(s0) ? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
+#define _SUBCHAR(s0) (S_isASCII(s0) ? SPOL_ASCII : 0)
+#define _CHARSIZE(len) (len==1 ? SPOL_ASCII : SPOL_UTF8)
 
 #define knh_strncmp(s1, s2, n)         strncmp((const char*)(s1),(const char*)(s2),n)
 #define knh_strncasecmp(s1, s2, n)     strncasecmp((const char*)(s1),(const char*)(s2),n)
@@ -59,97 +55,11 @@ extern "C" {
 #endif
 /* ------------------------------------------------------------------------ */
 
-static inline kbool_t knh_bytes_equals(kbytes_t v1, kbytes_t v2)
-{
-	return (v1.len == v2.len && knh_strncmp(v1.text, v2.text, v1.len) == 0);
-}
-
-static inline kbool_t knh_bytes_equalsIgnoreCase(kbytes_t v1, kbytes_t v2)
-{
-	return (v1.len == v2.len && knh_strncasecmp(v1.text, v2.text, v1.len) == 0);
-}
-
-#define knh_bytes_startsWith(t, T)   knh_bytes_startsWith_(t, STEXT(T))
-static inline int knh_bytes_startsWith_(kbytes_t v1, kbytes_t v2)
-{
-	if(v1.len < v2.len) return 0;
-	return (knh_strncmp(v1.text, v2.text, v2.len) == 0);
-}
-
-#define knh_bytes_endsWith(t, T)   knh_bytes_endsWith_(t, STEXT(T))
 static inline kbool_t knh_bytes_endsWith_(kbytes_t v1, kbytes_t v2)
 {
 	if(v1.len < v2.len) return 0;
 	const char *p = v1.text + (v1.len-v2.len);
 	return (knh_strncmp(p, v2.text, v2.len) == 0);
-}
-
-static inline kindex_t knh_bytes_index(kbytes_t v, int ch)
-{
-	size_t i;
-	for(i = 0; i < v.len; i++) {
-		if(v.utext[i] == ch) return (kindex_t)i;
-	}
-	return -1;
-}
-
-static inline kindex_t knh_bytes_rindex(kbytes_t v, int ch)
-{
-	kindex_t i;
-	for(i = v.len - 1; i >= 0; i--) {
-		if(v.utext[i] == ch) return i;
-	}
-	return -1;
-}
-
-static inline kbytes_t knh_bytes_head(kbytes_t t, int ch)
-{
-	size_t i;
-	for(i = 0; i < t.len; i++) {
-		if(t.utext[i] == ch) {
-			t.len = i;
-			break;
-		}
-	}
-	return t;
-}
-
-static inline kbytes_t knh_bytes_rhead(kbytes_t t, int ch)
-{
-	long i;
-	for(i = t.len - 1; i >= 0; i--) {
-		if(t.utext[i] == ch) {
-			t.len = i;
-			break;
-		}
-	}
-	return t;
-}
-
-static inline kbytes_t knh_bytes_next(kbytes_t v, int ch)
-{
-	size_t i;
-	for(i = 0; i < v.len; i++) {
-		if(v.utext[i] == ch) {
-			v.text = v.text + (i+1);
-			v.len = v.len - (i+1);
-			break;
-		}
-	}
-	return v;
-}
-
-static inline kbytes_t knh_bytes_rnext(kbytes_t v, int ch)
-{
-	long i;
-	for(i = v.len - 1; i >= 0; i--) {
-		if(v.utext[i] == ch) {
-			v.text = v.text + (i+1);
-			v.len = v.len - (i+1);
-			break;
-		}
-	}
-	return v;
 }
 
 static inline kbytes_t knh_bytes_first(kbytes_t t, intptr_t loc)
@@ -200,12 +110,6 @@ static inline size_t knh_array_index(CTX, ksfp_t *sfp, kint_t n, size_t size)
 }
 
 /* ------------------------------------------------------------------------ */
-/* These utf8 functions were originally written by Shinpei Nakata */
-
-#define utf8_isLead(c)      ((c & 0xC0) != 0x80)
-#define utf8_isTrail(c)     ((0x80 <= c) && (c <= 0xBF))
-#define utf8_isSingleton(c) (c <= 0x7f)
-
 static const char _utf8len[] = {
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -228,37 +132,6 @@ static const char _utf8len[] = {
 #define utf8len(c)    _utf8len[(int)c]
 
 /* ------------------------------------------------------------------------ */
-
-//static kbool_t knh_bytes_checkENCODING(kbytes_t v)
-//{
-//#ifdef K_USING_UTF8
-//	const unsigned char *s = v.utext;
-//	const unsigned char *e = s + v.len;
-//	while (s < e) {
-//		size_t ulen = utf8len(s[0]);
-//		switch(ulen) {
-//		case 1: s++; break;
-//		case 2:
-//			if(!utf8_isTrail(s[1])) return 0;
-//			s+=2; break;
-//		case 3:
-//			if(!utf8_isTrail(s[1])) return 0;
-//			if(!utf8_isTrail(s[2])) return 0;
-//			s+=3; break;
-//		case 4:
-//			if(!utf8_isTrail(s[1])) return 0;
-//			if(!utf8_isTrail(s[2])) return 0;
-//			if(!utf8_isTrail(s[3])) return 0;
-//			s+=4; break;
-//		case 5: case 6: case 0: default:
-//			return 0;
-//		}
-//	}
-//	return (s == e);
-//#else
-//	return 1;
-//#endif
-//}
 
 static size_t knh_bytes_mlen(kbytes_t v)
 {
@@ -370,7 +243,6 @@ static KMETHOD String_getSize(CTX, ksfp_t *sfp _RIX)
 static KMETHOD String_startsWith(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNb_(knh_strncmp(S_text(sfp[0].s), S_text(sfp[1].s), S_size(sfp[1].s)) == 0);
-	//RETURNb_(knh_bytes_startsWith_(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s))); older
 }
 
 /* ------------------------------------------------------------------------ */
@@ -453,12 +325,12 @@ static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 	kString *s;
 	if(S_isASCII(sfp[0].s)) {
 		size_t n = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), S_size(sfp[0].s));
-		s = new_kString(base.text + n, 1, _ALWAYS|_ASCII);
+		s = new_kString(base.text + n, 1, SPOL_POOL|SPOL_ASCII);
 	}
 	else {
 		size_t off = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), knh_bytes_mlen(base));
 		kbytes_t sub = knh_bytes_mofflen(base, off, 1);
-		s = new_kString(sub.text, sub.len, _ALWAYS|_CHARSIZE(sub.len));
+		s = new_kString(sub.text, sub.len, SPOL_POOL|_CHARSIZE(sub.len));
 	}
 	RETURN_(s);
 }
@@ -533,8 +405,6 @@ static KMETHOD String_opTO(CTX, ksfp_t *sfp _RIX)
 	String_substring(_ctx, sfp, K_RIX);
 }
 
-
-
 // --------------------------------------------------------------------------
 
 #define _Public   kMethod_Public
@@ -547,19 +417,19 @@ static kbool_t String_initPackage(CTX, struct kLingo *lgo, int argc, const char*
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
 	intptr_t methoddata[] = {
-		_Public|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x,
-		_Public|_Const, _F(String_opSUB), TY_String, TY_String, MN_("opSUB"), 1, TY_String, FN_x,
-		_Public|_Const, _F(String_opEQ),  TY_String, TY_String, MN_("opEQ"),  1, TY_String, FN_x,
-		_Public|_Const, _F(String_getSize), TY_Int, TY_String, MN_("getSize"), 0,
+		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
+		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_x,
+		_Public|_Const, _F(String_opEQ),        TY_String,  TY_String, MN_("opEQ"),  1, TY_String, FN_x,
+		_Public|_Const, _F(String_opUNTIL),     TY_String,  TY_String, MN_("opUNTIL"), 2, TY_Int, FN_x, TY_Int, FN_y,
+		_Public|_Const, _F(String_opTO),        TY_String,  TY_String, MN_("opTO"),  2, TY_Int, FN_x, TY_Int, FN_y,
+		_Public|_Const, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_x,
+		_Public|_Const, _F(String_trim),        TY_String, TY_String, MN_("trim"), 0,
+		_Public|_Const, _F(String_get),         TY_String, TY_String, MN_("get"), 1, TY_Int, FN_x,
 		_Public|_Const, _F(String_startsWith),  TY_Boolean, TY_String, MN_("startsWith"), 1, TY_String, FN_x,
 		_Public|_Const, _F(String_endsWith),    TY_Boolean, TY_String, MN_("endsWith"),   1, TY_String, FN_x,
-		_Public|_Const, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_x,
+		_Public|_Const, _F(String_getSize),     TY_Int, TY_String, MN_("getSize"), 0,
 		_Public|_Const, _F(String_indexOf),     TY_Int, TY_String, MN_("indexOf"), 1, TY_String, FN_x,
 		_Public|_Const, _F(String_lastIndexOf), TY_Int, TY_String, MN_("lastIndexOf"), 1, TY_String, FN_x,
-		_Public|_Const, _F(String_trim),  TY_String, TY_String, MN_("trim"), 0,
-		_Public|_Const, _F(String_get),   TY_String, TY_String, MN_("get"), 1, TY_Int, FN_x,
-		_Public|_Const, _F(String_opUNTIL), TY_String, TY_String, MN_("opUNTIL"), 2, TY_Int, FN_x, TY_Int, FN_y,
-		_Public|_Const, _F(String_opTO),    TY_String, TY_String, MN_("opTO"), 2, TY_Int, FN_x, TY_Int, FN_y,
 		DEND,
 	};
 	kaddMethodDef(NULL, methoddata);
@@ -581,9 +451,9 @@ static kbool_t String_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
 	return true;
 }
 
-KPACKDEF* String_init(void)
+KPACKDEF* string_init(void)
 {
-	static KPACKDEF d = {
+	static const KPACKDEF d = {
 		KPACKNAME("String", "1.0"),
 		.initPackage = String_initPackage,
 		.setupPackage = String_setupPackage,
