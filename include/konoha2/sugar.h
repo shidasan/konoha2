@@ -405,11 +405,13 @@ typedef struct {
 	struct ksyntax_t *syn_typedecl;
 
 	// export
-	keyword_t (*keyword)(CTX, const char*, size_t, ksymbol_t);
-	kbool_t (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
-	kBlock* (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
-	kbool_t (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
-
+	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
+	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
+	kBlock*    (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
+	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
+	ksyntax_t* (*Lingo_syntax)(CTX, kLingo *, ksymbol_t, int);
+	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
+	kMethod*   (*Lingo_getMethodNULL)(CTX, kLingo *, kcid_t, kmethodn_t);
 } kevalshare_t;
 
 typedef struct {

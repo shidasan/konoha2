@@ -259,10 +259,14 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->kw_then = KW_("then");
 	base->kw_else = KW_("else");
 
-	base->keyword = keyword;
-	base->Stmt_getBlock = Stmt_getBlock;
-	base->Stmt_tyCheckExpr = Stmt_tyCheckExpr;
-	base->Block_tyCheckAll = Block_tyCheckAll;
+	// export
+	base->keyword             = keyword;
+	base->Stmt_getBlock       = Stmt_getBlock;
+	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
+	base->Block_tyCheckAll    = Block_tyCheckAll;
+	base->parseSyntaxRule     = parseSyntaxRule;
+	base->Lingo_syntax        = Lingo_syntax;
+	base->Lingo_getMethodNULL = Lingo_getMethodNULL;
 }
 
 static const char *Pkeyword_(CTX, keyword_t keyid)

@@ -96,7 +96,7 @@ static const KSTRUCT_DEF LingoDef = {
 	.free = Lingo_free,
 };
 
-static ksyntax_t* kLingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
+static ksyntax_t* Lingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
 {
 	kLingo *lgo = lgo0;
 	uintptr_t hcode = keyid;
@@ -146,7 +146,7 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 {
 	while(syndef->name != NULL) {
 		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
-		ksyntax_t* syn = kLingo_syntax(_ctx, lgo, keyid, 1);
+		ksyntax_t* syn = Lingo_syntax(_ctx, lgo, keyid, 1);
 		syn->token = syndef->name;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
@@ -179,7 +179,7 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 		}
 		if(syndef->ExprTyCheck != NULL) {
 			KINITv(syn->ExprTyCheck, new_kMethod(0, 0, 0, NULL, syndef->ExprTyCheck));
-			ksyntax_t *e = kLingo_syntax(_ctx, lgo, 1, 0);
+			ksyntax_t *e = Lingo_syntax(_ctx, lgo, 1, 0);
 			if(syn->syntaxRule == NULL) {
 				KINITv(syn->syntaxRule, e->syntaxRule);
 			}
@@ -187,19 +187,19 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
 			}
 		}
-		DBG_ASSERT(syn == kLingo_syntax(_ctx, lgo, keyid, 0));
+		DBG_ASSERT(syn == Lingo_syntax(_ctx, lgo, keyid, 0));
 		syndef++;
 	}
 	// update
 	kevalshare_t *base = kevalshare;
-	base->syn_err  = kLingo_syntax(_ctx, base->rootlgo, 0, 0);
-	base->syn_expr = kLingo_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_call = kLingo_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_invoke = kLingo_syntax(_ctx, base->rootlgo, KW_("$name"), 0);
-	base->syn_params = kLingo_syntax(_ctx, base->rootlgo, KW_("$params"), 0);
-	base->syn_return = kLingo_syntax(_ctx, base->rootlgo, KW_("return"), 0);
-	base->syn_break = kLingo_syntax(_ctx, base->rootlgo, KW_("break"), 0);
-	base->syn_typedecl = kLingo_syntax(_ctx, base->rootlgo, KW_(":"), 0);
+	base->syn_err  = Lingo_syntax(_ctx, base->rootlgo, 0, 0);
+	base->syn_expr = Lingo_syntax(_ctx, base->rootlgo, 1, 0);
+	base->syn_call = Lingo_syntax(_ctx, base->rootlgo, 1, 0);
+	base->syn_invoke = Lingo_syntax(_ctx, base->rootlgo, KW_("$name"), 0);
+	base->syn_params = Lingo_syntax(_ctx, base->rootlgo, KW_("$params"), 0);
+	base->syn_return = Lingo_syntax(_ctx, base->rootlgo, KW_("return"), 0);
+	base->syn_break = Lingo_syntax(_ctx, base->rootlgo, KW_("break"), 0);
+	base->syn_typedecl = Lingo_syntax(_ctx, base->rootlgo, KW_(":"), 0);
 }
 
 // Lingo

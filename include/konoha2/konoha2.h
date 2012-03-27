@@ -1123,6 +1123,7 @@ typedef struct klib2_t {
 #define KSETv(VAR, VAL)    OBJECT_SET(VAR, VAL)
 #define KINITp(parent, v, o) KINITv(v, o)
 #define KSETp(parent,  v, o) KSETv(v, o)
+#define KUNUSEv(V)  (V)->h.ct->free(_ctx, (V))
 
 REF_t *kstack_tail(CTX, size_t min);
 #define BEGIN_REFTRACE(SIZE)  int _ref_ = SIZE; REF_t* _tail = kstack_tail(_ctx, SIZE);
