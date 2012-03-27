@@ -38,6 +38,7 @@ int main(int argc, const char *argv[])
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -46,8 +47,8 @@ int main(int argc, const char *argv[])
 
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+4, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 30);
     }

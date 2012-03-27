@@ -11,13 +11,13 @@ static void test_add0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 10;
     }
     {
         /* reg5 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 20;
     }
     {
@@ -30,6 +30,7 @@ static void test_add0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -37,8 +38,8 @@ static void test_add0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 30);
     }
@@ -53,13 +54,13 @@ static void test_sub0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -72,6 +73,7 @@ static void test_sub0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -79,8 +81,8 @@ static void test_sub0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 10);
     }
@@ -95,13 +97,13 @@ static void test_mul0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -114,6 +116,7 @@ static void test_mul0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -121,8 +124,8 @@ static void test_mul0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 200);
     }
@@ -137,13 +140,13 @@ static void test_div0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -156,6 +159,7 @@ static void test_div0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -163,9 +167,8 @@ static void test_div0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 2);
     }
@@ -178,15 +181,15 @@ static void test_mod0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->th = thcode;
     }
     {
-        /* reg3 = 20; */
+        /* reg1 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
-        /* reg5 = 10; */
+        /* reg3 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -199,6 +202,7 @@ static void test_mod0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -206,9 +210,8 @@ static void test_mod0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%ld\n", sfp[0].ivalue);
         assert(sfp[0].ivalue == 0);
     }
@@ -223,13 +226,13 @@ static void test_eq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -242,6 +245,7 @@ static void test_eq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -249,8 +253,8 @@ static void test_eq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 0);
     }
@@ -265,13 +269,13 @@ static void test_neq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -284,6 +288,7 @@ static void test_neq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -291,9 +296,8 @@ static void test_neq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 1);
     }
@@ -308,13 +312,13 @@ static void test_lt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -327,6 +331,7 @@ static void test_lt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -334,8 +339,8 @@ static void test_lt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 0);
     }
@@ -350,13 +355,13 @@ static void test_gt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -369,6 +374,7 @@ static void test_gt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -376,8 +382,8 @@ static void test_gt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 1);
     }
@@ -392,13 +398,13 @@ static void test_lte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -411,6 +417,7 @@ static void test_lte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -418,8 +425,8 @@ static void test_lte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 0);
     }
@@ -434,13 +441,13 @@ static void test_gte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg3 = 20; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 3;
+        op->a = 1;
         op->n = 20;
     }
     {
         /* reg5 = 10; */
         klr_NSET_t *op = OPCAST(NSET, pc);
-        op->a = 5;
+        op->a = 3;
         op->n = 10;
     }
     {
@@ -453,6 +460,7 @@ static void test_gte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
         op->espshift = 0;
         op->mtd = &mtd;
     }
+    emit_ret(pc);
     {
         /* exit; */
         klr_EXIT_t *op = OPCAST(EXIT, pc);
@@ -460,8 +468,8 @@ static void test_gte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     }
     {
         ksfp_t sfp[10];
-        Fmethod_runVM(konoha, sfp, opbuf);
-        Fmethod_runVM(konoha, sfp+4, opbuf+1);
+        pc = VirtualMachine_run(konoha, sfp, opbuf);
+        VirtualMachine_run(konoha, sfp+K_CALLDELTA, pc);
         fprintf(stderr, "%d\n", sfp[0].bvalue);
         assert(sfp[0].bvalue == 1);
     }
