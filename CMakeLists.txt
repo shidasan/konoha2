@@ -79,6 +79,11 @@ set(VM
 	src/vm/asm.c
 )
 
+set(PACKAGES
+	konoha.string
+	sugar
+)
+
 find_library(HAVE_LIBDL NAMES dl)
 find_library(HAVE_LIBM  NAMES m)
 
@@ -137,7 +142,7 @@ macro(create_package_project PKGNAME)
 	set(_PACKAGE_NAME    ${PROJECT_NAME})
 	set(_PACKAGE_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 	set(_PACKAGE_STRING  ${CMAKE_PROJECT_NAME}-${_PACKAGE_VERSION})
-	set(_KONOHA_PACKAGE_DIR konoha2/package/${KONOHA_VERSION}/konoha.${PROJECT_NAME})
+	set(_KONOHA_PACKAGE_DIR konoha2/package/${KONOHA_VERSION}/${PROJECT_NAME})
 	set(_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
 			${CMAKE_CURRENT_SOURCE_DIR}/include  ${CMAKE_CURRENT_BINARY_DIR}
 			${KONOHA_INCLUDE_DIRS}
@@ -167,7 +172,10 @@ endmacro(add_konoha_package)
 #	add_subdirectory(${dir})
 #endforeach()
 
-add_subdirectory(package/konoha.string)
+foreach(dir ${PACKAGES})
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/package/${dir})
+endforeach()
+
 
 # test cases
 enable_testing()
