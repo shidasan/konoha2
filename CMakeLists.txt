@@ -81,6 +81,7 @@ set(VM
 
 set(PACKAGES
 	konoha.string
+	konoha.loop
 	sugar
 )
 
@@ -136,10 +137,25 @@ target_link_libraries(konoha2_bin ${ExtraLibs})
 set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
 
 # package
-macro(create_package_project PKGNAME)
-	project(${PKGNAME})
+
+macro(POP _STR _DELIM _RESULT)
+	string(REPLACE ${_DELIM} ";" _tmp ${_STR})
+	list(REVERSE _tmp)
+	list(GET _tmp 0 ${_RESULT})
+endmacro()
+
+macro(PKGNAME _STR _RESULT)
+	set(_tmp)
+	POP(${_STR} "/" _tmp)
+	POP(${_tmp} "." ${_RESULT})
+endmacro()
+
+macro(create_package_project _PKGNAME)
+	project(${_PKGNAME})
 	set(CMAKE_BUILD_TYPE ${KONOHA_BUILD_TYPE})
-	set(_PACKAGE_NAME    ${PROJECT_NAME})
+	#set(_PACKAGE_NAME    ${PROJECT_NAME})
+	PKGNAME(${_PKGNAME} _PACKAGE_NAME)
+	set(LIB  "${_PACKAGE_NAME}_glue")
 	set(_PACKAGE_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 	set(_PACKAGE_STRING  ${CMAKE_PROJECT_NAME}-${_PACKAGE_VERSION})
 	set(_KONOHA_PACKAGE_DIR konoha2/package/${KONOHA_VERSION}/${PROJECT_NAME})
@@ -148,10 +164,13 @@ macro(create_package_project PKGNAME)
 			${KONOHA_INCLUDE_DIRS}
 			${_PACKAGE_INCLUDE_DIR})
 	include_directories(${_INCLUDE_DIRS})
-	add_library(${_PACKAGE_NAME} SHARED ${PACKAGE_SOURCE_CODE})
-	set_target_properties(${_PACKAGE_NAME} PROPERTIES PREFIX "")
-	target_link_libraries(${_PACKAGE_NAME} konoha ${PACKAGE_EXTRA_LIBRARY})
-	install(TARGETS ${_PACKAGE_NAME} DESTINATION ${_KONOHA_PACKAGE_DIR})
+	list(LENGTH PACKAGE_SOURCE_CODE LEN)
+	if(${LEN} GREATER 0)
+		add_library(${LIB} SHARED ${PACKAGE_SOURCE_CODE})
+		set_target_properties(${LIB} PROPERTIES PREFIX "")
+		target_link_libraries(${LIB} konoha ${PACKAGE_EXTRA_LIBRARY})
+		install(TARGETS ${LIB} DESTINATION ${_KONOHA_PACKAGE_DIR})
+	endif(${LEN} GREATER 0)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PACKAGE_SCRIPT_CODE} DESTINATION ${_KONOHA_PACKAGE_DIR})
 endmacro(create_package_project)
 
