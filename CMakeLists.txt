@@ -222,7 +222,9 @@ set(TEST_CODE
 		"string"
 		"usymbol"
 		"var"
-		"while")
+		"while"
+		"20120328_int_call.k"
+)
 
 foreach(arg ${TEST_CODE})
 	add_konoha_test(${arg})
