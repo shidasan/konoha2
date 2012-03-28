@@ -702,6 +702,7 @@ static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int 
 	expr->index = index;
 	expr->xindex = xindex;
 	if(build == TEXPR_BLOCKLOCAL_) {
+		DBG_P("index=%d, expr %p", kArray_size(gma->genv->lvarlst), expr);
 		kArray_add(gma->genv->lvarlst, expr);
 	}
 	return expr;

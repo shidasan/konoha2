@@ -253,12 +253,13 @@ struct kExpr {
 	};
 };
 
-#define TSTMT_ERR            0
-#define TSTMT_EXPR           1
-#define TSTMT_BLOCK          2
-#define TSTMT_RETURN         3
-#define TSTMT_IF             4
-#define TSTMT_LOOP           5
+#define TSTMT_UNDEFINED      0
+#define TSTMT_ERR            1
+#define TSTMT_EXPR           2
+#define TSTMT_BLOCK          3
+#define TSTMT_RETURN         4
+#define TSTMT_IF             5
+#define TSTMT_LOOP           6
 
 typedef struct kStmt kStmt;
 struct kStmt {

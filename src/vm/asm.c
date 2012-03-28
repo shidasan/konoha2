@@ -98,6 +98,9 @@ static void BasicBlock_add(CTX, kBasicBlock *bb, kushort_t line, kopl_t *op, siz
 	memcpy(pc, op, size == 0 ? sizeof(kopl_t) : size);
 	pc->line = line;
 	bb->size += 1;
+//	if(op->opcode == OPCODE_NMOV) {
+//		assert(((klr_NMOV_t*)op)->ty != CT_(0));
+//	}
 }
 
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize)
@@ -1432,13 +1435,13 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
 	}
 	else {
-		if(mtd->fcall_1 != Fmethod_runVM) {
+//		if(mtd->fcall_1 != Fmethod_runVM) {
 			ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd);
-		}
-		else {
-			ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
-			ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
-		}
+//		}
+//		else {
+//			ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
+//			ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
+//		}
 	}
 }
 

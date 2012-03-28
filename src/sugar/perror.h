@@ -120,6 +120,8 @@ static void kvperror(CTX, int pe, const char *msg, kline_t uline, int lpos, cons
 	kreport(pe, S_text(emsg));
 }
 
+#define ERR_Undefined()  kerror(_ctx, ERR_, 0, -1, "undefined error at %s:%d", __FUNCTION__, __LINE__);
+
 static void kerror(CTX, int level, kline_t uline, int lpos, const char *fmt, ...)
 {
 	int isPRINT = 0;

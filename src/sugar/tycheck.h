@@ -35,6 +35,9 @@ static gmabuf_t *Gamma_push(CTX, kGamma *gma, gmabuf_t *newone)
 {
 	gmabuf_t *oldone = gma->genv;
 	gma->genv = newone;
+	newone->lvarlst = kevalmod->lvarlst;
+	newone->lvarlst_top = kArray_size(kevalmod->lvarlst);
+	DBG_P("push lvarlst.. size=%d", newone->lvarlst_top);
 	return oldone;
 }
 
@@ -43,9 +46,8 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 	gmabuf_t *newone = gma->genv;
 	assert(checksum == newone);
 	gma->genv = oldone;
-	if(newone->lvarlst != NULL) {
-		kArray_clear(newone->lvarlst, newone->lvarlst_top);
-	}
+	DBG_P("pop lvarlst.. size%d=>%d", kArray_size(newone->lvarlst), newone->lvarlst_top);
+	kArray_clear(newone->lvarlst, newone->lvarlst_top);
 	return newone;
 }
 
@@ -237,8 +239,9 @@ static KMETHOD TokenTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
-static kExpr* tycheckVariable(CTX, kExpr *expr, kGamma *gma)
+static kExpr* Expr_tyCheckVariable(CTX, kExpr *expr, kGamma *gma)
 {
+	DBG_ASSERT(expr->ty == TY_var);
 	kToken *tk = expr->tkNUL;
 	ksymbol_t fn = ksymbol(S_text(tk->text), S_size(tk->text), FN_NONAME, SYMPOL_NAME);
 	int i;
@@ -248,6 +251,7 @@ static kExpr* tycheckVariable(CTX, kExpr *expr, kGamma *gma)
 			expr->build = TEXPR_BLOCKLOCAL_;
 			expr->ty = genv->lvars[i].ty;
 			expr->index = i;
+			DBG_P("index=%d, expr %p", kArray_size(genv->lvarlst), expr);
 			kArray_add(genv->lvarlst, expr);
 			return expr;
 		}
@@ -267,7 +271,7 @@ static kExpr* tycheckVariable(CTX, kExpr *expr, kGamma *gma)
 static KMETHOD TokenTyCheck_SYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
-	RETURN_(tycheckVariable(_ctx, expr, gma));
+	RETURN_(Expr_tyCheckVariable(_ctx, expr, gma));
 }
 
 static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
@@ -460,18 +464,9 @@ static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	DBG_P("getter: size=%d", kArray_size(expr->consNUL));
-	//kExpr *e1 = expr->consNUL->exprs[1];
-	//kExpr *e2 = expr->consNUL->exprs[2];
-	//e1 = Expr_typed(_ctx, e1, gma, req_ty);
-	//e2 = Expr_typed(_ctx, e2, gma, TY_var);
 	kToken *tk = expr->consNUL->tts[1];
 	kerror(_ctx, ERR_, tk->uline, tk->lpos, "call chenji to finish this");
 	RETURN_(K_NULLEXPR);
-}
-
-static KMETHOD StmtTyCheck_nop(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNb_(1);
 }
 
 static KMETHOD StmtTyCheck_err(CTX, ksfp_t *sfp _RIX)  // $expr
@@ -501,30 +496,31 @@ static kbool_t Stmt_TyCheck(CTX, ksyntax_t *syn, kStmt *stmt, kGamma *gma)
 static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 {
 	int i, result = 1, lvarsize = gma->genv->lvarsize;
-	if(bk != NULL) {
-		for(i = 0; i < kArray_size(bk->blockS); i++) {
-			kStmt *stmt = (kStmt*)bk->blockS->list[i];
-			ksyntax_t *syn = stmt->syn;
-			DBG_P("i=%d, syn=%p", i, syn);
-			dumpStmt(_ctx, stmt);
-			if(syn == NULL) continue;
-			int estart = kerrno;
-			if(syn->StmtTyCheck == NULL) {
-				kerror(_ctx, ERR_, stmt->uline, 0, "undefined statement type checker: %s", syn->token);
-				kStmt_toERR(stmt, estart);
-			}
-			else if(!Stmt_TyCheck(_ctx, syn, stmt, gma)) {
-				kStmt_toERR(stmt, estart);
-			}
-			if(stmt->syn == SYN_ERR) {
-				result = 0;
-				break;
-			}
+	for(i = 0; i < kArray_size(bk->blockS); i++) {
+		kStmt *stmt = (kStmt*)bk->blockS->list[i];
+		ksyntax_t *syn = stmt->syn;
+		DBG_P("i=%d, syn=%p", i, syn);
+		dumpStmt(_ctx, stmt);
+		if(syn == NULL) continue;
+		int estart = kerrno;
+		if(syn->StmtTyCheck == NULL) {
+			kerror(_ctx, ERR_, stmt->uline, 0, "undefined statement type checker: %s", syn->token);
+			kStmt_toERR(stmt, estart);
 		}
+		else if(!Stmt_TyCheck(_ctx, syn, stmt, gma)) {
+			kStmt_toERR(stmt, estart);
+		}
+		if(stmt->syn == SYN_ERR) {
+			result = 0;
+			break;
+		}
+	}
+	if(bk != K_NULLBLOCK) {
+		DBG_P("bk=%p esp=%p ty=%s", bk, bk->esp, T_cid(bk->esp->ty));
 		kExpr_setVariable(bk->esp, TEXPR_BLOCKLOCAL_, TY_void, gma->genv->lvarsize, 0, gma);
-		if(lvarsize < gma->genv->lvarsize) {
-			gma->genv->lvarsize = lvarsize;
-		}
+	}
+	if(lvarsize < gma->genv->lvarsize) {
+		gma->genv->lvarsize = lvarsize;
 	}
 	return result;
 }
@@ -598,11 +594,9 @@ static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
 	kbool_t r = 0;
-	if (gma->genv->mtd == NULL) {
-		kerror(_ctx, ERR_, stmt->uline, 0, "do not use return stmt in top level");
-	} else if ((r = Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, gma->genv->mtd->pa->rtype, 0))) {
-		stmt->build = TSTMT_RETURN;
-	}
+	stmt->build = TSTMT_RETURN;
+	assert (gma->genv->mtd != NULL);
+	r = Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, gma->genv->mtd->pa->rtype, 0);
 	RETURNb_(r);
 }
 
@@ -835,7 +829,8 @@ static void Gamma_shiftBlockIndex(CTX, gmabuf_t *genv)
 	size_t i, size = kArray_size(a);
 	int shift = genv->fvarsize;
 	for(i = genv->lvarlst_top; i < size; i++) {
-		kExpr *expr = (kExpr*)a->list[i];
+		kExpr *expr = a->exprs[i];
+		DBG_P("i=%d expr %p", i, expr);
 		DBG_ASSERT(expr->build == TEXPR_BLOCKLOCAL_);
 		expr->index += shift;
 		expr->build = TEXPR_LOCAL;
@@ -854,8 +849,6 @@ static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, k
 		.this_cid = (mtd)->cid,
 		.fvars = fvars, .fcapacity = 32,
 		.lvars = lvars, .lcapacity = 32,
-		.lvarlst = kevalmod->lvarlst,
-		.lvarlst_top = kArray_size(kevalmod->lvarlst),
 	};
 	GAMMA_PUSH(gma, &newgma);
 	Gamma_initParam(_ctx, &newgma, mtd->pa);
@@ -943,8 +936,6 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kLingo *lgo)
 		.this_cid     = (mtd)->cid,
 		.fvars = fvars, .fcapacity = 32,
 		.lvars = lvars, .lcapacity = 32,
-		.lvarlst = kevalmod->lvarlst,
-		.lvarlst_top = kArray_size(kevalmod->lvarlst),
 	};
 	GAMMA_PUSH(gma, &newgma);
 	Gamma_initIt(_ctx, &newgma, mtd->pa);
