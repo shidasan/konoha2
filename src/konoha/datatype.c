@@ -411,10 +411,6 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 	}
 }
 
-
-
-
-
 // -------------------------------------------------------------------------
 
 #define TYPENAME(C) \
@@ -543,7 +539,7 @@ static void String_checkASCII(kString *s)
 	unsigned char ch = 0;
 	long len = S_size(s), n = (len + 3) / 4;
 	const unsigned char*p = (const unsigned char *)S_text(s);
-	switch(len % 4) {  	/* Duff's device written by ide */
+	switch(len % 4) { /* Duff's device written by ide */
 		case 0: do{ ch |= *p++;
 		case 3:     ch |= *p++;
 		case 2:     ch |= *p++;

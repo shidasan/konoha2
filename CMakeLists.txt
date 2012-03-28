@@ -223,7 +223,7 @@ set(TEST_CODE
 		"usymbol"
 		"var"
 		"while"
-		"20120328_int_call.k"
+		"20120328_int_call"
 )
 
 foreach(arg ${TEST_CODE})
