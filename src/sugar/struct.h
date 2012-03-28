@@ -655,9 +655,6 @@ static kToken *Expr_firstToken(CTX, kExpr *expr)
 	return K_NULLTOKEN;
 }
 
-#define new_ConstValue(T, O)  Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
-#define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
-
 static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 {
 	if(expr == NULL) {
@@ -676,9 +673,6 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 	return expr;
 }
 
-#define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
-#define kExpr_setNConstValue(EXPR, T, D)  Expr_setNConstValue(_ctx, EXPR, T, D)
-
 static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 {
 	if(expr == NULL) {
@@ -691,8 +685,6 @@ static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 	return expr;
 }
 
-#define new_Variable(B, T, I, I2, G)         Expr_setVariable(_ctx, NULL, B, T, I, I2, G)
-#define kExpr_setVariable(E, B, T, I, I2, G) Expr_setVariable(_ctx, E, B, T, I, I2, G)
 static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int index, int xindex, kGamma *gma)
 {
 	if(expr == NULL) {

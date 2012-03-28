@@ -407,11 +407,17 @@ typedef struct {
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
+
+	kExpr* (*Expr_setConstValue)(CTX, kExpr *expr, ktype_t ty, kObject *o);
+	kExpr* (*Expr_setNConstValue)(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata);
+	kExpr* (*Expr_setVariable)(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int index, int xindex, kGamma *gma);
+
 	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
 	kBlock*    (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
-	ksyntax_t* (*Lingo_syntax)(CTX, kLingo *, ksymbol_t, int);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
+	ksyntax_t* (*Lingo_syntax)(CTX, kLingo *, ksymbol_t, int);
+	void       (*Lingo_defineSyntax)(CTX, kLingo *, ksyntaxdef_t *);
 	kMethod*   (*Lingo_getMethodNULL)(CTX, kLingo *, kcid_t, kmethodn_t);
 } kevalshare_t;
 
@@ -431,6 +437,26 @@ typedef struct {
 	kflag_t flags;
 } kevalmod_t;
 
+#ifdef USING_SUGAR_AS_BUILTIN
+#define new_ConstValue(T, O)  Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
+#define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
+#define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
+#define kExpr_setNConstValue(EXPR, T, D)  Expr_setNConstValue(_ctx, EXPR, T, D)
+#define new_Variable(B, T, I, I2, G)         Expr_setVariable(_ctx, NULL, B, T, I, I2, G)
+#define kExpr_setVariable(E, B, T, I, I2, G) Expr_setVariable(_ctx, E, B, T, I, I2, G)
+
+#else/*SUGAR_EXPORTS*/
+#define USING_SUGAR                          const kevalshare_t *_e = (const kevalshare_t *)kevalshare
+#define SUGAR                                _e->
+#define new_ConstValue(T, O)                 _e->Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
+#define kExpr_setConstValue(EXPR, T, O)      _e->Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
+#define new_NConstValue(T, D)                _e->Expr_setNConstValue(_ctx, NULL, T, D)
+#define kExpr_setNConstValue(EXPR, T, D)     _e->Expr_setNConstValue(_ctx, EXPR, T, D)
+#define new_Variable(B, T, I, I2, G)         _e->Expr_setVariable(_ctx, NULL, B, T, I, I2, G)
+#define kExpr_setVariable(E, B, T, I, I2, G) _e->Expr_setVariable(_ctx, E, B, T, I, I2, G)
+
+
+#endif/*SUGAR_EXPORTS*/
 ///* ------------------------------------------------------------------------ */
 ///* Sugar API */
 //extern kMethod* Lingo_getMethodNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn);

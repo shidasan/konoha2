@@ -623,10 +623,10 @@ static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
 ///* [MethodDecl] */
 
 static flagop_t MethodDeclFlag[] = {
-	{AKEY("@Virtual"), kMethod_Virtual},
-	{AKEY("@Public"),  kMethod_Public},
-	{AKEY("@Const"),   kMethod_Const},
-	{AKEY("@Static"),  kMethod_Static},
+	{AKEY("@Virtual"),    kMethod_Virtual},
+	{AKEY("@Public"),     kMethod_Public},
+	{AKEY("@Const"),      kMethod_Const},
+	{AKEY("@Static"),     kMethod_Static},
 	{AKEY("@Restricted"), kMethod_Restricted},
 	{NULL},
 };
@@ -720,6 +720,7 @@ static KMETHOD StmtTyCheck_declMethod(CTX, ksfp_t *sfp _RIX)
 	kcid_t cid =  Stmt_getcid(_ctx, stmt, ns, KW_("$cname"), ns->function_cid);
 	kmethodn_t mn = Stmt_getmn(_ctx, stmt, ns, KW_("$name"), MN_("new"));
 	kParam *pa = Stmt_newMethodParam(_ctx, stmt, gma);
+	if(TY_isSingleton(cid)) flag |= kMethod_Static;
 	if(pa != NULL) {
 		INIT_GCSTACK();
 		kMethod *mtd = new_kMethod(flag, cid, mn, pa, NULL);

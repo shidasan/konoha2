@@ -584,7 +584,6 @@ static void ktokenize(CTX, const char *source, kline_t uline, int policy, kArray
 static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 {
 	int i;
-	dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == tt && S_text(tk->text)[0] == closech) return i;
@@ -598,7 +597,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 	int i;
 	char nbuf[80];
 	ksymbol_t nameid = 0;
-	dumpTokenArray(_ctx, 0, tls, s, e);
+	//dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == TK_TEXT || tk->tt == TK_STEXT) {

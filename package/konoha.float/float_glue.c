@@ -1,5 +1,6 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
+#include<konoha2/float.h>
 
 typedef struct kFloat kFloat;
 struct kFloat {
@@ -19,6 +20,40 @@ static KCLASS_DEF FloatDef = {
 	.cflag = CFLAG_Int,
 	.init = Float_init,
 };
+
+//static void kfloatmod_reftrace(CTX, struct kmod_t *baseh)
+//{
+//}
+//
+//static void kfloatmod_free(CTX, struct kmod_t *baseh)
+//{
+//}
+
+static void kfloatshare_setup(CTX, struct kmodshare_t *def)
+{
+}
+
+static void kfloatshare_reftrace(CTX, struct kmodshare_t *baseh)
+{
+//	kfloatshare_t *base = (kfloatshare_t*)baseh;
+//	BEGIN_REFTRACE(1);
+//	END_REFTRACE();
+}
+
+static void kfloatshare_free(CTX, struct kmodshare_t *baseh)
+{
+//	kfloatshare_t *base = (kfloatshare_t*)baseh;
+	KNH_FREE(baseh, sizeof(kfloatshare_t));
+}
+
+static KMETHOD TokenTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	kToken *tk = expr->tkNUL;
+	sfp[4].fvalue = strtod(S_text(tk->text), NULL);
+	RETURN_(kExpr_setNConstValue(expr, TY_Float, sfp[4].ndata));
+}
 
 // --------------------------------------------------------------------------
 
@@ -117,8 +152,14 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 
 static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
 {
-	const kclass_t *cFloat = kaddClassDef(lgo->pid, 0, &FloatDef);
-	kcid_t TY_Float = cFloat->cid;
+	kfloatshare_t *base = (kfloatshare_t*)KNH_ZMALLOC(sizeof(kfloatshare_t));
+	base->h.name     = "float";
+	base->h.setup    = kfloatshare_setup;
+	base->h.reftrace = kfloatshare_reftrace;
+	base->h.free     = kfloatshare_free;
+	ksetModule(MOD_FLOAT, &base->h, pline);
+	base->cFloat = kaddClassDef(lgo->pid, 0, &FloatDef);
+
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
 		_Public|_Const, _F(Float_opADD), TY_Float, TY_Float, MN_("opADD"), 1, TY_Float, FN_x,
@@ -147,8 +188,18 @@ static kbool_t float_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
 	return true;
 }
 
+#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+
 static kbool_t float_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
 {
+	USING_SUGAR;
+	ksyntaxdef_t SYNTAX[] = {
+		{ TOKEN("float"), .type = TY_Float, },
+		{ TOKEN("double"), .type = TY_Float, },
+		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+		{ .name = NULL, },
+	};
+	SUGAR Lingo_defineSyntax(_ctx, lgo, SYNTAX);
 	return true;
 }
 

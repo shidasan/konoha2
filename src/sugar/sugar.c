@@ -27,6 +27,7 @@
 
 /* ************************************************************************ */
 
+#define USING_SUGAR_AS_BUILTIN 1
 #include<konoha2/sugar.h>
 
 /* ************************************************************************ */
@@ -262,11 +263,15 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 
 	// export
 	base->keyword             = keyword;
+	base->Expr_setConstValue  = Expr_setConstValue;
+	base->Expr_setNConstValue  = Expr_setNConstValue;
+	base->Expr_setVariable    = Expr_setVariable;
 	base->Stmt_getBlock       = Stmt_getBlock;
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
 	base->Block_tyCheckAll    = Block_tyCheckAll;
 	base->parseSyntaxRule     = parseSyntaxRule;
 	base->Lingo_syntax        = Lingo_syntax;
+	base->Lingo_defineSyntax  = Lingo_defineSyntax;
 	base->Lingo_getMethodNULL = Lingo_getMethodNULL;
 }
 

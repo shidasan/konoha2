@@ -247,8 +247,9 @@ typedef const struct kcontext_t *const CTX_t;
 #define K_PKGMATRIX 128
 struct kObject;
 
-#define MOD_CODE 0
-#define MOD_EVAL 1
+#define MOD_CODE  0
+#define MOD_EVAL  1
+#define MOD_FLOAT 2
 
 struct kmod_t;
 typedef struct kmod_t {
@@ -495,8 +496,8 @@ typedef struct kclass_t {
 	};
 	struct kmap_t            *constNameMapSO;
 	struct kmap_t            *constPoolMapNO;
-	const struct kclass_t *simbody;
-	const KSTRUCT_DEF       *s;
+	const struct kclass_t    *simbody;
+	const KSTRUCT_DEF        *s;
 } kclass_t;
 
 /* ----------------------------------------------------------------------- */
@@ -535,15 +536,18 @@ typedef struct kclass_t {
 #define kClass_Interface        ((kflag_t)(1<<8))
 #define kClass_TypeVar          ((kflag_t)(1<<9))
 
-#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
-#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
-#define T_isImmutable(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Immutable))
-#define T_isPrivate(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Private))
-#define T_isFinal(t)        (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Final))
-#define T_isSingleton(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Singleton))
-#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UnboxType))
-#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
-#define T_isTypeVar(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_TypeVar))
+//#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
+//#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
+//#define T_isImmutable(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Immutable))
+//#define T_isPrivate(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Private))
+//#define T_isFinal(t)        (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Final))
+
+#define TY_isSingleton(T)    (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_Singleton))
+#define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
+
+//#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UnboxType))
+//#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
+//#define T_isTypeVar(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_TypeVar))
 
 /* magic flag */
 #define MAGICFLAG(f)             (K_OBJECT_MAGIC | ((kmagicflag_t)(f) & K_CFLAGMASK))
@@ -575,10 +579,10 @@ typedef struct kclass_t {
 //## @TypeVariable class Tvar  Tvoid;
 
 #define OFLAG_Tvoid              MAGICFLAG(0)
-#define CFLAG_Tvoid              kClass_TypeVar|kClass_UnboxType
+#define CFLAG_Tvoid              kClass_TypeVar|kClass_UnboxType|kClass_Singleton
 #define TY_void                  CLASS_Tvoid
 #define OFLAG_Tvar               MAGICFLAG(0)
-#define CFLAG_Tvar               kClass_TypeVar|kClass_UnboxType
+#define CFLAG_Tvar               CFLAG_Tvoid
 #define TY_var                   CLASS_Tvar
 
 /* ------------------------------------------------------------------------ */
@@ -594,9 +598,9 @@ typedef struct kclass_t {
 
 #define K_FASTMALLOC_SIZE  (sizeof(void*) * 8)
 
-#define K_OBJECT_MAGIC        (578L << ((sizeof(kflag_t)*8)))
-#define K_CFLAGMASK           (FLAG_Object_Ref)
-#define KNH_MAGICFLAG(f)      (K_OBJECT_MAGIC | ((kmagicflag_t)(f) & K_CFLAGMASK))
+#define K_OBJECT_MAGIC           (578L << ((sizeof(kflag_t)*8)))
+#define K_CFLAGMASK              (FLAG_Object_Ref)
+#define KNH_MAGICFLAG(f)         (K_OBJECT_MAGIC | ((kmagicflag_t)(f) & K_CFLAGMASK))
 #define DBG_ASSERT_ISOBJECT(o)   DBG_ASSERT(TFLAG_is(uintptr_t,(o)->h.magicflag, K_OBJECT_MAGIC))
 
 typedef struct kObjectHeader {
@@ -853,28 +857,21 @@ typedef struct kMethod kMethod;
 //#define kMethod_setOverload(o,b) TFLAG_set(uintptr_t,DP(o)->flag,kMethod_Overload,b)
 
 /* method data */
-#define PTRSIZE  (sizeof(void*))
 #define DEND     (-1)
-#define DT_(X)   ((const char*)((TY_##X)    | (1UL<<(PTRSIZE*8-1))))
-#define DC_(X)   ((const char*)((CLASS_##X) | (1UL<<(PTRSIZE*8-1))))
-#define DS_(X)   ((const char*)((FN_##X)    | (1UL<<(PTRSIZE*8-1))))
-#define DM_(X)   ((const char*)((MN_##X)    | (1UL<<(PTRSIZE*8-1))))
-#define DF_(X)   ((const char*)(X))
-#define FF_(X)   (kMethod_##X)
 
 #define _RIX   ,long _rix
 #define K_RIX  _rix
 
 #ifdef K_USING_WIN32_
-#define KMETHOD  void CC_EXPORT
-#define ITRNEXT int   CC_EXPORT
-typedef void (CC_EXPORT *knh_Fmethod)(CTX, ksfp_t* _RIX);
-typedef int  (CC_EXPORT *knh_Fitrnext)(CTX, ksfp_t * _RIX);
+//#define KMETHOD  void CC_EXPORT
+//#define ITRNEXT int   CC_EXPORT
+//typedef void (CC_EXPORT *knh_Fmethod)(CTX, ksfp_t* _RIX);
+//typedef int  (CC_EXPORT *knh_Fitrnext)(CTX, ksfp_t * _RIX);
 #else
 #define KMETHOD  void  /*CC_FASTCALL_*/
-#define ITRNEXT  int   /*CC_FASTCALL_*/
 typedef KMETHOD (*knh_Fmethod)(CTX, ksfp_t* _RIX);
-typedef ITRNEXT (*knh_Fitrnext)(CTX, ksfp_t* _RIX);
+typedef KMETHOD (*FmethodFastCall)(CTX, ksfp_t * _RIX);
+typedef KMETHOD (*FmethodCallCC)(CTX, ksfp_t *, int, int, struct kopl_t*);
 #endif
 
 struct kMethod {
@@ -888,7 +885,7 @@ struct kMethod {
 	union {
 		kObject            *objdata;
 		struct kKonohaCode *kcode;
-		struct kLingo  *lazyns;       // lazy compilation
+		struct kLingo      *lazyns;       // lazy compilation
 		struct kMethod     *proceed;      // during typing, asm
 	};
 	int delta;
