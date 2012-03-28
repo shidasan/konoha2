@@ -186,7 +186,7 @@ struct kKonohaCode {
 	}\
 
 #define OPEXEC_NCALL() { \
-		(rbp[K_MTDIDX2].mtdNC)->fastcall_1(_ctx, SFP(rbp), K_RTNIDX);\
+		(rbp[K_MTDIDX2].mtdNC)->fastcall_1(_ctx, SFP(rbp) K_RIXPARAM);\
 		OPEXEC_RET();\
 	} \
 

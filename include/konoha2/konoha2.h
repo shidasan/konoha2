@@ -965,7 +965,7 @@ typedef struct kRawPtr {
 		tsfp[K_SHIFTIDX].shift = 0;\
 		tsfp[K_RTNIDX].uline = __LINE__;\
 		klr_setesp(_ctx, tsfp + ARGC + 1);\
-		(MTD)->fastcall_1(_ctx, tsfp, K_RTNIDX);\
+		(MTD)->fastcall_1(_ctx, tsfp K_RIXPARAM);\
 		tsfp[K_MTDIDX].mtdNC = NULL;\
 	} \
 
