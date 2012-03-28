@@ -70,10 +70,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-//#include<inttypes.h>
-
-//#define K_SYSTEMBIT       (sizeof(void*) * CHAR_BIT)
-
 #if defined(__LP64__) || defined(_WIN64)
 #define K_USING_SYS64_    1
 typedef int32_t           kshort_t;
@@ -749,8 +745,6 @@ struct kString {
 #define new_S(T, L)         new_kString(T, L, SPOL_ASCII|SPOL_POOL)
 #define new_String_()
 
-//#define S_tobytep(s)          (&(s)->str)
-//#define S_tobytes(s)          ((s)->str)
 #define S_text(s)             ((const char*) (O_ct(s)->unbox(_ctx, (kRawPtr*)(s))))
 #define S_size(s)             ((s)->str.len)
 //#define S_equals(s, b)        knh_bytes_equals(S_tobytes(s), b)
@@ -859,8 +853,15 @@ typedef struct kMethod kMethod;
 /* method data */
 #define DEND     (-1)
 
-#define _RIX   ,long _rix
-#define K_RIX  _rix
+#define _RIX         ,long _rix
+#define K_RIX        _rix
+#define K_RIXPARAM    ,K_RTNIDX
+#define _KFASTCALL   ,long _rix
+#define K_FASTRIX    _rix
+
+//#define _RIX
+//#define K_RIX (-4)
+//#define K_RIXPARAM
 
 #ifdef K_USING_WIN32_
 //#define KMETHOD  void CC_EXPORT
@@ -868,10 +869,11 @@ typedef struct kMethod kMethod;
 //typedef void (CC_EXPORT *knh_Fmethod)(CTX, ksfp_t* _RIX);
 //typedef int  (CC_EXPORT *knh_Fitrnext)(CTX, ksfp_t * _RIX);
 #else
-#define KMETHOD  void  /*CC_FASTCALL_*/
-typedef KMETHOD (*knh_Fmethod)(CTX, ksfp_t* _RIX);
-typedef KMETHOD (*FmethodFastCall)(CTX, ksfp_t * _RIX);
-typedef KMETHOD (*FmethodCallCC)(CTX, ksfp_t *, int, int, struct kopl_t*);
+#define KMETHOD    void  /*CC_FASTCALL_*/
+#define KMETHODCC  int  /*CC_FASTCALL_*/
+typedef KMETHOD   (*knh_Fmethod)(CTX, ksfp_t* _RIX);
+typedef KMETHOD   (*FmethodFastCall)(CTX, ksfp_t * _KFASTCALL);
+typedef KMETHODCC (*FmethodCallCC)(CTX, ksfp_t *, int, int, struct kopl_t*);
 #endif
 
 struct kMethod {
@@ -879,6 +881,7 @@ struct kMethod {
 	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
 	struct kParam     *pa;
+	kshort_t delta;          kpkg_t packid;
 	union {
 		struct kToken *tcode;
 	};
@@ -888,9 +891,14 @@ struct kMethod {
 		struct kLingo      *lazyns;       // lazy compilation
 		struct kMethod     *proceed;      // during typing, asm
 	};
-	int delta;
-	knh_Fmethod       fcall_1;
-	struct kopl_t    *pc_start;
+	union {
+		knh_Fmethod       fcall_1;
+		FmethodFastCall   fastcall_1;
+	};
+	union {/* body*/
+		struct kopl_t    *pc_start;
+		FmethodCallCC     callcc_1;
+	};
 };
 
 /* ------------------------------------------------------------------------ */
@@ -957,7 +965,7 @@ typedef struct kRawPtr {
 		tsfp[K_SHIFTIDX].shift = 0;\
 		tsfp[K_RTNIDX].uline = __LINE__;\
 		klr_setesp(_ctx, tsfp + ARGC + 1);\
-		(MTD)->fcall_1(_ctx, tsfp, K_RTNIDX);\
+		(MTD)->fastcall_1(_ctx, tsfp, K_RTNIDX);\
 		tsfp[K_MTDIDX].mtdNC = NULL;\
 	} \
 
@@ -1156,28 +1164,28 @@ REF_t *kstack_tail(CTX, size_t min);
 #define KNH_SAFEPOINT(_ctx, sfp)
 
 #define RETURN_(vv) do {\
-	KSETv(sfp[_rix].o, vv);\
+	KSETv(sfp[K_RIX].o, vv);\
 	KNH_SAFEPOINT(_ctx, sfp);\
 	return; \
 } while (0)
 
 #define RETURNd_(d) do {\
-	sfp[_rix].ndata = d; \
+	sfp[K_RIX].ndata = d; \
 	return; \
 } while (0)
 
 #define RETURNb_(c) do {\
-	sfp[_rix].bvalue = c; \
+	sfp[K_RIX].bvalue = c; \
 	return; \
 } while(0)
 
 #define RETURNi_(c) do {\
-	sfp[_rix].ivalue = c; \
+	sfp[K_RIX].ivalue = c; \
 	return; \
 } while (0)
 
 #define RETURNf_(c) do {\
-	sfp[_rix].fvalue = c; \
+	sfp[K_RIX].fvalue = c; \
 	return; \
 } while (0)
 

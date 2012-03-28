@@ -108,6 +108,8 @@ typedef struct kopl_t {
 	union {
 		intptr_t data[5];
 		void *p[5];
+		kObject *o[5];
+		const kclass_t *ct[5];
 		char *u[5];
 	};
 } kopl_t;
@@ -184,7 +186,7 @@ struct kKonohaCode {
 	}\
 
 #define OPEXEC_NCALL() { \
-		(rbp[K_MTDIDX2].mtdNC)->fcall_1(_ctx, SFP(rbp), K_RTNIDX);\
+		(rbp[K_MTDIDX2].mtdNC)->fastcall_1(_ctx, SFP(rbp), K_RTNIDX);\
 		OPEXEC_RET();\
 	} \
 
@@ -205,10 +207,11 @@ struct kKonohaCode {
 
 #define PC_NEXT(pc)   pc+1
 
-#define OPEXEC_CALL(UL, THIS, espshift, CT) { \
+#define OPEXEC_CALL(UL, THIS, espshift, CTO) { \
 		kMethod *mtd_ = rbp[THIS+K_MTDIDX2].mtdNC;\
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
 		rbp = rshift(rbp, THIS);\
+		rbp[K_ULINEIDX2-1].o = CTO;\
 		rbp[K_ULINEIDX2].uline = UL;\
 		rbp[K_SHIFTIDX2].shift = THIS;\
 		rbp[K_PCIDX2].pc = PC_NEXT(pc);\
@@ -216,16 +219,17 @@ struct kKonohaCode {
 		GOTO_PC(pc); \
 	} \
 
-#define OPEXEC_SCALL(UL, thisidx, espshift, mtdO) { \
+#define OPEXEC_SCALL(UL, thisidx, espshift, mtdO, CTO) { \
 		kMethod *mtd_ = mtdO;\
 		/*prefetch((mtd_)->fcall_1);*/\
 		ksfp_t *sfp_ = SFP(rshift(rbp, thisidx)); \
+		sfp_[K_RTNIDX].o = CTO;\
 		sfp_[K_RTNIDX].uline = UL;\
 		sfp_[K_SHIFTIDX].shift = thisidx; \
 		sfp_[K_PCIDX].pc = PC_NEXT(pc);\
 		sfp_[K_MTDIDX].mtdNC = mtd_;\
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
-		(mtd_)->fcall_1(_ctx, sfp_, K_RTNIDX); \
+		(mtd_)->fcall_1(_ctx, sfp_ K_RIXPARAM); \
 		sfp_[K_MTDIDX].mtdNC = NULL;\
 	} \
 

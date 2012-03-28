@@ -22,8 +22,8 @@ NULL       0                  a:ro ty:cid
 BOX        0                  a:ro b:rn ty:cid
 UNBOX      0                  a:rn b:ro ty:cid
 
-CALL       0                  uline:u thisidx:ro espshift:ro ty:cid
-SCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method
+CALL       0                  uline:u thisidx:ro espshift:ro tyo:co
+SCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method  tyo:co
 RET        0
 NCALL      0
 
@@ -214,14 +214,11 @@ ERROR      0                  start:ro msg:String
 
 CTYPE = {
 	'sfpidx' :  'intptr_t', 
-#	'sfpidx2' : 'intptr_t', 
-#	'sfx' :     'ksfx_t',
 	'int':      'kint_t',
 	'float':    'kfloat_t',
 	'cid':      'const kclass_t*',
+	'co':       'kObject*',
 	'hcache':   'kcachedata_t',
-#	'mtd':      'kMethod*',
-#	'tmr':      'kTypeMap*',
 	'addr':     'knh_KLRInst_t*',
 	'u':        'uintptr_t',
 	'i':        'intptr_t',
@@ -237,9 +234,6 @@ def getctype(t, v):
 
 def getVMT(t):
 	tt = ', VMT_%s' % (t.upper())
-#	if t == 'sfx': tt = tt + ', VMT_VOID'
-#	if t == 'int': tt = tt + ' VMTX_INT'
-#	if t == 'float': tt = tt + ' VMTX_FLOAT'
 	return tt
 
 def getsize(t):
@@ -329,12 +323,13 @@ def write_define_h(f):
 #define VMT_U        3
 #define VMT_I        4
 #define VMT_CID      5
-#define VMT_INT      6
-#define VMT_FLOAT    7
-#define VMT_HCACHE   8
-#define VMT_F        9/*function*/
-#define VMT_STRING  10
-#define VMT_METHOD  10
+#define VMT_CO       6
+#define VMT_INT      7
+#define VMT_FLOAT    8
+#define VMT_HCACHE   9
+#define VMT_F        10/*function*/
+#define VMT_STRING   11
+#define VMT_METHOD   12
 
 ''' % (n))
 

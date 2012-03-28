@@ -95,7 +95,7 @@ typedef struct klr_CALL_t {
 	uintptr_t uline;
 	kreg_t thisidx;
 	kreg_t espshift;
-	const kclass_t* ty;
+	kObject* tyo;
 } klr_CALL_t;
 
 #define OPCODE_SCALL ((kopcode_t)13)
@@ -105,6 +105,7 @@ typedef struct klr_SCALL_t {
 	kreg_t thisidx;
 	kreg_t espshift;
 	kMethod* mtd;
+	kObject* tyo;
 } klr_SCALL_t;
 
 #define OPCODE_RET ((kopcode_t)14)
@@ -161,12 +162,13 @@ typedef struct klr_ERROR_t {
 #define VMT_U        3
 #define VMT_I        4
 #define VMT_CID      5
-#define VMT_INT      6
-#define VMT_FLOAT    7
-#define VMT_HCACHE   8
-#define VMT_F        9/*function*/
-#define VMT_STRING  10
-#define VMT_METHOD  10
+#define VMT_CO       6
+#define VMT_INT      7
+#define VMT_FLOAT    8
+#define VMT_HCACHE   9
+#define VMT_F        10/*function*/
+#define VMT_STRING   11
+#define VMT_METHOD   12
 
 
 /* ------------------------------------------------------------------------ */
@@ -198,8 +200,8 @@ static const kOPDATA_t OPDATA[] = {
 	{"NULL", 0, 2, { VMT_RO, VMT_CID, VMT_VOID}}, 
 	{"BOX", 0, 3, { VMT_RO, VMT_RN, VMT_CID, VMT_VOID}}, 
 	{"UNBOX", 0, 3, { VMT_RN, VMT_RO, VMT_CID, VMT_VOID}}, 
-	{"CALL", 0, 4, { VMT_U, VMT_RO, VMT_RO, VMT_CID, VMT_VOID}}, 
-	{"SCALL", 0, 4, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}}, 
+	{"CALL", 0, 4, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_VOID}}, 
+	{"SCALL", 0, 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_CO, VMT_VOID}}, 
 	{"RET", 0, 0, { VMT_VOID}}, 
 	{"NCALL", 0, 0, { VMT_VOID}}, 
 	{"BNOT", 0, 2, { VMT_RN, VMT_RN, VMT_VOID}}, 
@@ -384,12 +386,12 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(CALL) {
 		klr_CALL_t *op = (klr_CALL_t*)pc; (void)op;
-		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, op->ty); pc++;
+		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(SCALL) {
 		klr_SCALL_t *op = (klr_SCALL_t*)pc; (void)op;
-		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->mtd); pc++;
+		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(RET) {

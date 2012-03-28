@@ -648,7 +648,7 @@ static KMETHOD String_opUNTIL(CTX, ksfp_t *sfp _RIX)
 			sfp[2].ivalue = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), (sfp[0].s)->str.len) - offset;
 		}
 	}
-	String_substring(_ctx, sfp, K_RIX);
+	String_substring(_ctx, sfp K_RIXPARAM);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -670,7 +670,7 @@ static KMETHOD String_opTO(CTX, ksfp_t *sfp _RIX)
 			sfp[2].ivalue = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), (sfp[0].s)->str.len) - offset + 1;
 		}
 	}
-	String_substring(_ctx, sfp, K_RIX);
+	String_substring(_ctx, sfp K_RIXPARAM);
 }
 
 // --------------------------------------------------------------------------

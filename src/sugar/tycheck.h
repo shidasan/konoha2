@@ -679,7 +679,7 @@ static KMETHOD Fmethod_lazyCompilation(CTX, ksfp_t *sfp _RIX)
 	kLingo *ns = mtd->lazyns;
 	Method_compile(_ctx, mtd, text, uline, ns);
 	((kcontext_t*)_ctx)->esp = esp;
-	mtd->fcall_1(_ctx, sfp, K_RIX); // call again;
+	mtd->fcall_1(_ctx, sfp K_RIXPARAM); // call again;
 }
 
 static void Stmt_setMethodFunc(CTX, kStmt *stmt, kLingo *ns, kMethod *mtd)

@@ -648,7 +648,10 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 		case VMT_F:
 			DUMP_P("function(%p)", c->p[i]); break;
 		case VMT_CID:
-			DUMP_P("CT(%s)", S_text(((kclass_t*)c->data[i])->name)); break;
+			DUMP_P("CT(%s)", S_text((c->ct[i])->name)); break;
+		case VMT_CO:
+			DUMP_P("CT(%s)", S_text(O_ct(c->o[i])->name)); break;
+
 //		case VMT_HCACHE: {
 //			kcachedata_t *hc = (kcachedata_t*)&(c->p[i]);
 //			knh_write_cname(_ctx, w, hc->cid);
@@ -1432,11 +1435,11 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 	if(kMethod_isVirtual(mtd)) {
 		//ASM(LDMTD, SFP_(thisidx), _LOOKUPMTD, {mtd->cid, mtd->mn}, mtd);
 		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
-		ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
+		ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), knull(CT_(expr->ty)));
 	}
 	else {
 //		if(mtd->fcall_1 != Fmethod_runVM) {
-			ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd);
+			ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 //		}
 //		else {
 //			ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
