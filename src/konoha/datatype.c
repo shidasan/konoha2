@@ -171,6 +171,12 @@ static void DEFAULT_free(CTX, kRawPtr *o)
 	(void)_ctx;(void)o;
 }
 
+static uintptr_t DEFAULT_unbox(CTX, kRawPtr *o)
+{
+	(void)_ctx;(void)o;
+	return 0;
+}
+
 static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
 {
 	return ct->nulvalNUL;
@@ -213,6 +219,7 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 		// function
 		ct->init = s->init;
 		ct->reftrace = s->reftrace;
+		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
 		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
 		ct->initdef = s->initdef;
@@ -523,6 +530,12 @@ static void String_free(CTX, kRawPtr *o)
 	}
 }
 
+static uintptr_t String_unbox(CTX, kRawPtr *o)
+{
+	kString *s = (kString*)o;
+	return (uintptr_t) s->str.text;
+}
+
 //static int String_compareTo(kRawPtr *o, kRawPtr *o2)
 //{
 //	return knh_bytes_strcmp(S_tobytes((kString*)o) ,S_tobytes((kString*)o2));
@@ -532,9 +545,10 @@ static KCLASS_DEF StringDef = {
 	CLASSNAME(String),
 	.init = String_init,
 	.free = String_free,
+	.unbox = String_unbox
 };
 
-static void String_checkASCII(kString *s)
+static void String_checkASCII(CTX, kString *s)
 {
 	unsigned char ch = 0;
 	long len = S_size(s), n = (len + 3) / 4;
@@ -559,6 +573,7 @@ static kString* new_String(CTX, const char *text, size_t len, int policy)
 		s->str.text = text;
 		s->str.len = len;
 		s->hashCode = 0;
+		S_setTextSgm(s, 1);
 	}
 	else if(len + 1 < sizeof(void*) * 2) {
 		s = (kString*)new_Object(_ctx, ct, NULL);
@@ -566,6 +581,7 @@ static kString* new_String(CTX, const char *text, size_t len, int policy)
 		s->str.len = len;
 		memcpy(s->str.ubuf, text, len);
 		s->str.ubuf[len] = '\0';
+		S_setTextSgm(s, 1);
 	}
 	else {
 		s = (kString*)new_Object(_ctx, ct, NULL);
@@ -583,7 +599,7 @@ static kString* new_String(CTX, const char *text, size_t len, int policy)
 		S_setASCII(s, 0);
 	}
 	else {
-		String_checkASCII(s);
+		String_checkASCII(_ctx, s);
 	}
 //	if(TFLAG_is(int, policy, SPOL_POOL)) {
 //		kmapSN_add(_ctx, ct->constPoolMapNO, s);

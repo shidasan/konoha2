@@ -53,6 +53,279 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MASK_LINER    ((S_FLAG_LINER   ) << S_FLAG_MASK_BASE)
+#define MASK_NOFREE   ((S_FLAG_NOFREE  ) << S_FLAG_MASK_BASE)
+#define MASK_ROPE     ((S_FLAG_ROPE    ) << S_FLAG_MASK_BASE)
+#define MASK_INLINE   ((S_FLAG_INLINE  ) << S_FLAG_MASK_BASE)
+#define MASK_EXTERNAL ((S_FLAG_EXTERNAL) << S_FLAG_MASK_BASE)
+
+typedef struct StringBase {
+	kObjectHeader h;
+	size_t length;
+} StringBase;
+#define S_len(s) ((s)->length)
+
+typedef struct LinerString {
+	StringBase base;
+	char *text;
+} LinerString;
+
+typedef struct ExternalString {
+	struct StringBase base;
+	char *text;
+} ExternalString;
+
+typedef struct RopeString {
+	struct StringBase base;
+	struct StringBase *left;
+	struct StringBase *right;
+} RopeString;
+
+typedef struct InlineString {
+	struct StringBase base;
+	char *text;
+	char inline_text[SIZE_INLINE_TEXT];
+} InlineString;
+
+static inline uint32_t S_flag(StringBase *s)
+{
+	uint32_t flag = ((~0U) & (s)->h.magicflag) >> S_FLAG_MASK_BASE;
+	assert(flag <= S_FLAG_ROPE);
+	return flag;
+}
+
+static inline int StringBase_isRope(StringBase *s)
+{
+	return S_flag(s) == S_FLAG_ROPE;
+}
+
+static inline int StringBase_isLiner(StringBase *s)
+{
+	return S_flag(s) == S_FLAG_LINER;
+}
+
+static char *String_getReference(CTX, StringBase *s);
+
+static inline kbytes_t _S_tobytes(CTX, kString *str)
+{
+	kbytes_t b;
+	StringBase *s  = (StringBase *) str;
+	b.text = String_getReference(_ctx, s);
+	b.len  = S_len(s);
+	return b;
+}
+#define S_tobytes(s) _S_tobytes(_ctx, s)
+
+static StringBase *StringBase_concat(CTX, kString *left, kString *right);
+static int String_equal(CTX, StringBase *self, StringBase *arg1);
+
+static void StringBase_setFlag(StringBase *s, uint32_t mask)
+{
+	s->h.magicflag |= mask;
+}
+
+static void StringBase_unsetFlag(StringBase *s, uint32_t mask)
+{
+	s->h.magicflag ^= mask;
+}
+
+static StringBase *new_StringBase(CTX, uint32_t mask)
+{
+	StringBase *s = (StringBase *) new_(String, 0);
+	StringBase_setFlag(s, mask);
+	return s;
+}
+
+static StringBase *InlineString_new(CTX, StringBase *base,
+		const char *text, size_t len)
+{
+	size_t i;
+	InlineString *s = (InlineString *) base;
+	StringBase_setFlag(base, MASK_INLINE);
+	s->base.length = len;
+	for (i = 0; i < len; ++i) {
+		s->inline_text[i] = text[i];
+	}
+	s->inline_text[len] = '\0';
+	s->text = s->inline_text;
+	return base;
+}
+
+static StringBase *ExternalString_new(CTX, StringBase *base,
+		const char *text, size_t len)
+{
+	ExternalString *s = (ExternalString *) base;
+	StringBase_setFlag(base, MASK_EXTERNAL);
+	s->base.length = len;
+	s->text = (char *) text;
+	return base;
+}
+
+static StringBase *LinerString_new(CTX, StringBase *base,
+		const char *text, size_t len)
+{
+	LinerString *s = (LinerString *) base;
+	StringBase_setFlag(base, MASK_LINER);
+	s->base.length = len;
+	s->text = (char *) KNH_MALLOC(len+1);
+	memcpy(s->text, text, len);
+	s->text[len] = '\0';
+	return base;
+}
+
+static StringBase *RopeString_new(CTX, StringBase *left,
+		StringBase *right, size_t len)
+{
+	RopeString *s = (RopeString *) new_StringBase(_ctx, MASK_ROPE);
+	s->base.length = len;
+	s->left  = left;
+	s->right = right;
+	return (StringBase *) s;
+}
+
+static LinerString *RopeString_toLinerString(RopeString *o, char *text, size_t len)
+{
+	LinerString *s = (LinerString *) o;
+	StringBase_unsetFlag((StringBase*)s, MASK_ROPE);
+	StringBase_setFlag((StringBase*)s, MASK_LINER);
+	s->base.length = len;
+	s->text = text;
+	return s;
+}
+
+static kString *new_String2(CTX, const char *text, size_t len, int policy)
+{
+	StringBase *s = (StringBase *) new_StringBase(_ctx, 0);
+	if (len < SIZE_INLINE_TEXT)
+		return (kString*) InlineString_new(_ctx, s, text, len);
+	if(TFLAG_is(int, policy, SPOL_TEXT))
+		return (kString*) ExternalString_new(_ctx, s, text, len);
+	return (kString*) LinerString_new(_ctx, s, text, len);
+}
+
+static void String2_free(CTX, kRawPtr *o)
+{
+	StringBase *base = (StringBase*) o;
+	if (S_isMallocText(base)) {
+		KNH_FREE(((LinerString *)base)->text, S_len(base)+1);
+	}
+}
+
+static void write_text(StringBase *base, char *dest, int size)
+{
+	RopeString *str;
+	size_t len;
+	while (1) {
+		switch (S_flag(base)) {
+			case S_FLAG_LINER:
+			case S_FLAG_EXTERNAL:
+			case S_FLAG_INLINE:
+				memcpy(dest, ((InlineString *) base)->text, size);
+				return;
+			case S_FLAG_ROPE:
+				str = (RopeString *) base;
+				len = S_len(str->left);
+				write_text(str->left, dest, len);
+				base = str->right;
+				dest += len;
+				break;
+		}
+	}
+}
+
+static LinerString *RopeString_flatten(CTX, RopeString *rope)
+{
+	size_t length = S_len((StringBase *) rope);
+	char *dest = (char *) KNH_MALLOC(length+1);
+	size_t len = S_len(rope->left);
+	write_text(rope->left,  dest, len);
+	write_text(rope->right, dest+len, length - len);
+	return RopeString_toLinerString(rope, dest, length);
+}
+
+static char *String_getReference(CTX, StringBase *s)
+{
+	uint32_t flag = S_flag(s);
+	switch (flag) {
+		case S_FLAG_LINER:
+		case S_FLAG_EXTERNAL:
+		case S_FLAG_INLINE:
+			return ((LinerString*)s)->text;
+		case S_FLAG_ROPE:
+			return RopeString_flatten(_ctx, (RopeString*)s)->text;
+		default:
+			/*unreachable*/
+			assert(0);
+	}
+	return NULL;
+}
+
+static void StringBase_reftrace(CTX, StringBase *s)
+{
+	while (1) {
+		if (unlikely(!StringBase_isRope(s)))
+			break;
+		BEGIN_REFTRACE(1);
+		RopeString *rope = (RopeString *) s;
+		StringBase_reftrace(_ctx, rope->left);
+		KREFTRACEv(rope->right);
+		s = rope->right;
+		END_REFTRACE();
+	}
+}
+
+static void String2_reftrace(CTX, kRawPtr *o)
+{
+	StringBase_reftrace(_ctx, (StringBase *) o);
+}
+
+static uintptr_t String2_unbox(CTX, kRawPtr *o)
+{
+	StringBase *s = (StringBase*)o;
+	return (uintptr_t) String_getReference(_ctx, s);
+}
+
+static StringBase *StringBase_concat(CTX, kString *s0, kString *s1)
+{
+	StringBase *left = (StringBase*) s0, *right = (StringBase*) s1;
+	size_t llen, rlen, length;
+
+	llen = S_len(left);
+	if (llen == 0)
+		return right;
+
+	rlen = S_len(right);
+	if (rlen == 0)
+		return left;
+
+	length = llen + rlen;
+	if (length < SIZE_INLINE_TEXT) {
+		InlineString *ret = (InlineString *) new_StringBase(_ctx, MASK_INLINE);
+		char *s0 = String_getReference(_ctx, left);
+		char *s1 = String_getReference(_ctx, right);
+		ret->base.length = length;
+		memcpy(ret->inline_text, s0, llen);
+		memcpy(ret->inline_text + llen, s1, rlen);
+		ret->inline_text[length] = '\0';
+		ret->text = ret->inline_text;
+		return (StringBase *) ret;
+	}
+	return RopeString_new(_ctx, left, right, length);
+}
+
+static int String_equal(CTX, StringBase *self, StringBase *arg1)
+{
+	size_t len0 = S_len(self);
+	size_t len1 = S_len(arg1);
+	char *s0, *s1;
+	if (len0 != len1)
+		return 0;
+	s0 = String_getReference(_ctx, self);
+	s1 = String_getReference(_ctx, arg1);
+	return strncmp(s0, s1, len0) == 0;
+}
+
 /* ------------------------------------------------------------------------ */
 
 static inline kbool_t knh_bytes_endsWith_(kbytes_t v1, kbytes_t v2)
@@ -64,13 +337,13 @@ static inline kbool_t knh_bytes_endsWith_(kbytes_t v1, kbytes_t v2)
 
 static inline kbytes_t knh_bytes_first(kbytes_t t, intptr_t loc)
 {
-	kbytes_t t2 = {{t.text}, loc};
+	kbytes_t t2 = {loc, {t.text}};
 	return t2;
 }
 
 static inline kbytes_t knh_bytes_last(kbytes_t t, intptr_t loc)
 {
-	kbytes_t t2 = {{t.text + loc}, t.len - loc};
+	kbytes_t t2 = {t.len - loc, {t.text + loc}};
 	return t2;
 }
 
@@ -104,7 +377,7 @@ static inline size_t knh_array_index(CTX, ksfp_t *sfp, kint_t n, size_t size)
 	size_t idx = (n < 0) ? size + n : n;
 	if(unlikely(!(idx < size))) {
 		//FIXME
-		//THROW_OutOfRange(ctx, sfp, n, size);
+		//THROW_OutOfRange(_ctx, sfp, n, size);
 	}
 	return idx;
 }
@@ -177,12 +450,8 @@ static kbytes_t knh_bytes_mofflen(kbytes_t v, size_t moff, size_t mlen)
 
 static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 {
-	kwb_t wb;
-	kwb_init(&(_ctx->stack->cwb), &wb);
 	kString *lhs = sfp[0].s, *rhs = sfp[1].s;
-	kwb_write(&wb, S_text(lhs), S_size(lhs));
-	kwb_write(&wb, S_text(rhs), S_size(rhs));
-	RETURN_(new_kString(kwb_top(&wb, 1), kwb_size(&wb), SPOL_POOL));
+	RETURN_(StringBase_concat(_ctx, lhs, rhs));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -222,8 +491,7 @@ static KMETHOD String_opSUB(CTX, ksfp_t *sfp _RIX)
 //## @Const method Boolean String.opEQ(String s);
 static KMETHOD String_opEQ(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_((S_size(sfp[0].s) == S_size(sfp[1].s) &&
-		knh_bytes_strcmp(S_tobytes(sfp[0].s), S_tobytes(sfp[1].s)) == 0));
+	RETURNb_(String_equal(_ctx, (StringBase*)sfp[0].s, (StringBase*)sfp[1].s));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -283,7 +551,7 @@ static KMETHOD String_lastIndexOf(CTX, ksfp_t *sfp _RIX)
 	if(delim.len == 0) loc--;
 	for(; loc >= 0; loc--) {
 		if(base.utext[loc] == delim.utext[0]) {
-			kbytes_t sub = {{base.text + loc}, delim.len};
+			kbytes_t sub = {delim.len, {base.text + loc}};
 			if(knh_bytes_strcmp(sub, delim) == 0) break;
 		}
 	}
@@ -419,9 +687,9 @@ static kbool_t String_initPackage(CTX, struct kLingo *lgo, int argc, const char*
 	intptr_t methoddata[] = {
 		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
 		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_x,
-		_Public|_Const, _F(String_opEQ),        TY_String,  TY_String, MN_("opEQ"),  1, TY_String, FN_x,
 		_Public|_Const, _F(String_opUNTIL),     TY_String,  TY_String, MN_("opUNTIL"), 2, TY_Int, FN_x, TY_Int, FN_y,
 		_Public|_Const, _F(String_opTO),        TY_String,  TY_String, MN_("opTO"),  2, TY_Int, FN_x, TY_Int, FN_y,
+		_Public|_Const, _F(String_opEQ),        TY_Boolean, TY_String, MN_("opEQ"),  1, TY_String, FN_x,
 		_Public|_Const, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_x,
 		_Public|_Const, _F(String_trim),        TY_String, TY_String, MN_("trim"), 0,
 		_Public|_Const, _F(String_get),         TY_String, TY_String, MN_("get"), 1, TY_Int, FN_x,
@@ -433,6 +701,16 @@ static kbool_t String_initPackage(CTX, struct kLingo *lgo, int argc, const char*
 		DEND,
 	};
 	kaddMethodDef(NULL, methoddata);
+	{
+		kclass_t *cString = (kclass_t*) CT_String;
+		cString->unbox = String2_unbox;
+		cString->free  = String2_free;
+		cString->reftrace = String2_reftrace;
+	}
+	{
+		klib2_t *l = _ctx->lib2;
+		l->Knew_String = new_String2;
+	}
 	return true;
 }
 
@@ -441,7 +719,7 @@ static kbool_t String_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
 	return true;
 }
 
-static kbool_t String_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t String_initLingo(CTX, struct kLingo *lgo, kline_t pline)
 {
 	return true;
 }
@@ -460,6 +738,11 @@ KPACKDEF* string_init(void)
 		.initLingo = String_initLingo,
 		.setupPackage = String_setupLingo,
 	};
+	assert(sizeof(StringBase) <= sizeof(kString));
+	assert(sizeof(ExternalString) <= sizeof(kString));
+	assert(sizeof(InlineString) <= sizeof(kString));
+	assert(sizeof(LinerString) <= sizeof(kString));
+	assert(sizeof(RopeString) <= sizeof(kString));
 	return &d;
 }
 #ifdef __cplusplus

@@ -441,6 +441,7 @@ struct kp_api;
 		void (*init)(CTX, struct kRawPtr*, void *conf);\
 		void (*reftrace)(CTX, struct kRawPtr*);\
 		void (*free)(CTX, struct kRawPtr*);\
+		uintptr_t (*unbox)(CTX, struct kRawPtr*);\
 		int  (*compareTo)(struct kRawPtr*, struct kRawPtr*);\
 		void (*p)(CTX, kwb_t *, int);\
 		struct kObject* (*fnull)(CTX, const struct kclass_t *);\
@@ -549,6 +550,8 @@ typedef struct kclass_t {
 
 #define kObject_NullObject       ((kmagicflag_t)(1<<0))
 
+#define kObject_Local6           ((kmagicflag_t)(1<<10))
+#define kObject_Local5           ((kmagicflag_t)(1<<11))
 #define kObject_Local4           ((kmagicflag_t)(1<<12))
 #define kObject_Local3           ((kmagicflag_t)(1<<13))
 #define kObject_Local2           ((kmagicflag_t)(1<<14))
@@ -688,22 +691,41 @@ struct kInt {
 #define OFLAG_String              MAGICFLAG(0)
 #define TY_String                 CLASS_String
 #define IS_String(o)              (O_cid(o) == CLASS_String)
+/*
+ * Bit encoding for Rope String
+ * 5432109876543210
+ * 000xxxxxxxxxxxxx ==> magicflag bit representation
+ * 001xxxxxxxxxxxxx LinerString
+ * 011xxxxxxxxxxxxx ExterenalString
+ * 010xxxxxxxxxxxxx InlinedString
+ * 100xxxxxxxxxxxxx RopeString
+ */
+#define S_FLAG_MASK_BASE (13)
+#define S_FLAG_LINER     ((1UL << (0)))
+#define S_FLAG_NOFREE    ((1UL << (1)))
+#define S_FLAG_ROPE      ((1UL << (2)))
+#define S_FLAG_INLINE    (S_FLAG_NOFREE)
+#define S_FLAG_EXTERNAL  (S_FLAG_LINER | S_FLAG_NOFREE)
 
-#define S_isMallocText(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
-#define S_setMallocText(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
-#define S_isASCII(o)         (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local2))
-#define S_setASCII(o,b)      TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local2,b)
-#define S_isPooled(o)        (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local3))
-#define S_setPooled(o,b)     TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local3,b)
+#define S_isRope(o)          (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
+#define S_isTextSgm(o)       (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local2))
+#define S_setTextSgm(o,b)    TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local2,b)
+#define S_isMallocText(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local3))
+#define S_setMallocText(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local3,b)
+#define S_isASCII(o)         (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local4))
+#define S_setASCII(o,b)      TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local4,b)
+#define S_isPooled(o)        (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local5))
+#define S_setPooled(o,b)     TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local5,b)
+#define SIZE_INLINE_TEXT (64 - sizeof(kObjectHeader)-sizeof(kbytes_t)-sizeof(kuint_t))
 
 typedef struct {
+	size_t       len;
 	union {
 		const char *text;
 		const unsigned char *utext;
 		char *buf;
 		unsigned char *ubuf;
 	};
-	size_t       len;
 } kbytes_t;
 
 typedef struct kString kString;
@@ -711,6 +733,7 @@ struct kString {
 	kObjectHeader h;
 	kbytes_t str;
 	kuint_t hashCode;
+	const char _reserved[SIZE_INLINE_TEXT];
 };
 
 #define SPOL_TEXT          (1<<0)
@@ -722,13 +745,13 @@ struct kString {
 #define new_S(T, L)         new_kString(T, L, SPOL_ASCII|SPOL_POOL)
 #define new_String_()
 
-#define S_tobytep(s)          (&(s)->str)
-#define S_tobytes(s)          ((s)->str)
-#define S_text(s)           ((s)->str.text)
+//#define S_tobytep(s)          (&(s)->str)
+//#define S_tobytes(s)          ((s)->str)
+#define S_text(s)             ((const char*) (O_ct(s)->unbox(_ctx, (kRawPtr*)(s))))
 #define S_size(s)             ((s)->str.len)
-#define S_equals(s, b)        knh_bytes_equals(S_tobytes(s), b)
-#define S_startsWith(s, b)    knh_bytes_startsWith_(S_tobytes(s), b)
-#define S_endsWith(s, b)      knh_bytes_endsWith_(S_tobytes(s), b)
+//#define S_equals(s, b)        knh_bytes_equals(S_tobytes(s), b)
+//#define S_startsWith(s, b)    knh_bytes_startsWith_(S_tobytes(s), b)
+//#define S_endsWith(s, b)      knh_bytes_endsWith_(S_tobytes(s), b)
 
 /* ------------------------------------------------------------------------ */
 //## class Array   Object;

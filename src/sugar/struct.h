@@ -430,13 +430,14 @@ static const KSTRUCT_DEF TokenDef = {
 	.reftrace = Token_reftrace,
 };
 
-static const char *kToken_s(kToken *tk)
+#define kToken_s(tk) kToken_s_(_ctx, tk)
+static const char *kToken_s_(CTX, kToken *tk)
 {
 	switch((int)tk->tt) {
 	case AST_PARENTHESIS: return "(... )";
 	case AST_BRACE: return "{... }";
 	case AST_BRANCET: return "[... ]";
-	default: 	return S_text(tk->text);
+	default:  return S_text(tk->text);
 	}
 }
 

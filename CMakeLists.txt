@@ -170,7 +170,7 @@ macro(create_package_project _PKGNAME)
 	if(${LEN} GREATER 0)
 		add_library(${LIB} SHARED ${PACKAGE_SOURCE_CODE})
 		set_target_properties(${LIB} PROPERTIES PREFIX "")
-		target_link_libraries(${LIB} konoha ${PACKAGE_EXTRA_LIBRARY})
+		target_link_libraries(${LIB} konoha2 ${PACKAGE_EXTRA_LIBRARY})
 		install(TARGETS ${LIB} DESTINATION ${_KONOHA_PACKAGE_DIR})
 	endif(${LEN} GREATER 0)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PACKAGE_SCRIPT_CODE} DESTINATION ${_KONOHA_PACKAGE_DIR})
@@ -223,6 +223,7 @@ set(TEST_CODE
 		"usymbol"
 		"var"
 		"while"
+		"ropestring"
 		"20120328_int_call"
 )
 
@@ -272,4 +273,15 @@ add_test(test_string test_string)
 
 add_executable(test_sizeof ./test/test_sizeof.c)
 add_test(test_sizeof test_sizeof)
+
+install(TARGETS konoha2 konoha2_bin
+		RUNTIME DESTINATION bin
+		LIBRARY DESTINATION lib
+		)
+
+install(DIRECTORY include/ DESTINATION include 
+		FILES_MATCHING
+		PATTERN "*.h"
+		PATTERN ".svn" EXCLUDE
+		)
 
