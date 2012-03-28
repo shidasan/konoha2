@@ -556,8 +556,8 @@ static kBlock *Stmt_getBlock(CTX, kStmt *stmt, ksymbol_t nameid, kBlock *bkdef)
 				kObject_setObject(stmt, nameid, bk);
 			}
 		}
-		if(!IS_Block(bk)) {
-			return bkdef;
+		if(IS_Block(bk)) {
+			return bk;
 		}
 	}
 	return bkdef;
