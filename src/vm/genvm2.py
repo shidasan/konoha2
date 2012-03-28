@@ -34,6 +34,8 @@ SAFEPOINT  0                  espshift:ro
 
 ERROR      0                  start:ro msg:String
 
+VCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method  tyo:co
+
 #P          _CONST            print:f flag:u  msg:String n:sfpidx2
 #PROBE      0                 sfpidx:sfpidx2 probe:f n:u n2:u
 #TRY        0                 addr:addr hn:ro

@@ -771,34 +771,8 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 //	kcodemod->bbNC = newbb;
 //}
 
-//static void _LOOKUPMTD(CTX, ksfp_t *sfp, struct kopLDMTD_t *op)
-//{
-//	size_t thisidx = op->thisidx / 2;
-//	const kclass_t *ct = O_ct(sfp[thisidx].o);
-//	if(op->cache.cid != ct->cid) {
-//		kMethod *mtd = ClassTBL_getMethod(_ctx, ct, op->cache.mn);
-//		op->mtdNC = mtd;
-//		op->cache.cid = ct->cid;
-//	}
-//	sfp[thisidx+K_MTDIDX].mtdNC = op->mtdNC;
-//}
-
-
 /* ------------------------------------------------------------------------ */
 /* [GammaBuilder] */
-
-//static void ASM_SAFEPOINT(CTX, int espidx)
-//{
-//#ifdef K_USING_SAFEPOINT
-//	kBasicBlock *bb = kcodemod->bbNC;
-//	size_t i;
-//	for(i = 0; i < bb->size; i++) {
-//		kopl_t *op = bb->opbuf + i;
-//		if(op->opcode == OPSAFEPOINT) return;
-//	}
-//	ASM(SAFEPOINT, SFP_(espidx));
-//#endif
-//}
 
 /* ------------------------------------------------------------------------ */
 /* CALL */
@@ -817,81 +791,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 //	return ((tk)->num)->n.fvalue;
 //}
 
-//static int CALLPARAMs_asm(CTX, kStmtExpr *stmt, size_t s, int local, kcid_t cid, kMethod *mtd)
-//{
-//	size_t i;
-//	if(s == 1 && Method_isStatic(mtd)) s = 2;   // ignoring static caller, like Script
-//	if(DP(stmt)->size + DP(stmt)->espidx > 32) {
-//		ASM(CHKSTACK, SFP_(DP(stmt)->size + DP(stmt)->espidx));
-//	}
-//	for(i = s; i < DP(stmt)->size; i++) {
-//		Tn_asm(_ctx, stmt, i, local + i + (K_CALLDELTA-1));
-//	}
-//	// TODO(@imasahiro)
-//	if(Stmt_isTAILRECURSION(stmt) && BUILD_isTailRecursion(_ctx->gma)) {
-//		kBasicBlock *lbBEGIN = GammaBuilderLabel(_ctx, 1);
-//		for(i = s; i < DP(stmt)->size; i++) {
-//			ktype_t reqt = Tn_type(stmt, i); //Tn_ptype(_ctx, stmt, i, cid, mtd);
-//			if(TY_isUnbox(reqt)) {
-//				ASM(NMOV, NC_(i-1), NC_(local + i + (K_CALLDELTA-1)));
-//			}
-//			else {
-//				ASM(OMOV, OC_(i-1), OC_(local + i + (K_CALLDELTA-1)));
-//			}
-//		}
-//		ASM_JMP(_ctx, lbBEGIN);
-//		return 0;
-//	}
-//	return 1;
-//}
-
-//static void ASM_INLINE(CTX, int sfpshift, kopl_t *code, size_t isize)
-//{
-//	size_t i, last = isize;
-//	kBasicBlock* bb[K_INLINECODE];
-//	for(i = 0; i < isize; i++) {
-//		bb[i] = new_BasicBlockLABEL(_ctx);
-//		bb[i]->nextNC = NULL;
-//		bb[i]->jumpNC = NULL;
-//		if(code[i].opcode == OPRET) {
-//			last = i; break;
-//		}
-//	}
-//	KNH_ASSERT(last != isize);
-//	ASM_LABEL(_ctx, bb[0]);
-//	for(i = 0; i < last; i++) {
-//		kopl_t opbuf, *op;
-//		opbuf = code[i]; op = &opbuf;
-//		knh_OPshift(op, sfpshift);
-//		if(op->opcode == OPJMP_) {
-//			op->opcode = OPJMP;
-//		}
-//		if(op->opcode != OPJMP) {
-//			BasicBlock_add(_ctx, bb[i], op->line, op, 0);
-//			bb[i]->nextNC = bb[i+1];
-//			DP(bb[i+1])->incoming += 1;
-//		}
-//		if(kOPhasjump(op->opcode)) {
-//			int jmpidx = code - (kopl_t*)(op->p[0]);
-//			if (jmpidx < 0) jmpidx = -jmpidx;
-//			DBG_ASSERT(jmpidx < (int)isize);
-//			bb[i]->jumpNC = bb[jmpidx];
-//			DP(bb[jmpidx])->incoming += 1;
-//			op->p[0] = NULL;
-//		}
-//	}
-//	kcodemod->bbNC = bb[last];
-//	DBG_ASSERT(DP(bb[last])->incoming > 0);
-//}
-
 #define ESP_(sfpidx, args)   SFP_(sfpidx + args + K_CALLDELTA + 1)
-
-//static kreg_t RTNIDX_(CTX, int sfpidx, ktype_t rtype)
-//{
-//	if(rtype == TY_void) return -1;
-//	if(TY_isUnbox(rtype)) return NC_(sfpidx);
-//	return OC_(sfpidx);
-//}
 
 //static void ASM_CALL(CTX, int espidx, ktype_t rtype, kMethod *mtd, int isStatic, size_t argc)
 //{
@@ -1438,13 +1338,12 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), knull(CT_(expr->ty)));
 	}
 	else {
-//		if(mtd->fcall_1 != Fmethod_runVM) {
+		if(mtd->fcall_1 != Fmethod_runVM) {
 			ASM(SCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
-//		}
-//		else {
-//			ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
-//			ASM(CALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), CT_(expr->ty));
-//		}
+		}
+		else {
+			ASM(VCALL, kcodemod->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
+		}
 	}
 }
 
@@ -1506,7 +1405,7 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 /* ------------------------------------------------------------------------ */
 /* [LABEL]  */
 
-static void BUILD_pushLABEL(CTX, kBlock *bk, kBasicBlock *lbC, kBasicBlock *lbB)
+static void BUILD_pushLABEL(CTX, kStmt *stmtNUL, kBasicBlock *lbC, kBasicBlock *lbB)
 {
 	kObject *tkL = NULL;
 //	if(IS_Map(DP(bk)->metaDictCaseMap)) {
@@ -1835,6 +1734,17 @@ static void ASSERT_asm(CTX, kStmtExpr *stmt)
 
 /* ------------------------------------------------------------------------ */
 
+static void ASM_SAFEPOINT(CTX, int espidx)
+{
+	kBasicBlock *bb = kcodemod->bbNC;
+	size_t i;
+	for(i = 0; i < bb->size; i++) {
+		kopl_t *op = bb->opbuf + i;
+		if(op->opcode == OPCODE_SAFEPOINT) return;
+	}
+	ASM(SAFEPOINT, SFP_(espidx));
+}
+
 static void BLOCK_asm(CTX, kBlock *bk);
 
 #define kStmt_expr(STMT, KW, DEF)  Stmt_expr(_ctx, STMT, KW, DEF)
@@ -1902,6 +1812,20 @@ static void ReturnStmt_asm(CTX, kStmt *stmt, int espidx)
 	ASM_JMP(_ctx, GammaBuilderLabel(2));  // RET
 }
 
+static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
+{
+	kBasicBlock* lbCONTINUE = new_BasicBlockLABEL(_ctx);
+	kBasicBlock* lbBREAK = new_BasicBlockLABEL(_ctx);
+	BUILD_pushLABEL(_ctx, stmt, lbCONTINUE, lbBREAK);
+	ASM_LABEL(_ctx, lbCONTINUE);
+	ASM_SAFEPOINT(_ctx, espidx);
+	EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbBREAK, espidx);
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_BLOCK, K_NULLBLOCK));
+	ASM_JMP(_ctx, lbCONTINUE);
+	ASM_LABEL(_ctx, lbBREAK);
+	BUILD_popLABEL(_ctx);
+}
+
 static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	DBG_P("undefined asm syntax='%s'", stmt->syn->token);
@@ -1921,6 +1845,7 @@ static void BLOCK_asm(CTX, kBlock *bk)
 		case TSTMT_BLOCK:  BlockStmt_asm(_ctx, stmt, espidx); break;
 		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, espidx); return;
 		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     break;
+		case TSTMT_LOOP:   LoopStmt_asm(_ctx, stmt, espidx);     break;
 		default: UndefinedStmt_asm(_ctx, stmt, espidx); break;
 		}
 	}
@@ -1945,13 +1870,14 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 	if(kcodemod == NULL) {
 		kcodeshare->h.setup(_ctx, NULL);
 	}
+	kMethod_setFunc(mtd, Fmethod_runVM);
 	DBG_ASSERT(kArray_size(kcodemod->insts) == 0);
 	DBG_ASSERT(kArray_size(kcodemod->lstacks) == 0);
 	kBasicBlock* lbINIT  = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbBEGIN = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbEND   = new_BasicBlockLABEL(_ctx);
 	kcodemod->bbNC = lbINIT;
-	BUILD_pushLABEL(_ctx, bk, lbBEGIN, lbEND);
+	BUILD_pushLABEL(_ctx, NULL, lbBEGIN, lbEND);
 	ASM(THCODE, _THCODE);
 	ASM_LABEL(_ctx, lbBEGIN);
 	BLOCK_asm(_ctx, bk);

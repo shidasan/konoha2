@@ -151,8 +151,18 @@ typedef struct klr_ERROR_t {
 	kString* msg;
 } klr_ERROR_t;
 
+#define OPCODE_VCALL ((kopcode_t)21)
+typedef struct klr_VCALL_t {
+	KCODE_HEAD;
+	uintptr_t uline;
+	kreg_t thisidx;
+	kreg_t espshift;
+	kMethod* mtd;
+	kObject* tyo;
+} klr_VCALL_t;
+
 	
-#define KOPCODE_MAX ((kopcode_t)21)
+#define KOPCODE_MAX ((kopcode_t)22)
 
 #define VMT_VOID     0
 #define VMT_ADDR     1
@@ -209,6 +219,7 @@ static const kOPDATA_t OPDATA[] = {
 	{"JMPF", 0, 2, { VMT_ADDR, VMT_RN, VMT_VOID}}, 
 	{"SAFEPOINT", 0, 1, { VMT_RO, VMT_VOID}}, 
 	{"ERROR", 0, 2, { VMT_RO, VMT_STRING, VMT_VOID}}, 
+	{"VCALL", 0, 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_CO, VMT_VOID}}, 
 };
 
 static void opcode_check(void)
@@ -234,6 +245,7 @@ static void opcode_check(void)
 	assert(sizeof(klr_JMPF_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_SAFEPOINT_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_ERROR_t) <= sizeof(kopl_t));
+	assert(sizeof(klr_VCALL_t) <= sizeof(kopl_t));
 }
 
 static const char *T_opcode(kopcode_t opcode)
@@ -314,7 +326,7 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 		&&L_NEW, &&L_NULL, &&L_BOX, &&L_UNBOX, 
 		&&L_CALL, &&L_SCALL, &&L_RET, &&L_NCALL, 
 		&&L_BNOT, &&L_JMP, &&L_JMPF, &&L_SAFEPOINT, 
-		&&L_ERROR, 
+		&&L_ERROR, &&L_VCALL, 
 	};
 #endif
 	krbp_t *rbp = (krbp_t*)sfp0;
@@ -427,6 +439,11 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	CASE(ERROR) {
 		klr_ERROR_t *op = (klr_ERROR_t*)pc; (void)op;
 		OPEXEC_ERROR(op->start, op->msg); pc++;
+		GOTO_NEXT();
+	} 
+	CASE(VCALL) {
+		klr_VCALL_t *op = (klr_VCALL_t*)pc; (void)op;
+		OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
 	DISPATCH_END(pc);

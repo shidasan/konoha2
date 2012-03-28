@@ -219,6 +219,18 @@ struct kKonohaCode {
 		GOTO_PC(pc); \
 	} \
 
+#define OPEXEC_VCALL(UL, THIS, espshift, mtdO, CTO) { \
+		kMethod *mtd_ = mtdO;\
+		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
+		rbp = rshift(rbp, THIS);\
+		rbp[K_ULINEIDX2-1].o = CTO;\
+		rbp[K_ULINEIDX2].uline = UL;\
+		rbp[K_SHIFTIDX2].shift = THIS;\
+		rbp[K_PCIDX2].pc = PC_NEXT(pc);\
+		pc = (mtd_)->pc_start;\
+		GOTO_PC(pc); \
+	} \
+
 #define OPEXEC_SCALL(UL, thisidx, espshift, mtdO, CTO) { \
 		kMethod *mtd_ = mtdO;\
 		/*prefetch((mtd_)->fcall_1);*/\
