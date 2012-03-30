@@ -48,7 +48,7 @@ static inline kString* S_ty_(CTX, ktype_t ty)
 #define T_fn(fn)   S_text(S_fn(fn))
 static inline kString* S_fn_(CTX, ksymbol_t sym)
 {
-	int index = MN_UNMASK(sym);
+	size_t index = (size_t) MN_UNMASK(sym);
 	if(index < kArray_size(_ctx->share->symbolList)) {
 		return _ctx->share->symbolList->strings[index];
 	}

@@ -82,6 +82,7 @@ set(VM
 set(PACKAGES
 	konoha.string
 	konoha.float
+	konoha.llvm
 	konoha.loop
 	sugar
 	posix.process
