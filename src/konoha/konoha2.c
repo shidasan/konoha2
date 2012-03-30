@@ -93,15 +93,15 @@ static void konoha_init(void)
 	}
 }
 
-//void knh_beginContext(CTX, void **bottom)
-//{
-//	ctx->stack->cstack_bottom = bottom;
-//}
-//
-//void knh_endContext(CTX)
-//{
-//	ctx->stack->cstack_bottom = NULL;
-//}
+void knh_beginContext(CTX, void **bottom)
+{
+	_ctx->stack->cstack_bottom = bottom;
+}
+
+void knh_endContext(CTX)
+{
+	_ctx->stack->cstack_bottom = NULL;
+}
 
 /* ------------------------------------------------------------------------ */
 /* stack */

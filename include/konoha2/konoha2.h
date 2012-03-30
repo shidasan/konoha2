@@ -1222,6 +1222,10 @@ extern void konoha_ginit(int argc, const char **argv);
 extern konoha_t konoha_open(void);
 extern void konoha_close(konoha_t konoha);
 extern int konoha_main(konoha_t konoha, int argc, const char **argv);
+extern void knh_beginContext(CTX, void **bottom);
+extern void knh_endContext(CTX);
+#define BEGIN_CONTEXT(_ctx) knh_beginContext(_ctx, (void**)&_ctx)
+#define END_CONTEXT(_ctx) knh_endContext(_ctx)
 extern void klib2_init(klib2_t *klib2);
 extern void kshare_init(CTX, kcontext_t *ctx);
 extern void MODEVAL_init(CTX, kcontext_t *ctx);

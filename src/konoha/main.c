@@ -308,7 +308,9 @@ int main(int argc, const char *argv[])
 	}
 	konoha_ginit(argc, argv);
 	konoha_t konoha = konoha_open();
+	BEGIN_CONTEXT(konoha);
 	ret = konoha_main(konoha, argc, argv);
+	END_CONTEXT(konoha);
 	konoha_close(konoha);
 	MODGC_check_malloced_size();
 	return ret;
