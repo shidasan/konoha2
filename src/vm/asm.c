@@ -1951,16 +1951,9 @@ static const KSTRUCT_DEF KonohaCodeDef = {
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
 //	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
-//	ktype_t rtype = ktype_tocid(_ctx, knh_Param_rtype(DP(mtd)->mp), O_cid(sfp[0].o));
-//	//KNH_SYSLOG(_ctx, LOG_NOTICE, "AbstractMethod", "%C.%M", mtd->cid, mtd->mn);
-//	if(rtype != TY_void) {
-//		if(TY_isUnbox(rtype)) {
-//			RETURNi_(KINT0);
-//		}
-//		else {
-//			RETURN_(KNH_NULVAL(CLASS_t(rtype)));
-//		}
-//	}
+//	char mbuf[128];
+//	kreportf(WARN_, sfp[K_RTNIDX].uline, "calling abstract method: %s.%s", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	RETURNi_(0);
 }
 
 //static kbool_t Method_isAbstract(kMethod *mtd)

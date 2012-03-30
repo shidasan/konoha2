@@ -174,8 +174,7 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 		KARRAY_INIT(base->cwb, K_PAGESIZE, char);
 		base->iseval = 0;
 		base->evalty = TY_void;
-		KINITv(base->evalval.o, K_NULL);
-		base->evalval.ivalue = 0;
+		base->evalidx = 0;
 		base->evaljmpbuf = (kjmpbuf_t*)KNH_ZMALLOC(sizeof(kjmpbuf_t));
 		_ctx->mod[MOD_EVAL] = (kmod_t*)base;
 	}

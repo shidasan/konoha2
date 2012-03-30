@@ -109,17 +109,15 @@ typedef uintptr_t        kuint_t;
 #define ULLONG_MAX 18446744073709551615ULL
 #endif
 
-//#define KINT_MAX               LLONG_MAX
-//#define KINT_MIN               LLONG_MIN
-//#define KINT_FMT               "%lld"
+#define KINT_MAX               LLONG_MAX
+#define KINT_MIN               LLONG_MIN
+#define KINT_FMT               "%lld"
 //#define KINT_XFMT              "%llx"
 //#define KINT0                  0ULL
 //#define KUINT_MAX              ULLONG_MAX
 //#define KUINT_MIN              0ULL
 //#define KUINT_FMT              "%llu"
 //#define knh_abs(n)              llabs(n)
-#define VMTX_INT
-#define VMTSIZE_int 0
 
 #else/*K_USING_SYS64_*/
 
@@ -434,14 +432,17 @@ typedef struct kfield_t {
 
 struct kp_api;
 
+#define KP_STR    0
+#define KP_DUMP   1
+
 #define KCLASSSPI \
 		void (*init)(CTX, struct kRawPtr*, void *conf);\
 		void (*reftrace)(CTX, struct kRawPtr*);\
 		void (*free)(CTX, struct kRawPtr*);\
+		struct kObject* (*fnull)(CTX, const struct kclass_t *);\
+		void (*p)(CTX, ksfp_t *, int, kwb_t *, int);\
 		uintptr_t (*unbox)(CTX, struct kRawPtr*);\
 		int  (*compareTo)(struct kRawPtr*, struct kRawPtr*);\
-		void (*p)(CTX, kwb_t *, int);\
-		struct kObject* (*fnull)(CTX, const struct kclass_t *);\
 		struct kString* (*getkey)(CTX, struct kRawPtr*);\
 		kuint_t (*hashCode)(CTX, struct kRawPtr*);\
 		struct kclass_t* (*initdef)(CTX, struct kclass_t *)

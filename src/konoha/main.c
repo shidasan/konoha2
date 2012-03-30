@@ -245,6 +245,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
 	return status;
 }
 
+void MODEVAL_dumpEval(CTX, kwb_t *wb);
 static void shell(CTX)
 {
 	kwb_t wb;
@@ -262,7 +263,8 @@ static void shell(CTX)
 		if(status == K_CONTINUE && kwb_size(&wb) > 0) {
 			status = MODEVAL_eval(_ctx, kwb_top(&wb, 1), kwb_size(&wb), uline);
 			if(status != K_FAILED) {
-
+				kwb_free(&wb);
+				MODEVAL_dumpEval(_ctx, &wb);
 			}
 		}
 		kwb_free(&wb);

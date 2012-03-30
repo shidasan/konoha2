@@ -432,7 +432,7 @@ typedef struct {
 	struct kArray *definedMethods;
 	kshort_t iseval;
 	ktype_t evalty;
-	ksfp_t  evalval;
+	int     evalidx;
 	kjmpbuf_t* evaljmpbuf;
 	kflag_t flags;
 } kevalmod_t;

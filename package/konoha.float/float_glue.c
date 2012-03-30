@@ -15,10 +15,16 @@ static void Float_init(CTX, kRawPtr *o, void *conf)
 	n->n.data = (uintptr_t)conf;  // conf is unboxed data
 }
 
+static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	kwb_printf(wb, "%f", sfp[pos].fvalue);
+}
+
 static KCLASS_DEF FloatDef = {
 	STRUCTNAME(Float),
 	.cflag = CFLAG_Int,
 	.init = Float_init,
+	.p     = Float_p,
 };
 
 //static void kfloatmod_reftrace(CTX, struct kmod_t *baseh)

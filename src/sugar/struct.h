@@ -212,15 +212,6 @@ static kObject *Lingo_getSymbolValueNULL(CTX, kLingo *lgo, const char *key, size
 	return NULL;
 }
 
-static uintptr_t casehash(const char *name, size_t len)
-{
-	uintptr_t i, hcode = 0;
-	for(i = 0; i < len; i++) {
-		hcode = tolower(name[i]) + (31 * hcode);
-	}
-	return hcode;
-}
-
 //static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 //{
 //	uintptr_t hcode = casehash(S_text(skey), S_size(skey));

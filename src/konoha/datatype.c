@@ -7,6 +7,7 @@
 
 #define K_INTERNAL
 #include <konoha2/konoha2.h>
+#include <konoha2/klib.h>
 #include "../gc/gc_api.h"
 
 #ifdef __cplusplus
@@ -171,6 +172,11 @@ static void DEFAULT_free(CTX, kRawPtr *o)
 	(void)_ctx;(void)o;
 }
 
+static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	kwb_printf(wb, "%s:&%p", T_cid(O_cid(sfp[pos].o)), sfp[pos].o);
+}
+
 static uintptr_t DEFAULT_unbox(CTX, kRawPtr *o)
 {
 	(void)_ctx;(void)o;
@@ -219,6 +225,7 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 		// function
 		ct->init = s->init;
 		ct->reftrace = s->reftrace;
+		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
 		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
 		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
@@ -228,15 +235,6 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 		}
 	}
 	return ct;
-}
-
-static uintptr_t casehash(const char *name, size_t len)
-{
-	uintptr_t i, hcode = 0;
-	for(i = 0; i < len; i++) {
-		hcode = tolower(name[i]) + (31 * hcode);
-	}
-	return hcode;
 }
 
 static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
@@ -291,15 +289,6 @@ const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body)
 		ct = ct->simbody;
 	}
 	return ct;
-}
-
-static uintptr_t strhash(const char *name, size_t len)
-{
-	uintptr_t i, hcode = 0;
-	for(i = 0; i < len; i++) {
-		hcode = name[i] + (31 * hcode);
-	}
-	return hcode;
 }
 
 static kuri_t Kuri(CTX, const char *name, size_t len)
@@ -495,9 +484,15 @@ static void Boolean_init(CTX, kRawPtr *o, void *conf)
 	n->n.bvalue = (kbool_t)conf;
 }
 
+static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
+}
+
 static KCLASS_DEF BooleanDef = {
 	CLASSNAME(Boolean),
 	.init = Boolean_init,
+	.p    = Boolean_p,
 };
 
 // Int
@@ -507,9 +502,15 @@ static void Int_init(CTX, kRawPtr *o, void *conf)
 	n->n.ivalue = (kint_t)conf;
 }
 
+static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	kwb_printf(wb, KINT_FMT, sfp[pos].ivalue);
+}
+
 static KCLASS_DEF IntDef = {
 	CLASSNAME(Int),
 	.init = Int_init,
+	.p    = Int_p,
 };
 
 // String
@@ -530,6 +531,16 @@ static void String_free(CTX, kRawPtr *o)
 	}
 }
 
+static void String_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	if(level == 0) {
+		kwb_printf(wb, "%s", S_text(sfp[pos].o));
+	}
+	else {
+		kwb_printf(wb, "\"%s\"", S_text(sfp[pos].o));
+	}
+}
+
 static uintptr_t String_unbox(CTX, kRawPtr *o)
 {
 	kString *s = (kString*)o;
@@ -545,6 +556,7 @@ static KCLASS_DEF StringDef = {
 	CLASSNAME(String),
 	.init = String_init,
 	.free = String_free,
+	.p    = String_p,
 	.unbox = String_unbox
 };
 

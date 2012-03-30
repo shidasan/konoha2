@@ -883,23 +883,28 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 	kstatus_t result = K_CONTINUE;
 	DBG_P("TY=%s, running EVAL..", T_cid(rtype));
 	if(base->evalty != TY_void) {
-		KSETv(lsfp[K_CALLDELTA+1].o, base->evalval.o);
-		lsfp[K_CALLDELTA+1].ivalue = base->evalval.ivalue;
+		KSETv(lsfp[K_CALLDELTA+1].o, _ctx->stack->stack[base->evalidx].o);
+		lsfp[K_CALLDELTA+1].ivalue = _ctx->stack->stack[base->evalidx].ivalue;
 	}
 	KCALL(lsfp, 0, mtd, 0);
 	if(rtype != TY_void) {
 		base->evalty = rtype;
-		KSETv(base->evalval.o, lsfp[0].o);
-		base->evalval.ivalue = lsfp[0].ivalue;
-		if(rtype == TY_String) {
-			fprintf(stdout, "TY=%s, EVAL=\"%s\"\n", T_cid(rtype), S_text(lsfp[0].s));
-		}
-		else {
-			fprintf(stdout, "TY=%s, EVAL=%ld\n", T_cid(rtype), lsfp[0].ivalue);
-		}
+		base->evalidx = (lsfp - _ctx->stack->stack);
 	}
 	END_LOCAL();
 	return result;
+}
+
+void MODEVAL_dumpEval(CTX, kwb_t *wb)
+{
+	kevalmod_t *base = kevalmod;
+	ktype_t ty = base->evalty;
+	if(ty != TY_void) {
+		ksfp_t *lsfp = _ctx->stack->stack + base->evalidx;
+		CT_(ty)->p(_ctx, lsfp, 0, wb, KP_DUMP);
+		fflush(stdout);
+		fprintf(stdout, "TY=%s EVAL=%s\n", T_cid(ty), kwb_top(wb,1));
+	}
 }
 
 static ktype_t Stmt_checkReturnType(CTX, kStmt *stmt)
