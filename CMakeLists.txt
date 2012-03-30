@@ -61,14 +61,6 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Small")
 	set(K_NODEBUG 1)
 endif()
 
-# for jenkins coverage test
-if(USE_CTEST)
-	include(CTest)
-	message(STATUS "*** Enable CTest Option ***")
-	add_definitions(-fprofile-arcs -ftest-coverage)
-	target_link_libraries(konoha2 -fprofile-arcs)
-endif(USE_CTEST)
-
 set(RUNTIME
 	src/konoha/datatype.c
 	src/konoha/klib.c
@@ -145,6 +137,14 @@ set(ExtraLibs ${ExtraLibs} konoha2)
 add_executable(konoha2_bin src/konoha/main.c)
 target_link_libraries(konoha2_bin ${ExtraLibs})
 set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
+
+# for jenkins coverage test
+if(USE_CTEST)
+	include(CTest)
+	message(STATUS "*** Enable CTest Option ***")
+	add_definitions(-fprofile-arcs -ftest-coverage)
+	target_link_libraries(konoha2 -fprofile-arcs)
+endif(USE_CTEST)
 
 # package
 
