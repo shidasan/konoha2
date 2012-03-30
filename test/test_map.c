@@ -1,5 +1,5 @@
 #include "konoha2/konoha2.h"
-#include "../src/gc/gc_api.h"
+#include "konoha2/gc.h"
 
 static int _sum_  = 0;
 static int _sum2_ = 0;

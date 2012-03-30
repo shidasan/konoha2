@@ -8,7 +8,7 @@
 #define K_INTERNAL
 #include <konoha2/konoha2.h>
 #include <konoha2/klib.h>
-#include "../gc/gc_api.h"
+#include "konoha2/gc.h"
 
 #ifdef __cplusplus
 extern "C" {

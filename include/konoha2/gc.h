@@ -1,5 +1,16 @@
-#ifndef GC_API_H_
-#define GC_API_H_
+#ifndef MODGC_H_
+#define MODGC_H_
+
+//#define kgcmod        ((kgcmod_t*)_ctx->mod[MOD_GC])
+//#define kgcshare      ((kgcshare_t*)_ctx->modshare[MOD_GC])
+//
+//typedef struct {
+//	kmodshare_t h;
+//} kgcshare_t;
+//
+//typedef struct {
+//	kmod_t h;
+//} kgcmod_t;
 
 extern void MODGCSHARE_init(CTX, kcontext_t *ctx);
 extern void MODGCSHARE_free(CTX, kcontext_t *ctx);
@@ -15,4 +26,4 @@ extern void kSystem_reftraceAll(CTX);
 extern void MODGC_gc_invoke(CTX, int needsCStackTrace);
 extern void MODGC_check_malloced_size(void);
 
-#endif /* end of include guard */
+#endif /* MODGC_H_ */

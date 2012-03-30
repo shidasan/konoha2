@@ -1,5 +1,5 @@
 #include "konoha2/konoha2.h"
-#include "../src/gc/gc_api.h"
+#include "konoha2/gc.h"
 
 void test_Karray(CTX)
 {

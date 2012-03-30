@@ -1,6 +1,6 @@
 #include "konoha2/konoha2.h"
 #include "konoha2/sugar.h"
-#include "../src/gc/gc_api.h"
+#include "konoha2/gc.h"
 
 /* operator */
 #define DEFINE_KMETHOD 1

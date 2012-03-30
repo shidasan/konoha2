@@ -1,5 +1,5 @@
 #include "konoha2/konoha2.h"
-#include "../src/gc/gc_api.h"
+#include "konoha2/gc.h"
 
 #ifdef __cplusplus
 extern "C" {

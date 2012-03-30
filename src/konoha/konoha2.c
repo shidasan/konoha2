@@ -26,7 +26,7 @@
  ****************************************************************************/
 
 #include <konoha2/konoha2.h>
-#include "../gc/gc_api.h"
+#include "konoha2/gc.h"
 
 #ifdef K_USING_LOGPOOL
 #include <logpool.h>

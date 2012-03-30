@@ -44,7 +44,7 @@
 #include <btron/event.h>
 #endif
 
-#include "gc_api.h"
+#include "konoha2/gc.h"
 
 #ifndef BMGC_H_
 #define BMGC_H_
@@ -1677,8 +1677,6 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 	memlocal->refs = memlocal->ref_buf;\
 	memlocal->ref_size = 0;\
 } while (0)
-
-extern void kSystem_reftraceAll(CTX);
 
 static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 {
