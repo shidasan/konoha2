@@ -130,6 +130,14 @@ if(HAVE_LIBDL)
 set(ExtraLibs ${ExtraLibs} ${HAVE_LIBDL})
 endif(HAVE_LIBDL)
 
+# for jenkins coverage test
+if(USE_CTEST)
+	include(CTest)
+	message(STATUS "*** Enable CTest Option ***")
+	add_definitions(-fprofile-arcs -ftest-coverage)
+	set(ExtraLibs ${ExtraLibs} -fprofile-arcs)
+endif(USE_CTEST)
+
 add_library(konoha2 SHARED ${RUNTIME} ${GC} ${PARSER} ${VM})
 target_link_libraries(konoha2 ${ExtraLibs})
 set(ExtraLibs ${ExtraLibs} konoha2)
@@ -137,14 +145,6 @@ set(ExtraLibs ${ExtraLibs} konoha2)
 add_executable(konoha2_bin src/konoha/main.c)
 target_link_libraries(konoha2_bin ${ExtraLibs})
 set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
-
-# for jenkins coverage test
-if(USE_CTEST)
-	include(CTest)
-	message(STATUS "*** Enable CTest Option ***")
-	add_definitions(-fprofile-arcs -ftest-coverage)
-	target_link_libraries(konoha2 -fprofile-arcs)
-endif(USE_CTEST)
 
 # package
 
@@ -289,6 +289,7 @@ add_test(test_string test_string)
 #add_test(test_getMethod test_getMethod)
 
 add_executable(test_sizeof ./test/test_sizeof.c)
+target_link_libraries(test_sizeof ${ExtraLibs})
 add_test(test_sizeof test_sizeof)
 
 install(TARGETS konoha2 konoha2_bin
