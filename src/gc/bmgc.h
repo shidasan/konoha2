@@ -684,7 +684,7 @@ static inline void *do_malloc(size_t size)
 	void *ptr = malloc(size);
 	do_bzero(ptr, size);
 	DBG_CHECK_MALLOCED_INC_SIZE(size);
-	//fprintf(stderr, "mem:{a:%p, size=%ld}\n", ptr, size);
+	//fprintf(stderr, "mem:{a:(%p, %p), size=%ld}\n", ptr, ((char*)ptr)+size, size);
 	return ptr;
 }
 
@@ -693,6 +693,7 @@ static inline void *do_realloc(void *ptr, size_t oldSize, size_t newSize)
 	char *newptr = (char *) realloc(ptr, newSize);
 	do_bzero(newptr+oldSize, newSize-oldSize);
 	DBG_CHECK_MALLOCED_INC_SIZE(newSize - oldSize);
+	//fprintf(stderr, "mem:{r:(%p, %p), size=%ld}\n", newptr, ((char*)newptr)+newSize, newSize);
 	return (void *) newptr;
 }
 
@@ -702,7 +703,7 @@ static inline void do_free(void *ptr, size_t size)
 	memset(ptr, 0xa, size);
 #endif
 	DBG_CHECK_MALLOCED_DEC_SIZE(size);
-	//fprintf(stderr, "mem:{fre:%p, size=%ld}\n", ptr, size);
+	//fprintf(stderr, "mem:{f:(%p, %p), size=%ld}\n", ptr, ((char*)ptr)+size, size);
 	free(ptr);
 }
 
@@ -720,7 +721,7 @@ static void* Kzmalloc(CTX, size_t s)
 	klib2_malloced += s;
 	size_t *p = (size_t*)do_malloc(s + sizeof(size_t));
 	p[0] = s;
-	bzero(p+1, s);
+	do_bzero(p+1, s);
 	return (void*)(p+1);
 }
 
@@ -1271,6 +1272,7 @@ static void HeapManager_expandHeap(CTX, HeapManager *mng, size_t list_size)
 	size_t heap_size = list_size * SEGMENT_SIZE;
 	void *managed_heap = call_malloc_aligned(_ctx, heap_size, SEGMENT_SIZE);
 	void *managed_heap_end = (char*)managed_heap + heap_size;
+	do_bzero(managed_heap, heap_size);
 #if defined(GCDEBUG) && defined(GCSTAT)
 	global_gc_stat.managed_heap = (AllocationBlock*) managed_heap;
 	global_gc_stat.managed_heap_end = (AllocationBlock*) managed_heap_end;

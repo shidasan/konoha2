@@ -2036,6 +2036,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kBasicBlock_add(ia, ENTER);
 		kBasicBlock_add(ia, EXIT);
 		kBasicBlock_add(ib, RET);   // NEED TERMINATION
+		ia->nextNC = ib;
 		kKonohaCode *kcode = new_KonohaCode(_ctx, ia, ib);
 		KINITv(kcodeshare->codeNull, kcode);
 		kopl_t *pc = VirtualMachine_run(_ctx, _ctx->esp, kcode->code);
