@@ -197,7 +197,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		_ctx = (CTX_t)newctx;
 
 		klogger_init(_ctx, newctx);
-		kmemshare_init(_ctx, newctx);
+		MODGCSHARE_init(_ctx, newctx);
 		kshare_init(_ctx, newctx);
 		newctx->modshare = (kmodshare_t**)KNH_ZMALLOC(sizeof(kmodshare_t*) * K_PKGMATRIX);
 	}
@@ -209,7 +209,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->modshare = _ctx->modshare;
 		klogger_init(_ctx, newctx);
 	}
-	//kmemlocal_init(_ctx, newctx);
+	//MODGC_init(_ctx, newctx);
 	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
 	newctx->mod = (kmod_t**)KNH_ZMALLOC(sizeof(kmod_t*) * K_PKGMATRIX);
 //	for(i = 0; i < K_PKGMATRIX; i++) {
@@ -272,10 +272,10 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 			}
 		}
 		KNH_FREE(_ctx->modshare, sizeof(kmodshare_t*) * K_PKGMATRIX);
-		kmemshare_gc_destroy(_ctx, ctx);
+		MODGCSHARE_gc_destroy(_ctx, ctx);
 		kshare_free(_ctx, ctx);
-		kmemshare_free(_ctx, ctx);
-		kmemlocal_free(_ctx, ctx);
+		MODGCSHARE_free(_ctx, ctx);
+		MODGC_free(_ctx, ctx);
 		klogger_free(_ctx, ctx);
 		free(klib2/*, sizeof(klib2_t) + sizeof(kcontext_t)*/);
 	}

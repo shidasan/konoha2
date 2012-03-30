@@ -93,6 +93,6 @@ int main(int argc, const char *argv[])
     init_test(konoha);
     test_getMethod(konoha);
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return 0;
 }

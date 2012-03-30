@@ -498,7 +498,7 @@ int main(int argc, const char *argv[])
     TEST(lte);
     TEST(gte);
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     (void)Int_toString;
     (void)String_toInt;
     return 0;

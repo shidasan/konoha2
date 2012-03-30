@@ -854,15 +854,19 @@ typedef struct kMethod kMethod;
 /* method data */
 #define DEND     (-1)
 
+#if 1
 #define _RIX         ,long _rix
 #define K_RIX        _rix
 #define K_RIXPARAM    ,K_RTNIDX
 #define _KFASTCALL   ,long _rix
 #define K_FASTRIX    _rix
-
-//#define _RIX
-//#define K_RIX (-4)
-//#define K_RIXPARAM
+#else
+#define _RIX
+#define K_RIX (-4)
+#define K_RIXPARAM
+#define _KFASTCALL
+#define K_FASTRIX K_RIXPARAM
+#endif
 
 #ifdef K_USING_WIN32_
 //#define KMETHOD  void CC_EXPORT

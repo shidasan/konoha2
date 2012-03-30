@@ -23,7 +23,7 @@ void test_module_load(CTX)
 
     assert(mod);
     assert(IS_NULL(mod->array) == 0);
-    knh_System_gc(_ctx, 0);
+    MODGC_gc_invoke(_ctx, 0);
     assert(IS_NULL(mod->array) == 0);
 }
 
@@ -64,6 +64,6 @@ int main(int argc, const char *argv[])
     test_classdef_load(konoha);
     test_mtd_load(konoha);
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return 0;
 }

@@ -732,7 +732,7 @@ static void Kfree(CTX, void *p, size_t s)
 	klib2_malloced -= s;
 }
 
-void klib2_check_malloced_size(void)
+void MODGC_check_malloced_size(void)
 {
 	if(konoha_debug) {
 		DUMP_P("\nklib:memory leaked=%ld\n", klib2_malloced);
@@ -740,45 +740,44 @@ void klib2_check_malloced_size(void)
 	}
 }
 
-void klib2_GCAPI_init(klib2_t *l)
-{
-	l->Kmalloc       = Kmalloc;
-	l->Kzmalloc      = Kzmalloc;
-	l->Kfree         = Kfree;
-}
-
 /* ------------------------------------------------------------------------ */
-void kmemshare_init(CTX, kcontext_t *ctx)
+void MODGCSHARE_init(CTX, kcontext_t *ctx)
 {
 	(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
 	//do_bzero(ctx->memshare, sizeof(kmemshare_t));
 	//ctx->memshare->memlock = knh_mutex_malloc(ctx);
 	ctx->memshare->gcObjectCount = 0;
 	ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
-	kmemlocal_init(_ctx, ctx);
+	MODGC_init(_ctx, ctx);
 	(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
+	{
+		klib2_t *l = ctx->lib2;
+		l->Kmalloc       = Kmalloc;
+		l->Kzmalloc      = Kzmalloc;
+		l->Kfree         = Kfree;
+	}
 }
 
-void kmemshare_gc_destroy(CTX, kcontext_t *ctx)
+void MODGCSHARE_gc_destroy(CTX, kcontext_t *ctx)
 {
 	BMGC_exit(ctx, (ctx)->memlocal->gcHeapMng);
 	((kcontext_t*)ctx)->memlocal->gcHeapMng = NULL;
 }
 
-void kmemshare_free(CTX, kcontext_t *ctx)
+void MODGCSHARE_free(CTX, kcontext_t *ctx)
 {
 	//knh_mutex_free(ctx, ctx->memshare->memlock);
 	do_free(ctx->memshare, sizeof(kmemshare_t));
 	(ctx)->memshare = NULL;
 }
 
-void kmemlocal_init(CTX, kcontext_t *ctx)
+void MODGC_init(CTX, kcontext_t *ctx)
 {
 	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
 	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 }
 
-void kmemlocal_free(CTX, kcontext_t *ctx)
+void MODGC_free(CTX, kcontext_t *ctx)
 {
 	if(ctx->memlocal != NULL) {
 		if(ctx->memlocal->queue_capacity > 0) {
@@ -836,7 +835,7 @@ static void cstack_mark(CTX)
 	o->fields[0] = NULL;\
 } while(0)
 
-kObject *bmgc_omalloc(CTX, size_t size)
+kObject *MODGC_omalloc(CTX, size_t size)
 {
 	kObject *o = bm_malloc_internal(_ctx, GCDATA(_ctx), size);
 	OBJECT_INIT(o);
@@ -1916,7 +1915,7 @@ static bool start_the_world(CTX)
 
 /* ------------------------------------------------------------------------ */
 
-void knh_System_gc(CTX, int needsCStackTrace)
+void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
 	uint64_t start_time = knh_getTimeMilliSecond(), mark_time = 0, intval;
 	if(stop_the_world(_ctx)) {

@@ -36,7 +36,7 @@ int main(int argc, const char *argv[])
         test_kString(konoha);
     }
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return 0;
 }
 

@@ -310,7 +310,7 @@ int main(int argc, const char *argv[])
 	konoha_t konoha = konoha_open();
 	ret = konoha_main(konoha, argc, argv);
 	konoha_close(konoha);
-	klib2_check_malloced_size();
+	MODGC_check_malloced_size();
 	return ret;
 }
 

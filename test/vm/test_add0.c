@@ -53,6 +53,6 @@ int main(int argc, const char *argv[])
         assert(sfp[0].ivalue == 30);
     }
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return 0;
 }

@@ -47,6 +47,6 @@ int main(int argc, const char *argv[])
     konoha_t konoha = konoha_open();
     test_KloadMethodData(konoha);
     konoha_close(konoha);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return 0;
 }

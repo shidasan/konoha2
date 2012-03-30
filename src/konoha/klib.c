@@ -352,7 +352,6 @@ static void Kdbg_p(const char *file, const char *func, int line, const char *fmt
 
 void klib2_init(klib2_t *l)
 {
-	klib2_GCAPI_init(l);
 	l->Karray_init   = karray_init;
 	l->Karray_expand = karray_expand;
 	l->Karray_free   = karray_free;

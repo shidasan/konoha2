@@ -53,7 +53,7 @@ void test_gc(CTX)
         }
         assert(__init__ == (i+1) * 100);
         assert(__trace__ == -1);
-        knh_System_gc(_ctx, 0);
+        MODGC_gc_invoke(_ctx, 0);
     }
 
     int small_object_count = __init__;
@@ -65,7 +65,7 @@ void test_gc(CTX)
         }
         assert(__init__ == (i+1) * 1000 + small_object_count);
         assert(__trace__ == -1);
-        knh_System_gc(_ctx, 0);
+        MODGC_gc_invoke(_ctx, 0);
     }
 }
 
@@ -78,7 +78,7 @@ int main(int argc, const char *argv[])
     konoha_close(konoha);
     assert(__free__ == __init__);
     fprintf(stderr, "alloced_object_count = %d, freed_object_count=%d\n", __init__, __free__);
-    klib2_check_malloced_size();
+    MODGC_check_malloced_size();
     return ret;
 }
 

@@ -469,7 +469,7 @@ static KCLASS_DEF ObjectDef = {
 static kObject *new_Object(CTX, const kclass_t *ct, void *conf)
 {
 	DBG_ASSERT(ct->cstruct_size > 0);
-	kObject *o = (kObject*) bmgc_omalloc(_ctx, ct->cstruct_size);
+	kObject *o = (kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
 	o->h.magicflag = ct->magicflag;
 	o->h.ct = ct;
 	o->h.proto = kpromap_null();
