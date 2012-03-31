@@ -35,11 +35,11 @@ static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
 	return (pa->psize == 1 && pa->rtype == TY_Boolean && pa->p[0].ty == kevalshare->cGamma->cid);
 }
 
-//## void Lingo.defineSyntaxRule(String keyword, String rule);
-static KMETHOD Lingo_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
+//## void KonohaSpace.defineSyntaxRule(String keyword, String rule);
+static KMETHOD KonohaSpace_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 {
 	kevalshare_t *export = kevalshare;
-	ksyntax_t *syn = export->Lingo_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
+	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->syntaxRule != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding SyntaxRule: %s", S_text(sfp[1].s));
 		KSETv(syn->syntaxRule, new_(Array, 0));
@@ -50,19 +50,19 @@ static KMETHOD Lingo_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 	export->parseSyntaxRule(_ctx, S_text(sfp[2].s), sfp[K_RTNIDX].uline, syn->syntaxRule);
 }
 
-//## void Lingo.defineStmtTyCheck(String keyword, String methodname);
-static KMETHOD Lingo_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
+//## void KonohaSpace.defineStmtTyCheck(String keyword, String methodname);
+static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 {
 	kevalshare_t *export = kevalshare;
 	kmethodn_t mn = ksymbol(S_text(sfp[2].s), S_size(sfp[2].s), MN_NONAME, SYMPOL_METHOD);
-	kMethod *mtd = export->Lingo_getMethodNULL(_ctx, sfp[0].lgo, export->cStmt->cid, mn);
+	kMethod *mtd = export->KonohaSpace_getMethodNULL(_ctx, sfp[0].lgo, export->cStmt->cid, mn);
 	if(mtd == NULL) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "undefined method: Stmt.%s", S_text(sfp[2].s));
 	}
 	if(!isStmtTyCheck(_ctx, mtd->pa)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "mismatched method: Stmt.%s", S_text(sfp[2].s));
 	}
-	ksyntax_t *syn = export->Lingo_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
+	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->StmtTyCheck != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding StmtTyCheck: %s", S_text(sfp[1].s));
 	}
@@ -76,7 +76,7 @@ static KMETHOD Lingo_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t sugar_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_buildid = FN_("buildid"), FN_key = FN_("key"), FN_defval = FN_("defval");
@@ -87,26 +87,26 @@ static	kbool_t sugar_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 		_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
 		_Public, _F(Stmt_tyCheckExpr), TY_Boolean, TY_Stmt, MN_("tyCheckExpr"), 4, TY_String, FN_key, TY_Gamma, FN_gma, TY_Int, FN_typeid, TY_Int, FN_pol,
 		_Public, _F(Block_tyCheckAll), TY_Boolean, TY_Block, MN_("tyCheckAll"), 1, TY_Gamma, FN_gma,
-		_Public, _F(Lingo_defineSyntaxRule), TY_void, TY_Lingo, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
-		_Public, _F(Lingo_defineStmtTyCheck), TY_void, TY_Lingo, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
+		_Public, _F(KonohaSpace_defineSyntaxRule), TY_void, TY_KonohaSpace, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
+		_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
 	return true;
 }
 
-static kbool_t sugar_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t sugar_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t sugar_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t sugar_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 {
 
 	return true;
 }
 
-static kbool_t sugar_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t sugar_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
@@ -117,8 +117,8 @@ KPACKDEF* sugar_init(void)
 		KPACKNAME("sugar", "1.0"),
 		.initPackage = sugar_initPackage,
 		.setupPackage = sugar_setupPackage,
-		.initLingo = sugar_initLingo,
-		.setupPackage = sugar_setupLingo,
+		.initKonohaSpace = sugar_initKonohaSpace,
+		.setupPackage = sugar_setupKonohaSpace,
 	};
 	return &d;
 }

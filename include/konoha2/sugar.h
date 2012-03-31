@@ -67,10 +67,10 @@ typedef struct {
 	const char *libname;
 	const char *libversion;
 	const char *note;
-	kbool_t (*initPackage)(CTX, struct kLingo *, int, const char**, kline_t);
-	kbool_t (*setupPackage)(CTX, struct kLingo *, kline_t);
-	kbool_t (*initLingo)(CTX,  struct kLingo *, kline_t);
-	kbool_t (*setupLingo)(CTX, struct kLingo *, kline_t);
+	kbool_t (*initPackage)(CTX, struct kKonohaSpace *, int, const char**, kline_t);
+	kbool_t (*setupPackage)(CTX, struct kKonohaSpace *, kline_t);
+	kbool_t (*initKonohaSpace)(CTX,  struct kKonohaSpace *, kline_t);
+	kbool_t (*setupKonohaSpace)(CTX, struct kKonohaSpace *, kline_t);
 	int konoha_revision;
 } KPACKDEF_;
 
@@ -80,7 +80,7 @@ typedef KPACKDEF* (*Fpackageinit)(void);
 typedef struct {
 	kpkg_t               pid;
 	kString             *name;
-	struct kLingo       *lgo;
+	struct kKonohaSpace       *lgo;
 	KPACKDEF            *packdef;
 	kline_t              export_script;
 } kpackage_t;
@@ -137,18 +137,18 @@ typedef struct ksyntaxdef_t {
 	knh_Fmethod ExprTyCheck;
 } ksyntaxdef_t;
 
-typedef struct kLingo kLingo;
+typedef struct kKonohaSpace kKonohaSpace;
 
-struct kLingo {
+struct kKonohaSpace {
 	kObjectHeader h;
 	kpkg_t packid;  kpkg_t packdom;
-	struct kLingo   *parentNULL;
+	struct kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
 	struct kmap_t   *symtblMapSO;
 	//
 	void                *gluehdr;
 	struct kObject      *script;
-	kcid_t static_cid;    // kLingo_getStaticMethodNULL
+	kcid_t static_cid;    // kKonohaSpace_getStaticMethodNULL
 	kcid_t function_cid;
 	struct kArray*       methodsNULL;
 };
@@ -273,7 +273,7 @@ struct kStmt {
 typedef struct kBlock kBlock;
 struct kBlock {
 	kObjectHeader h;
-	struct kLingo        *lgo;
+	struct kKonohaSpace        *lgo;
 	struct kStmt         *parentNULL;
 	struct kArray        *blockS;
 	struct kExpr         *esp;
@@ -296,7 +296,7 @@ typedef struct gmabuf_t {
 	kflag_t                 flag;
 	kflag_t                 cflag;
 
-	struct kLingo           *lgo;
+	struct kKonohaSpace           *lgo;
 	struct kScript          *scrNUL;
 
 	kcid_t                   this_cid;
@@ -324,7 +324,7 @@ struct kGamma {
 #define CT_Expr     kevalshare->cExpr
 #define CT_Stmt     kevalshare->cStmt
 #define CT_Block    kevalshare->cBlock
-#define CT_Lingo    kevalshare->cLingo
+#define CT_KonohaSpace    kevalshare->cKonohaSpace
 #define CT_Gamma    kevalshare->cGamma
 
 #define IS_Token(O)  ((O)->h.ct == CT_Token)
@@ -363,9 +363,9 @@ struct kGamma {
 
 #define FN_this      FN_("this")
 
-struct kLingo;
+struct kKonohaSpace;
 struct ksyntaxdef_t;
-#define kLingo_defineSyntax(L, S)  kevalshare->KLingo_defineSyntax(_ctx, L, S)
+#define kKonohaSpace_defineSyntax(L, S)  kevalshare->KKonohaSpace_defineSyntax(_ctx, L, S)
 
 typedef struct {
 	kmodshare_t h;
@@ -373,14 +373,14 @@ typedef struct {
 	const kclass_t *cExpr;
 	const kclass_t *cStmt;
 	const kclass_t *cBlock;
-	const kclass_t *cLingo;
+	const kclass_t *cKonohaSpace;
 	const kclass_t *cGamma;
 	//
 	struct kArray         *keywordList;
 	struct kmap_t         *keywordMapNN;
 	struct kArray         *packageList;
 	struct kmap_t         *packageMapNO;
-	struct kLingo         *rootlgo;
+	struct kKonohaSpace         *rootlgo;
 	struct kArray         *aBuffer;
 
 	struct kToken *nullToken;
@@ -417,9 +417,9 @@ typedef struct {
 	kBlock*    (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
-	ksyntax_t* (*Lingo_syntax)(CTX, kLingo *, ksymbol_t, int);
-	void       (*Lingo_defineSyntax)(CTX, kLingo *, ksyntaxdef_t *);
-	kMethod*   (*Lingo_getMethodNULL)(CTX, kLingo *, kcid_t, kmethodn_t);
+	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
+	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, ksyntaxdef_t *);
+	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
 } kevalshare_t;
 
 typedef struct {
@@ -454,7 +454,7 @@ typedef struct {
 #else/*SUGAR_EXPORTS*/
 #define USING_SUGAR                          const kevalshare_t *_e = (const kevalshare_t *)kevalshare
 #define SUGAR                                _e->
-#define TY_Lingo                             _e->cLingo->cid
+#define TY_KonohaSpace                             _e->cKonohaSpace->cid
 #define TY_Token                             _e->cToken->cid
 #define TY_Stmt                              _e->cStmt->cid
 #define TY_Block                             _e->cBlock->cid
@@ -472,7 +472,7 @@ typedef struct {
 #endif/*SUGAR_EXPORTS*/
 ///* ------------------------------------------------------------------------ */
 ///* Sugar API */
-//extern kMethod* Lingo_getMethodNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn);
+//extern kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ns, kcid_t cid, kmethodn_t mn);
 
 #ifdef __cplusplus
 }

@@ -2430,7 +2430,7 @@ static void Script_init(CTX, kRawPtr *o)
 	DBG_ASSERT(ct->defnull == NULL);
 	scr->fields = NULL;
 	knh_setClassDefaultValue(_ctx, cid, scr, NULL);
-	KINITv(scr->ns, new_Lingo(_ctx, ctx->share->rootlgo));
+	KINITv(scr->ns, new_KonohaSpace(_ctx, ctx->share->rootlgo));
 }
 
 static void Script_p(CTX, kOutputStream *w, kRawPtr *o, int level)
@@ -2472,19 +2472,19 @@ static const kclass_t ScriptDef = {
 };
 
 /* --------------- */
-/* Lingo */
+/* KonohaSpace */
 
-static void Lingo_init(CTX, kRawPtr *o)
+static void KonohaSpace_init(CTX, kRawPtr *o)
 {
-	kLingo *ns = (kLingo*)o;
-	knh_LingoEX_t *b;
+	kKonohaSpace *ns = (kKonohaSpace*)o;
+	knh_KonohaSpaceEX_t *b;
 #ifdef K_USING_BMGC
 	b = DP(ns);
 #else
-	b = knh_bodymalloc(_ctx, Lingo);
+	b = knh_bodymalloc(_ctx, KonohaSpace);
 	ns->b = b;
 #endif
-	knh_bzero(b, sizeof(knh_LingoEX_t));
+	knh_bzero(b, sizeof(knh_KonohaSpaceEX_t));
 	KINITv(b->nsname, TS_main);
 	KINITv(ns->path, ctx->share->cwdPath);
 	ns->parentNULL          = NULL;
@@ -2497,10 +2497,10 @@ static void Lingo_init(CTX, kRawPtr *o)
 	ns->gluehdr = NULL;
 }
 
-static void Lingo_reftrace(CTX, kRawPtr *o)
+static void KonohaSpace_reftrace(CTX, kRawPtr *o)
 {
-	kLingo *ns = (kLingo*)o;
-	knh_LingoEX_t *b = DP(ns);
+	kKonohaSpace *ns = (kKonohaSpace*)o;
+	knh_KonohaSpaceEX_t *b = DP(ns);
 	KREFTRACEv(b->nsname);
 	KREFTRACEv(ns->path);
 	KREFTRACEn(ns->parentNULL);
@@ -2514,25 +2514,25 @@ static void Lingo_reftrace(CTX, kRawPtr *o)
 	kref_setSize();
 }
 
-static void Lingo_free(CTX, kRawPtr *o)
+static void KonohaSpace_free(CTX, kRawPtr *o)
 {
 	BODY_free(_ctx, o);
 }
 
-static void Lingo_p(CTX, kOutputStream *w, kRawPtr *o, int level)
+static void KonohaSpace_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 {
-	kLingo *ns = (kLingo*)o;
+	kKonohaSpace *ns = (kKonohaSpace*)o;
 	knh_write_ascii(_ctx, w, "ns:");
 	knh_write(_ctx, w, S_tobytes(ns->path->urn));
 }
 
-static const kclass_t LingoDef = {
-	Lingo_init, TODO_initcopy, Lingo_reftrace, Lingo_free,
-	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Lingo_p,
+static const kclass_t KonohaSpaceDef = {
+	KonohaSpace_init, TODO_initcopy, KonohaSpace_reftrace, KonohaSpace_free,
+	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, KonohaSpace_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
 	DEFAULT_findTypeMapNULL, DEFAULT_wdata, DEFAULT_2, DEFAULT_3,
-	"Lingo", CFLAG_Lingo, sizeof(knh_LingoEX_t), NULL,
-	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Lingo), 0,
+	"KonohaSpace", CFLAG_KonohaSpace, sizeof(knh_KonohaSpaceEX_t), NULL,
+	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(KonohaSpace), 0,
 };
 
 /* --------------- */
@@ -3131,7 +3131,7 @@ static void knh_setDefaultValues(CTX)
 #endif
 	// load file/Channel/regex/db drivers
 	knh_setClassDefaultValue(_ctx, CLASS_Context, K_NULL, knh_Context_fdefault);
-	knh_setClassDefaultValue(_ctx, CLASS_Lingo, UPCAST(_ctx->share->rootlgo), NULL);
+	knh_setClassDefaultValue(_ctx, CLASS_KonohaSpace, UPCAST(_ctx->share->rootlgo), NULL);
 	knh_setClassDefaultValue(_ctx, CLASS_Lang, UPCAST(_ctx->share->corelang), NULL);
 //	knh_setClassDefaultValue(_ctx, CLASS_System, UPCAST(_ctx->sys), NULL);
 	knh_loadSystemDriver(_ctx, ctx->share->rootlgo);
@@ -3223,7 +3223,7 @@ void knh_loadScriptSystemString(CTX)
 	}
 }
 
-void knh_loadScriptSystemData(CTX, kLingo *ns, const knh_LoaderAPI_t *kapi)
+void knh_loadScriptSystemData(CTX, kKonohaSpace *ns, const knh_LoaderAPI_t *kapi)
 {
 	kapi->loadData(_ctx, ClassData0, NULL);
 	kapi->loadData(_ctx, CParamData0, NULL);

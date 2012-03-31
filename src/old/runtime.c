@@ -405,7 +405,7 @@ static int shell_checkstmt(kbytes_t t)
 
 static void shell_restart(CTX)
 {
-//	kLingo *ns = new_Lingo(_ctx, NULL);
+//	kKonohaSpace *ns = new_KonohaSpace(_ctx, NULL);
 //	DBG_ASSERT(ns->b->aliasDictMapNULL == NULL);
 //	ctx->wshare->sysAliasDictMapNULL = DP(_ctx->share->rootlgo)->aliasDictMapNULL;
 //	DP(_ctx->share->rootlgo)->aliasDictMapNULL = NULL;

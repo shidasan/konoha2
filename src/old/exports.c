@@ -38,7 +38,7 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* [CONST/PROPERTY DATA] */
 
-static void loadData(CTX, kLingo *ns, const char *dname, Object *value)
+static void loadData(CTX, kKonohaSpace *ns, const char *dname, Object *value)
 {
 	if(dname[0] == '$') {
 		kString *n = new_T(dname + 1);
@@ -50,7 +50,7 @@ static void loadData(CTX, kLingo *ns, const char *dname, Object *value)
 		kString *name = new_T(dname + (loc+1));
 		kcid_t cid = CLASS_Tdynamic;
 		if(loc != -1) {
-			cid = knh_Lingo_getcid(_ctx, ns, knh_bytes_first(n, loc));
+			cid = knh_KonohaSpace_getcid(_ctx, ns, knh_bytes_first(n, loc));
 			if(cid == CLASS_unknown) {
 				KNH_LOG("unknown class constant: %s", dname);
 				cid = CLASS_Tdynamic;
@@ -60,7 +60,7 @@ static void loadData(CTX, kLingo *ns, const char *dname, Object *value)
 	}
 }
 
-static void loadIntData(CTX, kLingo *ns, const knh_IntData_t *data)
+static void loadIntData(CTX, kKonohaSpace *ns, const knh_IntData_t *data)
 {
 	while(data->name != NULL) {
 		Object *value = UPCAST(new_Int(_ctx, data->ivalue));
@@ -69,7 +69,7 @@ static void loadIntData(CTX, kLingo *ns, const knh_IntData_t *data)
 	}
 }
 
-static void loadFloatData(CTX, kLingo *ns, const knh_FloatData_t *data)
+static void loadFloatData(CTX, kKonohaSpace *ns, const knh_FloatData_t *data)
 {
 	while(data->name != NULL) {
 		Object *value = UPCAST(new_Float(_ctx, data->fvalue));
@@ -78,7 +78,7 @@ static void loadFloatData(CTX, kLingo *ns, const knh_FloatData_t *data)
 	}
 }
 
-static void loadStringData(CTX, kLingo *ns, const knh_StringData_t *data)
+static void loadStringData(CTX, kKonohaSpace *ns, const knh_StringData_t *data)
 {
 	while(data->name != NULL) {
 		Object *value = UPCAST(new_kString(data->value, knh_strlen(data->value), SPOL_TEXT|SPOL_ASCII));
@@ -158,7 +158,7 @@ static kParam *knh_loadScriptParam(CTX, const kloaddata_t **d, uintptr_t uflag, 
 	data += 2;
 	for(i = 0; i < psize+rsize; i++) {
 		ktype_t type = (data[0] < _MAX || (T_This <= data[0] && data[0] <= T_T3)) ?
-			(ktype_t)data[0] : knh_Lingo_gettype(_ctx, K_GMANS, kloaddata_tobytes(data[0]));
+			(ktype_t)data[0] : knh_KonohaSpace_gettype(_ctx, K_GMANS, kloaddata_tobytes(data[0]));
 		ksymbol_t fn = (data[1] < _MAX) ?
 			(ksymbol_t)data[1] : knh_getfnq(_ctx, kloaddata_tobytes(data[1]), FN_NEWID);
 		kparam_t p = {type, fn};
@@ -172,7 +172,7 @@ static kParam *knh_loadScriptParam(CTX, const kloaddata_t **d, uintptr_t uflag, 
 	return pa;
 }
 
-#define _CID(d)  (d < _MAX) ? (kcid_t)(d) : knh_Lingo_getcid(_ctx, K_GMANS, kloaddata_tobytes(d))
+#define _CID(d)  (d < _MAX) ? (kcid_t)(d) : knh_KonohaSpace_getcid(_ctx, K_GMANS, kloaddata_tobytes(d))
 #define _EXPTID(d)  (d < _MAX) ? (kevent_t)(d) : knh_geteid(_ctx, kloaddata_tobytes(d))
 
 static void knh_loadSystemData(CTX, const kloaddata_t *data, kParam **buf)
@@ -319,9 +319,9 @@ static void knh_loadFuncData(CTX, const knh_FuncData_t *d)
 
 /* ------------------------------------------------------------------------ */
 
-//static void addLink(CTX, kLingo *ns, const char *scheme, kcid_t cid)
+//static void addLink(CTX, kKonohaSpace *ns, const char *scheme, kcid_t cid)
 //{
-//	knh_Lingo_setLinkClass(_ctx, ns, B(scheme), ClassTBL(cid));
+//	knh_KonohaSpace_setLinkClass(_ctx, ns, B(scheme), ClassTBL(cid));
 //}
 
 static void knh_addStreamDPI(CTX, const char *scheme, const knh_PathDPI_t *d)

@@ -472,7 +472,7 @@ extern "C" {
 //
 //typedef void* (*Fgetfunc)(const char *symbol);
 //
-//static void* knh_loadCFUNC(CTX, kLingo *ns, kbytes_t cfunc)
+//static void* knh_loadCFUNC(CTX, kKonohaSpace *ns, kbytes_t cfunc)
 //{
 //	const char *funcname = knh_bytes_next(cfunc, ':').text;
 //	void *func = NULL;
@@ -497,7 +497,7 @@ extern "C" {
 //	return NULL;
 //}
 
-knh_Fmethod knh_gluefunc(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
+knh_Fmethod knh_gluefunc(CTX, kMethod *mtd, kKonohaSpace *ns, kDictMap *mdata)
 {
 	knh_Fmethod gluefunc = NULL;
 	kObject *gluedata = knh_DictMap_getNULL(_ctx, mdata, STEXT("gluefunc"));
@@ -518,7 +518,7 @@ knh_Fmethod knh_gluefunc(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 	return gluefunc;
 }
 
-kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
+kbool_t knh_Method_ffi(CTX, kMethod *mtd, kKonohaSpace *ns, kDictMap *mdata)
 {
 	DBG_P("class %s", CLASS__(O_cid(mdata)));
 	//knh_write_Object(_ctx, KNH_STDOUT, UPCAST(mdata), FMT_dump);
@@ -558,7 +558,7 @@ kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 
 /* ------------------------------------------------------------------------ */
 
-//static kbool_t LIB_exists(CTX, kLingo *ns, kbytes_t path)
+//static kbool_t LIB_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	kbytes_t libname = knh_bytes_next(path, ':');
 //	kbytes_t funcname = knh_bytes_rnext(path, '.');
@@ -575,7 +575,7 @@ kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 //	return res;
 //}
 //
-//static kObject* LIB_newObjectNULL(CTX, kLingo *ns, kcid_t cid, kString *s)
+//static kObject* LIB_newObjectNULL(CTX, kKonohaSpace *ns, kcid_t cid, kString *s)
 //{
 //	return NULL/*(kObject*)s*/;
 //}
@@ -589,12 +589,12 @@ kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 //	return 0;
 //}
 //
-//static kbool_t CFUNC_exists(CTX, kLingo *ns, kbytes_t path)
+//static kbool_t CFUNC_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	return (knh_loadCFUNC(_ctx, ns, path) != NULL);
 //}
 //
-//static kObject* CFUNC_newObjectNULL(CTX, kLingo *ns, kcid_t cid, kString *s)
+//static kObject* CFUNC_newObjectNULL(CTX, kKonohaSpace *ns, kcid_t cid, kString *s)
 //{
 //	return NULL/*(kObject*)s*/;
 //}
@@ -608,13 +608,13 @@ kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 //	return 0;
 //}
 //
-//static kbool_t CT_exists(CTX, kLingo *ns, kbytes_t path)
+//static kbool_t CT_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	void *ctype = bytes_find(knh_bytes_next(path, ':'), tdata, sizeof(tdata) / sizeof(knh_keyvalue_t));
 //	return (ctype != NULL);
 //}
 //
-//static kObject* CT_newObjectNULL(CTX, kLingo *ns, kcid_t cid, kString *s)
+//static kObject* CT_newObjectNULL(CTX, kKonohaSpace *ns, kcid_t cid, kString *s)
 //{
 //	return NULL/*(kObject*)s*/;
 //}
@@ -623,7 +623,7 @@ kbool_t knh_Method_ffi(CTX, kMethod *mtd, kLingo *ns, kDictMap *mdata)
 //	"ctype", NULL, CT_hasType, CT_exists, CT_newObjectNULL,
 //};
 
-void knh_loadFFIDriver(CTX, kLingo *ns)
+void knh_loadFFIDriver(CTX, kKonohaSpace *ns)
 {
 //	const knh_LoaderAPI_t *api = knh_getLoaderAPI();
 //	api->addLinkDPI(_ctx, ns, "lib", &LINK_LIB);

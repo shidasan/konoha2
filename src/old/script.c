@@ -40,10 +40,10 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* [namespace] */
 
-kLingo* new_Lingo(CTX, kLingo *parent)
+kKonohaSpace* new_KonohaSpace(CTX, kKonohaSpace *parent)
 {
-	kLingo* ns = new_(Lingo);
-	DBG_ASSERT(IS_Lingo(parent));
+	kKonohaSpace* ns = new_(KonohaSpace);
+	DBG_ASSERT(IS_KonohaSpace(parent));
 	KINITv(ns->parentNULL, parent);
 	KSETv(DP(ns)->nsname, DP(parent)->nsname);
 	KSETv(ns->path, parent->path);
@@ -51,9 +51,9 @@ kLingo* new_Lingo(CTX, kLingo *parent)
 	return ns;
 }
 
-kcid_t knh_Lingo_getcid(CTX, kLingo *ns, kbytes_t sname)
+kcid_t knh_KonohaSpace_getcid(CTX, kKonohaSpace *ns, kbytes_t sname)
 {
-	DBG_ASSERT(IS_Lingo(ns));
+	DBG_ASSERT(IS_KonohaSpace(ns));
 	if(knh_bytes_equals(sname, STEXT("Script"))) {
 		return O_cid(K_GMASCR);
 	}
@@ -69,7 +69,7 @@ kcid_t knh_Lingo_getcid(CTX, kLingo *ns, kbytes_t sname)
 	return knh_getcid(_ctx, sname);
 }
 
-kbool_t knh_Lingo_isIpackdomeScope(CTX, kLingo *ns, kcid_t cid)
+kbool_t knh_KonohaSpace_isIpackdomeScope(CTX, kKonohaSpace *ns, kcid_t cid)
 {
 	return (knh_bytes_startsWith_(S_tobytes(ClassTBL(cid)->lname), S_tobytes(DP(ns)->nsname)));
 }
@@ -90,7 +90,7 @@ kflag_t knh_Stmt_flag_(CTX, kStmtExpr *stmt, kbytes_t name, kflag_t flag)
 /* [function] */
 
 //static
-//void Lingo_setFuncClass(CTX, kLingo *ns, kmethodn_t mn, kcid_t c)
+//void KonohaSpace_setFuncClass(CTX, kKonohaSpace *ns, kmethodn_t mn, kcid_t c)
 //{
 //	if(!MN_isGETTER(mn) && !MN_isSETTER(mn)) {
 //		if(!IS_DictSet(DP(ns)->func2cidDictSet)) {
@@ -102,7 +102,7 @@ kflag_t knh_Stmt_flag_(CTX, kStmtExpr *stmt, kbytes_t name, kflag_t flag)
 
 /* ------------------------------------------------------------------------ */
 
-kcid_t knh_Lingo_getFuncClass(CTX, kLingo *ns, kmethodn_t mn)
+kcid_t knh_KonohaSpace_getFuncClass(CTX, kKonohaSpace *ns, kmethodn_t mn)
 {
 //	if(!MN_isGETTER(mn) && !MN_isSETTER(mn)) {
 //		kbytes_t name = S_tobytes(knh_getFieldName(_ctx, MN_toFN(mn)));
@@ -119,7 +119,7 @@ kcid_t knh_Lingo_getFuncClass(CTX, kLingo *ns, kmethodn_t mn)
 	return CLASS_unknown; /* if not found */
 }
 
-ktype_t knh_Lingo_gettype(CTX, kLingo *ns, kbytes_t name)
+ktype_t knh_KonohaSpace_gettype(CTX, kKonohaSpace *ns, kbytes_t name)
 {
 	if(name.utext[0] == 'v') {
 		if(name.len == 4 && name.utext[1] == 'o' &&
@@ -128,15 +128,15 @@ ktype_t knh_Lingo_gettype(CTX, kLingo *ns, kbytes_t name)
 			return TY_var;
 		}
 	}
-	return knh_Lingo_getcid(_ctx, ns, name);
+	return knh_KonohaSpace_getcid(_ctx, ns, name);
 }
 
-ktype_t kLingoagcid(CTX, kLingo *o, kcid_t cid, kbytes_t tag)
+ktype_t kKonohaSpaceagcid(CTX, kKonohaSpace *o, kcid_t cid, kbytes_t tag)
 {
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kcid_t bcid = ClassTBL(cid)->bcid;
 	knh_printf(_ctx, cwb->w, "%C:%B", bcid, tag);
-	cid = knh_Lingo_getcid(_ctx, o, CWB_tobytes(cwb));
+	cid = knh_KonohaSpace_getcid(_ctx, o, CWB_tobytes(cwb));
 	CWB_close(_ctx, cwb);
 	return cid;
 }
@@ -153,7 +153,7 @@ static kTerm * new_TermEVALED(CTX)
 	return tk;
 }
 
-static void *knh_open_gluelink(CTX, kStmtExpr *stmt, kLingo *ns, kbytes_t libname)
+static void *knh_open_gluelink(CTX, kStmtExpr *stmt, kKonohaSpace *ns, kbytes_t libname)
 {
 	void *p = NULL;
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
@@ -197,7 +197,7 @@ static void *knh_open_gluelink(CTX, kStmtExpr *stmt, kLingo *ns, kbytes_t libnam
 	return p;
 }
 
-static void *knh_open_ffilink(CTX, kLingo *ns, kbytes_t libname)
+static void *knh_open_ffilink(CTX, kKonohaSpace *ns, kbytes_t libname)
 {
 	void *p = NULL;
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
@@ -217,7 +217,7 @@ static void *knh_open_ffilink(CTX, kLingo *ns, kbytes_t libname)
 	return p;
 }
 
-static void INCLUDE_ffilink(CTX, kStmtExpr *stmt, kLingo *ns, kbytes_t path)
+static void INCLUDE_ffilink(CTX, kStmtExpr *stmt, kKonohaSpace *ns, kbytes_t path)
 {
 	kbytes_t libname = knh_bytes_next(path, ':');
 	if(libname.text[0] == '*' || knh_bytes_equals(libname, STEXT("gluelink"))) {
@@ -238,15 +238,15 @@ static void INCLUDE_ffilink(CTX, kStmtExpr *stmt, kLingo *ns, kbytes_t path)
 	}
 }
 
-static void Lingo_beginINCLUDE(CTX, kLingo *newns, kLingo *oldns)
+static void KonohaSpace_beginINCLUDE(CTX, kKonohaSpace *newns, kKonohaSpace *oldns)
 {
-	knh_LingoEX_t *tb = DP(newns);
+	knh_KonohaSpaceEX_t *tb = DP(newns);
 	void *tdlhdr = newns->gluehdr;
 #ifdef K_USING_BMGC
-	knh_LingoEX_t tmp;
-	knh_memcpy(&tmp, tb, sizeof(knh_LingoEX_t));
-	knh_memcpy(DP(newns), DP(oldns), sizeof(knh_LingoEX_t));
-	knh_memcpy(DP(oldns), &tmp, sizeof(knh_LingoEX_t));
+	knh_KonohaSpaceEX_t tmp;
+	knh_memcpy(&tmp, tb, sizeof(knh_KonohaSpaceEX_t));
+	knh_memcpy(DP(newns), DP(oldns), sizeof(knh_KonohaSpaceEX_t));
+	knh_memcpy(DP(oldns), &tmp, sizeof(knh_KonohaSpaceEX_t));
 	newns->gluehdr = oldns->gluehdr;
 	oldns->gluehdr = tdlhdr;
 #else
@@ -257,15 +257,15 @@ static void Lingo_beginINCLUDE(CTX, kLingo *newns, kLingo *oldns)
 #endif
 }
 
-static void Lingo_endINCLUDE(CTX, kLingo *newns, kLingo *oldns)
+static void KonohaSpace_endINCLUDE(CTX, kKonohaSpace *newns, kKonohaSpace *oldns)
 {
-	knh_LingoEX_t *tb = DP(newns);
+	knh_KonohaSpaceEX_t *tb = DP(newns);
 	void *tdlhdr = newns->gluehdr;
 #ifdef K_USING_BMGC
-	knh_LingoEX_t tmp;
-	knh_memcpy(&tmp, tb, sizeof(knh_LingoEX_t));
-	knh_memcpy(DP(newns), DP(oldns), sizeof(knh_LingoEX_t));
-	knh_memcpy(DP(oldns), &tmp, sizeof(knh_LingoEX_t));
+	knh_KonohaSpaceEX_t tmp;
+	knh_memcpy(&tmp, tb, sizeof(knh_KonohaSpaceEX_t));
+	knh_memcpy(DP(newns), DP(oldns), sizeof(knh_KonohaSpaceEX_t));
+	knh_memcpy(DP(oldns), &tmp, sizeof(knh_KonohaSpaceEX_t));
 	newns->gluehdr = oldns->gluehdr;
 	oldns->gluehdr = tdlhdr;
 #else
@@ -276,13 +276,13 @@ static void Lingo_endINCLUDE(CTX, kLingo *newns, kLingo *oldns)
 #endif
 }
 
-kbool_t knh_Lingo_include(CTX, kLingo *ns, kPath *pth)
+kbool_t knh_KonohaSpace_include(CTX, kKonohaSpace *ns, kPath *pth)
 {
-	kLingo *newns = new_Lingo(_ctx, ns);
+	kKonohaSpace *newns = new_KonohaSpace(_ctx, ns);
 	KSETv(ctx->gma->scr->ns, newns);
-	Lingo_beginINCLUDE(_ctx, newns, ns);
+	KonohaSpace_beginINCLUDE(_ctx, newns, ns);
 	kstatus_t res = knh_load(_ctx, pth);
-	Lingo_endINCLUDE(_ctx, newns, ns);
+	KonohaSpace_endINCLUDE(_ctx, newns, ns);
 	KSETv(ctx->gma->scr->ns, ns);
 	return (res == K_CONTINUE);
 }
@@ -303,7 +303,7 @@ static void INCLUDE_file(CTX, kStmtExpr *stmt)
 			KSETv(tkNN(stmt, 0), new_TermEVALED(_ctx));
 		}
 		kPath *pth = (kPath*)tkNN(stmt,0)->data;
-		if(!knh_Lingo_include(_ctx, K_GMANS, pth)) {
+		if(!knh_KonohaSpace_include(_ctx, K_GMANS, pth)) {
 			kStmtExproERR(_ctx, stmt, ERROR_NotFound(_ctx, "include path:", S_text(pth->urn)));
 		}
 		else {
@@ -412,15 +412,15 @@ kstatus_t knh_loadPackage(CTX, kbytes_t pkgname)
 
 /* ------------------------------------------------------------------------ */
 
-static void Lingo_setcid(CTX, kLingo *ns, kString *name, kcid_t cid)
+static void KonohaSpace_setcid(CTX, kKonohaSpace *ns, kString *name, kcid_t cid)
 {
 	if(DP(ns)->name2ctDictSetNULL == NULL) {
-		KINITv(DP(ns)->name2ctDictSetNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "Lingo.name2cid"));
+		KINITv(DP(ns)->name2ctDictSetNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "KonohaSpace.name2cid"));
 	}
 	knh_DictSet_set(_ctx, DP(ns)->name2ctDictSetNULL, name, (uintptr_t)ClassTBL(cid));
 }
 
-static void Lingo_setDPI(CTX, kLingo *ns, kbytes_t pkgname, kDictSet *ds)
+static void KonohaSpace_setDPI(CTX, kKonohaSpace *ns, kbytes_t pkgname, kDictSet *ds)
 {
 	size_t i, size = knh_Map_size(ds);
 	for(i = 0; i < size; i++) {
@@ -435,14 +435,14 @@ static void Lingo_setDPI(CTX, kLingo *ns, kbytes_t pkgname, kDictSet *ds)
 	}
 }
 
-static void Lingo_addDPI(CTX, kLingo *ns, kbytes_t pkgname)
+static void KonohaSpace_addDPI(CTX, kKonohaSpace *ns, kbytes_t pkgname)
 {
 	if(DP(ns)->name2dpiNameDictMapNULL == NULL) {
-		KINITv(DP(ns)->name2dpiNameDictMapNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "Lingo.name2dpiName"));
+		KINITv(DP(ns)->name2dpiNameDictMapNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "KonohaSpace.name2dpiName"));
 	}
-	Lingo_setDPI(_ctx, ns, pkgname, ctx->share->streamDpiDictSet);
-	Lingo_setDPI(_ctx, ns, pkgname, ctx->share->mapDpiDictSet);
-	Lingo_setDPI(_ctx, ns, pkgname, ctx->share->convDpiDictSet);
+	KonohaSpace_setDPI(_ctx, ns, pkgname, ctx->share->streamDpiDictSet);
+	KonohaSpace_setDPI(_ctx, ns, pkgname, ctx->share->mapDpiDictSet);
+	KonohaSpace_setDPI(_ctx, ns, pkgname, ctx->share->convDpiDictSet);
 }
 
 static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
@@ -463,7 +463,7 @@ static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
 	}
 	KSETv((tkPKG)->data, CWB_newString(_ctx, cwb, SPOL_ASCII));
 	if(knh_loadPackage(_ctx, S_tobytes((tkPKG)->text)) == K_CONTINUE) {
-		kLingo *ns = K_GMANS;
+		kKonohaSpace *ns = K_GMANS;
 		if(TT_(tkN) == TT_MUL) {
 			kbytes_t pkgname = S_tobytes((tkPKG)->text);
 			size_t cid;
@@ -472,10 +472,10 @@ static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
 				if(class_isPrivate(cid) && C_isGenerics(cid)) continue;
 				kbytes_t cname = S_tobytes(ClassTBL(cid)->lname);
 				if(cname.utext[pkgname.len] == '.' && isupper(cname.utext[pkgname.len+1]) && knh_bytes_startsWith_(cname, pkgname)) {
-					Lingo_setcid(_ctx, ns, ClassTBL(cid)->sname, (kcid_t)cid);
+					KonohaSpace_setcid(_ctx, ns, ClassTBL(cid)->sname, (kcid_t)cid);
 				}
 			}
-			Lingo_addDPI(_ctx, ns, pkgname);
+			KonohaSpace_addDPI(_ctx, ns, pkgname);
 		}
 		else if(TT_(tkN) == TT_UNAME) {
 			kcid_t newcid;
@@ -491,7 +491,7 @@ static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
 				goto L_ERROR;
 			}
 			else {
-				Lingo_setcid(_ctx, ns, cname, newcid);
+				KonohaSpace_setcid(_ctx, ns, cname, newcid);
 			}
 			CWB_close(_ctx, cwb);
 		}
@@ -533,14 +533,14 @@ static void USING_eval(CTX, kStmtExpr *stmt)
 
 static kMethod *Script_getEvalMethod(CTX, kScript *scr, ktype_t it_type)
 {
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, O_cid(scr), MN_);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, O_cid(scr), MN_);
 	if(mtd == NULL) {
 		kParam *pa = new_(Param);
 		knh_Param_addParam(_ctx, pa, it_type, FN_it);
 		knh_Param_addReturnType(_ctx, pa, TY_void);
 		mtd = new_Method(_ctx, FLAG_Method_Hidden, O_cid(scr), MN_LAMBDA, NULL);
 		KSETv(DP(mtd)->mp, pa);
-		knh_Lingo_addMethod(_ctx, O_cid(scr), mtd);
+		knh_KonohaSpace_addMethod(_ctx, O_cid(scr), mtd);
 	}
 	else {
 		kparam_t *p = knh_Param_get(DP(mtd)->mp, 0);
@@ -640,7 +640,7 @@ static void IF_eval(CTX, kStmtExpr *stmt)
 	}
 }
 
-Object *knh_Lingo_getConstNULL(CTX, kLingo *ns, kbytes_t name)
+Object *knh_KonohaSpace_getConstNULL(CTX, kKonohaSpace *ns, kbytes_t name)
 {
 	L_TAIL:
 	if(DP(ns)->constDictCaseMapNULL != NULL) {
@@ -658,8 +658,8 @@ static void CONST_decl(CTX, kStmtExpr *stmt)
 {
 	kTerm *tkN = tkNN(stmt, 0), *tkRES = NULL;
 	kcid_t cid = knh_Term_cid(_ctx, tkN, CLASS_unknown);
-	kLingo *ns = K_GMANS;
-	Object *value = knh_Lingo_getConstNULL(_ctx, ns, TK_tobytes(tkN));
+	kKonohaSpace *ns = K_GMANS;
+	Object *value = knh_KonohaSpace_getConstNULL(_ctx, ns, TK_tobytes(tkN));
 	if(cid != CLASS_unknown || value != NULL) {
 		WARN_AlreadyDefined(_ctx, "const", UPCAST(tkN));
 		knh_Stmt_done(_ctx, stmt);
@@ -679,12 +679,12 @@ static void CONST_decl(CTX, kStmtExpr *stmt)
 			value = ctx->evaled;
 		}
 		if(IS_Class(value)) {
-			Lingo_setcid(_ctx, ns, tkN->text, ((kClass*)value)->cid);
+			KonohaSpace_setcid(_ctx, ns, tkN->text, ((kClass*)value)->cid);
 		}
 		else {
 			if(DP(ns)->constDictCaseMapNULL == NULL) {
 				KINITv(DP(ns)->constDictCaseMapNULL,
-					new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "Lingo.lconstDictMap"));
+					new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "KonohaSpace.lconstDictMap"));
 			}
 			knh_DictMap_set_(_ctx, DP(ns)->constDictCaseMapNULL, tkN->text, value);
 		}
@@ -735,7 +735,7 @@ static kflag_t knh_StmtCLASS_flag(CTX, kStmtExpr *stmt)
 static void knh_loadNativeClass(CTX, const char *cname, kclass_t *ct)
 {
 	char fname[256];
-	kLingo *ns = K_GMANS;
+	kKonohaSpace *ns = K_GMANS;
 	const kclass_t *cdef = NULL;
 	if(ns->gluehdr != NULL) {
 		knh_snprintf(fname, sizeof(fname), "def%s", cname);
@@ -794,7 +794,7 @@ static kclass_t *CLASSNAME_decl(CTX, kStmtExpr *stmt, kTerm *tkC, kTerm *tkE)
 		knh_setClassName(_ctx, cid, CWB_newString(_ctx, cwb, SPOL_ASCII), (tkC)->text);
 		ct->cflag  = knh_StmtCLASS_flag(_ctx, stmt);
 		ct->magicflag  = KNH_MAGICFLAG(ct->cflag);
-		Lingo_setcid(_ctx, K_GMANS, (tkC)->text, cid);
+		KonohaSpace_setcid(_ctx, K_GMANS, (tkC)->text, cid);
 		KINITv(ct->methods, K_EMPTYARRAY);
 		KINITv(ct->typemaps, K_EMPTYARRAY);
 
@@ -871,7 +871,7 @@ static void StmtITR_eval(CTX, kStmtExpr *stmtITR)
 		switch(STT_(stmt)) {
 		case STT_NAMESPACE:
 		{
-			kLingo *ns = new_Lingo(_ctx, K_GMANS);
+			kKonohaSpace *ns = new_KonohaSpace(_ctx, K_GMANS);
 			kStmtExpr *stmtIN = stmtNN(stmt, 0);
 			KSETv(K_GMANS, ns);
 			StmtITR_eval(_ctx, stmtIN);
@@ -1077,7 +1077,7 @@ kstatus_t knh_startScript(CTX, const char *path)
 {
 	kstatus_t status = K_BREAK;
 	KONOHA_BEGIN(_ctx);
-	kLingo *ns = K_GMANS;
+	kKonohaSpace *ns = K_GMANS;
 	kline_t uline = 1;
 	if(path[0] == '-' && path[1] == 0) {
 		kInputStream *in = KNH_STDIN;

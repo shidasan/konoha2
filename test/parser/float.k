@@ -1,4 +1,4 @@
-Lingo.importPackage("konoha.float");
+KonohaSpace.importPackage("konoha.float");
 1.0;
 1.0+2.0;
 1.0-2.0;

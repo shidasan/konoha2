@@ -1498,7 +1498,7 @@ KNHAPI2(void) knh_DataMap_setBlob(CTX, kMap *m, const char *key, const char *val
 
 /* ------------------------------------------------------------------------ */
 
-void knh_loadScriptDefaultMapDSPI(CTX, kLingo *ns)
+void knh_loadScriptDefaultMapDSPI(CTX, kKonohaSpace *ns)
 {
 	const knh_LoaderAPI_t* ploader = knh_getLoaderAPI();
 	ploader->addMapDPI(_ctx, "hash", &HMAP_SO);

@@ -508,7 +508,7 @@ static int Term_startsWithExpr(CTX, kTerm *tkB)
 	return 1;
 }
 
-static kString* Lingo_getAliasNULL(CTX, kLingo* ns, kbytes_t t)
+static kString* KonohaSpace_getAliasNULL(CTX, kKonohaSpace* ns, kbytes_t t)
 {
 	kString *s = (kString*)knh_DictMap_getNULL(_ctx, ctx->wshare->sysAliasDictMap, t);
 	while(1) {
@@ -597,7 +597,7 @@ static void Term_setTEXT(CTX, kTerm *tk, CWB_t *cwb)
 {
 	kbytes_t t = CWB_tobytes(cwb);
 	if(TT_(tk) == TT_UNTYPED) {
-		kString *text = Lingo_getAliasNULL(_ctx, K_GMANS, t);
+		kString *text = KonohaSpace_getAliasNULL(_ctx, K_GMANS, t);
 		if(text != NULL) {
 			t = S_tobytes(text);
 			KSETv((tk)->data, text);
@@ -1405,7 +1405,7 @@ static void Term_meta(CTX, kTerm *tm)
 static void Term_op(CTX, kTerm *tm)
 {
 	kbytes_t t = S_tobytes(tm->text);
-	kString *text = Lingo_getAliasNULL(_ctx, K_GMANS, t);
+	kString *text = KonohaSpace_getAliasNULL(_ctx, K_GMANS, t);
 	if(text != NULL) {
 		KSETv((tm)->data, text);
 	}

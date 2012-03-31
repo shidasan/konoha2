@@ -247,7 +247,7 @@ static KMETHOD Object_typeCheck(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden method dynamic Object.opWITH(Map data, Lingo _, Boolean _);
+//## @Hidden method dynamic Object.opWITH(Map data, KonohaSpace _, Boolean _);
 
 static KMETHOD Object_opWITH(CTX, ksfp_t *sfp _RIX)
 {
@@ -303,12 +303,12 @@ static KMETHOD Object__dump(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method Tdynamic Tdynamic.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method Tdynamic Tdynamic.opLINK(String path, KonohaSpace _);
 
 static KMETHOD Tdynamic_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = knh_bytes_next(S_tobytes(sfp[1].s), ':');
-	const kclass_t *ct = knh_Lingo_getLinkClassTBLNULL(_ctx, sfp[2].ns, t, CLASS_Tdynamic);
+	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, sfp[2].ns, t, CLASS_Tdynamic);
 	if(ct != NULL) {
 		RETURN_(new_Type(_ctx, ct->cid));
 	}
@@ -597,7 +597,7 @@ static KMETHOD Date_new(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method Date Date.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method Date Date.opLINK(String path, KonohaSpace _);
 
 static KMETHOD Date_opLINK(CTX, ksfp_t *sfp _RIX)
 {
@@ -630,11 +630,11 @@ static TYPEMAP Date_String(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method Path Path.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method Path Path.opLINK(String path, KonohaSpace _);
 
 static KMETHOD Path_opLINK(CTX, ksfp_t *sfp _RIX)
 {
-	const knh_PathDPI_t *dpi = knh_Lingo_getStreamDPINULL(_ctx, sfp[2].ns, S_tobytes(sfp[1].s));
+	const knh_PathDPI_t *dpi = knh_KonohaSpace_getStreamDPINULL(_ctx, sfp[2].ns, S_tobytes(sfp[1].s));
 	kPath *pth = new_(Path);
 	KSETv(pth->urn, sfp[1].s);
 	pth->dpi = dpi;
@@ -768,12 +768,12 @@ static KMETHOD Regex_new(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Private method dynamic String.opLINK(String path, Lingo _, Class _);
+//## @Hidden @Private method dynamic String.opLINK(String path, KonohaSpace _, Class _);
 
 static KMETHOD String_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kcid_t cid = (sfp[3].c)->cid;
-	DBG_ASSERT(IS_Lingo(sfp[2].ns));
+	DBG_ASSERT(IS_KonohaSpace(sfp[2].ns));
 	DBG_ASSERT(IS_String(sfp[1].s));
 	if(!bytes_startsWithLink(S_tobytes(sfp[1].s), S_tobytes(sfp[0].s))) {
 		CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
@@ -782,18 +782,18 @@ static KMETHOD String_opLINK(CTX, ksfp_t *sfp _RIX)
 		knh_Bytes_write(_ctx, cwb->ba, S_tobytes(sfp[1].s));
 		KSETv(sfp[1].s, CWB_newString(_ctx, cwb, SPOL_POOL));
 	}
-	kObject* v = knh_Lingo_newObject(_ctx, sfp[2].ns, sfp[1].s, cid);
+	kObject* v = knh_KonohaSpace_newObject(_ctx, sfp[2].ns, sfp[1].s, cid);
 	DBG_P("v=%p, true=%p, false=%p", v, K_TRUE, K_FALSE);
 	RETURN_(v);
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden method Boolean String.opEXISTS(Lingo _);
+//## @Hidden method Boolean String.opEXISTS(KonohaSpace _);
 
 static KMETHOD String_opEXISTS(CTX, ksfp_t *sfp _RIX)
 {
-	DBG_ASSERT(IS_Lingo(sfp[1].ns));
-	kObject* btf = knh_Lingo_newObject(_ctx, sfp[1].ns, sfp[0].s, CLASS_Boolean);
+	DBG_ASSERT(IS_KonohaSpace(sfp[1].ns));
+	kObject* btf = knh_KonohaSpace_newObject(_ctx, sfp[1].ns, sfp[0].s, CLASS_Boolean);
 	DBG_P("btf=%p, true=%p, false=%p", btf, K_TRUE, K_FALSE);
 	RETURNb_(btf == K_TRUE);
 }
@@ -1088,12 +1088,12 @@ static KMETHOD String_extract(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method Converter Converter.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method Converter Converter.opLINK(String path, KonohaSpace _);
 
 static KMETHOD Converter_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = S_tobytes(sfp[1].s);
-	const knh_ConverterDPI_t *dpi = knh_Lingo_getConverterDPINULL(_ctx, sfp[2].ns, t);
+	const knh_ConverterDPI_t *dpi = knh_KonohaSpace_getConverterDPINULL(_ctx, sfp[2].ns, t);
 	if(dpi != NULL && dpi->conv != NULL) {
 		kConverter *c = new_(Converter);
 		c->dpi  = dpi;
@@ -1104,12 +1104,12 @@ static KMETHOD Converter_opLINK(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method StringEncoder StringEncoder.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method StringEncoder StringEncoder.opLINK(String path, KonohaSpace _);
 
 static KMETHOD StringEncoder_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = S_tobytes(sfp[1].s);
-	const knh_ConverterDPI_t *dpi = knh_Lingo_getConverterDPINULL(_ctx, sfp[2].ns, t);
+	const knh_ConverterDPI_t *dpi = knh_KonohaSpace_getConverterDPINULL(_ctx, sfp[2].ns, t);
 	if(dpi != NULL && dpi->enc != NULL) {
 		kStringEncoder *c = new_(StringEncoder);
 		c->dpi  = dpi;
@@ -1120,12 +1120,12 @@ static KMETHOD StringEncoder_opLINK(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method StringDecoder StringDecoder.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method StringDecoder StringDecoder.opLINK(String path, KonohaSpace _);
 
 static KMETHOD StringDecoder_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = S_tobytes(sfp[1].s);
-	const knh_ConverterDPI_t *dpi = knh_Lingo_getConverterDPINULL(_ctx, sfp[2].ns, t);
+	const knh_ConverterDPI_t *dpi = knh_KonohaSpace_getConverterDPINULL(_ctx, sfp[2].ns, t);
 	if(dpi != NULL && dpi->dec != NULL) {
 		kStringDecoder *c = new_(StringDecoder);
 		c->dpi  = dpi;
@@ -1136,12 +1136,12 @@ static KMETHOD StringDecoder_opLINK(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method StringConverter StringConverter.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method StringConverter StringConverter.opLINK(String path, KonohaSpace _);
 
 static KMETHOD StringConverter_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = S_tobytes(sfp[1].s);
-	const knh_ConverterDPI_t *dpi = knh_Lingo_getConverterDPINULL(_ctx, sfp[2].ns, t);
+	const knh_ConverterDPI_t *dpi = knh_KonohaSpace_getConverterDPINULL(_ctx, sfp[2].ns, t);
 	if(dpi != NULL && dpi->sconv != NULL) {
 		kStringConverter *c = new_(StringConverter);
 		c->dpi  = dpi;
@@ -1985,12 +1985,12 @@ static KMETHOD Map_newMAP(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Static @Throwable @Smart method Map Map.open(String path, Map _, Lingo _, Class _);
+//## @Static @Throwable @Smart method Map Map.open(String path, Map _, KonohaSpace _, Class _);
 
 static KMETHOD Map_open(CTX, ksfp_t *sfp _RIX)
 {
 	const kclass_t *ct = (sfp[4].c)->ct;
-	const knh_MapDPI_t *spi = knh_Lingo_getMapDPINULL(_ctx, sfp[3].ns, S_tobytes(sfp[1].s));
+	const knh_MapDPI_t *spi = knh_KonohaSpace_getMapDPINULL(_ctx, sfp[3].ns, S_tobytes(sfp[1].s));
 	kMap *m = NULL;
 	DBG_P("reqt = %s", CLASS__(ct->cid));
 	if(ct->bcid != CLASS_Map) ct = ClassTBL(CLASS_Map);
@@ -3058,7 +3058,7 @@ static KMETHOD String_format(CTX, ksfp_t *sfp _RIX)
 
 /* ------------------------------------------------------------------------ */
 
-static kbool_t knh_Lingo_addLinkObject(CTX, kLingo *ns, kString *name, kObject *o, int typeCheck)
+static kbool_t knh_KonohaSpace_addLinkObject(CTX, kKonohaSpace *ns, kString *name, kObject *o, int typeCheck)
 {
 	if(DP(ns)->linkDictMapNULL == NULL) {
 		KINITv(DP(ns)->linkDictMapNULL, new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "linkDictMap"));
@@ -3070,7 +3070,7 @@ static kbool_t knh_Lingo_addLinkObject(CTX, kLingo *ns, kString *name, kObject *
 	return 1;
 }
 
-static Object *knh_Lingo_getLinkObjectNULL(CTX, kLingo *ns, kbytes_t path)
+static Object *knh_KonohaSpace_getLinkObjectNULL(CTX, kKonohaSpace *ns, kbytes_t path)
 {
 	while(ns != NULL) {
 		if(DP(ns)->linkDictMapNULL != NULL) {
@@ -3146,7 +3146,7 @@ static void THROW_Undefined(CTX, ksfp_t *sfp, const char *whatis, const char *wh
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Static method void View.addView(String name, Lingo _, Map _);
+//## @Static method void View.addView(String name, KonohaSpace _, Map _);
 
 static KMETHOD View_addView(CTX, ksfp_t *sfp _RIX)
 {
@@ -3159,7 +3159,7 @@ static KMETHOD View_addView(CTX, ksfp_t *sfp _RIX)
 		kPath *path = (kPath*)knh_DictMap_getNULL(_ctx, conf, STEXT("path"));
 		kString *dtype = knh_DataMap_getString(_ctx, conf, "type", "driver", NULL);
 		if(dtype != NULL) {
-			const knh_PathDPI_t *dpi = knh_Lingo_getStreamDPINULL(_ctx, sfp[2].ns, S_tobytes(dtype));
+			const knh_PathDPI_t *dpi = knh_KonohaSpace_getStreamDPINULL(_ctx, sfp[2].ns, S_tobytes(dtype));
 			if(dpi != NULL) {
 				path->dpi = dpi;
 			}
@@ -3176,18 +3176,18 @@ static KMETHOD View_addView(CTX, ksfp_t *sfp _RIX)
 		CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 		knh_Bytes_write(_ctx, cwb->ba, STEXT("view:"));
 		knh_Bytes_write(_ctx, cwb->ba, S_tobytes(sfp[1].s));
-		tf = knh_Lingo_addLinkObject(_ctx, sfp[2].ns, CWB_newString(_ctx, cwb, SPOL_POOL), UPCAST(view), 0);
+		tf = knh_KonohaSpace_addLinkObject(_ctx, sfp[2].ns, CWB_newString(_ctx, cwb, SPOL_POOL), UPCAST(view), 0);
 		CWB_close(_ctx, cwb);
 	}
 	RETURNb_(tf);
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Hidden @Static @Const method View View.opLINK(String path, Lingo _);
+//## @Hidden @Static @Const method View View.opLINK(String path, KonohaSpace _);
 
 static KMETHOD View_opLINK(CTX, ksfp_t *sfp _RIX)
 {
-	Object *o = knh_Lingo_getLinkObjectNULL(_ctx, sfp[2].ns, S_tobytes(sfp[1].s));
+	Object *o = knh_KonohaSpace_getLinkObjectNULL(_ctx, sfp[2].ns, S_tobytes(sfp[1].s));
 	if(o != NULL) {
 		RETURN_(o);
 	}
@@ -3421,14 +3421,14 @@ static KMETHOD System_exec(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Restricted method Tvar System.eval(String cmd, Script _, Lingo _, Class _);
+//## @Restricted method Tvar System.eval(String cmd, Script _, KonohaSpace _, Class _);
 
 static KMETHOD System_eval(CTX, ksfp_t *sfp _RIX)
 {
 //	fprintf(stderr, "TESTING: '%s'\n", 	S_text(sfp[1].s));
 //	fprintf(stderr, "RETURN VALUE: '%s'\n", CLASS__(sfp[4].c->cid));
 	kScript *scr = ctx->gma->scr;
-	kLingo *ns = K_GMANS;
+	kKonohaSpace *ns = K_GMANS;
 	kcid_t tcid = sfp[4].c->cid;
 	if(scr != sfp[2].scr) {
 		KSETv(ctx->gma->scr, sfp[2].scr);

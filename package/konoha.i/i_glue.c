@@ -91,12 +91,12 @@ static void dumpMethodList(CTX, ksfp_t *sfp, size_t start, kArray *list)
 	}
 }
 
-static KMETHOD Lingo_man(CTX, ksfp_t *sfp _RIX)
+static KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 {
 	INIT_GCSTACK();
 	kArray *list = _ctx->stack->gcstack;
 	size_t start = kArray_size(list);
-	kLingo *lgo = sfp[0].lgo;
+	kKonohaSpace *lgo = sfp[0].lgo;
 	const kclass_t *ct = O_ct(sfp[1].o);
 	while(lgo != NULL) {
 		if(lgo->methodsNULL != NULL) {
@@ -116,27 +116,27 @@ static KMETHOD Lingo_man(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t i_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t i_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	kclass_t *ct = (kclass_t*)kclass(TY_Method, pline);
 	ct->p = Method_p;
 	intptr_t methoddata[] = {
-		_Public, _F(Lingo_man), TY_void, TY_Lingo, MN_("man"), 1, TY_Object, FN_("x"),
+		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x"),
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
 	return true;
 }
 
-static kbool_t i_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t i_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t i_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 {
 //	USING_SUGAR;
 //	ksyntaxdef_t SYNTAX[] = {
@@ -145,11 +145,11 @@ static kbool_t i_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
 //		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 //		{ .name = NULL, },
 //	};
-//	SUGAR Lingo_defineSyntax(_ctx, lgo, SYNTAX);
+//	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
 	return true;
 }
 
-static kbool_t i_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t i_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
@@ -160,8 +160,8 @@ KPACKDEF* i_init(void)
 		KPACKNAME("konoha.i", "1.0"),
 		.initPackage = i_initPackage,
 		.setupPackage = i_setupPackage,
-		.initLingo = i_initLingo,
-		.setupPackage = i_setupLingo,
+		.initKonohaSpace = i_initKonohaSpace,
+		.setupKonohaSpace = i_setupKonohaSpace,
 	};
 	return &d;
 }

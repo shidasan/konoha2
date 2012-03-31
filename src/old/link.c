@@ -48,7 +48,7 @@ extern "C" {
 //	return (cid == CLASS_StringEncoder || cid == CLASS_StringDecoder);
 //}
 //
-//static kbool_t CHARSET_exists(CTX, kLingo *ns, kbytes_t path)
+//static kbool_t CHARSET_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	kbytes_t t = knh_bytes_next(path, ':');
 //	knh_iconv_t ic = ctx->spi->iconv_openSPI(t.text, K_ENCODING);
@@ -62,7 +62,7 @@ extern "C" {
 //	return 0;
 //}
 //
-//static kObject* CHARSET_newObjectNULL(CTX, kLingo *ns, kcid_t cid, kString *s)
+//static kObject* CHARSET_newObjectNULL(CTX, kKonohaSpace *ns, kcid_t cid, kString *s)
 //{
 //	kbytes_t t = knh_bytes_next(S_tobytes(s), ':');
 //	if(cid == CLASS_StringEncoder) {
@@ -83,7 +83,7 @@ extern "C" {
 //	return (cid == CLASS_Bytes || cid == CLASS_InputStream);
 //}
 //
-//static kbool_t PACKAGE_exists(CTX, kLingo *ns, kbytes_t path)
+//static kbool_t PACKAGE_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 //	kbytes_t bpath = knh_bytes_next(path, ':');
@@ -93,7 +93,7 @@ extern "C" {
 //	return res;
 //}
 //
-//static kObject* PACKAGE_newObjectNULL(CTX, kLingo *ns, kcid_t cid, kString *s)
+//static kObject* PACKAGE_newObjectNULL(CTX, kKonohaSpace *ns, kcid_t cid, kString *s)
 //{
 //	kObject *res = NULL;
 //	if(cid == CLASS_Bytes) {
@@ -157,10 +157,10 @@ static const knh_ConverterDPI_t TO_upper = {
 	NULL, touppercase, touppercase, touppercase, touppercase, NULL, NULL,
 };
 
-void knh_loadSystemDriver(CTX, kLingo *ns)
+void knh_loadSystemDriver(CTX, kKonohaSpace *ns)
 {
 	const knh_LoaderAPI_t *api = knh_getLoaderAPI();
-	knh_Lingo_setLinkClass(_ctx, ns, STEXT("link"), ClassTBL(CLASS_Tdynamic));
+	knh_KonohaSpace_setLinkClass(_ctx, ns, STEXT("link"), ClassTBL(CLASS_Tdynamic));
 	api->addConverterDPI(_ctx, "lower", &TO_lower, NULL);
 	api->addConverterDPI(_ctx, "upper", &TO_upper, NULL);
 	knh_loadSystemQueryDriver(_ctx, ns);

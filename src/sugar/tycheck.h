@@ -65,7 +65,7 @@ static kExpr *Expr_typed(CTX, kExpr *expr, kGamma *gma, int req_ty)
 	if(Expr_isTerm(expr)) {
 		kToken *tk = expr->tkNUL;
 		keyword_t keyid = tk->tt == TK_KEYWORD ? tk->keyid : KW_TK(tk->tt);
-		syn = Lingo_syntax(_ctx, gma->genv->lgo, keyid, 0);
+		syn = KonohaSpace_syntax(_ctx, gma->genv->lgo, keyid, 0);
 		if(syn == NULL || syn->ExprTyCheck == NULL) {
 			kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined term type checker: %s %s", T_tt(tk->tt), kToken_s(tk));
 			return K_NULLEXPR;
@@ -159,7 +159,7 @@ static kExpr *Expr_tycheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 		if(req_ty == TY_var) {
 			return texpr;
 		}
-		kMethod *mtd = kLingo_getCastMethodNULL(gma->genv->lgo, texpr->ty, req_ty);
+		kMethod *mtd = kKonohaSpace_getCastMethodNULL(gma->genv->lgo, texpr->ty, req_ty);
 		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, TPOL_COERCION))) {
 			kExpr *Cexpr = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
 			Cexpr->ty = req_ty;
@@ -289,7 +289,7 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	kToken *tk = expr->tkNUL;
-	kObject *v = Lingo_getSymbolValueNULL(_ctx, gma->genv->lgo, S_text(tk->text), S_size(tk->text));
+	kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->lgo, S_text(tk->text), S_size(tk->text));
 	kExpr *texpr;
 	if(v == NULL) {
 		kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined symbol: %s", kToken_s(tk));
@@ -351,7 +351,7 @@ static kExpr *Cons_tycheckParams(CTX, kExpr *expr, ktype_t cid, kGamma *gma, kty
 
 static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 {
-	kLingo *ns = gma->genv->lgo;
+	kKonohaSpace *ns = gma->genv->lgo;
 	kToken *tkMN = expr->consNUL->tts[0];
 	kMethod *mtd = NULL;
 	if(!IS_Token(tkMN)) {
@@ -372,14 +372,14 @@ static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 	DBG_P("finding %s.%s", T_cid(this_cid), S_text(tkMN->text));
 	if(tkMN->tt == TK_KEYWORD) {
 		if(kArray_size(expr->consNUL) == 3) {
-			mtd = kLingo_getMethodNULL(ns, this_cid, expr->syn->op2);
+			mtd = kKonohaSpace_getMethodNULL(ns, this_cid, expr->syn->op2);
 			if(mtd == NULL) {
 				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined binary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
 			}
 			goto L_RETURN;
 		}
 		if(kArray_size(expr->consNUL) == 2) {
-			mtd = kLingo_getMethodNULL(ns, this_cid, expr->syn->op1);
+			mtd = kKonohaSpace_getMethodNULL(ns, this_cid, expr->syn->op1);
 			if(mtd == NULL) {
 				kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined uninary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
 			}
@@ -387,7 +387,7 @@ static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
 		}
 	}
 	if(tkMN->tt == TK_MN) {
-		mtd = kLingo_getMethodNULL(ns, this_cid, tkMN->mn);
+		mtd = kKonohaSpace_getMethodNULL(ns, this_cid, tkMN->mn);
 		if(mtd == NULL) {
 			kerror(_ctx, ERR_, tkMN->uline, tkMN->lpos, "undefined method: %s.%s", T_cid(this_cid), S_text(tkMN->text));
 		}
@@ -428,7 +428,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 		if(tk->tt == TK_MN) {
 			kMethod *mtd = NULL;
 			if(true/*FIXME gma->genv->this_cid != 0*/) {
-				mtd = kLingo_getMethodNULL(gma->genv->lgo, gma->genv->this_cid, tk->mn);
+				mtd = kKonohaSpace_getMethodNULL(gma->genv->lgo, gma->genv->this_cid, tk->mn);
 				if(mtd != NULL) {
 					if(!kMethod_isStatic(mtd)) {
 						KSETv(cons->tts[1], new_Variable(TEXPR_LOCAL, gma->genv->this_cid, 0, 0, gma));
@@ -437,7 +437,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 				}
 			}
 			if(mtd == NULL) {
-				mtd = kLingo_getStaticMethodNULL(gma->genv->lgo, tk->mn);
+				mtd = kKonohaSpace_getStaticMethodNULL(gma->genv->lgo, tk->mn);
 			}
 			if(mtd == NULL) {
 				kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined function/method: %s", S_text(tk->text));
@@ -631,7 +631,7 @@ static flagop_t MethodDeclFlag[] = {
 	{NULL},
 };
 
-static kcid_t Stmt_getcid(CTX, kStmt *stmt, kLingo *ns, keyword_t keyid, kcid_t defcid)
+static kcid_t Stmt_getcid(CTX, kStmt *stmt, kKonohaSpace *ns, keyword_t keyid, kcid_t defcid)
 {
 	kToken *tk = (kToken*)kObject_getObjectNULL(stmt, keyid);
 	if(tk == NULL || !IS_Token(tk)) {
@@ -643,7 +643,7 @@ static kcid_t Stmt_getcid(CTX, kStmt *stmt, kLingo *ns, keyword_t keyid, kcid_t 
 	}
 }
 
-static kcid_t Stmt_getmn(CTX, kStmt *stmt, kLingo *ns, keyword_t keyid, kmethodn_t defmn)
+static kcid_t Stmt_getmn(CTX, kStmt *stmt, kKonohaSpace *ns, keyword_t keyid, kmethodn_t defmn)
 {
 	kToken *tk = (kToken*)kObject_getObjectNULL(stmt, keyid);
 	if(tk == NULL || !IS_Token(tk) || !IS_String(tk->text)) {
@@ -668,7 +668,7 @@ static kParam *Stmt_newMethodParam(CTX, kStmt *stmt, kGamma* gma)
 	return pa;
 }
 
-static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, kLingo *lgo);
+static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, kKonohaSpace *lgo);
 
 static KMETHOD Fmethod_lazyCompilation(CTX, ksfp_t *sfp _RIX)
 {
@@ -676,13 +676,13 @@ static KMETHOD Fmethod_lazyCompilation(CTX, ksfp_t *sfp _RIX)
 	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
 	kString *text = mtd->tcode->text;
 	kline_t uline = mtd->tcode->uline;
-	kLingo *ns = mtd->lazyns;
+	kKonohaSpace *ns = mtd->lazyns;
 	Method_compile(_ctx, mtd, text, uline, ns);
 	((kcontext_t*)_ctx)->esp = esp;
 	mtd->fcall_1(_ctx, sfp K_RIXPARAM); // call again;
 }
 
-static void Stmt_setMethodFunc(CTX, kStmt *stmt, kLingo *ns, kMethod *mtd)
+static void Stmt_setMethodFunc(CTX, kStmt *stmt, kKonohaSpace *ns, kMethod *mtd)
 {
 	if(kStmt_is(stmt, KW_("@Glue"))) {
 		const char *funcname = kStmt_text(stmt, KW_("@Glue"), NULL);
@@ -693,7 +693,7 @@ static void Stmt_setMethodFunc(CTX, kStmt *stmt, kLingo *ns, kMethod *mtd)
 			snprintf(namebuf, sizeof(namebuf), "%s_%s", T_cid(mtd->cid), mname);
 			funcname = (const char*)namebuf;
 		}
-		knh_Fmethod f = kLingo_loadGlueFunc(ns, funcname, 1, stmt->uline);
+		knh_Fmethod f = kKonohaSpace_loadGlueFunc(ns, funcname, 1, stmt->uline);
 		if(f != NULL) {
 			kMethod_setFunc(mtd, f);
 		}
@@ -715,7 +715,7 @@ static KMETHOD StmtTyCheck_declMethod(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
 	kbool_t r = 0;
-	kLingo *ns = gma->genv->lgo;
+	kKonohaSpace *ns = gma->genv->lgo;
 	uintptr_t flag =  Stmt_flag(_ctx, stmt, MethodDeclFlag, 0);
 	kcid_t cid =  Stmt_getcid(_ctx, stmt, ns, KW_("$cname"), ns->function_cid);
 	kmethodn_t mn = Stmt_getmn(_ctx, stmt, ns, KW_("$name"), MN_("new"));
@@ -725,7 +725,7 @@ static KMETHOD StmtTyCheck_declMethod(CTX, ksfp_t *sfp _RIX)
 		INIT_GCSTACK();
 		kMethod *mtd = new_kMethod(flag, cid, mn, pa, NULL);
 		PUSH_GCSTACK(mtd);
-		if(kLingo_addMethod(ns, mtd, stmt->uline)) {
+		if(kKonohaSpace_addMethod(ns, mtd, stmt->uline)) {
 			r = 1;
 			Stmt_setMethodFunc(_ctx, stmt, ns, mtd);
 			kStmt_done(stmt);
@@ -769,7 +769,7 @@ static kbool_t Expr_setParam(CTX, kExpr *expr, int n, kparam_t *p)
 static KMETHOD StmtTyCheck_declParams(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
-	kLingo *ns = gma->genv->lgo;
+	kKonohaSpace *ns = gma->genv->lgo;
 	ktype_t rtype =  Stmt_getcid(_ctx, stmt, ns, KW_("$type"), TY_var);
 	kParam *pa = NULL;
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, KW_PARAMS);
@@ -838,7 +838,7 @@ static void Gamma_shiftBlockIndex(CTX, gmabuf_t *genv)
 	}
 }
 
-static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, kLingo *lgo)
+static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, kKonohaSpace *lgo)
 {
 	INIT_GCSTACK();
 	kGamma *gma = kevalmod->gma;
@@ -932,7 +932,7 @@ static ktype_t Gamma_evalMethod(CTX, kGamma *gma, kBlock *bk, kMethod *mtd)
 	return Method_runEval(_ctx, mtd, rtype);
 }
 
-static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kLingo *lgo)
+static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *lgo)
 {
 	kGamma *gma = kevalmod->gma;
 	gammastack_t fvars[32] = {}, lvars[32] = {};

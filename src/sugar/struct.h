@@ -27,12 +27,12 @@
 #define PACKSUGAR    .packid = 1, .packdom = 1
 
 /* --------------- */
-/* Lingo */
+/* KonohaSpace */
 
-static void Lingo_init(CTX, kRawPtr *o, void *conf)
+static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 {
-	kLingo *lgo = (kLingo*)o;
-	bzero(&lgo->parentNULL, sizeof(kLingo) - sizeof(kObjectHeader));
+	kKonohaSpace *lgo = (kKonohaSpace*)o;
+	bzero(&lgo->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
 	lgo->parentNULL = conf;
 	lgo->static_cid = CLASS_unknown;
 }
@@ -56,9 +56,9 @@ static void symtbl_reftrace(CTX, kmape_t *p)
 	END_REFTRACE();
 }
 
-static void Lingo_reftrace(CTX, kRawPtr *o)
+static void KonohaSpace_reftrace(CTX, kRawPtr *o)
 {
-	kLingo *lgo = (kLingo*)o;
+	kKonohaSpace *lgo = (kKonohaSpace*)o;
 	if(lgo->syntaxMapNN != NULL) {
 		kmap_reftrace(lgo->syntaxMapNN, syntax_reftrace);
 	}
@@ -77,24 +77,24 @@ static void syntax_free(CTX, void *p)
 	KNH_FREE(p, sizeof(ksyntax_t));
 }
 
-static void Lingo_free(CTX, kRawPtr *o)
+static void KonohaSpace_free(CTX, kRawPtr *o)
 {
-	kLingo *lgo = (kLingo*)o;
+	kKonohaSpace *lgo = (kKonohaSpace*)o;
 	if(lgo->syntaxMapNN != NULL) {
 		kmap_free(lgo->syntaxMapNN, syntax_free);
 	}
 }
 
-static KCLASSDEF LingoDef = {
-	STRUCTNAME(Lingo), PACKSUGAR,
-	.init = Lingo_init,
-	.reftrace = Lingo_reftrace,
-	.free = Lingo_free,
+static KCLASSDEF KonohaSpaceDef = {
+	STRUCTNAME(KonohaSpace), PACKSUGAR,
+	.init = KonohaSpace_init,
+	.reftrace = KonohaSpace_reftrace,
+	.free = KonohaSpace_free,
 };
 
-static ksyntax_t* Lingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
+static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *lgo0, keyword_t keyid, int isnew)
 {
-	kLingo *lgo = lgo0;
+	kKonohaSpace *lgo = lgo0;
 	uintptr_t hcode = keyid;
 	ksyntax_t *parent = NULL;
 	while(lgo != NULL) {
@@ -138,11 +138,11 @@ static ksyntax_t* Lingo_syntax(CTX, kLingo *lgo0, keyword_t keyid, int isnew)
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
 static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
 
-static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
+static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *lgo, ksyntaxdef_t *syndef)
 {
 	while(syndef->name != NULL) {
 		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
-		ksyntax_t* syn = Lingo_syntax(_ctx, lgo, keyid, 1);
+		ksyntax_t* syn = KonohaSpace_syntax(_ctx, lgo, keyid, 1);
 		syn->token = syndef->name;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
@@ -175,7 +175,7 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 		}
 		if(syndef->ExprTyCheck != NULL) {
 			KINITv(syn->ExprTyCheck, new_kMethod(0, 0, 0, NULL, syndef->ExprTyCheck));
-			ksyntax_t *e = Lingo_syntax(_ctx, lgo, 1, 0);
+			ksyntax_t *e = KonohaSpace_syntax(_ctx, lgo, 1, 0);
 			if(syn->syntaxRule == NULL) {
 				KINITv(syn->syntaxRule, e->syntaxRule);
 			}
@@ -183,26 +183,26 @@ static void Lingo_defineSyntax(CTX, kLingo *lgo, ksyntaxdef_t *syndef)
 				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
 			}
 		}
-		DBG_ASSERT(syn == Lingo_syntax(_ctx, lgo, keyid, 0));
+		DBG_ASSERT(syn == KonohaSpace_syntax(_ctx, lgo, keyid, 0));
 		syndef++;
 	}
 	// update
 	kevalshare_t *base = kevalshare;
-	base->syn_err  = Lingo_syntax(_ctx, base->rootlgo, 0, 0);
-	base->syn_expr = Lingo_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_call = Lingo_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_invoke = Lingo_syntax(_ctx, base->rootlgo, KW_("$name"), 0);
-	base->syn_params = Lingo_syntax(_ctx, base->rootlgo, KW_("$params"), 0);
-	base->syn_return = Lingo_syntax(_ctx, base->rootlgo, KW_("return"), 0);
-	base->syn_break = Lingo_syntax(_ctx, base->rootlgo, KW_("break"), 0);
-	base->syn_typedecl = Lingo_syntax(_ctx, base->rootlgo, KW_(":"), 0);
+	base->syn_err  = KonohaSpace_syntax(_ctx, base->rootlgo, 0, 0);
+	base->syn_expr = KonohaSpace_syntax(_ctx, base->rootlgo, 1, 0);
+	base->syn_call = KonohaSpace_syntax(_ctx, base->rootlgo, 1, 0);
+	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("$name"), 0);
+	base->syn_params = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("$params"), 0);
+	base->syn_return = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("return"), 0);
+	base->syn_break = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("break"), 0);
+	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootlgo, KW_(":"), 0);
 }
 
-// Lingo
+// KonohaSpace
 
-static kObject *Lingo_getSymbolValueNULL(CTX, kLingo *lgo, const char *key, size_t klen)
+static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *lgo, const char *key, size_t klen)
 {
-	if(strcmp("Lingo", key) == 0) {
+	if(strcmp("KonohaSpace", key) == 0) {
 		return (kObject*)lgo;
 	}
 	return NULL;
@@ -229,7 +229,7 @@ static uintptr_t casehash_getuint(CTX, kmap_t *kmp, const char *name, size_t len
 	return def;
 }
 
-static kcid_t Lingo_getcid(CTX, kLingo *lgo, const char *name, size_t len, kcid_t def)
+static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *lgo, const char *name, size_t len, kcid_t def)
 {
 	kcid_t cid;
 	//while(nsN != NULL) {
@@ -239,7 +239,7 @@ static kcid_t Lingo_getcid(CTX, kLingo *lgo, const char *name, size_t len, kcid_
 	return (cid != CLASS_unknown && CT_(cid)->packdom == 0) ? cid : def;
 }
 
-/* Lingo/Class/Method */
+/* KonohaSpace/Class/Method */
 static kMethod* CT_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn)
 {
 	const kclass_t *p, *t0 = ct;
@@ -259,9 +259,9 @@ static kMethod* CT_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn)
 	return NULL;
 }
 
-#define kLingo_getMethodNULL(ns, cid, mn)     Lingo_getMethodNULL(_ctx, ns, cid, mn)
-#define kLingo_getStaticMethodNULL(ns, mn)   Lingo_getStaticMethodNULL(_ctx, ns, mn)
-static kMethod* Lingo_getMethodNULL(CTX, kLingo *lgo, kcid_t cid, kmethodn_t mn)
+#define kKonohaSpace_getMethodNULL(ns, cid, mn)     KonohaSpace_getMethodNULL(_ctx, ns, cid, mn)
+#define kKonohaSpace_getStaticMethodNULL(ns, mn)   KonohaSpace_getStaticMethodNULL(_ctx, ns, mn)
+static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *lgo, kcid_t cid, kmethodn_t mn)
 {
 	while(lgo != NULL) {
 		if(lgo->methodsNULL != NULL) {
@@ -279,11 +279,11 @@ static kMethod* Lingo_getMethodNULL(CTX, kLingo *lgo, kcid_t cid, kmethodn_t mn)
 	return CT_findMethodNULL(_ctx, CT_(cid), mn);
 }
 
-static kMethod* Lingo_getStaticMethodNULL(CTX, kLingo *lgo, kmethodn_t mn)
+static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *lgo, kmethodn_t mn)
 {
 	while(lgo != NULL) {
 		if(lgo->static_cid != CLASS_unknown) {
-			kMethod *mtd = kLingo_getMethodNULL(lgo, lgo->static_cid, mn);
+			kMethod *mtd = kKonohaSpace_getMethodNULL(lgo, lgo->static_cid, mn);
 			if(mtd != NULL && kMethod_isStatic(mtd)) {
 				return mtd;
 			}
@@ -293,22 +293,22 @@ static kMethod* Lingo_getStaticMethodNULL(CTX, kLingo *lgo, kmethodn_t mn)
 	return NULL;
 }
 
-#define kLingo_getCastMethodNULL(ns, cid, tcid)     Lingo_getCastMethodNULL(_ctx, ns, cid, tcid)
-static kMethod* Lingo_getCastMethodNULL(CTX, kLingo *lgo, kcid_t cid, kcid_t tcid)
+#define kKonohaSpace_getCastMethodNULL(ns, cid, tcid)     KonohaSpace_getCastMethodNULL(_ctx, ns, cid, tcid)
+static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *lgo, kcid_t cid, kcid_t tcid)
 {
-	kMethod *mtd = Lingo_getMethodNULL(_ctx, lgo, cid, MN_to(tcid));
+	kMethod *mtd = KonohaSpace_getMethodNULL(_ctx, lgo, cid, MN_to(tcid));
 	if(mtd != NULL) {
-		mtd = Lingo_getMethodNULL(_ctx, lgo, cid, MN_as(tcid));
+		mtd = KonohaSpace_getMethodNULL(_ctx, lgo, cid, MN_as(tcid));
 	}
 	return mtd;
 }
 
-#define kLingo_addMethod(NS,MTD,UL)  Lingo_addMethod(_ctx, NS, MTD, UL)
+#define kKonohaSpace_addMethod(NS,MTD,UL)  KonohaSpace_addMethod(_ctx, NS, MTD, UL)
 
-static kbool_t Lingo_addMethod(CTX, kLingo *lgo, kMethod *mtd, kline_t pline)
+static kbool_t KonohaSpace_addMethod(CTX, kKonohaSpace *lgo, kMethod *mtd, kline_t pline)
 {
 	if(pline != 0) {
-		kMethod *mtdOLD = Lingo_getMethodNULL(_ctx, lgo, mtd->cid, mtd->mn);
+		kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, lgo, mtd->cid, mtd->mn);
 		if(mtdOLD != NULL) {
 			char mbuf[128];
 			kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
@@ -328,7 +328,7 @@ static kbool_t Lingo_addMethod(CTX, kLingo *lgo, kMethod *mtd, kline_t pline)
 	return 1;
 }
 
-static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
+static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *lgo, intptr_t *data)
 {
 	intptr_t *d = data;
 	kParam *prev = NULL;
@@ -371,9 +371,9 @@ static void Lingo_loadMethodData(CTX, kLingo *lgo, intptr_t *data)
 	}
 }
 
-#define kLingo_loadGlueFunc(NS, F, OPT, UL)  Lingo_loadGlueFunc(_ctx, NS, F, OPT, UL)
+#define kKonohaSpace_loadGlueFunc(NS, F, OPT, UL)  KonohaSpace_loadGlueFunc(_ctx, NS, F, OPT, UL)
 
-static knh_Fmethod Lingo_loadGlueFunc(CTX, kLingo *lgo, const char *funcname, int DOPTION, kline_t uline)
+static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *lgo, const char *funcname, int DOPTION, kline_t uline)
 {
 	void *f = NULL;
 	if(lgo->gluehdr != NULL) {
@@ -749,7 +749,7 @@ static void dumpStmt(CTX, kStmt *stmt)
 }
 
 #define kStmt_lgo(STMT)   Stmt_lgo(_ctx, STMT)
-static kLingo *Stmt_lgo(CTX, kStmt *stmt)
+static kKonohaSpace *Stmt_lgo(CTX, kStmt *stmt)
 {
 	return stmt->parentNULL != NULL ? stmt->parentNULL->lgo : kevalshare->rootlgo;
 }
@@ -842,7 +842,7 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 static void Block_init(CTX, kRawPtr *o, void *conf)
 {
 	kBlock *bk = (kBlock*)o;
-	kLingo *lgo = (conf != NULL) ? (kLingo*)conf : kevalshare->rootlgo;
+	kKonohaSpace *lgo = (conf != NULL) ? (kKonohaSpace*)conf : kevalshare->rootlgo;
 	bk->parentNULL = NULL;
 	KINITv(bk->lgo, lgo);
 	KINITv(bk->blockS, new_(Array, 0));

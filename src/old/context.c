@@ -312,7 +312,7 @@ static kcontext_t* new_RootContext(void)
 	KINITv(share->tokenDictSet, new_DictSet0(_ctx, (TT_MAX - STT_MAX), 0/*isCaseMap*/, "System.tokenDictSet"));
 //	KINITv(share->URNAliasDictMap, new_DictMap0(_ctx, 0, 0/*isCaseMap*/, "System.URNAliasDictMap"));
 
-	KINITv(share->rootlgo, new_(Lingo));
+	KINITv(share->rootlgo, new_(KonohaSpace));
 	knh_loadScriptSystemData(_ctx, share->rootlgo, kapi);
 	knh_System_initPath(_ctx);                 // require rootlgo
 	KINITv(_ctx->script, new_(Script));     // require rootlgo

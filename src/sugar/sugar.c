@@ -53,7 +53,7 @@ static void Kraise(CTX, int isContinue);
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 #define _EXPR     .rule ="$expr"
 
-static void defineDefaultSyntax(CTX, kLingo *lgo)
+static void defineDefaultSyntax(CTX, kKonohaSpace *lgo)
 {
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
@@ -101,13 +101,13 @@ static void defineDefaultSyntax(CTX, kLingo *lgo)
 		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
-	Lingo_defineSyntax(_ctx, lgo, SYNTAX);
+	KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
 }
 
 /* ------------------------------------------------------------------------ */
 /* kevalmod_t global functions */
 
-static kstatus_t Lingo_eval(CTX, kLingo *lgo, const char *script, kline_t uline)
+static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *lgo, const char *script, kline_t uline)
 {
 	kstatus_t result;
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
@@ -131,7 +131,7 @@ kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline)
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
 	}
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
-	return Lingo_eval(_ctx, kevalshare->rootlgo, script, uline);
+	return KonohaSpace_eval(_ctx, kevalshare->rootlgo, script, uline);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -222,8 +222,8 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->h.free     = kevalshare_free;
 
 	klib2_t *l = ctx->lib2;
-	l->KLingo_getcid   = Lingo_getcid;
-	l->KloadMethodData = Lingo_loadMethodData;
+	l->KKonohaSpace_getcid   = KonohaSpace_getcid;
+	l->KloadMethodData = KonohaSpace_loadMethodData;
 	l->Kraise = Kraise;
 
 	KINITv(base->keywordList, new_(Array, 32));
@@ -232,14 +232,14 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->packageMapNO = kmap_init(0);
 
 	ksetModule(MOD_EVAL, (kmodshare_t*)base, 0);
-	base->cLingo = kaddClassDef(NULL, &LingoDef, 0);
+	base->cKonohaSpace = kaddClassDef(NULL, &KonohaSpaceDef, 0);
 	base->cToken = kaddClassDef(NULL, &TokenDef, 0);
 	base->cExpr  = kaddClassDef(NULL, &ExprDef, 0);
 	base->cStmt  = kaddClassDef(NULL, &StmtDef, 0);
 	base->cBlock = kaddClassDef(NULL, &BlockDef, 0);
 	base->cGamma = kaddClassDef(NULL, &GammaDef, 0);
 
-	KINITv(base->rootlgo, new_(Lingo, NULL));
+	KINITv(base->rootlgo, new_(KonohaSpace, NULL));
 	KINITv(base->nullToken, new_(Token, NULL));
 	kObject_setNullObject(base->nullToken, 1);
 	KINITv(base->nullExpr, new_(Expr, NULL));
@@ -270,9 +270,9 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
 	base->Block_tyCheckAll    = Block_tyCheckAll;
 	base->parseSyntaxRule     = parseSyntaxRule;
-	base->Lingo_syntax        = Lingo_syntax;
-	base->Lingo_defineSyntax  = Lingo_defineSyntax;
-	base->Lingo_getMethodNULL = Lingo_getMethodNULL;
+	base->KonohaSpace_syntax        = KonohaSpace_syntax;
+	base->KonohaSpace_defineSyntax  = KonohaSpace_defineSyntax;
+	base->KonohaSpace_getMethodNULL = KonohaSpace_getMethodNULL;
 }
 
 static const char *Pkeyword_(CTX, keyword_t keyid)
@@ -409,7 +409,7 @@ static int isemptychunk(const char *t, size_t len)
 	return 0;
 }
 
-static kstatus_t Lingo_loadstream(CTX, kLingo *ns, FILE *fp, kline_t uline)
+static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t uline)
 {
 	kstatus_t status;
 	kwb_t wb;
@@ -446,18 +446,18 @@ static kline_t uline_init(CTX, const char *path, size_t len, int line, int isrea
 	return uline;
 }
 
-static kstatus_t Lingo_loadscript(CTX, kLingo *lgo, const char *path, size_t len, kline_t pline)
+static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *lgo, const char *path, size_t len, kline_t pline)
 {
 	kstatus_t status = K_BREAK;
 	if(path[0] == '-' && path[1] == 0) {
 		kline_t uline = KURI("<stdin>") | 1;
-		status = Lingo_loadstream(_ctx, lgo, stdin, uline);
+		status = KonohaSpace_loadstream(_ctx, lgo, stdin, uline);
 	}
 	else {
 		FILE *fp = fopen(path, "r");
 		if(fp != NULL) {
 			kline_t uline = uline_init(_ctx, path, len, 1, 1);
-			status = Lingo_loadstream(_ctx, lgo, fp, uline);
+			status = KonohaSpace_loadstream(_ctx, lgo, fp, uline);
 			fclose(fp);
 		}
 		else {
@@ -473,9 +473,9 @@ kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline)
 		kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
 	}
 	INIT_GCSTACK();
-	kLingo *ns = new_(Lingo, kevalshare->rootlgo);
+	kKonohaSpace *ns = new_(KonohaSpace, kevalshare->rootlgo);
 	PUSH_GCSTACK(ns);
-	kstatus_t result = Lingo_loadscript(_ctx, ns, path, len, pline);
+	kstatus_t result = KonohaSpace_loadscript(_ctx, ns, path, len, pline);
 	RESET_GCSTACK();
 	return result;
 }
@@ -496,12 +496,12 @@ static KPACKDEF PKGDEFNULL = {
 	.note = "this is stub",
 	.initPackage = NULL,
 	.setupPackage = NULL,
-	.initLingo = NULL,
-	.setupLingo = NULL,
+	.initKonohaSpace = NULL,
+	.setupKonohaSpace = NULL,
 	.konoha_revision = 0,
 };
 
-static KPACKDEF *Lingo_openGlueHandler(CTX, kLingo *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
+static KPACKDEF *KonohaSpace_openGlueHandler(CTX, kKonohaSpace *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
 {
 	char *p = strrchr(pathbuf, '.');
 	snprintf(p, bufsiz - (p  - pathbuf), "%s", K_OSDLLEXT);
@@ -556,13 +556,13 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
 		INIT_GCSTACK();
-		kLingo *lgo = new_(Lingo, kevalshare->rootlgo);
+		kKonohaSpace *lgo = new_(KonohaSpace, kevalshare->rootlgo);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
-		KPACKDEF *packdef = Lingo_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
+		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
 		if(packdef->initPackage != NULL) {
 			packdef->initPackage(_ctx, lgo, 0, NULL, pline);
 		}
-		if(Lingo_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE) {
+		if(KonohaSpace_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE) {
 			if(packdef->initPackage != NULL) {
 				packdef->setupPackage(_ctx, lgo, pline);
 			}
@@ -608,20 +608,20 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 	return pack;
 }
 
-static kbool_t Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t pline)
+static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *lgo, kString *pkgname, kline_t pline)
 {
 	kbool_t res = 0;
 	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
 	if(pack != NULL) {
-		if(pack->packdef->initLingo != NULL) {
-			res = pack->packdef->initLingo(_ctx, lgo, pline);
+		if(pack->packdef->initKonohaSpace != NULL) {
+			res = pack->packdef->initKonohaSpace(_ctx, lgo, pline);
 		}
 		if(res && pack->export_script != 0) {
 			kString *fname = S_uri(pack->export_script);
 			kline_t uline = pack->export_script | (kline_t)1;
 			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {
-				res = (Lingo_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE);
+				res = (KonohaSpace_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE);
 				fclose(fp);
 			}
 			else {
@@ -629,27 +629,27 @@ static kbool_t Lingo_importPackage(CTX, kLingo *lgo, kString *pkgname, kline_t p
 				res = 0;
 			}
 		}
-		if(res && pack->packdef->setupLingo != NULL) {
-			res = pack->packdef->setupLingo(_ctx, lgo, pline);
+		if(res && pack->packdef->setupKonohaSpace != NULL) {
+			res = pack->packdef->setupKonohaSpace(_ctx, lgo, pline);
 		}
 	}
 	return res;
 }
 
-// boolean Lingo.importPackage(String pkgname);
-static KMETHOD Lingo_importPackage_(CTX, ksfp_t *sfp _RIX)
+// boolean KonohaSpace.importPackage(String pkgname);
+static KMETHOD KonohaSpace_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_(Lingo_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline));
+	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline));
 }
 
-// boolean Lingo.loadScript(String path);
-static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
+// boolean KonohaSpace.loadScript(String path);
+static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t pline = sfp[K_RTNIDX].uline;
 	FILE *fp = fopen(S_text(sfp[1].s), "r");
 	if(fp != NULL) {
 		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
-		kstatus_t status = Lingo_loadstream(_ctx, sfp[0].lgo, fp, uline);
+		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].lgo, fp, uline);
 		fclose(fp);
 		RETURNb_(status == K_CONTINUE);
 	}
@@ -659,8 +659,8 @@ static KMETHOD Lingo_loadScript_(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
-// void Lingo.p(String msg);
-static KMETHOD Lingo_p(CTX, ksfp_t *sfp _RIX)
+// void KonohaSpace.p(String msg);
+static KMETHOD KonohaSpace_p(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t uline = sfp[K_RTNIDX].uline;
 	fprintf(stdout, "uline=%ld, %s\n", uline, S_text(sfp[1].s));
@@ -669,16 +669,16 @@ static KMETHOD Lingo_p(CTX, ksfp_t *sfp _RIX)
 #define _Public kMethod_Public
 #define _Static kMethod_Static
 #define _F(F)   (intptr_t)(F)
-#define TY_Lingo  (CT_Lingo)->cid
+#define TY_KonohaSpace  (CT_KonohaSpace)->cid
 
 void MODEVAL_defMethods(CTX)
 {
 	int FN_msg = FN_("msg");
 	int FN_pkgname = FN_("pkgname");
 	intptr_t methoddata[] = {
-		_Public, _F(Lingo_p), TY_void, TY_Lingo, MN_("p"), 1, TY_String, FN_msg,
-		_Public, _F(Lingo_importPackage_), TY_Boolean, TY_Lingo, MN_("importPackage"), 1, TY_String, FN_pkgname,
-		_Public, _F(Lingo_loadScript_), TY_Boolean, TY_Lingo, MN_("loadScript"), 1, TY_String, FN_("path"),
+		_Public, _F(KonohaSpace_p), TY_void, TY_KonohaSpace, MN_("p"), 1, TY_String, FN_msg,
+		_Public, _F(KonohaSpace_importPackage_), TY_Boolean, TY_KonohaSpace, MN_("importPackage"), 1, TY_String, FN_pkgname,
+		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("loadScript"), 1, TY_String, FN_("path"),
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);

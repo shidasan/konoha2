@@ -39,10 +39,10 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 // Block
 
-static int selectStmtLine(CTX, kLingo *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
+static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e);
 
-kBlock *new_Block(CTX, kArray *tls, int s, int e, kLingo* lgo)
+kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* lgo)
 {
 	kBlock *bk = new_(Block, lgo);
 	PUSH_GCSTACK(bk);
@@ -58,12 +58,12 @@ kBlock *new_Block(CTX, kArray *tls, int s, int e, kLingo* lgo)
 	return bk;
 }
 
-static void checkKeyword(CTX, kLingo *ns, kToken *tk)
+static void checkKeyword(CTX, kKonohaSpace *ns, kToken *tk)
 {
 	if(tk->tt == TK_SYMBOL || tk->tt == TK_OPERATOR) {
 		keyword_t keyid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NONAME);
 		if(keyid != FN_NONAME) {
-			ksyntax_t *syn = Lingo_syntax(_ctx, ns, keyid, 0);
+			ksyntax_t *syn = KonohaSpace_syntax(_ctx, ns, keyid, 0);
 			if(syn != NULL) {
 				tk->tt = TK_KEYWORD; tk->keyid = keyid;
 			}
@@ -86,7 +86,7 @@ static kbool_t kToken_toBRACE(CTX, kToken *tk)
 	return 0;
 }
 
-static int makeTree(CTX, kLingo *ns, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst)
+static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst)
 {
 	int i;
 	kToken *tk = tls->tts[s];
@@ -116,7 +116,7 @@ static int makeTree(CTX, kLingo *ns, kArray *tls, ktoken_t tt, int s, int e, int
 	return e;
 }
 
-static int selectStmtLine(CTX, kLingo *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
+static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
 {
 	int i = s;
 	for(; i < e; i++) {
@@ -239,7 +239,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			continue;
 		}
 		else if(rule->tt == TK_OPERATOR) {
-			ksyntax_t *syn = Lingo_syntax(_ctx, kStmt_lgo(stmt), rule->keyid, 0);
+			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), rule->keyid, 0);
 			if(syn == NULL || syn->StmtAdd == NULL) {
 				kerror(_ctx, ERR_, tk->uline, tk->lpos, "unknown sugar %s", T_kw(rule->keyid));
 				return -1;
@@ -284,7 +284,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 
 static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 {
-	kLingo *lgo = kStmt_lgo(stmt);
+	kKonohaSpace *lgo = kStmt_lgo(stmt);
 	kToken *tk = tls->tts[s];
 	while(tk->tt == TK_NONE) {
 		s++;
@@ -295,7 +295,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		return 1;
 	}
 	else if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = Lingo_syntax(_ctx, lgo, tk->keyid, 0);
+		ksyntax_t *syn = KonohaSpace_syntax(_ctx, lgo, tk->keyid, 0);
 		if(syn->ty != CLASS_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = syn->ty;
@@ -304,7 +304,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		}
 	}
 	else if(tk->tt == TK_USYMBOL) {
-		kcid_t ty = kLingo_getcid(lgo, S_text(tk->text), S_size(tk->text), CLASS_unknown);
+		kcid_t ty = kKonohaSpace_getcid(lgo, S_text(tk->text), S_size(tk->text), CLASS_unknown);
 		if(ty != CLASS_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = ty;
@@ -348,7 +348,7 @@ static kbool_t Stmt_makeTree(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	dumpTokenArray(_ctx, 0, tls, s, e);
 	keyword_t keyid = Stmt_stmttype(_ctx, stmt, tls, s, e);
-	ksyntax_t *syn = Lingo_syntax(_ctx, kStmt_lgo(stmt), keyid, 0);
+	ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), keyid, 0);
 	int ret = 0;
 //	if (keyid == KW_DECLMETHOD) {
 //		kevalmod->flags = kflag_set(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE);
@@ -388,7 +388,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 static kbool_t Stmt_isUninaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = Lingo_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
+		ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
 		if(syn != NULL && syn->op1 != 0) return 1;
 	}
 	return 0;
@@ -412,7 +412,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == TK_KEYWORD) {
-			ksyntax_t *syn = Lingo_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
+			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
 			if(syn != NULL && syn->op2 != 0) {
 				//DBG_P("operator: %s priotiry=%d", Pkeyword(syn->keyid), syn->priority);
 				if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {

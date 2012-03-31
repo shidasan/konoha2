@@ -1,6 +1,6 @@
 
 
 
-Lingo.defineSyntaxRule("while", "'while' ( $expr ) [$block]");
-Lingo.defineStmtTyCheck("while", "tyCheckWhile");
+KonohaSpace.defineSyntaxRule("while", "'while' ( $expr ) [$block]");
+KonohaSpace.defineStmtTyCheck("while", "tyCheckWhile");
 

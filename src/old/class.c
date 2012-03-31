@@ -61,10 +61,10 @@ KNHAPI2(void) kObjectoNULL_(CTX, Object *o)
 
 /* ------------------------------------------------------------------------ */
 
-kbool_t knh_invokeMethod0(CTX, Object *o, kLingo *ns, unsigned long mnd, void **retval, ...)
+kbool_t knh_invokeMethod0(CTX, Object *o, kKonohaSpace *ns, unsigned long mnd, void **retval, ...)
 {
 	kmethodn_t mn = mnd < 10000 ? (kmethodn_t)mnd : knh_getmn(_ctx, B((char*)mnd), MN_NONAME);
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, O_cid(o), mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, O_cid(o), mn);
 	if(mtd != NULL) {
 		BEGIN_LOCAL(_ctx, lsfp, 0);
 		size_t i, psize = knh_Method_psize(mtd), rtnidx = 0, thisidx = rtnidx + K_CALLDELTA;
@@ -1240,12 +1240,12 @@ void knh_ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, ksymbol_t fn)
 	knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 }
 
-kMethod *knh_Lingo_addXSetter(CTX, kLingo *ns, const kclass_t *ct, ktype_t type, kmethodn_t mn_setter)
+kMethod *knh_KonohaSpace_addXSetter(CTX, kKonohaSpace *ns, const kclass_t *ct, ktype_t type, kmethodn_t mn_setter)
 {
 	if(FLAG_is(ct->cflag, FLAG_Class_Expando)) {
 		ksymbol_t fn = FN_UNMASK(mn_setter);
 		kmethodn_t mn = (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_toGETTER(fn);
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, ct->cid, mn);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, ct->cid, mn);
 		if(mtd == NULL) {
 			knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
 			mtd = new_Method(_ctx, 0, ct->cid, mn, f);
@@ -1439,7 +1439,7 @@ kMethod *knh_ClassTBL_getFmt(CTX, const kclass_t *t, kmethodn_t mn0)
 /* ------------------------------------------------------------------------ */
 
 
-kMethod* knh_Lingo_getMethodNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn)
+kMethod* knh_KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ns, kcid_t cid, kmethodn_t mn)
 {
 	while(ns != NULL) {
 		if(DP(ns)->methodsNULL != NULL) {
@@ -1457,7 +1457,7 @@ kMethod* knh_Lingo_getMethodNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn)
 	return ClassTBL_getMethodNULL(_ctx, ClassTBL(cid), mn);
 }
 
-kMethod* knh_Lingo_getFmtNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn)
+kMethod* knh_KonohaSpace_getFmtNULL(CTX, kKonohaSpace *ns, kcid_t cid, kmethodn_t mn)
 {
 	L_TAIL:;
 	if(DP(ns)->formattersNULL != NULL) {
@@ -1477,7 +1477,7 @@ kMethod* knh_Lingo_getFmtNULL(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn)
 	return knh_ClassTBL_getFmtNULL(_ctx, ClassTBL(cid), mn);
 }
 
-void knh_Lingo_addFmt(CTX, kLingo *ns, kMethod *mtd)
+void knh_KonohaSpace_addFmt(CTX, kKonohaSpace *ns, kMethod *mtd)
 {
 	if(DP(ns)->formattersNULL == NULL) {
 		KINITv(DP(ns)->formattersNULL, new_Array0(_ctx, 0));
@@ -2147,15 +2147,15 @@ static kTypeMap *knh_inferMapIterator(CTX, const kclass_t *sct, const kclass_t *
 
 /* ------------------------------------------------------------------------- */
 
-static kbool_t knh_Lingo_dataCheck(CTX, kLingo *ns, kcid_t cid, ksfp_t *sfp)
+static kbool_t knh_KonohaSpace_dataCheck(CTX, kKonohaSpace *ns, kcid_t cid, ksfp_t *sfp)
 {
 	kString *key = sfp[0].s;
 	kObject *value = sfp[1].o;
 	kmethodn_t mn = knh_getmn(_ctx, S_tobytes(key), MN_NEWID);
 	DBG_P("key=%s", S_text(key));
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, cid, MN_toSETTER(mn));
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, MN_toSETTER(mn));
 	if(mtd == NULL) {
-		mtd = knh_Lingo_addXSetter(_ctx, ns, ClassTBL(cid), O_cid(value), MN_toSETTER(mn));
+		mtd = knh_KonohaSpace_addXSetter(_ctx, ns, ClassTBL(cid), O_cid(value), MN_toSETTER(mn));
 		if(mtd == NULL) return 0;
 	}
 	KSETv(sfp[0].o, mtd); //
@@ -2205,7 +2205,7 @@ void knh_Object_fastset(CTX, kObject *o, kMethod *mtd, kObject *v)
 	}
 }
 
-void knh_Object_setData(CTX, kObject *o, kMap *m, kLingo *ns, int Checked)
+void knh_Object_setData(CTX, kObject *o, kMap *m, kKonohaSpace *ns, int Checked)
 {
 	ksfp_t *lsfp = ctx->esp;
 	knitr_t mitrbuf = K_NITR_INIT, *mitr = &mitrbuf;
@@ -2220,7 +2220,7 @@ void knh_Object_setData(CTX, kObject *o, kMap *m, kLingo *ns, int Checked)
 	else {
 		kcid_t cid = O_cid(o);
 		while(m->spi->next(_ctx, m->mapptr, mitr, lsfp)) {
-			if(knh_Lingo_dataCheck(_ctx, ns, cid, lsfp)) {
+			if(knh_KonohaSpace_dataCheck(_ctx, ns, cid, lsfp)) {
 				klr_setesp(_ctx, lsfp+2);
 				knh_Object_fastset(_ctx, o, lsfp[0].mtd, lsfp[1].o);
 			}
@@ -2286,7 +2286,7 @@ static void ClassTBL_checkGetter(CTX, const kclass_t *sct)
 		if(!FLAG_is(sct->fields[i].flag, kField_Getter)) continue;
 		if(ftype == TY_void) continue;
 		kmethodn_t mn = (ftype == TY_Boolean) ? MN_toISBOOL(sct->fields[i].fn) : MN_toGETTER(sct->fields[i].fn);
-		knh_Lingo_getMethodNULL(_ctx, NULL, sct->cid, mn);
+		knh_KonohaSpace_getMethodNULL(_ctx, NULL, sct->cid, mn);
 	}
 }
 
@@ -2317,36 +2317,36 @@ void knh_loadSystemTypeMapRule(CTX)
 
 /* ------------------------------------------------------------------------ */
 
-void knh_Lingo_setLinkClass(CTX, kLingo *ns, kbytes_t linkname, const kclass_t *ct)
+void knh_KonohaSpace_setLinkClass(CTX, kKonohaSpace *ns, kbytes_t linkname, const kclass_t *ct)
 {
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	knh_Bytes_write(_ctx, cwb->ba, knh_bytes_head(linkname, ':'));
 	kwb_putc(cwb->ba, ':');
 	if(DP(ns)->name2ctDictSetNULL == NULL) {
-		KINITv(DP(ns)->name2ctDictSetNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "Lingo.name2cid"));
+		KINITv(DP(ns)->name2ctDictSetNULL, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "KonohaSpace.name2cid"));
 	}
 	knh_DictSet_set(_ctx, DP(ns)->name2ctDictSetNULL, CWB_newString(_ctx, cwb, SPOL_POOLNEVER|SPOL_ASCII), (uintptr_t)ct);
 }
 
-const kclass_t *knh_Lingo_getLinkClassTBLNULL(CTX, kLingo *ns, kbytes_t path, kcid_t tcid)
+const kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbytes_t path, kcid_t tcid)
 {
 	if(path.text[0] == 't' && path.text[1] == 'o' && (path.text[2] == ':' || path.text[2] == 0)) {
 		if(CLASS_Converter <= tcid && tcid <= CLASS_StringConverter) return ClassTBL(tcid);
 		return ClassTBL(CLASS_Converter);
 	}
 	kbytes_t scheme = knh_bytes_head(path, ':');
-	kcid_t cid = CLASS_unknown; /* = knh_Lingo_getcid(_ctx, ns, scheme);*/
+	kcid_t cid = CLASS_unknown; /* = knh_KonohaSpace_getcid(_ctx, ns, scheme);*/
 	if(islower(scheme.buf[0]) && scheme.len < 81) {
 		char buf[128] = {0}; // zero clear
 		knh_memcpy(buf, scheme.text, scheme.len);
 		buf[scheme.len] = ':';
-		cid = knh_Lingo_getcid(_ctx, ns, B(buf));
+		cid = knh_KonohaSpace_getcid(_ctx, ns, B(buf));
 	}
 	if(cid == CLASS_unknown) {
-		cid = knh_Lingo_getcid(_ctx, ns, scheme);
+		cid = knh_KonohaSpace_getcid(_ctx, ns, scheme);
 	}
 	if(cid != CLASS_unknown) {
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, cid, MN_opLINK);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, MN_opLINK);
 		if(mtd != NULL) return ClassTBL(cid);
 	}
 	return NULL;
@@ -2362,10 +2362,10 @@ kcid_t knh_ClassTBL_linkType(CTX, const kclass_t *ct, kcid_t tcid)
 	return (tmr != NULL) ? tmr->tcid : CLASS_unknown;
 }
 
-kObject *knh_Lingo_newObject(CTX, kLingo *ns, kString *path, kcid_t tcid)
+kObject *knh_KonohaSpace_newObject(CTX, kKonohaSpace *ns, kString *path, kcid_t tcid)
 {
 	if(tcid == CLASS_String) return UPCAST(path);
-	const kclass_t *ct = knh_Lingo_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), tcid);
+	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), tcid);
 	Object *value = NULL;
 	if(ct == NULL) {
 		if(tcid == CLASS_Boolean) return K_FALSE;
@@ -2374,7 +2374,7 @@ kObject *knh_Lingo_newObject(CTX, kLingo *ns, kString *path, kcid_t tcid)
 	}
 	else {
 		BEGIN_LOCAL(_ctx, lsfp, 3 + K_CALLDELTA);
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, ns, ct->cid, MN_opLINK);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, ct->cid, MN_opLINK);
 		DBG_ASSERT(mtd != NULL);
 		long rtnidx = 0, thisidx = rtnidx + K_CALLDELTA;
 		KSETv(lsfp[thisidx+1].o, path);
@@ -2415,7 +2415,7 @@ kObject *knh_Lingo_newObject(CTX, kLingo *ns, kString *path, kcid_t tcid)
 static KMETHOD Object_hasMethod(CTX, ksfp_t *sfp _RIX)
 {
 	kmethodn_t mn = knh_getmn(_ctx, S_tobytes(sfp[1].s), MN_NONAME);
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, NULL, O_cid(sfp[0].o), mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, NULL, O_cid(sfp[0].o), mn);
 	RETURNb_(mtd != NULL);
 }
 
@@ -2423,7 +2423,7 @@ static KMETHOD Object_hasMethod(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 {
 	kmethodn_t mn = knh_getmn(_ctx, S_tobytes(sfp[1].s), MN_NONAME);
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, NULL, O_cid(sfp[0].o), mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, NULL, O_cid(sfp[0].o), mn);
 	if(mtd == NULL) {
 		LANG_LOG("Object.invokeMethod: no such method %s.%s", S_text(O_ct(sfp[0].o)->lname), S_text(sfp[1].s));
 		RETURN_(K_NULL);
@@ -2484,7 +2484,7 @@ static KMETHOD System_addClassField(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(ClassTBL_addXField(_ctx, (sfp[1].c)->ct, (sfp[2].c)->type, sfp[3].s));
 }
 
-static kArray *new_MethodList(CTX, const kclass_t *ct, kLingo *ns)
+static kArray *new_MethodList(CTX, const kclass_t *ct, kKonohaSpace *ns)
 {
 	kArray *ma = new_Array(_ctx, CLASS_Method, kArray_size(ct->methods));
 	size_t i;
@@ -2508,22 +2508,22 @@ static kArray *new_MethodList(CTX, const kclass_t *ct, kLingo *ns)
 	return ma;
 }
 
-// Method[] Object.getMethods(Lingo _)
+// Method[] Object.getMethods(KonohaSpace _)
 static KMETHOD Object_getMethods(CTX, ksfp_t *sfp _RIX)
 {
 	RETURN_(new_MethodList(_ctx, O_ct(sfp[0].o), sfp[1].ns));
 }
 
-// Method[] Object.getMethods(Lingo _)
+// Method[] Object.getMethods(KonohaSpace _)
 static KMETHOD Class_getMethods(CTX, ksfp_t *sfp _RIX)
 {
 	RETURN_(new_MethodList(_ctx, (sfp[0].c)->ct, sfp[1].ns));
 }
 
-// Class Class.opLINK(String path, Lingo _)
+// Class Class.opLINK(String path, KonohaSpace _)
 static KMETHOD Class_opLINK(CTX, ksfp_t *sfp _RIX)
 {
-//	kLingo *ns = sfp[2].ns;
+//	kKonohaSpace *ns = sfp[2].ns;
 	kbytes_t bpath = knh_bytes_next(S_tobytes(sfp[1].s), ':');
 	kcid_t cid = knh_getcid(_ctx, bpath);
 	if(cid == CLASS_unknown) {
@@ -2552,20 +2552,20 @@ static KMETHOD Class_query(CTX, ksfp_t *sfp _RIX)
 	RETURN_(ca);
 }
 
-// Method Method.opLINK(String path, Lingo _)
+// Method Method.opLINK(String path, KonohaSpace _)
 static KMETHOD Method_opLINK(CTX, ksfp_t *sfp _RIX)
 {
-	kLingo *ns = sfp[2].ns;
+	kKonohaSpace *ns = sfp[2].ns;
 	kbytes_t bpath = knh_bytes_next(S_tobytes(sfp[1].s), ':');
 	kindex_t loc = knh_bytes_rindex(bpath, '.');
 	kMethod *mtd = NULL;
 	if(loc != -1) {
 		kbytes_t cpath = knh_bytes_first(bpath, loc);
 		kbytes_t mpath = knh_bytes_last(bpath, loc+1);
-		kcid_t cid = knh_Lingo_getcid(_ctx, ns, cpath);
+		kcid_t cid = knh_KonohaSpace_getcid(_ctx, ns, cpath);
 		kmethodn_t mn = knh_getmn(_ctx, mpath, MN_NONAME);
 		if(cid != CLASS_unknown && mn != MN_NONAME) {
-			mtd = knh_Lingo_getMethodNULL(_ctx, ns, cid, mn);
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, mn);
 		}
 	}
 	if(mtd == NULL) {

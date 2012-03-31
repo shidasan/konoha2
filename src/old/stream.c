@@ -114,7 +114,7 @@ KNHAPI2(kPath*) new_Path(CTX, kString *path)
 	return pth;
 }
 
-static void knh_buff_addScriptPath(CTX, kBytes *ba, size_t pos, kLingo *ns, kbytes_t path)
+static void knh_buff_addScriptPath(CTX, kBytes *ba, size_t pos, kKonohaSpace *ns, kbytes_t path)
 {
 	kbytes_t bpath = knh_bytes_next(path, ':');
 	knh_buff_addpath(_ctx, ba, pos, 0, B(ns->path->ospath));
@@ -124,7 +124,7 @@ static void knh_buff_addScriptPath(CTX, kBytes *ba, size_t pos, kLingo *ns, kbyt
 	knh_buff_addospath(_ctx, ba, pos, 1, bpath);
 }
 
-kPath *new_ScriptPath(CTX, kString *urn, kLingo *ns)
+kPath *new_ScriptPath(CTX, kString *urn, kKonohaSpace *ns)
 {
 	kPath *pth = new_(Path);
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
@@ -602,7 +602,7 @@ kbool_t NOFILE_exists(CTX, kPath *path)
 {
 	return 0;
 }
-void NOFILE_ospath(CTX, kPath *path, kLingo *ns)
+void NOFILE_ospath(CTX, kPath *path, kKonohaSpace *ns)
 {
 	path->ospath ="";
 	path->asize = 0;
@@ -621,7 +621,7 @@ static kbool_t FILE_exists(CTX, kPath *path)
 {
 	return knh_exists(_ctx, path->ospath);
 }
-static void FILE_ospath(CTX, kPath *path, kLingo *ns)
+static void FILE_ospath(CTX, kPath *path, kKonohaSpace *ns)
 {
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kbytes_t urn = S_tobytes(path->urn);
@@ -652,7 +652,7 @@ static const knh_PathDPI_t STREAM_FILE = {
 	FILE_exists, FILE_ospath, FILE_openNULL,
 };
 
-static void SCRIPT_ospath(CTX, kPath *path, kLingo *ns)
+static void SCRIPT_ospath(CTX, kPath *path, kKonohaSpace *ns)
 {
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kbytes_t bpath = knh_bytes_next(S_tobytes(path->urn), ':');
@@ -685,7 +685,7 @@ static kbool_t CURL_exists(CTX, kPath *path)
 	return res;
 }
 
-static void CURL_ospath(CTX, kPath *path, kLingo *ns)
+static void CURL_ospath(CTX, kPath *path, kKonohaSpace *ns)
 {
 	path->ospath = NULL;
 	path->asize = 0;
@@ -1588,12 +1588,12 @@ static knh_FuncData_t FuncData[] = {
 void knh_initStreamFuncData(CTX, const knh_LoaderAPI_t *kapi)
 {
 	kapi->addStreamDPI(_ctx, "file", &STREAM_FILE);
-	knh_Lingo_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("file"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("file"), ClassTBL(CLASS_Path));
 	kapi->addStreamDPI(_ctx, "script", &STREAM_SCRIPT);
-	knh_Lingo_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("script"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("script"), ClassTBL(CLASS_Path));
 #ifdef K_USING_CURL
 	kapi->addStreamDPI(_ctx, "http", &STREAM_CURL);
-	knh_Lingo_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("http"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("http"), ClassTBL(CLASS_Path));
 #endif
 	kapi->loadFuncData(_ctx, FuncData);
 }

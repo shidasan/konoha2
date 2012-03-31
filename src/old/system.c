@@ -317,7 +317,7 @@ kString *knh_getURN(CTX, kuri_t uri)
 /* ------------------------------------------------------------------------ */
 /* [Driver] */
 
-static kbytes_t knh_Lingo_getDpiPath(CTX , kLingo *ns, kbytes_t path)
+static kbytes_t knh_KonohaSpace_getDpiPath(CTX , kKonohaSpace *ns, kbytes_t path)
 {
 	while(DP(ns)->name2dpiNameDictMapNULL != NULL) {
 		kString *s = (kString*)knh_DictMap_getNULL(_ctx, DP(ns)->name2dpiNameDictMapNULL, path);
@@ -328,21 +328,21 @@ static kbytes_t knh_Lingo_getDpiPath(CTX , kLingo *ns, kbytes_t path)
 	return path;
 }
 
-const knh_PathDPI_t *knh_Lingo_getStreamDPINULL(CTX, kLingo *ns, kbytes_t path)
+const knh_PathDPI_t *knh_KonohaSpace_getStreamDPINULL(CTX, kKonohaSpace *ns, kbytes_t path)
 {
-	kbytes_t hpath = knh_Lingo_getDpiPath(_ctx, ns, knh_bytes_head(path, ':'));
+	kbytes_t hpath = knh_KonohaSpace_getDpiPath(_ctx, ns, knh_bytes_head(path, ':'));
 	return (const knh_PathDPI_t *)knh_DictSet_get(_ctx, ctx->share->streamDpiDictSet, hpath);
 }
 
-const knh_MapDPI_t *knh_Lingo_getMapDPINULL(CTX, kLingo *ns, kbytes_t path)
+const knh_MapDPI_t *knh_KonohaSpace_getMapDPINULL(CTX, kKonohaSpace *ns, kbytes_t path)
 {
-	kbytes_t hpath = knh_Lingo_getDpiPath(_ctx, ns, knh_bytes_head(path, ':'));
+	kbytes_t hpath = knh_KonohaSpace_getDpiPath(_ctx, ns, knh_bytes_head(path, ':'));
 	return (const knh_MapDPI_t*)knh_DictSet_get(_ctx, ctx->share->mapDpiDictSet, hpath);
 }
 
-const knh_ConverterDPI_t *knh_Lingo_getConverterDPINULL(CTX, kLingo *ns, kbytes_t path)
+const knh_ConverterDPI_t *knh_KonohaSpace_getConverterDPINULL(CTX, kKonohaSpace *ns, kbytes_t path)
 {
-	kbytes_t bpath = knh_Lingo_getDpiPath(_ctx, ns, knh_bytes_next(path, ':'));
+	kbytes_t bpath = knh_KonohaSpace_getDpiPath(_ctx, ns, knh_bytes_next(path, ':'));
 	void *d;
 	if(path.text[0] == 'f') {
 		d = (void*)knh_DictSet_get(_ctx, ctx->share->rconvDpiDictSet, bpath);

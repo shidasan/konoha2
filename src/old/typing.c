@@ -477,12 +477,12 @@ kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 			break;
 		}
 		case TT_UNAME: case TT_UFUNCNAME: {
-			kLingo *ns = K_GMANS;
+			kKonohaSpace *ns = K_GMANS;
 			if(Term_isExceptionType(tk)) {
 				(tk)->cid = CLASS_Exception;
 				return CLASS_Exception;
 			}
-			cid = knh_Lingo_getcid(_ctx, ns, TK_tobytes(tk));
+			cid = knh_KonohaSpace_getcid(_ctx, ns, TK_tobytes(tk));
 			break;
 		}
 		case TT_TYPEOF: {
@@ -546,7 +546,7 @@ static kTerm *TT_typing(CTX, kTerm *tk, ktype_t reqt)
 static void *knh_loadGlueFunc(CTX, const char *funcname, int isVerbose)
 {
 	void *f = NULL;
-	kLingo *ns = K_GMANS;
+	kKonohaSpace *ns = K_GMANS;
 	if(ns->gluehdr != NULL) {
 		f = knh_dlsym(_ctx, ns->gluehdr, funcname, NULL, 0/*isTest*/);
 		if(f != NULL) return f;
@@ -890,22 +890,22 @@ static kTerm *TNAME_typing(CTX, kTerm *tkN, ktype_t reqt, kflag_t op)
 
 	if(FLAG_is(op, _FINDFUNC)) { // TODO_AC
 		kMethod *mtd = NULL;
-		kLingo *ns = K_GMANS;
+		kKonohaSpace *ns = K_GMANS;
 		kcid_t this_cid = DP(_ctx->gma)->this_cid;
-		kcid_t mtd_cid = knh_Lingo_getFuncClass(_ctx, ns, fnq);
+		kcid_t mtd_cid = knh_KonohaSpace_getFuncClass(_ctx, ns, fnq);
 		if(mtd_cid != CLASS_unknown) {
-			mtd = knh_Lingo_getMethodNULL(_ctx, ns, mtd_cid, fnq);
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, mtd_cid, fnq);
 			if(!Method_isStatic(mtd)) mtd = NULL;
 		}
 		if(mtd == NULL) {
-			mtd = knh_Lingo_getMethodNULL(_ctx, ns, this_cid, fnq);
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, this_cid, fnq);
 			if(mtd != NULL && !Method_isStatic(mtd)) {
 				mtd = NULL;
 			}
 		}
 		if(mtd == NULL) {
 			mtd_cid = O_cid(K_GMASCR);
-			mtd = knh_Lingo_getMethodNULL(_ctx, ns, mtd_cid, fnq);
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, mtd_cid, fnq);
 			if(mtd != NULL && !Method_isStatic(mtd)) {
 				mtd = NULL;
 			}
@@ -968,7 +968,7 @@ static kTerm* Term_toSYSVAL(CTX, kTerm *tk)
 		Term_setCONST(_ctx, tk, DP(_ctx->gma)->mtd);
 	}
 	else if(IS_SYSVAL(t, "NS")) {
-		kLingo *ns = K_GMANS;
+		kKonohaSpace *ns = K_GMANS;
 		Term_setCONST(_ctx, tk, ns);
 	}
 	else if(IS_SYSVAL(t, "BEGIN")) {
@@ -990,8 +990,8 @@ static kTerm* TUNAME_typing(CTX, kTerm *tk)
 		return kTermoCID(_ctx, tk, cid);
 	}
 	else {
-		kLingo *ns = K_GMANS;
-		Object *value = knh_Lingo_getConstNULL(_ctx, ns, TK_tobytes(tk));
+		kKonohaSpace *ns = K_GMANS;
+		Object *value = knh_KonohaSpace_getConstNULL(_ctx, ns, TK_tobytes(tk));
 		if(value != NULL) {
 			return Term_setCONST(_ctx, tk, value);
 		}
@@ -1034,7 +1034,7 @@ static kTerm* TPROPN_typing(CTX, kTerm *tk, ktype_t reqt)
 /* [NUM] */
 
 #ifdef K_USING_SEMANTICS
-static kcid_t kTermagcNUM(CTX, kTerm *tk, kcid_t reqc, kLingo *ns)
+static kcid_t kTermagcNUM(CTX, kTerm *tk, kcid_t reqc, kKonohaSpace *ns)
 {
 	kbytes_t t = TK_tobytes(_ctx, tk), tag = STEXT("");
 	size_t i = 1;
@@ -1077,7 +1077,7 @@ static kcid_t kTermagcNUM(CTX, kTerm *tk, kcid_t reqc, kLingo *ns)
 		return reqc;
 	}
 	else {
-		kcid_t tagc = kLingoagcid(_ctx, ns, reqc, tag);
+		kcid_t tagc = kKonohaSpaceagcid(_ctx, ns, reqc, tag);
 		if(tagc == CLASS_unknown) {
 			knh_GammaBuilder_perror(_ctx, tk, KC_DWARN, _("unknown class tag: %L"), tk);
 			return reqc;
@@ -1253,7 +1253,7 @@ static kTerm *W1_typing(CTX, kStmtExpr *stmt)
 		kStmtExprrimToSize(_ctx, stmt, 3);
 	}
 	if(cid != CLASS_unknown) {  // "%4d"(1), not "%d"(1)
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_format);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_format);
 		DBG_ASSERT(mtd != NULL);
 		Term_setCONST(_ctx, tkNN(stmt, 1), (tkFMT)->data);
 		TYPING(_ctx, stmt, 2, cid, _NOBOX);
@@ -1266,7 +1266,7 @@ static kTerm *W1_typing(CTX, kStmtExpr *stmt)
 		STT_(stmt) = STT_W1;
 		TYPING_UntypedExpr(_ctx, stmt, 2);
 		kmethodn_t mn = bytes_parsemn(_ctx, fmt);
-		kMethod *mtdf = knh_Lingo_getFmtNULL(_ctx, K_GMANS, Tn_cid(stmt, 2), mn);
+		kMethod *mtdf = knh_KonohaSpace_getFmtNULL(_ctx, K_GMANS, Tn_cid(stmt, 2), mn);
 		if(mtdf != NULL) {
 			KSETv((tkFMT)->data, mtdf);
 		}
@@ -1436,9 +1436,9 @@ static kTerm* TURN_typing(CTX, kTerm *tk, kcid_t reqt)
 		return Term_toCONST(_ctx, tk);
 	}
 	else {
-		kLingo *ns = K_GMANS;
+		kKonohaSpace *ns = K_GMANS;
 		kString *path = (tk)->text;
-		const kclass_t *ct = knh_Lingo_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
+		const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 		if(ct == NULL) {
 			return ERROR_Undefined(_ctx, "link", CLASS_unknown, tk);
 		}
@@ -1448,7 +1448,7 @@ static kTerm* TURN_typing(CTX, kTerm *tk, kcid_t reqt)
 		if(reqt == CLASS_Tdynamic || reqt == CLASS_Tvar || reqt == CLASS_Tvar) {
 			reqt = ct->cid;
 		}
-		Object *value = knh_Lingo_newObject(_ctx, ns, path, reqt);
+		Object *value = knh_KonohaSpace_newObject(_ctx, ns, path, reqt);
 		if(IS_NULL(value)) {
 			WARN_Undefined(_ctx, "literal", reqt, tk);
 		}
@@ -1460,9 +1460,9 @@ static kTerm* TURN_typing(CTX, kTerm *tk, kcid_t reqt)
 static kTerm* TLINK_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 {
 	kTerm *tkLNK = tkNN(stmt, 1);
-	kLingo *ns = K_GMANS;
+	kKonohaSpace *ns = K_GMANS;
 	kString *path = (tkLNK)->text;
-	const kclass_t *ct = knh_Lingo_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
+	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 	if(ct == NULL) {
 		return ERROR_Undefined(_ctx, "link", CLASS_unknown, tkLNK);
 	}
@@ -1479,7 +1479,7 @@ static kTerm* TLINK_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	if(cid != CLASS_unknown) {
 		DBG_ASSERT(DP(stmt)->size == 3);
 		STT_(stmt) = STT_CALL;
-		Term_setMethod(_ctx, tkNN(stmt, 0), MN_opLINK, knh_Lingo_getMethodNULL(_ctx, ns, CLASS_String, MN_opLINK));
+		Term_setMethod(_ctx, tkNN(stmt, 0), MN_opLINK, knh_KonohaSpace_getMethodNULL(_ctx, ns, CLASS_String, MN_opLINK));
 		Term_setCONST(_ctx, tkLNK, path);
 		// expr
 		knh_Stmt_add(_ctx, stmt, new_TermCONST(_ctx, K_GMANS));
@@ -1980,9 +1980,9 @@ static kTerm *SELECT_typing(CTX, kStmtExpr *stmt)
 			return ERROR_text(_ctx, "unsupported token for selector" K_TRACEPOINT);
 		}
 		ksymbol_t fn = Term_fn(_ctx, tkN);
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_toGETTER(fn));
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_toGETTER(fn));
 		if(mtd == NULL) {
-			mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_toISBOOL(fn));
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_toISBOOL(fn));
 			if(mtd == NULL) {
 				return ERROR_Undefined(_ctx, "field", cid, tkN);
 			}
@@ -2221,7 +2221,7 @@ static kTerm *new_TermDEFAULT(CTX, kcid_t cid, ktype_t reqt)
 	case CLASS_Class:
 		reqt = (reqt == TY_var) ? T_dyn : reqt;
 		return new_TermCONST(_ctx, new_Type(_ctx, reqt));
-	case CLASS_Lingo: return new_TermCONST(_ctx, K_GMANS);
+	case CLASS_KonohaSpace: return new_TermCONST(_ctx, K_GMANS);
 	case CLASS_Script: return new_TermCONST(_ctx, ctx->gma->scr);
 	default:
 		return new_TermTYPED(_ctx, TT_NULL/*DEFVAL*/, cid, cid);
@@ -2325,7 +2325,7 @@ static kTerm* CALLPARAMs_typing(CTX, kStmtExpr *stmt, ktype_t tcid, kcid_t new_c
 	return CALL_toCONST(_ctx, stmt, mtd);
 }
 
-static void Lingo_lookupMethods(CTX, kLingo *ns, kcid_t cid, kmethodn_t mn, kMethod **mlists, size_t remaining)
+static void KonohaSpace_lookupMethods(CTX, kKonohaSpace *ns, kcid_t cid, kmethodn_t mn, kMethod **mlists, size_t remaining)
 {
 	size_t i;
 	while(ns != NULL) {
@@ -2369,7 +2369,7 @@ static kTerm* OLCALLPARAMs_typing(CTX, kStmtExpr *stmt, ktype_t tcid, kcid_t new
 	size_t i, size = DP(stmt)->size;
 	kMethod *mlists[32] = {NULL}, **mp = mlists;
 	kMethod *tmtd = NULL;
-	Lingo_lookupMethods(_ctx, K_GMANS, mtd0->cid, mtd0->mn, mlists, 30);
+	KonohaSpace_lookupMethods(_ctx, K_GMANS, mtd0->cid, mtd0->mn, mlists, 30);
 	for(i = 2; i < size; i++) {
 		TYPING_UntypedExpr(_ctx, stmt, i);
 	}
@@ -2436,12 +2436,12 @@ static kTerm* CALL_typing(CTX, kStmtExpr *stmt, kcid_t tcid)
 		kTermoTYPED(_ctx, tkO, TT_NULL/*DEFVAL*/, (tkO)->cid, (tkO)->cid);
 	}
 	mtd_cid = Tn_cid(stmt, 1);
-	mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+	mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	if(mtd == NULL) {
 		if(DP(stmt)->size == 3 && MN_isSETTER(mn)) {
 			TYPING_UntypedExpr(_ctx, stmt, 2);
 			DBG_P("ptype=%s", T__(Tn_type(stmt, 2)));
-			mtd = knh_Lingo_addXSetter(_ctx, K_GMANS, ClassTBL(mtd_cid), Tn_type(stmt, 2), mn);
+			mtd = knh_KonohaSpace_addXSetter(_ctx, K_GMANS, ClassTBL(mtd_cid), Tn_type(stmt, 2), mn);
 		}
 	}
 	if(mtd != NULL) {
@@ -2530,7 +2530,7 @@ static kTerm* defined_typing(CTX, kStmtExpr *stmt)
 //	else {
 //		kcid_t cid = Tn_cid(stmt, 2);
 //		if(knh_class_canObjectCopy(_ctx, cid)) {
-//			kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_copy);
+//			kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_copy);
 //			KSETv(tmNN(stmt, 1), tmNN(stmt, 2));
 //			Term_setMethod(_ctx, tkNN(stmt, 0), MN_copy, mtd);
 //			kStmtExprrimToSize(_ctx, stmt, 2);
@@ -2550,7 +2550,7 @@ static kTerm* this_typing(CTX, kStmtExpr *stmt, kmethodn_t mn)
 	kcid_t mtd_cid = DP(_ctx->gma)->this_cid;
 	kTerm *tkMTD = tkNN(stmt, 0); /* change */
 	kMethod *mtd;
-	mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, MN_new);
+	mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, MN_new);
 	if(mtd == NULL || (mtd)->cid != mtd_cid) {
 		return ErrorUnsupportedConstructor(_ctx, mtd_cid);
 	}
@@ -2599,7 +2599,7 @@ static kTerm* delegate_typing(CTX, kStmtExpr *stmt)
 		kcid_t cid = Tn_cid(stmt, 2), this_cid = DP(_ctx->gma)->this_cid;
 		if(Tn_isCID(stmt, 2)) { /* delegate(Class, f) */
 			kTerm *tkC = tkNN(stmt, 2);
-			kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, (tkC)->cid, Term_mn(_ctx, tkMN));
+			kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, (tkC)->cid, Term_mn(_ctx, tkMN));
 			if(mtd == NULL) {
 				return ERROR_Undefined(_ctx, "method", (tkC)->cid, tkMN);
 			}
@@ -2611,7 +2611,7 @@ static kTerm* delegate_typing(CTX, kStmtExpr *stmt)
 		}
 		else {
 			kcid_t cid = Tn_cid(stmt, 2);
-			kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, Term_mn(_ctx, tkMN));
+			kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, Term_mn(_ctx, tkMN));
 			if(mtd == NULL) {
 				return ERROR_Undefined(_ctx, "method", cid, tkMN);
 			}
@@ -2622,7 +2622,7 @@ static kTerm* delegate_typing(CTX, kStmtExpr *stmt)
 			kTermoCID(_ctx, tkNN(stmt, 1), cid);
 			Term_setCONST(_ctx, tkNN(stmt, 3), mtd);
 			STT_(stmt) = STT_NEW;
-			mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Func, MN_new);
+			mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Func, MN_new);
 			DBG_ASSERT(mtd != NULL);
 			Term_setMethod(_ctx, tkNN(stmt, 0), (mtd)->mn, mtd);
 			return Stmt_typed(_ctx, stmt, cid);
@@ -2661,7 +2661,7 @@ static kTerm* FUNCCALLPARAMs_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	kcid_t cid = Tn_cid(stmt, 0);
 	DBG_ASSERT(IS_Tfunc(cid));
 	kParam *pa = ClassTBL(cid)->cparam;
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_);
 	KNH_ASSERT(mtd != NULL);
 		/* 0 1 2 3 4 .. 5 */
 	knh_Stmt_swap(_ctx, stmt, 0, 1);
@@ -2708,7 +2708,7 @@ static kTerm* FUNCDYNCALL_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	tkNN(stmt, 0)->type = cid;
 	Stmt_setDYNCALL(stmt, 1);
 	{
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_);
 		KNH_ASSERT(mtd != NULL);
 		knh_Stmt_swap(_ctx, stmt, 0, 1);
 		DBG_ASSERT(TT_(tkNN(stmt, 0)) == TT_ASIS);
@@ -2748,19 +2748,19 @@ static kTerm* func_typingNULL(CTX, kStmtExpr *stmt, kcid_t reqt)
 		}
 	}
 
-	kcid_t mtd_cid = knh_Lingo_getFuncClass(_ctx, K_GMANS, mn);
+	kcid_t mtd_cid = knh_KonohaSpace_getFuncClass(_ctx, K_GMANS, mn);
 	kMethod *mtd = NULL;
 
 	/* 3. static function in namespace */
 	if(mtd_cid != CLASS_unknown) {
-		mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+		mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 		if(mtd != NULL) {
 			kTermoTYPED(_ctx, tkNN(stmt, 1), TT_NULL, mtd_cid, mtd_cid);
 			goto L_CALLPARAMs;
 		}
 	}
 	mtd_cid = DP(_ctx->gma)->this_cid;
-	mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+	mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	if(mtd != NULL) {
 		/* Removed by @imasahiro to improve method performance. */
 		//GammaBuilder_foundFIELD(_ctx->gma, 1);
@@ -2770,7 +2770,7 @@ static kTerm* func_typingNULL(CTX, kStmtExpr *stmt, kcid_t reqt)
 
 	if(mtd_cid != O_cid(K_GMASCR)) {
 		mtd_cid = O_cid(K_GMASCR);
-		mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+		mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 		if(mtd != NULL) {
 			kTermoTYPED(_ctx, tkNN(stmt, 1), TT_NULL/*DEFVAL*/, mtd_cid, mtd_cid);
 			goto L_CALLPARAMs;
@@ -2778,7 +2778,7 @@ static kTerm* func_typingNULL(CTX, kStmtExpr *stmt, kcid_t reqt)
 	}
 
 	mtd_cid = CLASS_System;
-	mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+	mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	DBG_P("********* mtd=%p", mtd);
 	if(mtd != NULL) {
 		if(Method_isRestricted(mtd)) {
@@ -2838,7 +2838,7 @@ static kTerm* FUNCCALL_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 
 static kTerm* NEWPARAMs_typing(CTX, kStmtExpr *stmt, kcid_t new_cid, kmethodn_t mn, int needsTypingPARAMs)
 {
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, new_cid, mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, new_cid, mn);
 	kTerm *tkRES = (kTerm*)stmt;
 	if(mtd == NULL || ClassTBL((mtd)->cid)->bcid != ClassTBL(new_cid)->bcid) {
 		return ERROR_Undefined(_ctx, _("constructor"), new_cid, tkNN(stmt, 0));
@@ -2869,10 +2869,10 @@ static kTerm* FIELD_typing(CTX, kcid_t cid, kStmtExpr *stmt, size_t n)
 {
 	kTerm *tkK = tkNN(stmt, n); DBG_ASSERT(IS_String(tkK->text));
 	ksymbol_t fn = knh_getfnq(_ctx, S_tobytes(tkK->text), FN_NEWID);
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_toSETTER(fn));
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_toSETTER(fn));
 	if(mtd == NULL) {
 		TYPING_UntypedExpr(_ctx, stmt, n+1);
-		mtd = knh_Lingo_addXSetter(_ctx, K_GMANS, ClassTBL(cid), Tn_type(stmt, n+1), fn);
+		mtd = knh_KonohaSpace_addXSetter(_ctx, K_GMANS, ClassTBL(cid), Tn_type(stmt, n+1), fn);
 		if(mtd == NULL) {
 			WARN_Undefined(_ctx, "field", cid, tkK);
 		}
@@ -3027,7 +3027,7 @@ static kTerm* NEW_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 
 static kTerm *OPR_setMethod(CTX, kStmtExpr *stmt, kcid_t mtd_cid, kmethodn_t mn, kcid_t reqt)
 {
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	if(mtd == NULL) {
 		if(mtd_cid != CLASS_Tdynamic) {
 			return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_text(tkNN(stmt, 0)->text) : knh_getopname(mn));
@@ -3139,7 +3139,7 @@ static kTerm* StmtCALL_toIterator(CTX, kStmtExpr *stmt)
 		kcid_t itrcid = knh_class_P1(_ctx, CLASS_Iterator, rtype);
 		Stmt_insert(_ctx, stmt, 1, new_TermCID(_ctx, itrcid));
 		knh_Stmt_add(_ctx, stmt, new_TermCONST(_ctx, mtd));
-		KSETv(tkMN->mtd, knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Iterator, MN_new));
+		KSETv(tkMN->mtd, knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Iterator, MN_new));
 		tkMN->mn = MN_new;
 		STT_(stmt) = STT_NEW;
 		return NEW_typing(_ctx, stmt, itrcid);
@@ -3319,7 +3319,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 	L_LOOKUPMETHOD:;
 	DBG_ASSERT_cid(mtd_cid);
 	{
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 		if(mtd == NULL) {
 			if(mtd_cid != CLASS_Tdynamic) {
 				return ERROR_Unsupported(_ctx, "operator", mtd_cid, mn == MN_NONAME ? S_text(tkOP->text) : knh_getopname(mn));
@@ -3347,7 +3347,7 @@ static kTerm* SEND_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	if(mtd_cid == CLASS_OutputStream) {
 		return Stmt_typed(_ctx, stmt, TY_void);
 	} else {
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, MN_send);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, MN_send);
 		if(mtd == NULL) {
 			return ERROR_Unsupported(_ctx, "operator", mtd_cid, "<<<");
 		}
@@ -3378,7 +3378,7 @@ static void Term_setTypeMap(CTX, kTerm *tk, kcid_t tcid, kTypeMap *tmrNULL)
 
 static kTerm *new_TermDYNCAST(CTX, kcid_t tcid, kmethodn_t mn, kTerm *tkO)
 {
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Object, mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Object, mn);
 	if(Method_isRestricted(mtd)) {
 		return ERROR_MethodIsNot(_ctx, mtd, "allowed");
 	}
@@ -3437,7 +3437,7 @@ static kTerm* TCAST_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 		}
 	}
 	if(scid == CLASS_Tdynamic) {
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_typeCheck);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_typeCheck);
 		Term_setMethod(_ctx, tkC, MN_typeCheck, mtd);
 		knh_Stmt_add(_ctx, stmt, new_TermTYPED(_ctx, TT_CID, T_Class, CLASS_t(tcid)));
 		Stmt_toSTT(stmt, STT_CALL);
@@ -3456,7 +3456,7 @@ static kTerm* TCAST_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	tmr = knh_findTypeMapNULL(_ctx, scid, tcid/*, Stmt_isTRANS(stmt)*/);
 	if(tmr == NULL) {
 		WARN_Cast(_ctx, "undefined cast", tcid, scid);
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_to);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Object, MN_to);
 		Term_setMethod(_ctx, tkC, MN_to, mtd);
 		knh_Stmt_add(_ctx, stmt, new_TermTYPED(_ctx, TT_CID, T_Class, CLASS_t(tcid)));
 		Stmt_toSTT(stmt, STT_CALL);
@@ -3995,7 +3995,7 @@ static kTerm* FOREACH1_toIterator(CTX, kStmtExpr *stmt, size_t n)
 		KNH_TODO("tuple iterator");
 	}
 	{
-		kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, cid, MN_opITR);
+		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_opITR);
 		if(mtd != NULL) {
 			kStmtExpr *stmtC = new_Stmt2(_ctx, STT_CALL, new_TermMN(_ctx, MN_opITR), tmNN(stmt, n), NULL);
 			KSETv(tmNN(stmt, n), CALL_typing(_ctx, stmtC, TY_var));
@@ -4110,7 +4110,7 @@ static kTerm *ASSURE_typing(CTX, kStmtExpr *stmt)
 	{
 		kTerm *tkC = new_TermTYPED(_ctx, TT_CID, CLASS_Class, CLASS_Assurance);
 		kTerm *tkCALL = new_(Term);
-		kMethod* mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, CLASS_Assurance, MN_new);
+		kMethod* mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, CLASS_Assurance, MN_new);
 		Term_setMethod(_ctx, tkCALL, MN_new, mtd);
 		kStmtExpr *stmtCALL = new_Stmt2(_ctx, STT_NEW, tkCALL, tkC, tmNN(stmt, 0), NULL);
 		KSETv(tmNN(stmt, 0), stmtCALL);
@@ -4204,7 +4204,7 @@ static kTerm* METHOD_typing(CTX, kStmtExpr *stmtM)
 	kcid_t mtd_cid = METHOD_cid(_ctx, stmtM);
 	kflag_t flag   = METHOD_flag(_ctx, stmtM, mtd_cid);
 	kmethodn_t mn = METHOD_name(_ctx, stmtM);
-	kMethod *mtd = knh_Lingo_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
+	kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 	kParam *mp = NULL;
 	kStmtExpr *stmtP = stmtNN(stmtM, 3/*PARAMs*/);
 	int isDynamic = 0, allowDynamic = 1;
@@ -4227,7 +4227,7 @@ static kTerm* METHOD_typing(CTX, kStmtExpr *stmtM)
 		}
 	}
 L_CheckScope:;
-	if(!knh_Lingo_isIpackdomeScope(_ctx, K_GMANS, mtd_cid)) {
+	if(!knh_KonohaSpace_isIpackdomeScope(_ctx, K_GMANS, mtd_cid)) {
 		if(!knh_StmtMETA_is(_ctx, stmtM, "Public")) {
 			flag |= FLAG_Method_Private;
 		}
@@ -4238,7 +4238,7 @@ L_CheckScope:;
 		if(knh_StmtMETA_is(_ctx, stmtM, "Overload")) {
 			Method_setOverload(mtd, 1);
 		}
-		knh_Lingo_addMethod(_ctx, mtd_cid, mtd);
+		knh_KonohaSpace_addMethod(_ctx, mtd_cid, mtd);
 //		DP(mtd)->uri = ULINE_uri(stmtM->uline);
 //		Term_setCONST(_ctx, tkNN(stmtM, 2/*method*/), mtd);
 		mp = new_Param(_ctx);
@@ -4311,7 +4311,7 @@ L_CheckScope:;
 		}
 		if((mtd)->cid != mtd_cid) { /* @Override */
 			mtd = new_Method(_ctx, flag, mtd_cid, mn, NULL);
-			knh_Lingo_addMethod(_ctx, mtd_cid, mtd);
+			knh_KonohaSpace_addMethod(_ctx, mtd_cid, mtd);
 			KSETv(DP(mtd)->mp, mp);
 		}
 		else if(knh_StmtMETA_is(_ctx, stmtM, "Around")) {
@@ -4446,11 +4446,11 @@ static kTerm* FORMAT_typing(CTX, kStmtExpr *stmt)
 	kTerm *tkT = DECLFIRST_typing(_ctx, stmtNN(stmt, 3));
 	if(TT_(tkT) != TT_ERR) {
 		kcid_t cid = tkT->cid;
-		kMethod *mtd = knh_Lingo_getFmtNULL(_ctx, K_GMANS, cid, mn);
+		kMethod *mtd = knh_KonohaSpace_getFmtNULL(_ctx, K_GMANS, cid, mn);
 		if(mtd == NULL) {
 			mtd = new_Method(_ctx, 0, cid, mn, NULL);
 			KSETv(DP(mtd)->mp, KNH_TNULL(Param));
-			knh_Lingo_addFmt(_ctx, K_GMANS, mtd);
+			knh_KonohaSpace_addFmt(_ctx, K_GMANS, mtd);
 		}
 		return knh_StmtMTD_typing(_ctx, stmt, mtd, cid);
 	}

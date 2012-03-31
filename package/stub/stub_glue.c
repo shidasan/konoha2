@@ -16,29 +16,29 @@ static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t stub_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
 {
 //	intptr_t methoddata[] = {
 //		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
 //		_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
 //		_Public, _F(Stmt_tyCheckExpr), TY_Boolean, TY_Stmt, MN_("tyCheckExpr"), 4, TY_String, FN_key, TY_Gamma, FN_gma, TY_Int, FN_typeid, TY_Int, FN_pol,
 //		_Public, _F(Block_tyCheckAll), TY_Boolean, TY_Block, MN_("tyCheckAll"), 1, TY_Gamma, FN_gma,
-//		_Public, _F(Lingo_defineSyntaxRule), TY_void, TY_Lingo, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
-//		_Public, _F(Lingo_defineStmtTyCheck), TY_void, TY_Lingo, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
+//		_Public, _F(KonohaSpace_defineSyntaxRule), TY_void, TY_KonohaSpace, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
+//		_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 //		DEND,
 //	};
 //	kloadMethodData(NULL, methoddata);
 	return true;
 }
 
-static kbool_t stub_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t stub_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t stub_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 {
 //	USING_SUGAR;
 //	ksyntaxdef_t SYNTAX[] = {
@@ -47,11 +47,11 @@ static kbool_t stub_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
 //		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 //		{ .name = NULL, },
 //	};
-//	SUGAR Lingo_defineSyntax(_ctx, lgo, SYNTAX);
+//	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
 	return true;
 }
 
-static kbool_t stub_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t stub_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
@@ -62,8 +62,8 @@ KPACKDEF* stub_init(void)
 		KPACKNAME("stub", "1.0"),
 		.initPackage = stub_initPackage,
 		.setupPackage = stub_setupPackage,
-		.initLingo = stub_initLingo,
-		.setupPackage = stub_setupLingo,
+		.initKonohaSpace = stub_initKonohaSpace,
+		.setupPackage = stub_setupKonohaSpace,
 	};
 	return &d;
 }

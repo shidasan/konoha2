@@ -133,7 +133,7 @@ static ITRNEXT SQLITE3_nextData(CTX, ksfp_t *sfp _RIX)
 //	SQLITE3_nextData,
 //};
 
-void knh_loadSystemQueryDriver(CTX, kLingo *ns)
+void knh_loadSystemQueryDriver(CTX, kKonohaSpace *ns)
 {
 //	const knh_LoaderAPI_t *api = knh_getLoaderAPI();
 //	api->addStreamDPI(_ctx, "sqlite3", &STREAM_SQLITE3);

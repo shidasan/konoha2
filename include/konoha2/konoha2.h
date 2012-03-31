@@ -334,7 +334,7 @@ typedef struct kshare_t {
 		struct kTypeMap           *tmr;\
 		struct kException         *e;\
 		struct kExceptionHandler  *hdr; \
-		struct kLingo             *lgo;\
+		struct kKonohaSpace             *lgo;\
 		struct kRawPtr   *p; \
 		struct kObject *ox; \
 		struct kConverter         *conv;\
@@ -903,7 +903,7 @@ struct kMethod {
 	union {
 		kObject            *objdata;
 		struct kKonohaCode *kcode;
-		struct kLingo      *lazyns;       // lazy compilation
+		struct kKonohaSpace      *lazyns;       // lazy compilation
 		struct kMethod     *proceed;      // during typing, asm
 	};
 	union {
@@ -988,7 +988,7 @@ typedef struct kRawPtr {
 /* ----------------------------------------------------------------------- */
 // klib2
 
-struct kLingo;
+struct kKonohaSpace;
 struct ksyntaxdef_t;
 
 typedef struct klib2_t {
@@ -1038,8 +1038,8 @@ typedef struct klib2_t {
 	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
 	const kclass_t* (*KaddClassDef)(CTX, kString *, KCLASSDEF *, kline_t);
 
-	kcid_t  (*KLingo_getcid)(CTX, struct kLingo *, const char *, size_t, kcid_t def);
-	void    (*KloadMethodData)(CTX, struct kLingo *, intptr_t *d);
+	kcid_t  (*KKonohaSpace_getcid)(CTX, struct kKonohaSpace *, const char *, size_t, kcid_t def);
+	void    (*KloadMethodData)(CTX, struct kKonohaSpace *, intptr_t *d);
 
 	void  (*KCodeGen)(CTX, struct kMethod *, struct kBlock *);
 	void (*Kreport)(CTX, int level, const char *msg);
@@ -1048,7 +1048,7 @@ typedef struct klib2_t {
 
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
 
-	void (*KLingo_defineSyntax)(CTX, struct kLingo*, struct ksyntaxdef_t *);
+	void (*KKonohaSpace_defineSyntax)(CTX, struct kKonohaSpace*, struct ksyntaxdef_t *);
 
 } klib2_t;
 
@@ -1124,7 +1124,7 @@ typedef struct klib2_t {
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 
 #define KCLASS(cid)              S_text(CT(cid)->name)
-#define kLingo_getcid(NS, S, L, C)  (KPI)->KLingo_getcid(_ctx, NS, S, L, C)
+#define kKonohaSpace_getcid(NS, S, L, C)  (KPI)->KKonohaSpace_getcid(_ctx, NS, S, L, C)
 #define ksetModule(N,D,P)        (KPI)->KsetModule(_ctx, N, D, P)
 #define kaddClassDef(NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, NAME, DEF, UL)
 #define kloadMethodData(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)

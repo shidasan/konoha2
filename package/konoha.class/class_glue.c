@@ -109,16 +109,16 @@
 
 // --------------------------------------------------------------------------
 
-// int Lingo.getCid(String name, int defval)
-static KMETHOD Lingo_getCid(CTX, ksfp_t *sfp _RIX)
+// int KonohaSpace.getCid(String name, int defval)
+static KMETHOD KonohaSpace_getCid(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(kLingo_getcid(sfp[0].lgo, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue));
+	RETURNi_(kKonohaSpace_getcid(sfp[0].lgo, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue));
 }
 
-// int Lingo.defineClass(int flag, String name, int supcid, int fieldsize);
-static KMETHOD Lingo_defineClass(CTX, ksfp_t *sfp _RIX)
+// int KonohaSpace.defineClass(int flag, String name, int supcid, int fieldsize);
+static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 {
-	kLingo *lgo = sfp[0].lgo;
+	kKonohaSpace *lgo = sfp[0].lgo;
 	KCLASSDEF cdef = {};
 	cdef.cstruct_size = sfp[4].ivalue * sizeof(void*);
 	cdef.cflag  = (kflag_t)sfp[1].ivalue | ((cdef.cstruct_size > 0) ? kClass_UNDEF : 0);
@@ -137,8 +137,8 @@ static KMETHOD Lingo_defineClass(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(c->cid);
 }
 
-// int Lingo.defineClassField(int cid, int ty, String name, Object *value);
-static KMETHOD Lingo_defineClassField(CTX, ksfp_t *sfp _RIX)
+// int KonohaSpace.defineClassField(int cid, int ty, String name, Object *value);
+static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 {
 	kclass_t *ct = (kclass_t*)kclass((kcid_t)sfp[1].ivalue, sfp[K_RTNIDX].uline);
 	if(!CT_isUNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
@@ -171,31 +171,31 @@ static KMETHOD Lingo_defineClassField(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t class_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t class_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_flag = FN_("flag"), FN_cid = FN_("cid"), FN_name = FN_("name"), FN_defval = FN_("defval");
 	intptr_t methoddata[] = {
-		_Public, _F(Lingo_getCid), TY_Int, TY_Lingo, MN_("cid"), 2, TY_String, FN_name, TY_Int, FN_defval,
-		_Public, _F(Lingo_defineClass), TY_Int, TY_Lingo, MN_("defineClass"), 4, TY_Int, FN_flag, TY_String, FN_name, TY_Int, FN_("supcid"), TY_Int, FN_("fieldSize"),
-		_Public, _F(Lingo_defineClassField), TY_Int, TY_Lingo, MN_("defineClassField"), 4, TY_Int, FN_cid, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
+		_Public, _F(KonohaSpace_getCid), TY_Int, TY_KonohaSpace, MN_("cid"), 2, TY_String, FN_name, TY_Int, FN_defval,
+		_Public, _F(KonohaSpace_defineClass), TY_Int, TY_KonohaSpace, MN_("defineClass"), 4, TY_Int, FN_flag, TY_String, FN_name, TY_Int, FN_("supcid"), TY_Int, FN_("fieldSize"),
+		_Public, _F(KonohaSpace_defineClassField), TY_Int, TY_KonohaSpace, MN_("defineClassField"), 4, TY_Int, FN_cid, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
 		DEND,
 	};
 	kloadMethodData(lgo, methoddata);
 	return true;
 }
 
-static kbool_t class_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t class_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t class_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t class_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
@@ -206,8 +206,8 @@ KPACKDEF* class_init(void)
 		KPACKNAME("class", "1.0"),
 		.initPackage = class_initPackage,
 		.setupPackage = class_setupPackage,
-		.initLingo = class_initLingo,
-		.setupPackage = class_setupLingo,
+		.initKonohaSpace = class_initKonohaSpace,
+		.setupPackage = class_setupKonohaSpace,
 	};
 	return &d;
 }

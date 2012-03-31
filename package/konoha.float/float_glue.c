@@ -150,7 +150,7 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t float_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
 {
 	kfloatshare_t *base = (kfloatshare_t*)KNH_ZMALLOC(sizeof(kfloatshare_t));
 	base->h.name     = "float";
@@ -191,7 +191,7 @@ static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 	return true;
 }
 
-static kbool_t float_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t float_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 
 	return true;
@@ -199,7 +199,7 @@ static kbool_t float_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t float_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 {
 	USING_SUGAR;
 	ksyntaxdef_t SYNTAX[] = {
@@ -208,11 +208,11 @@ static kbool_t float_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
 		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
-	SUGAR Lingo_defineSyntax(_ctx, lgo, SYNTAX);
+	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
 	return true;
 }
 
-static kbool_t float_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t float_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
 {
 	return true;
 }
@@ -223,8 +223,8 @@ KPACKDEF* float_init(void)
 		KPACKNAME("float", "1.0"),
 		.initPackage = float_initPackage,
 		.setupPackage = float_setupPackage,
-		.initLingo = float_initLingo,
-		.setupPackage = float_setupLingo,
+		.initKonohaSpace = float_initKonohaSpace,
+		.setupPackage = float_setupKonohaSpace,
 	};
 	return &d;
 }
