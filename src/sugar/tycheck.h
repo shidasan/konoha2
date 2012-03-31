@@ -175,7 +175,7 @@ static kExpr *Expr_tycheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 
 static kExpr* Expr_tyCheckAt(CTX, kExpr *exprP, size_t pos, kGamma *gma, ktype_t req_ty, int pol)
 {
-	if(Expr_isTerm(exprP) && pos < kArray_size(exprP->consNUL)) {
+	if(!Expr_isTerm(exprP) && pos < kArray_size(exprP->consNUL)) {
 		kExpr *expr = exprP->consNUL->exprs[pos];
 		expr = Expr_tycheck(_ctx, expr, gma, req_ty, pol);
 		KSETv(exprP->consNUL->exprs[pos], expr);
