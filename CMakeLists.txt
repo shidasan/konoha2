@@ -80,12 +80,15 @@ set(VM
 )
 
 set(PACKAGES
+	sugar
 	konoha.string
 	konoha.float
 	konoha.llvm
 #	konoha.regex
 	konoha.loop
-	sugar
+	konoha.class
+	konoha.assignment
+	konoha.i
 	posix.process
 )
 

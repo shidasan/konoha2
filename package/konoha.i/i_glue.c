@@ -1,62 +1,64 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
+#include<konoha2/klib.h>
 
-// Expr Expr.tyCheckStub(Gamma gma, int req_tyid);
-//static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
-//{
-//	VAR_ExprTyCheck(expr, gma, req_ty);
-//	DBG_P("stub: size=%d", kArray_size(expr->consNUL));
-//	RETURN_(K_NULLEXPR);
-//}
+struct fn {
+	uintptr_t  flag;
+	const char *aname;
+};
+
+#define _P(T)  kMethod_##T, #T
+
+static struct fn attrs[] = {
+	{_P(Public)}, {_P(Static)}, {_P(Const)}, {_P(Abstract)},
+	{_P(Virtual)}, {_P(Overloaded)},
+	{_P(Coercion)},
+	{_P(D)}, {_P(Restricted)}, {_P(Immutable)},
+	{_P(FASTCALL)}, {_P(CALLCC)},
+	{_P(Hidden)},
+	{0, NULL}
+};
+
+static void MethodAttribute_p(CTX, kMethod *mtd, kwb_t *wb)
+{
+	uintptr_t i;
+	for(i = 0; i < 30; i++) {
+		if(attrs[i].aname == NULL) break;
+		if((attrs[i].flag & mtd->flag) == attrs[i].flag) {
+			kwb_printf(wb, "@%s ", attrs[i].aname);
+		}
+	}
+	if(kMethod_isCast(mtd)) {
+		kwb_printf(wb, "@Cast ");
+	}
+//	if(kMethod_isTransCast(mtd)) {
+//		kwb_printf(wb, "@T ");
+//	}
+}
 
 static void Method_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 	kMethod *mtd = sfp[pos].mtd;
+	kParam *pa = mtd->pa;
 	char mbuf[128];
 	if(level != 0) {
-//		if(!(IS_FMTline(level))) {
-//			if(Method_isAbstract(mtd)) {
-//				knh_write(_ctx, w, STEXT("@Abstract")); kwb_putc(wb, ' ');
-//			}
-//			if(Method_isPrivate(mtd)) {
-//				knh_write(_ctx, w, STEXT("@Private"));  kwb_putc(wb, ' ');
-//			}
-//			if(Method_isStatic(mtd)) {
-//				knh_write(_ctx, w, STEXT("@Static"));   kwb_putc(wb, ' ');
-//			}
-//			knh_write_type(_ctx, w, knh_Param_rtype(DP(mtd)->mp));
-//			kwb_putc(wb, ' ');
-//		}
+		MethodAttribute_p(_ctx, mtd, wb);
 	}
-	kwb_printf(wb, "%s.%s", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	kwb_printf(wb, "%s %s.%s", T_ty(pa->rtype), T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
 	if(level != 0) {
-
-	}
-//	if(!(IS_FMTline(level))) {
-//		size_t i;
-//		kwb_putc(wb, '(');
-//		for(i = 0; i < knh_Method_psize(mtd); i++) {
-//			kparam_t *p = knh_Param_get(DP(mtd)->mp, i);
-//			if(i > 0) {
-//				knh_write_delim(_ctx, w);
-//			}
-//			knh_write_type(_ctx, w, p->type);
-//			kwb_putc(wb, ' ');
-//			knh_write(_ctx, w, B(FN__(p->fn)));
-//		}
+		size_t i;
+		kwb_putc(wb, '(');
+		for(i = 0; i < pa->psize; i++) {
+			if(i > 0) {
+				kwb_putc(wb, ',', ' ');
+			}
+			kwb_printf(wb, "%s %s", T_ty(pa->p[i].ty), T_fn(MN_UNMASK(pa->p[i].fn)));
+		}
 //		if(Param_isVARGs(DP(mtd)->mp)) {
 //			knh_write_delimdots(_ctx, w);
 //		}
-//		kwb_putc(wb, ')');
-//	}
-//	if(IS_FMTdump(level)) {
-//		if(!IS_NULL(DP(mtd)->objdata)) {
-//			knh_write_EOL(_ctx, w);
-//			knh_write_InObject(_ctx, w, DP(mtd)->objdata, level);
-//		}
-//	}
-//
-//	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
+		kwb_putc(wb, ')');
+	}
 }
 
 // --------------------------------------------------------------------------

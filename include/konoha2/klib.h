@@ -45,7 +45,7 @@ static inline kString* S_ty_(CTX, ktype_t ty)
 }
 
 #define S_fn(fn)   S_fn_(_ctx, fn)
-#define T_fn(fn)   S_text(S_fn(fn))
+#define T_fn(fn)   S_text(S_fn_(_ctx, fn))
 static inline kString* S_fn_(CTX, ksymbol_t sym)
 {
 	size_t index = (size_t) MN_UNMASK(sym);
