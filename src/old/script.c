@@ -69,7 +69,7 @@ kcid_t knh_Lingo_getcid(CTX, kLingo *ns, kbytes_t sname)
 	return knh_getcid(_ctx, sname);
 }
 
-kbool_t knh_Lingo_isInsideScope(CTX, kLingo *ns, kcid_t cid)
+kbool_t knh_Lingo_isIpackdomeScope(CTX, kLingo *ns, kcid_t cid)
 {
 	return (knh_bytes_startsWith_(S_tobytes(ClassTBL(cid)->lname), S_tobytes(DP(ns)->nsname)));
 }

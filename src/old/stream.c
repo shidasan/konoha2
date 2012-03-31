@@ -842,7 +842,7 @@ static int use_buffer(curl_t *cp, int want)
 //	curl_t *cp = (curl_t*)fd;
 //	fill_buffer(cp, bufsiz, 1);
 //	if(!cp->buffer_pos) return 0;
-//	/* ensure only available data is considered */
+//	/* ensure only available data is copackdomered */
 //	if(cp->buffer_pos < bufsiz) bufsiz = cp->buffer_pos;
 //	/* xfer data to caller */
 //	memcpy(buf, cp->buffer, bufsiz);

@@ -78,9 +78,7 @@ static KMETHOD Lingo_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 
 static	kbool_t sugar_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
 {
-	kevalshare_t *export = kevalshare;
-	int TY_Lingo = export->cLingo->cid, TY_Expr = export->cExpr->cid, TY_Token = export->cToken->cid;
-	int TY_Stmt = export->cStmt->cid, TY_Block = export->cBlock->cid, TY_Gamma = export->cGamma->cid;
+	USING_SUGAR;
 	int FN_buildid = FN_("buildid"), FN_key = FN_("key"), FN_defval = FN_("defval");
 	int FN_typeid = FN_("typeid"), FN_gma = FN_("gma"), FN_pol = FN_("pol");
 	int FN_methodname = FN_("methodName");
@@ -93,7 +91,7 @@ static	kbool_t sugar_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 		_Public, _F(Lingo_defineStmtTyCheck), TY_void, TY_Lingo, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(NULL, methoddata);
 	return true;
 }
 

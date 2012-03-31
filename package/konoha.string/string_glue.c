@@ -280,7 +280,7 @@ static void String2_reftrace(CTX, kRawPtr *o)
 	StringBase_reftrace(_ctx, (StringBase *) o);
 }
 
-static uintptr_t String2_unbox(CTX, kRawPtr *o)
+static uintptr_t String2_unbox(CTX, kObject *o)
 {
 	StringBase *s = (StringBase*)o;
 	return (uintptr_t) String_getReference(_ctx, s);
@@ -700,7 +700,7 @@ static kbool_t String_initPackage(CTX, struct kLingo *lgo, int argc, const char*
 		_Public|_Const, _F(String_lastIndexOf), TY_Int, TY_String, MN_("lastIndexOf"), 1, TY_String, FN_x,
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(NULL, methoddata);
 	{
 		kclass_t *cString = (kclass_t*) CT_String;
 		cString->unbox = String2_unbox;

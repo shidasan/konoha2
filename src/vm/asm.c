@@ -1891,6 +1891,8 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 /* ------------------------------------------------------------------------ */
 /* [datatype] */
 
+#define PACKSUGAR    .packid = 1, .packdom = 1
+
 static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
@@ -1912,8 +1914,8 @@ static void BasicBlock_free(CTX, kRawPtr *o)
 	}
 }
 
-static const KSTRUCT_DEF BasicBlockDef = {
-	STRUCTNAME(BasicBlock),
+static KCLASSDEF BasicBlockDef = {
+	STRUCTNAME(BasicBlock), PACKSUGAR,
 	.init = BasicBlock_init,
 	.free = BasicBlock_free,
 };
@@ -1941,8 +1943,8 @@ static void KonohaCode_free(CTX, kRawPtr *o)
 	KNH_FREE(b->code, b->codesize);
 }
 
-static const KSTRUCT_DEF KonohaCodeDef = {
-	STRUCTNAME(KonohaCode),
+static KCLASSDEF KonohaCodeDef = {
+	STRUCTNAME(KonohaCode), PACKSUGAR,
 	.init = KonohaCode_init,
 	.reftrace = KonohaCode_reftrace,
 	.free = KonohaCode_free,
@@ -2022,8 +2024,8 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 	base->h.free     = kcodeshare_free;
 
 	ksetModule(MOD_CODE, &base->h, 0);
-	base->cBasicBlock = kaddClassDef(1, 1, &BasicBlockDef);
-	base->cKonohaCode = kaddClassDef(1, 1, &KonohaCodeDef);
+	base->cBasicBlock = kaddClassDef(NULL, &BasicBlockDef, 0);
+	base->cKonohaCode = kaddClassDef(NULL, &KonohaCodeDef, 0);
 	kcodeshare_setup(_ctx, &base->h);
 	{
 		INIT_GCSTACK();

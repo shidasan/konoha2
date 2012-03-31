@@ -25,14 +25,14 @@ static KMETHOD Dummy_f(CTX, ksfp_t *sfp _RIX) {}
 struct DummyBase {
     int x;
 };
-static KSTRUCT_DEF DummyBaseDef = {
+static KCLASSDEF DummyBaseDef = {
     .structname   = "DummyBase",
     .cid          = 100,
     .cflag        = 0,
     .cstruct_size = sizeof(struct DummyBase),
 };
 
-static KSTRUCT_DEF DummyDef = {
+static KCLASSDEF DummyDef = {
     .structname   = "Dummy",
     .cid          = 0,
     .cflag        = 0,

@@ -24,11 +24,7 @@
  *
  ****************************************************************************/
 
-#define STRUCTNAME(C) \
-	.structname = #C,\
-	.cid = CLASS_newid,\
-	.cstruct_size = sizeof(k##C)\
-
+#define PACKSUGAR    .packid = 1, .packdom = 1
 
 /* --------------- */
 /* Lingo */
@@ -89,8 +85,8 @@ static void Lingo_free(CTX, kRawPtr *o)
 	}
 }
 
-static const KSTRUCT_DEF LingoDef = {
-	STRUCTNAME(Lingo),
+static KCLASSDEF LingoDef = {
+	STRUCTNAME(Lingo), PACKSUGAR,
 	.init = Lingo_init,
 	.reftrace = Lingo_reftrace,
 	.free = Lingo_free,
@@ -240,7 +236,7 @@ static kcid_t Lingo_getcid(CTX, kLingo *lgo, const char *name, size_t len, kcid_
 	//	nsN = nsN->parentNULL;
 	//}
 	cid = (kcid_t)casehash_getuint(_ctx, _ctx->share->classnameMapNN, name, len, def);
-	return (cid != CLASS_unknown && CT_(cid)->nsid == 0) ? cid : def;
+	return (cid != CLASS_unknown && CT_(cid)->packdom == 0) ? cid : def;
 }
 
 /* Lingo/Class/Method */
@@ -415,8 +411,8 @@ static void Token_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static const KSTRUCT_DEF TokenDef = {
-	STRUCTNAME(Token),
+static KCLASSDEF TokenDef = {
+	STRUCTNAME(Token), PACKSUGAR,
 	.init = Token_init,
 	.reftrace = Token_reftrace,
 };
@@ -473,8 +469,8 @@ static void dumpToken(CTX, kToken *tk)
 {
 	if(konoha_debug) {
 		if(tk->tt == TK_MN) {
-			char buf[256];
-			DUMP_P("%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, Tsymbol(_ctx, buf, sizeof(buf), tk->mn));
+			char mbuf[128];
+			DUMP_P("%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, T_mn(mbuf, tk->mn));
 		}
 		else if((int)tk->tt <= TK_TYPE) {
 			DUMP_P("%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_text(tk->text));
@@ -541,8 +537,8 @@ static void Expr_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static const KSTRUCT_DEF ExprDef = {
-	STRUCTNAME(Expr),
+static KCLASSDEF ExprDef = {
+	STRUCTNAME(Expr), PACKSUGAR,
 	.init = Expr_init,
 	.reftrace = Expr_reftrace,
 };
@@ -711,8 +707,8 @@ static void Stmt_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static const KSTRUCT_DEF StmtDef = {
-	STRUCTNAME(Stmt),
+static KCLASSDEF StmtDef = {
+	STRUCTNAME(Stmt), PACKSUGAR,
 	.init = Stmt_init,
 	.reftrace = Stmt_reftrace,
 };
@@ -864,8 +860,8 @@ static void Block_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static const KSTRUCT_DEF BlockDef = {
-	STRUCTNAME(Block),
+static KCLASSDEF BlockDef = {
+	STRUCTNAME(Block), PACKSUGAR,
 	.init = Block_init,
 	.reftrace = Block_reftrace,
 };
@@ -880,7 +876,7 @@ static void Gamma_init(CTX, kRawPtr *o, void *conf)
 	gma->genv = NULL;
 }
 
-static const KSTRUCT_DEF GammaDef = {
-	STRUCTNAME(Gamma),
+static KCLASSDEF GammaDef = {
+	STRUCTNAME(Gamma), PACKSUGAR,
 	.init = Gamma_init,
 };

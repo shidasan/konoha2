@@ -23,7 +23,7 @@ static	kbool_t process_initPackage(CTX, struct kLingo *lgo, int argc, const char
 		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
 		DEND,
 	};
-	kaddMethodDef(lgo, methoddata);
+	kloadMethodData(lgo, methoddata);
 	return true;
 }
 

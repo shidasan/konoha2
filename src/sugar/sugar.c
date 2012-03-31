@@ -232,12 +232,12 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->packageMapNO = kmap_init(0);
 
 	ksetModule(MOD_EVAL, (kmodshare_t*)base, 0);
-	base->cLingo = kaddClassDef(1, 1, &LingoDef);
-	base->cToken = kaddClassDef(1, 1, &TokenDef);
-	base->cExpr  = kaddClassDef(1, 1, &ExprDef);
-	base->cStmt  = kaddClassDef(1, 1, &StmtDef);
-	base->cBlock = kaddClassDef(1, 1, &BlockDef);
-	base->cGamma = kaddClassDef(1, 1, &GammaDef);
+	base->cLingo = kaddClassDef(NULL, &LingoDef, 0);
+	base->cToken = kaddClassDef(NULL, &TokenDef, 0);
+	base->cExpr  = kaddClassDef(NULL, &ExprDef, 0);
+	base->cStmt  = kaddClassDef(NULL, &StmtDef, 0);
+	base->cBlock = kaddClassDef(NULL, &BlockDef, 0);
+	base->cGamma = kaddClassDef(NULL, &GammaDef, 0);
 
 	KINITv(base->rootlgo, new_(Lingo, NULL));
 	KINITv(base->nullToken, new_(Token, NULL));
@@ -266,6 +266,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->Expr_setNConstValue  = Expr_setNConstValue;
 	base->Expr_setVariable    = Expr_setVariable;
 	base->Stmt_getBlock       = Stmt_getBlock;
+	base->Expr_tyCheckAt      = Expr_tyCheckAt;
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
 	base->Block_tyCheckAll    = Block_tyCheckAll;
 	base->parseSyntaxRule     = parseSyntaxRule;
@@ -680,7 +681,7 @@ void MODEVAL_defMethods(CTX)
 		_Public, _F(Lingo_loadScript_), TY_Boolean, TY_Lingo, MN_("loadScript"), 1, TY_String, FN_("path"),
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(NULL, methoddata);
 }
 
 #ifdef __cplusplus

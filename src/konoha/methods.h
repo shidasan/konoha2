@@ -2,6 +2,12 @@
 extern "C" {
 #endif
 
+/* !boolean */
+static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNb_(!sfp[0].bvalue);
+}
+
 /* int + int */
 static KMETHOD Int_opADD(CTX, ksfp_t *sfp _RIX)
 {

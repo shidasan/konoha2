@@ -58,13 +58,13 @@ static knh_gkint_t GammaBuilder_espidx(CTX)
 #define _NOWARN      1
 #define _NOVOID      (1<<1)
 #define _ALLOWVAR    (1<<2)
-#define _NOCHECK     (1<<3)
+#define TPOL_NOCHECK     (1<<3)
 #define _BCHECK      (1<<4)
 #define _BOX         (1<<5)
 #define _NOBOX       (1<<6)
 #define _NOCAST      (1<<7)
 #define _ITRCAST     (1<<8)
-#define _COERCION    (1<<9)
+#define TPOL_COERCION    (1<<9)
 #define _CONSTASIS   (1<<10)
 #define _CONSTONLY   (1<<11)
 
@@ -205,7 +205,7 @@ kTerm* Tn_typing(CTX, kStmtExpr *stmt, size_t n, ktype_t reqt, kflag_t opflag)
 		tkRES = ERROR_MustBe(_ctx, "statically typed", TT__(TT_(tmNN(stmt, n))));
 		goto L_PERROR;
 	}
-	if(FLAG_is(opflag, _NOCHECK)) {
+	if(FLAG_is(opflag, TPOL_NOCHECK)) {
 		DBG_P("NOCHECK stt=%s n=%d, reqt=%s, vart=%s", TT__(SP(stmt)->stt), (int)n, T__(reqt), T__(vart));
 		goto L_RETURN;
 	}
@@ -236,7 +236,7 @@ kTerm* Tn_typing(CTX, kStmtExpr *stmt, size_t n, ktype_t reqt, kflag_t opflag)
 		else {
 			kTypeMap *tmr = knh_findTypeMapNULL(_ctx, vart, reqt);
 			if(tmr != NULL) {
-				int isCOERCION = (!!(FLAG_is(opflag, _COERCION))) || (!!(TypeMap_isSemantic(tmr)));
+				int isCOERCION = (!!(FLAG_is(opflag, TPOL_COERCION))) || (!!(TypeMap_isSemantic(tmr)));
 				DBG_P("reqt=%s, vart=%s isSemantic=%d, isConst=%d", T__(reqt), T__(vart), isCOERCION, TypeMap_isConst(tmr));
 				if(isCOERCION) {
 					KSETv(tmNN(stmt, n), new_TermTCAST(_ctx, reqt, tmr, tkNN(stmt, n)));
@@ -1805,7 +1805,7 @@ static kTerm *SETPROPN_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 
 static kTerm *TNAME_infer(CTX, kTerm *tkN, kStmtExpr *stmt, size_t n)
 {
-	TYPING(_ctx, stmt, n, TY_var, _NOCHECK|_NOVOID);
+	TYPING(_ctx, stmt, n, TY_var, TPOL_NOCHECK|_NOVOID);
 	ktype_t type = Tn_type(stmt, n);
 	INFO_Typing(_ctx, "", TK_tobytes(tkN), type);
 	ksymbol_t fn = Term_fn(_ctx, tkN);
@@ -2504,14 +2504,14 @@ static kTerm* defined_typing(CTX, kStmtExpr *stmt)
 {
 	kTerm *tk = tkNN(stmt, 0);
 	if(TT_(tk) == TT_URN) {
-		kTerm *tkRES = Tn_typing(_ctx, stmt, 2, TY_Boolean, _NOWARN | _NOCHECK);
+		kTerm *tkRES = Tn_typing(_ctx, stmt, 2, TY_Boolean, _NOWARN | TPOL_NOCHECK);
 		if(TT_(tkRES) == TT_ERR) {
 			Term_setCONST(_ctx, tk, K_FALSE);
 		}
 		return tk;
 	}
 	else {
-		kTerm *tkRES = Tn_typing(_ctx, stmt, 2, T_dyn, _NOWARN | _NOCHECK);
+		kTerm *tkRES = Tn_typing(_ctx, stmt, 2, T_dyn, _NOWARN | TPOL_NOCHECK);
 		if(TT_(tkRES) != TT_ERR) {
 			return Term_setCONST(_ctx, tk, K_TRUE);
 		}
@@ -2981,7 +2981,7 @@ static kTerm* NEW_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 		else {
 			kcid_t p1 = C_p1(reqt);
 			for(i = 2; i < DP(stmt)->size; i++) {
-				TYPING(_ctx, stmt, i, p1, _NOVOID|_NOCHECK);
+				TYPING(_ctx, stmt, i, p1, _NOVOID|TPOL_NOCHECK);
 				if(Tn_cid(stmt, i) != p1) {
 					reqt = CLASS_Array;
 				}
@@ -3072,7 +3072,7 @@ static kTerm* OPRWITH_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 		}
 	}
 	GammaBuilder_setEnforceConst(_ctx->gma, 1);
-	kTerm *tkRES = Tn_typing(_ctx, stmt, 2, Tn_cid(stmt, 1), _NOCHECK);
+	kTerm *tkRES = Tn_typing(_ctx, stmt, 2, Tn_cid(stmt, 1), TPOL_NOCHECK);
 	GammaBuilder_setEnforceConst(_ctx->gma, 0);
 	if(TT_(tkRES) == TT_ERR) return tkRES;
 	kcid_t dcid = Tn_cid(stmt, 2);
@@ -3426,7 +3426,7 @@ static kTerm* TCAST_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 			return tkNN(stmt, 1);
 		}
 	}
-	TYPING(_ctx, stmt, 1, tcid, _NOCHECK|_NOVOID|_NOCAST);
+	TYPING(_ctx, stmt, 1, tcid, TPOL_NOCHECK|_NOVOID|_NOCAST);
 	scid = Tn_cid(stmt, 1);
 	if(Term_isDiamond(tkC) && C_isGenerics(tcid)) {
 		if(C_p1(scid) != CLASS_Tvoid) {
@@ -3900,7 +3900,7 @@ static kTerm* SWITCH_typing(CTX, kStmtExpr *stmt, int needsRETURN)
 					stmtDEFAULT = stmtCASE;
 					goto L_STMT;
 				}
-				else if(!Tn_typing(_ctx, stmtCASE, 0, type, _NOCHECK)) {
+				else if(!Tn_typing(_ctx, stmtCASE, 0, type, TPOL_NOCHECK)) {
 					knh_Stmt_done(_ctx, stmtCASE);
 					goto L_NEXT;
 				}
@@ -4019,7 +4019,7 @@ static kTerm* FOREACH1_typing(CTX, kStmtExpr *stmt)
 	if(p1 == TY_var) {  // foreach(s from in..) ;
 		kTerm *tkN2 = TNAME_typing(_ctx, tkN, T_dyn, _FINDLOCAL | _FINDFIELD | _FINDSCRIPT | _USEDCOUNT);
 		if(tkN2 == NULL) {
-			TYPING(_ctx, stmt, 1, T_dyn, _NOCHECK);
+			TYPING(_ctx, stmt, 1, T_dyn, TPOL_NOCHECK);
 			tkT = FOREACH1_toIterator(_ctx, stmt, 1);
 			if(TT_(tkT) == TT_ERR) return tkT;
 			itrcid = Tn_cid(stmt, 1);
@@ -4041,7 +4041,7 @@ static kTerm* FOREACH1_typing(CTX, kStmtExpr *stmt)
 		KSETv(tkNN(stmt, 0), GammaBuilder_addLVAR(_ctx, 0, p1, fn, 1/*ucnt*/));
 	}
 	itrcid = knh_class_P1(_ctx, CLASS_Iterator, p1);
-	TYPING(_ctx, stmt, 1, itrcid, _COERCION);
+	TYPING(_ctx, stmt, 1, itrcid, TPOL_COERCION);
 	Tn_it(_ctx, stmt, 2, itrcid);
 
 	L_BLOCK:;
@@ -4227,7 +4227,7 @@ static kTerm* METHOD_typing(CTX, kStmtExpr *stmtM)
 		}
 	}
 L_CheckScope:;
-	if(!knh_Lingo_isInsideScope(_ctx, K_GMANS, mtd_cid)) {
+	if(!knh_Lingo_isIpackdomeScope(_ctx, K_GMANS, mtd_cid)) {
 		if(!knh_StmtMETA_is(_ctx, stmtM, "Public")) {
 			flag |= FLAG_Method_Private;
 		}

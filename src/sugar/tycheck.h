@@ -125,8 +125,13 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 	return kExpr_setConstValue(expr, rtype, lsfp[0].o);
 }
 
-#define _NOCHECK        1
-#define _COERCION (1 << 1)
+//static kExpr *Object_tycheck(CTX, kObject *o, kGamma *gma, ktype_t req_ty, int pol)
+//{
+//	if(FLAG_is(pol, TPOL_NOCHECK) || O_cid(o) == req_ty ) {
+//		return new_ConstValue(O_cid(o), o);
+//	}
+//	return K_NULLEXPR;
+//}
 
 static int param_policy(ksymbol_t fn)
 {
@@ -137,21 +142,25 @@ static kExpr *Expr_tycheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 {
 	kExpr *texpr = K_NULLEXPR;
 	if(expr->ty == TY_var && expr != K_NULLEXPR) {
+		if(!IS_Expr(expr)) {
+			expr = new_ConstValue(O_cid(expr), expr);
+			PUSH_GCSTACK(expr);
+		}
 		texpr = Expr_typed(_ctx, expr, gma, req_ty);
 	}
 	if(texpr != K_NULLEXPR) {
-		if(texpr->ty == TY_void) {
+		if(texpr->ty == TY_void && !FLAG_is(pol, TPOL_ALLOWVOID)) {
 			DBG_P("void is not acceptable");
 			return K_NULLEXPR;
 		}
-		if(FLAG_is(pol, _NOCHECK) || texpr->ty == req_ty ) {
+		if(FLAG_is(pol, TPOL_NOCHECK) || texpr->ty == req_ty ) {
 			return texpr;
 		}
 		if(req_ty == TY_var) {
 			return texpr;
 		}
 		kMethod *mtd = kLingo_getCastMethodNULL(gma->genv->lgo, texpr->ty, req_ty);
-		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, _COERCION))) {
+		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, TPOL_COERCION))) {
 			kExpr *Cexpr = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
 			Cexpr->ty = req_ty;
 			if(kMethod_isConst(mtd) && (Cexpr->build == TEXPR_CONST || Cexpr->build == TEXPR_NCONST)) {
@@ -164,14 +173,16 @@ static kExpr *Expr_tycheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 	return texpr;
 }
 
-static kExpr *Object_tycheck(CTX, kObject *o, kGamma *gma, ktype_t req_ty, int pol)
+static kExpr* Expr_tyCheckAt(CTX, kExpr *exprP, size_t pos, kGamma *gma, ktype_t req_ty, int pol)
 {
-	if(FLAG_is(pol, _NOCHECK) || O_cid(o) == req_ty ) {
-		return new_ConstValue(O_cid(o), o);
+	if(Expr_isTerm(exprP) && pos < kArray_size(exprP->consNUL)) {
+		kExpr *expr = exprP->consNUL->exprs[pos];
+		expr = Expr_tycheck(_ctx, expr, gma, req_ty, pol);
+		KSETv(exprP->consNUL->exprs[pos], expr);
+		return expr;
 	}
 	return K_NULLEXPR;
 }
-
 static kbool_t Stmt_tyCheckExpr(CTX, kStmt *stmt, keyword_t nameid, kGamma *gma, ktype_t req_ty, int pol)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, nameid);
@@ -296,17 +307,6 @@ static ktype_t ktype_var(CTX, ktype_t ty, kcid_t cid)
 	return ty;
 }
 
-static kExpr *Cons_tycheck(CTX, kExpr *expr, size_t n, kGamma *gma, ktype_t req_ty, int pol)
-{
-	kArray *cons = expr->consNUL;
-	assert(n < kArray_size(cons));
-	kExpr *texpr = IS_Expr(cons->exprs[n]) ?
-		Expr_tycheck(_ctx, cons->exprs[n], gma, req_ty, pol):
-		Object_tycheck(_ctx, cons->list[n], gma, req_ty, pol);
-	KSETv(cons->exprs[n], texpr);
-	return texpr;
-}
-
 static kExpr *Cons_tycheckParams(CTX, kExpr *expr, ktype_t cid, kGamma *gma, ktype_t req_ty)
 {
 	kArray *cons = expr->consNUL;
@@ -321,16 +321,16 @@ static kExpr *Cons_tycheckParams(CTX, kExpr *expr, ktype_t cid, kGamma *gma, kty
 	//	}
 		if(pa->psize + 2 != size) {
 			char mbuf[128];
-			kerror(_ctx, ERR_, 0, 0, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_cid(cid), Tsymbol(_ctx, mbuf, sizeof(mbuf), mtd->mn), (int)pa->psize, (int)size-2);
+			kerror(_ctx, ERR_, 0, 0, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_cid(cid), T_mn(mbuf, mtd->mn), (int)pa->psize, (int)size-2);
 		}
 		for(i = 0; i < pa->psize; i++) {
 			size_t n = i + 2;
 			ktype_t ptype = ktype_var(_ctx, pa->p[i].ty, cid);
 			int pol = param_policy(pa->p[i].fn);
-			kExpr *texpr = Cons_tycheck(_ctx, expr, n, gma, ptype, pol);
+			kExpr *texpr = kExpr_tyCheckAt(expr, n, gma, ptype, pol);
 			if(texpr == K_NULLEXPR) {
 				char mbuf[128];
-				kerror(_ctx, ERR_, 0, 0, "%s.%s accepts %s at the parameter %d", T_cid(cid), Tsymbol(_ctx, mbuf, sizeof(mbuf), mtd->mn), T_ty(ptype), (int)i+1);
+				kerror(_ctx, ERR_, 0, 0, "%s.%s accepts %s at the parameter %d", T_cid(cid), T_mn(mbuf, mtd->mn), T_ty(ptype), (int)i+1);
 				return texpr;
 			}
 			if(texpr->build != TEXPR_CONST && texpr->build != TEXPR_NEW) isConst = 0;
@@ -402,7 +402,7 @@ static KMETHOD ExprTyCheck_call(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	DBG_P("call: size=%d", kArray_size(expr->consNUL));
-	kExpr *texpr = Cons_tycheck(_ctx, expr, 1, gma, TY_var, 0);
+	kExpr *texpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, 0);
 	if(texpr == K_NULLEXPR) {
 		RETURN_(texpr);
 	}
@@ -477,7 +477,7 @@ static KMETHOD StmtTyCheck_err(CTX, ksfp_t *sfp _RIX)  // $expr
 static KMETHOD StmtTyCheck_expr(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, gma);
-	kbool_t r = Stmt_tyCheckExpr(_ctx, stmt, 1, gma, TY_var, _NOCHECK);
+	kbool_t r = Stmt_tyCheckExpr(_ctx, stmt, 1, gma, TY_var, TPOL_NOCHECK);
 	stmt->syn = SYN_EXPR;
 	stmt->build = TSTMT_EXPR;
 	RETURNb_(r);

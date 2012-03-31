@@ -1,6 +1,13 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
-#include<konoha2/float.h>
+
+// Expr Expr.tyCheckStub(Gamma gma, int req_tyid);
+static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ExprTyCheck(expr, gma, req_ty);
+	DBG_P("stub: size=%d", kArray_size(expr->consNUL));
+	RETURN_(K_NULLEXPR);
+}
 
 // --------------------------------------------------------------------------
 
@@ -9,10 +16,8 @@
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t math_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t stub_initPackage(CTX, struct kLingo *lgo, int argc, const char**args, kline_t pline)
 {
-//	KREQUIRE("konoha.float");
-//	int FN_methodname = FN_("x");
 //	intptr_t methoddata[] = {
 //		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
 //		_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
@@ -26,30 +31,39 @@ static	kbool_t math_initPackage(CTX, struct kLingo *lgo, int argc, const char**a
 	return true;
 }
 
-static kbool_t math_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t stub_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t math_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
-{
+#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
+static kbool_t stub_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+{
+//	USING_SUGAR;
+//	ksyntaxdef_t SYNTAX[] = {
+//		{ TOKEN("float"), .type = TY_Float, },
+//		{ TOKEN("double"), .type = TY_Float, },
+//		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+//		{ .name = NULL, },
+//	};
+//	SUGAR Lingo_defineSyntax(_ctx, lgo, SYNTAX);
 	return true;
 }
 
-static kbool_t math_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t stub_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
 {
 	return true;
 }
 
-KPACKDEF* math_init(void)
+KPACKDEF* stub_init(void)
 {
 	static KPACKDEF d = {
-		KPACKNAME("math", "1.0"),
-		.initPackage = math_initPackage,
-		.setupPackage = math_setupPackage,
-		.initLingo = math_initLingo,
-		.setupPackage = math_setupLingo,
+		KPACKNAME("stub", "1.0"),
+		.initPackage = stub_initPackage,
+		.setupPackage = stub_setupPackage,
+		.initLingo = stub_initLingo,
+		.setupPackage = stub_setupLingo,
 	};
 	return &d;
 }

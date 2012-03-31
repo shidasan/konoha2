@@ -768,7 +768,7 @@ static knh_xblock_t* knh_generateWrapper(CTX, void* callee, int argc, knh_ffipar
 	for (i = argc - 1; i > 0; i--) {
 		// push aruguments on the stack;
 		// mov argument to eax!
-		// TODO : now, we only consider 32 bit values
+		// TODO : now, we only copackdomer 32 bit values
 
 		if (argv[i].type == CLASS_Int) {
 			function[fidx++] = 0x89; // mov r+disp r

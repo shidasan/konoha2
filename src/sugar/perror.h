@@ -36,36 +36,6 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* [perror] */
 
-#define T_mn(B, X)  Tsymbol(_ctx, B, sizeof(B), X)
-static const char* Tsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
-{
-	int index = MN_UNMASK(sym);
-	if(MN_isTOCID(sym)) {
-		snprintf(buf, bufsiz, "to%s", T_cid(index));
-	}
-	else if(index < kArray_size(_ctx->share->symbolList)) {
-		const char *name = S_text(_ctx->share->symbolList->strings[index]);
-		if(MN_isISBOOL(sym)) {
-			snprintf(buf, bufsiz, "is%s", name);
-			buf[2] = toupper(buf[2]);
-		}
-		else if(MN_isGETTER(sym)) {
-			snprintf(buf, bufsiz, "get%s", name);
-			buf[3] = toupper(buf[3]);
-		}
-		else if(MN_isSETTER(sym)) {
-			snprintf(buf, bufsiz, "set%s", name);
-			buf[3] = toupper(buf[3]);
-		}
-		else {
-			snprintf(buf, bufsiz, "%s", name);
-		}
-	}
-	else {
-		snprintf(buf, bufsiz, "unknown symbol=%d !< %ld", index, kArray_size(_ctx->share->symbolList));
-	}
-	return (const char*)buf;
-}
 
 /* ------------------------------------------------------------------------ */
 /* [perror] */

@@ -20,12 +20,6 @@ static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "%f", sfp[pos].fvalue);
 }
 
-static KCLASS_DEF FloatDef = {
-	STRUCTNAME(Float),
-	.cflag = CFLAG_Int,
-	.init = Float_init,
-	.p     = Float_p,
-};
 
 //static void kfloatmod_reftrace(CTX, struct kmod_t *baseh)
 //{
@@ -164,7 +158,16 @@ static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 	base->h.reftrace = kfloatshare_reftrace;
 	base->h.free     = kfloatshare_free;
 	ksetModule(MOD_FLOAT, &base->h, pline);
-	base->cFloat = kaddClassDef(lgo->pid, 0, &FloatDef);
+
+	KCLASSDEF FloatDef = {
+		STRUCTNAME(Float),
+		.packid  = lgo->packid,
+		.packdom = 0,
+		.cflag = CFLAG_Int,
+		.init = Float_init,
+		.p     = Float_p,
+	};
+	base->cFloat = kaddClassDef(NULL, &FloatDef, pline);
 
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
@@ -184,7 +187,7 @@ static	kbool_t float_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 		_Public|_Const, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(NULL, methoddata);
 	return true;
 }
 

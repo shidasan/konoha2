@@ -246,6 +246,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
 }
 
 void MODEVAL_dumpEval(CTX, kwb_t *wb);
+
 static void shell(CTX)
 {
 	kwb_t wb;

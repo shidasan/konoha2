@@ -177,14 +177,14 @@ static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "%s:&%p", T_cid(O_cid(sfp[pos].o)), sfp[pos].o);
 }
 
-static uintptr_t DEFAULT_unbox(CTX, kRawPtr *o)
+static uintptr_t DEFAULT_unbox(CTX, kObject *o)
 {
-	(void)_ctx;(void)o;
 	return 0;
 }
 
 static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
 {
+	DBG_ASSERT(ct->nulvalNUL != NULL);
 	return ct->nulvalNUL;
 }
 
@@ -202,7 +202,7 @@ static kObject *CT_null(CTX, const kclass_t *ct)
 	return ct->fnull(_ctx, ct);
 }
 
-static kclass_t* new_CT(CTX, KCLASS_DEF *s)
+static kclass_t* new_CT(CTX, KCLASSDEF *s, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
 	kcid_t newid = share->ca.size;
@@ -214,7 +214,6 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 	_ctx->share->ca.ClassTBL[newid] = (const kclass_t*)ct;
 	ct->cid = newid;
 	if(s != NULL) {
-		ct->s = s;
 		ct->cflag  = s->cflag;
 		ct->bcid   = s->bcid;
 		ct->supcid = s->supcid;
@@ -222,20 +221,46 @@ static kclass_t* new_CT(CTX, KCLASS_DEF *s)
 		ct->fsize  = s->fsize;
 		ct->fallocsize = s->fallocsize;
 		ct->cstruct_size = size64(s->cstruct_size);
+		ct->DBG_NAME = (s->structname != NULL) ? s->structname : "N/A";
 		// function
-		ct->init = s->init;
-		ct->reftrace = s->reftrace;
-		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
-		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
-		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
-		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
-		ct->initdef = s->initdef;
+		if(ct->bcid == 0) {
+			ct->bcid = ct->cid;
+			ct->init = s->init;
+			ct->reftrace = s->reftrace;
+			ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
+			ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
+			ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
+			ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
+			ct->initdef = s->initdef;
+		}
+		else {
+			const kclass_t *bct = kclass(ct->bcid, pline);
+			ct->init =  bct->init;
+			ct->reftrace = bct->reftrace;
+			ct->p     =  bct->p;
+			ct->unbox =  bct->unbox;
+			ct->free  =  bct->free;
+			ct->fnull =  bct->fnull ;
+			ct->initdef = bct->initdef;
+		}
 		if(s->initdef != NULL) {
-			s->initdef(_ctx, ct);
+			s->initdef(_ctx, ct, pline);
 		}
 	}
 	return ct;
 }
+
+static const kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
+{
+	kshare_t *share = _ctx->share;
+	if(cid < share->ca.size) {
+		return share->ca.ClassTBL[cid];
+	}
+	kreportf(ERR_, pline, "invalid cid=%d", (int)cid);
+	kraise(0);
+	return share->ca.ClassTBL[0];
+}
+
 
 static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 {
@@ -246,24 +271,12 @@ static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
 	kmap_add(kmp, e);
 }
 
-//static uintptr_t casehash_get(CTX, kmap_t *kmp, const char *name, size_t len, uintptr_t def)
-//{
-//	uintptr_t hcode = casehash(name, len);
-//	kmape_t *e = kmap_get(kmp, hcode);
-//	while(e != NULL) {
-//		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_text(e->skey), name, len) == 0) {
-//			return e->uvalue;
-//		}
-//	}
-//	return def;
-//}
-
-void CT_setName(CTX, kclass_t *ct, kString *name)
+static void CT_setName(CTX, kclass_t *ct, kString *name, kline_t pline)
 {
 	DBG_ASSERT(ct->name == NULL);
-	DBG_P("name='%s'", S_text(name));
+	kreportf(DEBUG_, pline, "new class name='%s'", S_text(name));
 	KINITv(ct->name, name);
-	if(ct->nsid == 0) {
+	if(ct->packdom == 0) {
 		casehash_add(_ctx, _ctx->share->classnameMapNN, name, ct->cid);
 	}
 	if(ct->methods == NULL) {
@@ -274,11 +287,11 @@ void CT_setName(CTX, kclass_t *ct, kString *name)
 	}
 }
 
-const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body)
+static const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body)
 {
 	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
 		if(ct->simbody == NULL) {
-			kclass_t *newct = new_CT(_ctx, NULL);
+			kclass_t *newct = new_CT(_ctx, NULL, 0);
 			memcpy(newct, ct, sizeof(kclass_t));
 			newct->cstruct_size *= 2;
 			newct->fallocsize = 0; // for safety
@@ -425,12 +438,12 @@ static void DEFAULT_init(CTX, kRawPtr *o, void *conf)
 
 }
 
-static KCLASS_DEF TvoidDef = {
+static KCLASSDEF TvoidDef = {
 	TYPENAME(void),
 	.init = DEFAULT_init,
 };
 
-static KCLASS_DEF TvarDef = {
+static KCLASSDEF TvarDef = {
 	TYPENAME(var),
 	.init = DEFAULT_init,
 };
@@ -438,10 +451,8 @@ static KCLASS_DEF TvarDef = {
 static void Object_init(CTX, kRawPtr *o, void *conf)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(of);
-	if(ct->fieldinit != NULL) {
-		memcpy(of->fields, ct->fieldinit, ct->cstruct_size - sizeof(kObjectHeader));
-	}
+	of->ndata[0] = 0;
+	of->ndata[1] = 0;
 }
 
 static void Object_reftrace(CTX, kRawPtr *o)
@@ -451,17 +462,44 @@ static void Object_reftrace(CTX, kRawPtr *o)
 	BEGIN_REFTRACE(ct->fsize);
 	size_t i;
 	for(i = 0; i < ct->fsize; i++) {
-		if(ct->fields[i].israw == 0) {
+		if(ct->fields[i].isobj) {
 			KREFTRACEv(of->fields[i]);
 		}
 	}
 	END_REFTRACE();
 }
 
-static KCLASS_DEF ObjectDef = {
+static void ObjectX_init(CTX, kRawPtr *o, void *conf)
+{
+	kObject *of = (kObject*)o;
+	const kclass_t *ct = O_ct(of);
+	assert(ct->nulvalNUL != NULL);
+	memcpy(of->fields, ct->nulvalNUL->fields, ct->cstruct_size - sizeof(kObjectHeader));
+}
+
+static void Object_initdef(CTX, kclass_t *ct, kline_t pline)
+{
+	if(ct->cid == TY_Object) return;
+	DBG_P("new object initialization");
+	const kclass_t *supct = kclass(ct->cid, pline);
+	if(CT_isUNDEF(supct)) {
+		kreportf(ERR_, pline, "%s's fields are not all set", T_cid(ct->cid));
+		kraise(0);
+	}
+	size_t fsize = supct->fsize + ct->fsize;
+	ct->cstruct_size = size64((fsize * sizeof(void*)) + sizeof(kObjectHeader));
+	KSETv(ct->nulvalNUL, new_kObject(ct, NULL));
+	if(fsize > 0) {
+		ct->init = ObjectX_init;
+	}
+	ct->fnull = DEFAULT_fnull;
+}
+
+static KCLASSDEF ObjectDef = {
 	CLASSNAME(Object),
 	.init = Object_init,
 	.reftrace = Object_reftrace,
+	.initdef = Object_initdef,
 };
 
 // Object API
@@ -477,6 +515,12 @@ static kObject *new_Object(CTX, const kclass_t *ct, void *conf)
 	return o;
 }
 
+static uintptr_t Number_unbox(CTX, kObject *o)
+{
+	kInt *n = (kInt*)o;
+	return (uintptr_t) n->n.data;
+}
+
 // Boolean
 static void Boolean_init(CTX, kRawPtr *o, void *conf)
 {
@@ -489,9 +533,10 @@ static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
 }
 
-static KCLASS_DEF BooleanDef = {
+static KCLASSDEF BooleanDef = {
 	CLASSNAME(Boolean),
 	.init = Boolean_init,
+	.unbox = Number_unbox,
 	.p    = Boolean_p,
 };
 
@@ -507,9 +552,10 @@ static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, KINT_FMT, sfp[pos].ivalue);
 }
 
-static KCLASS_DEF IntDef = {
+static KCLASSDEF IntDef = {
 	CLASSNAME(Int),
 	.init = Int_init,
+	.unbox = Number_unbox,
 	.p    = Int_p,
 };
 
@@ -541,7 +587,7 @@ static void String_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	}
 }
 
-static uintptr_t String_unbox(CTX, kRawPtr *o)
+static uintptr_t String_unbox(CTX, kObject *o)
 {
 	kString *s = (kString*)o;
 	return (uintptr_t) s->str.text;
@@ -552,7 +598,7 @@ static uintptr_t String_unbox(CTX, kRawPtr *o)
 //	return knh_bytes_strcmp(S_tobytes((kString*)o) ,S_tobytes((kString*)o2));
 //}
 
-static KCLASS_DEF StringDef = {
+static KCLASSDEF StringDef = {
 	CLASSNAME(String),
 	.init = String_init,
 	.free = String_free,
@@ -662,7 +708,7 @@ static void Array_free(CTX, kRawPtr *o)
 	}
 }
 
-static KCLASS_DEF ArrayDef = {
+static KCLASSDEF ArrayDef = {
 	CLASSNAME(Array),
 	.init = Array_init,
 	.reftrace = Array_reftrace,
@@ -737,7 +783,7 @@ static void Param_init(CTX, kRawPtr *o, void *conf)
 	pa->rtype = TY_void;
 }
 
-static KCLASS_DEF ParamDef = {
+static KCLASSDEF ParamDef = {
 	CLASSNAME(Param),
 	.init = Param_init,
 };
@@ -754,10 +800,6 @@ static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 	}
 	return pa;
 }
-
-//static const kparam_t param0[] = {
-//	 {TY_String, 1}, {TY_String, 2},
-//};
 
 /* --------------- */
 /* Method */
@@ -783,7 +825,7 @@ static void Method_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static KCLASS_DEF MethodDef = {
+static KCLASSDEF MethodDef = {
 	CLASSNAME(Method),
 	.init = Method_init,
 	.reftrace = Method_reftrace,
@@ -802,7 +844,7 @@ static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, kPara
 
 // ---------------
 
-static KCLASS_DEF TdynamicDef = {
+static KCLASSDEF TdynamicDef = {
 	TYPENAME(dynamic),
 	.init = DEFAULT_init,
 };
@@ -812,14 +854,14 @@ static KCLASS_DEF TdynamicDef = {
 
 #define CT_System               CT_(CLASS_System)
 
-static KCLASS_DEF SystemDef = {
+static KCLASSDEF SystemDef = {
 	CLASSNAME(System),
 	.init = DEFAULT_init,
 };
 
 // ---------------
 
-static KCLASS_DEF *DATATYPES[] = {
+static KCLASSDEF *DATATYPES[] = {
 	&TvoidDef,
 	&TvarDef,
 	&ObjectDef,
@@ -840,25 +882,29 @@ static void initStructData(CTX)
 	size_t i, size = _ctx->share->ca.size;
 	for(i = 0; i < size; i++) {
 		kclass_t *ct = ctt[i];
-		const char *name = ct->s->structname;
+		const char *name = ct->DBG_NAME;
 		kString *cname = new_kString(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT);
-		CT_setName(_ctx, ct, cname);
+		CT_setName(_ctx, ct, cname, 0);
 	}
 }
 
-static const kclass_t *addClassDef(CTX, kpkg_t pkgid, kpkg_t nsid, KCLASS_DEF *cdef)
+static const kclass_t *addClassDef(CTX, kString *name, KCLASSDEF *cdef, kline_t pline)
 {
-	kclass_t *ct = new_CT(_ctx, cdef);
-	const char *name = ct->s->structname;
-	kString *cname = new_kString(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT);
-	CT_setName(_ctx, ct, cname);
-	ct->pkgid = pkgid;
-	ct->nsid  = nsid;
+	kclass_t *ct = new_CT(_ctx, cdef, pline);
+	if(name == NULL) {
+		const char *n = cdef->structname;
+		assert(n != NULL); // structname must be set;
+		name = new_kString(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT);
+	}
+	ct->packid   = cdef->packid;
+	ct->packdom  = cdef->packdom;
+	CT_setName(_ctx, ct, name, pline);
 	return (const kclass_t*)ct;
 }
 
 static void kshare_initklib2(klib2_t *l)
 {
+	l->Kclass  = Kclass;
 	l->Kuri    = Kuri;
 	l->Ksymbol = Ksymbol;
 	l->Knew_Object = new_Object;
@@ -880,9 +926,9 @@ void kshare_init(CTX, kcontext_t *ctx)
 	kshare_initklib2(_ctx->lib2);
 	KARRAY_INIT(share->ca, K_CLASSTABLE_INIT, kclass_t);
 	share->classnameMapNN = kmap_init(0);
-	KCLASS_DEF **dd = DATATYPES;
+	KCLASSDEF **dd = DATATYPES;
 	while(*dd != NULL) {
-		new_CT(_ctx, *dd);
+		new_CT(_ctx, *dd, 0);
 		dd++;
 	}
 //	knh_ClassTBL_setConstPool(_ctx, ClassTBL(CLASS_Int));
@@ -996,33 +1042,6 @@ void kshare_free(CTX, kcontext_t *ctx)
 	KNH_FREE(share, sizeof(kshare_t));
 }
 
-//// -------------------------------------------------------------------------
-////## @Immutable @Hidden @TypedCall method Tvar Object.getObject(Int n);
-//static KMETHOD Object_getObject(CTX, ksfp_t *sfp _RIX)
-//{
-//	kObject *o = sfp[0].o;
-//	ksymbol_t key = (ksymbol_t)sfp[1].ivalue;
-//	kprodata_t *d = kproto_get(o->h.proto, key);
-//	if(d != NULL) {
-//		d->val;
-//	}
-//	size_t n2 = a->api->index(_ctx, sfp, Int_to(kint_t, ctx->esp[-1]), a->size);
-//	a->api->fastget(_ctx, sfp, n2, K_RIX);
-//}
-//
-//## @Immutable method T1 Array.get(Int n);
-//static KMETHOD Array_get(CTX, ksfp_t *sfp _RIX)
-//{
-//	kArray *a = sfp[0].a;
-//	size_t n2 = a->api->index(_ctx, sfp, Int_to(kint_t, ctx->esp[-1]), a->size);
-//	a->api->fastget(_ctx, sfp, n2, K_RIX);
-//}
-//
-//static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
-//{
-//	fprintf(stderr, "%s\n", S_text(sfp[1].s));
-//}
-
 /* operator */
 #include "methods.h"
 
@@ -1034,6 +1053,7 @@ void kshare_init_methods(CTX)
 {
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
+		_Public, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
 		_Public, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
@@ -1049,7 +1069,7 @@ void kshare_init_methods(CTX)
 		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(NULL, methoddata);
 }
 
 #ifdef __cplusplus

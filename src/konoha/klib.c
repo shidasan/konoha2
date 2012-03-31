@@ -269,6 +269,36 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 	kmap_unuse(kmap, oe);
 }
 
+static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
+{
+	int index = MN_UNMASK(sym);
+	if(MN_isTOCID(sym)) {
+		snprintf(buf, bufsiz, "to%s", T_cid(index));
+	}
+	else if(index < kArray_size(_ctx->share->symbolList)) {
+		const char *name = S_text(_ctx->share->symbolList->strings[index]);
+		if(MN_isISBOOL(sym)) {
+			snprintf(buf, bufsiz, "is%s", name);
+			buf[2] = toupper(buf[2]);
+		}
+		else if(MN_isGETTER(sym)) {
+			snprintf(buf, bufsiz, "get%s", name);
+			buf[3] = toupper(buf[3]);
+		}
+		else if(MN_isSETTER(sym)) {
+			snprintf(buf, bufsiz, "set%s", name);
+			buf[3] = toupper(buf[3]);
+		}
+		else {
+			snprintf(buf, bufsiz, "%s", name);
+		}
+	}
+	else {
+		snprintf(buf, bufsiz, "unknown symbol=%d !< %ld", index, kArray_size(_ctx->share->symbolList));
+	}
+	return (const char*)buf;
+}
+
 // -------------------------------------------------------------------------
 
 #define CTX_isTERM()     1
@@ -369,6 +399,7 @@ void klib2_init(klib2_t *l)
 	l->Kmap_get      = Kmap_getentry;
 	l->Kmap_add      = Kmap_add;
 	l->Kmap_remove   = Kmap_remove;
+	l->KTsymbol      = KTsymbol;
 	l->Kreport       = Kreport;
 	l->Kreportf      = Kreportf;
 	l->Kp            = Kdbg_p;
