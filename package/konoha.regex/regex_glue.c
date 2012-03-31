@@ -78,14 +78,6 @@ static void Regex_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "/%s/", S_text(sfp[pos].re->pattern));
 }
 
-static KCLASS_DEF RegexDef = {
-	STRUCTNAME(Regex),
-	.cflag = 0,
-	.init = Regex_init,
-	.free = Regex_free,
-	.p    = Regex_p,
-};
-
 static void kregexshare_setup(CTX, struct kmodshare_t *def)
 {
 }
@@ -700,7 +692,16 @@ static kbool_t regex_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 	base->h.reftrace = kregexshare_reftrace;
 	base->h.free     = kregexshare_free;
 	ksetModule(MOD_REGEX, &base->h, pline);
-	base->cRegex = kaddClassDef(lgo->pid, 0, &RegexDef);
+
+	KCLASSDEF RegexDef = {
+		STRUCTNAME(Regex),
+		.cflag = 0,
+		.init = Regex_init,
+		.free = Regex_free,
+		.p    = Regex_p,
+		.packid = lgo->packid,
+	};
+	base->cRegex = kaddClassDef(NULL, &RegexDef, pline);
 
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
@@ -710,7 +711,7 @@ static kbool_t regex_initPackage(CTX, struct kLingo *lgo, int argc, const char**
 		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
 		DEND,
 	};
-	kaddMethodDef(NULL, methoddata);
+	kloadMethodData(lgo, methoddata);
 	return true;
 }
 
