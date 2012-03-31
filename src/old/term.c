@@ -517,8 +517,8 @@ static kString* KonohaSpace_getAliasNULL(CTX, kKonohaSpace* ns, kbytes_t t)
 				ns = ns->parentNULL;
 				continue;
 			}
-			if(ns != ctx->share->rootlgo) {
-				ns = ctx->share->rootlgo;
+			if(ns != ctx->share->rootks) {
+				ns = ctx->share->rootks;
 				continue;
 			}
 		}

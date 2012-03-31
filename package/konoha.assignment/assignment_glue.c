@@ -46,7 +46,7 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t assignment_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t assignment_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 //	intptr_t methoddata[] = {
 //		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
@@ -61,25 +61,25 @@ static	kbool_t assignment_initPackage(CTX, struct kKonohaSpace *lgo, int argc, c
 	return true;
 }
 
-static kbool_t assignment_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t assignment_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t assignment_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t assignment_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, .ExprTyCheck = ExprTyCheck_assignment},
 		{ .name = NULL, },
 	};
-	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
-static kbool_t assignment_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t assignment_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -91,7 +91,7 @@ KPACKDEF* assignment_init(void)
 		.initPackage = assignment_initPackage,
 		.setupPackage = assignment_setupPackage,
 		.initKonohaSpace = assignment_initKonohaSpace,
-		.setupPackage = assignment_setupKonohaSpace,
+		.setupKonohaSpace = assignment_setupKonohaSpace,
 	};
 	return &d;
 }

@@ -39,16 +39,16 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 // Block
 
-static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
+static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e);
 
-kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* lgo)
+kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
 {
-	kBlock *bk = new_(Block, lgo);
+	kBlock *bk = new_(Block, ks);
 	PUSH_GCSTACK(bk);
 	int i = s, indent = 0, atop = kArray_size(tls);
 	while(i < e) {
-		i = selectStmtLine(_ctx, lgo, &indent, tls, i, e, tls);
+		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, tls);
 		int asize = kArray_size(tls);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize);
@@ -116,7 +116,7 @@ static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int 
 	return e;
 }
 
-static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
+static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
 {
 	int i = s;
 	for(; i < e; i++) {
@@ -127,7 +127,7 @@ static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int 
 				tk1->tt = TK_METANAME;
 				kArray_add(tlsdst, tk1);
 				if(i + 2 < e && tls->tts[i+2]->topch == '(') {
-					i = makeTree(_ctx, lgo, tls, AST_PARENTHESIS, i+2, e, ')', tlsdst);
+					i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i+2, e, ')', tlsdst);
 				}
 				else {
 					i++;
@@ -142,13 +142,13 @@ static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int 
 	for(; i < e ; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->topch == '{') {
-			i = makeTree(_ctx, lgo, tls, AST_BRACE, i, e, '}', tlsdst); continue;
+			i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tlsdst); continue;
 		}
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, lgo, tls, AST_BRANCET, i, e, ']', tlsdst); continue;
+			i = makeTree(_ctx, ks, tls, AST_BRANCET, i, e, ']', tlsdst); continue;
 		}
 		if(tk->topch == '(') {
-			i = makeTree(_ctx, lgo, tls, AST_PARENTHESIS, i, e, ')', tlsdst); continue;
+			i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i, e, ')', tlsdst); continue;
 		}
 		if(tk->topch == ';') {
 			i++; break;
@@ -162,7 +162,7 @@ static int selectStmtLine(CTX, kKonohaSpace *lgo, int *indent, kArray *tls, int 
 			if(tk->lpos <= *indent) break;
 			continue;
 		}
-		checkKeyword(_ctx, lgo, tk);
+		checkKeyword(_ctx, ks, tk);
 		kArray_add(tls, tk);
 	}
 	return i;
@@ -239,7 +239,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			continue;
 		}
 		else if(rule->tt == TK_OPERATOR) {
-			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), rule->keyid, 0);
+			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), rule->keyid, 0);
 			if(syn == NULL || syn->StmtAdd == NULL) {
 				kerror(_ctx, ERR_, tk->uline, tk->lpos, "unknown sugar %s", T_kw(rule->keyid));
 				return -1;
@@ -284,7 +284,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 
 static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 {
-	kKonohaSpace *lgo = kStmt_lgo(stmt);
+	kKonohaSpace *ks = kStmt_ks(stmt);
 	kToken *tk = tls->tts[s];
 	while(tk->tt == TK_NONE) {
 		s++;
@@ -295,7 +295,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		return 1;
 	}
 	else if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = KonohaSpace_syntax(_ctx, lgo, tk->keyid, 0);
+		ksyntax_t *syn = KonohaSpace_syntax(_ctx, ks, tk->keyid, 0);
 		if(syn->ty != CLASS_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = syn->ty;
@@ -304,7 +304,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		}
 	}
 	else if(tk->tt == TK_USYMBOL) {
-		kcid_t ty = kKonohaSpace_getcid(lgo, S_text(tk->text), S_size(tk->text), CLASS_unknown);
+		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), CLASS_unknown);
 		if(ty != CLASS_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = ty;
@@ -348,7 +348,7 @@ static kbool_t Stmt_makeTree(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	dumpTokenArray(_ctx, 0, tls, s, e);
 	keyword_t keyid = Stmt_stmttype(_ctx, stmt, tls, s, e);
-	ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), keyid, 0);
+	ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), keyid, 0);
 	int ret = 0;
 //	if (keyid == KW_DECLMETHOD) {
 //		kevalmod->flags = kflag_set(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE);
@@ -388,7 +388,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 static kbool_t Stmt_isUninaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	if(tk->tt == TK_KEYWORD) {
-		ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
+		ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), tk->keyid, 0);
 		if(syn != NULL && syn->op1 != 0) return 1;
 	}
 	return 0;
@@ -412,7 +412,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == TK_KEYWORD) {
-			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_lgo(stmt), tk->keyid, 0);
+			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), tk->keyid, 0);
 			if(syn != NULL && syn->op2 != 0) {
 				//DBG_P("operator: %s priotiry=%d", Pkeyword(syn->keyid), syn->priority);
 				if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {
@@ -647,13 +647,13 @@ static KMETHOD StmtAdd_block(CTX, ksfp_t *sfp _RIX)
 		s++;
 	}
 	else if(tk->tt == AST_BRACE) {
-		kBlock *bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_lgo(stmt));
+		kBlock *bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_ks(stmt));
 		kObject_setObject(stmt, name, bk);
 		s++;
 	}
 	else {
 		DBG_P("block1, s=%d, e=%d", s, e);
-		kBlock *bk = new_Block(_ctx, tls, s, e, kStmt_lgo(stmt));
+		kBlock *bk = new_Block(_ctx, tls, s, e, kStmt_ks(stmt));
 		kObject_setObject(stmt, name, bk);
 		e = s;
 		// s = -1; // ERROR

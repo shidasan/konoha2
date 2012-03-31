@@ -684,7 +684,7 @@ static KMETHOD String_replace(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t regex_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static kbool_t regex_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kregexshare_t *base = (kregexshare_t*)KNH_ZMALLOC(sizeof(kregexshare_t));
 	base->h.name     = "regex";
@@ -699,7 +699,7 @@ static kbool_t regex_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 		.init = Regex_init,
 		.free = Regex_free,
 		.p    = Regex_p,
-		.packid = lgo->packid,
+		.packid = ks->packid,
 	};
 	base->cRegex = kaddClassDef(NULL, &RegexDef, pline);
 
@@ -711,21 +711,21 @@ static kbool_t regex_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
 		DEND,
 	};
-	kloadMethodData(lgo, methoddata);
+	kloadMethodData(ks, methoddata);
 	return true;
 }
 
-static kbool_t regex_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t regex_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t regex_initKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t regex_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t regex_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t regex_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -737,7 +737,7 @@ KPACKDEF* regex_init(void)
 		.initPackage = regex_initPackage,
 		.setupPackage = regex_setupPackage,
 		.initKonohaSpace = regex_initKonohaSpace,
-		.setupPackage = regex_setupKonohaSpace,
+		.setupKonohaSpace = regex_setupKonohaSpace,
 	};
 	return &d;
 }

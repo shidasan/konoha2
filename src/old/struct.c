@@ -2430,7 +2430,7 @@ static void Script_init(CTX, kRawPtr *o)
 	DBG_ASSERT(ct->defnull == NULL);
 	scr->fields = NULL;
 	knh_setClassDefaultValue(_ctx, cid, scr, NULL);
-	KINITv(scr->ns, new_KonohaSpace(_ctx, ctx->share->rootlgo));
+	KINITv(scr->ns, new_KonohaSpace(_ctx, ctx->share->rootks));
 }
 
 static void Script_p(CTX, kOutputStream *w, kRawPtr *o, int level)
@@ -3131,10 +3131,10 @@ static void knh_setDefaultValues(CTX)
 #endif
 	// load file/Channel/regex/db drivers
 	knh_setClassDefaultValue(_ctx, CLASS_Context, K_NULL, knh_Context_fdefault);
-	knh_setClassDefaultValue(_ctx, CLASS_KonohaSpace, UPCAST(_ctx->share->rootlgo), NULL);
+	knh_setClassDefaultValue(_ctx, CLASS_KonohaSpace, UPCAST(_ctx->share->rootks), NULL);
 	knh_setClassDefaultValue(_ctx, CLASS_Lang, UPCAST(_ctx->share->corelang), NULL);
 //	knh_setClassDefaultValue(_ctx, CLASS_System, UPCAST(_ctx->sys), NULL);
-	knh_loadSystemDriver(_ctx, ctx->share->rootlgo);
+	knh_loadSystemDriver(_ctx, ctx->share->rootks);
 	{
 		kTerm *tk = KNH_TNULL(Term);
 		tk->tt = TT_FVAR;

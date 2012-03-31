@@ -1588,12 +1588,12 @@ static knh_FuncData_t FuncData[] = {
 void knh_initStreamFuncData(CTX, const knh_LoaderAPI_t *kapi)
 {
 	kapi->addStreamDPI(_ctx, "file", &STREAM_FILE);
-	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("file"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootks, STEXT("file"), ClassTBL(CLASS_Path));
 	kapi->addStreamDPI(_ctx, "script", &STREAM_SCRIPT);
-	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("script"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootks, STEXT("script"), ClassTBL(CLASS_Path));
 #ifdef K_USING_CURL
 	kapi->addStreamDPI(_ctx, "http", &STREAM_CURL);
-	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootlgo, STEXT("http"), ClassTBL(CLASS_Path));
+	knh_KonohaSpace_setLinkClass(_ctx, ctx->share->rootks, STEXT("http"), ClassTBL(CLASS_Path));
 #endif
 	kapi->loadFuncData(_ctx, FuncData);
 }

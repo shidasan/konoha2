@@ -39,7 +39,7 @@ static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
 static KMETHOD KonohaSpace_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 {
 	kevalshare_t *export = kevalshare;
-	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
+	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->syntaxRule != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding SyntaxRule: %s", S_text(sfp[1].s));
 		KSETv(syn->syntaxRule, new_(Array, 0));
@@ -55,14 +55,14 @@ static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 {
 	kevalshare_t *export = kevalshare;
 	kmethodn_t mn = ksymbol(S_text(sfp[2].s), S_size(sfp[2].s), MN_NONAME, SYMPOL_METHOD);
-	kMethod *mtd = export->KonohaSpace_getMethodNULL(_ctx, sfp[0].lgo, export->cStmt->cid, mn);
+	kMethod *mtd = export->KonohaSpace_getMethodNULL(_ctx, sfp[0].ks, export->cStmt->cid, mn);
 	if(mtd == NULL) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "undefined method: Stmt.%s", S_text(sfp[2].s));
 	}
 	if(!isStmtTyCheck(_ctx, mtd->pa)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "mismatched method: Stmt.%s", S_text(sfp[2].s));
 	}
-	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].lgo, KW_s(sfp[1].s), 1/*isnew*/);
+	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->StmtTyCheck != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding StmtTyCheck: %s", S_text(sfp[1].s));
 	}
@@ -76,7 +76,7 @@ static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_buildid = FN_("buildid"), FN_key = FN_("key"), FN_defval = FN_("defval");
@@ -95,18 +95,18 @@ static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 	return true;
 }
 
-static kbool_t sugar_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t sugar_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t sugar_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t sugar_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 
 	return true;
 }
 
-static kbool_t sugar_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t sugar_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -118,7 +118,7 @@ KPACKDEF* sugar_init(void)
 		.initPackage = sugar_initPackage,
 		.setupPackage = sugar_setupPackage,
 		.initKonohaSpace = sugar_initKonohaSpace,
-		.setupPackage = sugar_setupKonohaSpace,
+		.setupKonohaSpace = sugar_setupKonohaSpace,
 	};
 	return &d;
 }

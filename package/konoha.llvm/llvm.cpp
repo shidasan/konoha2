@@ -3465,7 +3465,7 @@ KMETHOD Instruction_setMetadata(CTX _UNUSED_, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **args, kline_t pline)
+static kbool_t llvm_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char **args, kline_t pline)
 {
 
 	static const char *TypeDefName[] = {
@@ -3548,24 +3548,24 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kaddClassDef(NULL, &BasicBlockDef, 0);
-	kaddClassDef(NULL, &PassManagerDef, 0);
-	kaddClassDef(NULL, &PassManagerBuilderDef, 0);
-	kaddClassDef(NULL, &FunctionPassManagerDef, 0);
+	kaddClassDef(NULL, &BasicBlockDef, pline);
+	kaddClassDef(NULL, &PassManagerDef, pline);
+	kaddClassDef(NULL, &PassManagerBuilderDef, pline);
+	kaddClassDef(NULL, &FunctionPassManagerDef, pline);
 	return true;
 }
 
-static kbool_t llvm_setupPackage(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t llvm_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t llvm_initLingo(CTX,  struct kLingo *lgo, kline_t pline)
+static kbool_t llvm_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t llvm_setupLingo(CTX, struct kLingo *lgo, kline_t pline)
+static kbool_t llvm_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -3578,8 +3578,8 @@ KPACKDEF* llvm_init(void)
 		"llvm", "3.0", "", "", "",
 		llvm_initPackage,
 		llvm_setupPackage,
-		llvm_initLingo,
-		llvm_setupLingo,
+		llvm_initKonohaSpace,
+		llvm_setupKonohaSpace,
 		K_REVISION
 	};
 

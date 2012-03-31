@@ -407,9 +407,9 @@ static void shell_restart(CTX)
 {
 //	kKonohaSpace *ns = new_KonohaSpace(_ctx, NULL);
 //	DBG_ASSERT(ns->b->aliasDictMapNULL == NULL);
-//	ctx->wshare->sysAliasDictMapNULL = DP(_ctx->share->rootlgo)->aliasDictMapNULL;
-//	DP(_ctx->share->rootlgo)->aliasDictMapNULL = NULL;
-//	KSETv(((kshare_t*)ctx->share)->rootlgo, ns);
+//	ctx->wshare->sysAliasDictMapNULL = DP(_ctx->share->rootks)->aliasDictMapNULL;
+//	DP(_ctx->share->rootks)->aliasDictMapNULL = NULL;
+//	KSETv(((kshare_t*)ctx->share)->rootks, ns);
 //	KSETv(((kcontext_t*)ctx)->script, new_(Script));
 //	{
 //		kGammaBuilder *newgma = new_(GammaBuilder);

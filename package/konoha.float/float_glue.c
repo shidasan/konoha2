@@ -150,7 +150,7 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t float_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t float_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kfloatshare_t *base = (kfloatshare_t*)KNH_ZMALLOC(sizeof(kfloatshare_t));
 	base->h.name     = "float";
@@ -161,7 +161,7 @@ static	kbool_t float_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 
 	KCLASSDEF FloatDef = {
 		STRUCTNAME(Float),
-		.packid  = lgo->packid,
+		.packid  = ks->packid,
 		.packdom = 0,
 		.cflag = CFLAG_Int,
 		.init = Float_init,
@@ -191,7 +191,7 @@ static	kbool_t float_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 	return true;
 }
 
-static kbool_t float_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t float_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 
 	return true;
@@ -199,7 +199,7 @@ static kbool_t float_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	ksyntaxdef_t SYNTAX[] = {
@@ -208,11 +208,11 @@ static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pli
 		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
-	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
-static kbool_t float_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t float_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -224,7 +224,7 @@ KPACKDEF* float_init(void)
 		.initPackage = float_initPackage,
 		.setupPackage = float_setupPackage,
 		.initKonohaSpace = float_initKonohaSpace,
-		.setupPackage = float_setupKonohaSpace,
+		.setupKonohaSpace = float_setupKonohaSpace,
 	};
 	return &d;
 }

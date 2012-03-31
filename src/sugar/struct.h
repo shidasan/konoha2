@@ -31,10 +31,10 @@
 
 static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 {
-	kKonohaSpace *lgo = (kKonohaSpace*)o;
-	bzero(&lgo->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
-	lgo->parentNULL = conf;
-	lgo->static_cid = CLASS_unknown;
+	kKonohaSpace *ks = (kKonohaSpace*)o;
+	bzero(&ks->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
+	ks->parentNULL = conf;
+	ks->static_cid = CLASS_unknown;
 }
 
 static void syntax_reftrace(CTX, kmape_t *p)
@@ -58,17 +58,17 @@ static void symtbl_reftrace(CTX, kmape_t *p)
 
 static void KonohaSpace_reftrace(CTX, kRawPtr *o)
 {
-	kKonohaSpace *lgo = (kKonohaSpace*)o;
-	if(lgo->syntaxMapNN != NULL) {
-		kmap_reftrace(lgo->syntaxMapNN, syntax_reftrace);
+	kKonohaSpace *ks = (kKonohaSpace*)o;
+	if(ks->syntaxMapNN != NULL) {
+		kmap_reftrace(ks->syntaxMapNN, syntax_reftrace);
 	}
-	if(lgo->symtblMapSO != NULL) {
-		kmap_reftrace(lgo->symtblMapSO, symtbl_reftrace);
+	if(ks->symtblMapSO != NULL) {
+		kmap_reftrace(ks->symtblMapSO, symtbl_reftrace);
 	}
 	BEGIN_REFTRACE(3);
-	KREFTRACEn(lgo->parentNULL);
-	KREFTRACEn(lgo->script);
-	KREFTRACEn(lgo->methodsNULL);
+	KREFTRACEn(ks->parentNULL);
+	KREFTRACEn(ks->script);
+	KREFTRACEn(ks->methodsNULL);
 	END_REFTRACE();
 }
 
@@ -79,9 +79,9 @@ static void syntax_free(CTX, void *p)
 
 static void KonohaSpace_free(CTX, kRawPtr *o)
 {
-	kKonohaSpace *lgo = (kKonohaSpace*)o;
-	if(lgo->syntaxMapNN != NULL) {
-		kmap_free(lgo->syntaxMapNN, syntax_free);
+	kKonohaSpace *ks = (kKonohaSpace*)o;
+	if(ks->syntaxMapNN != NULL) {
+		kmap_free(ks->syntaxMapNN, syntax_free);
 	}
 }
 
@@ -92,32 +92,32 @@ static KCLASSDEF KonohaSpaceDef = {
 	.free = KonohaSpace_free,
 };
 
-static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *lgo0, keyword_t keyid, int isnew)
+static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, int isnew)
 {
-	kKonohaSpace *lgo = lgo0;
+	kKonohaSpace *ks = ks0;
 	uintptr_t hcode = keyid;
 	ksyntax_t *parent = NULL;
-	while(lgo != NULL) {
-		if(lgo->syntaxMapNN != NULL) {
-			kmape_t *e = kmap_get(lgo->syntaxMapNN, hcode);
+	while(ks != NULL) {
+		if(ks->syntaxMapNN != NULL) {
+			kmape_t *e = kmap_get(ks->syntaxMapNN, hcode);
 			while(e != NULL) {
 				if(e->hcode == hcode) {
 					parent = (ksyntax_t*)e->uvalue;
-					if(isnew && lgo0 != lgo) goto L_NEW;
+					if(isnew && ks0 != ks) goto L_NEW;
 					return parent;
 				}
 				e = e->next;
 			}
 		}
-		lgo = lgo->parentNULL;
+		ks = ks->parentNULL;
 	}
 	L_NEW:;
 	if(isnew == 1) {
-		if(lgo0->syntaxMapNN == NULL) {
-			lgo0->syntaxMapNN = kmap_init(0);
+		if(ks0->syntaxMapNN == NULL) {
+			ks0->syntaxMapNN = kmap_init(0);
 		}
-		kmape_t *e = kmap_newentry(lgo0->syntaxMapNN, hcode);
-		kmap_add(lgo0->syntaxMapNN, e);
+		kmape_t *e = kmap_newentry(ks0->syntaxMapNN, hcode);
+		kmap_add(ks0->syntaxMapNN, e);
 		ksyntax_t *syn = (ksyntax_t*)KNH_ZMALLOC(sizeof(ksyntax_t));
 		e->uvalue = (uintptr_t)syn;
 		if(parent != NULL) {
@@ -138,11 +138,11 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *lgo0, keyword_t keyid, i
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
 static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
 
-static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *lgo, ksyntaxdef_t *syndef)
+static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef)
 {
 	while(syndef->name != NULL) {
 		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
-		ksyntax_t* syn = KonohaSpace_syntax(_ctx, lgo, keyid, 1);
+		ksyntax_t* syn = KonohaSpace_syntax(_ctx, ks, keyid, 1);
 		syn->token = syndef->name;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
@@ -175,7 +175,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *lgo, ksyntaxdef_t *synde
 		}
 		if(syndef->ExprTyCheck != NULL) {
 			KINITv(syn->ExprTyCheck, new_kMethod(0, 0, 0, NULL, syndef->ExprTyCheck));
-			ksyntax_t *e = KonohaSpace_syntax(_ctx, lgo, 1, 0);
+			ksyntax_t *e = KonohaSpace_syntax(_ctx, ks, 1, 0);
 			if(syn->syntaxRule == NULL) {
 				KINITv(syn->syntaxRule, e->syntaxRule);
 			}
@@ -183,27 +183,27 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *lgo, ksyntaxdef_t *synde
 				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
 			}
 		}
-		DBG_ASSERT(syn == KonohaSpace_syntax(_ctx, lgo, keyid, 0));
+		DBG_ASSERT(syn == KonohaSpace_syntax(_ctx, ks, keyid, 0));
 		syndef++;
 	}
 	// update
 	kevalshare_t *base = kevalshare;
-	base->syn_err  = KonohaSpace_syntax(_ctx, base->rootlgo, 0, 0);
-	base->syn_expr = KonohaSpace_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_call = KonohaSpace_syntax(_ctx, base->rootlgo, 1, 0);
-	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("$name"), 0);
-	base->syn_params = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("$params"), 0);
-	base->syn_return = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("return"), 0);
-	base->syn_break = KonohaSpace_syntax(_ctx, base->rootlgo, KW_("break"), 0);
-	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootlgo, KW_(":"), 0);
+	base->syn_err  = KonohaSpace_syntax(_ctx, base->rootks, 0, 0);
+	base->syn_expr = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
+	base->syn_call = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
+	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
+	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
+	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
+	base->syn_break = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
+	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
 }
 
 // KonohaSpace
 
-static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *lgo, const char *key, size_t klen)
+static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *ks, const char *key, size_t klen)
 {
-	if(strcmp("KonohaSpace", key) == 0) {
-		return (kObject*)lgo;
+	if(key[0] == 'K' && (key[1] == 0 || strcmp("Konoha", key) == 0)) {
+		return (kObject*)ks;
 	}
 	return NULL;
 }
@@ -229,7 +229,7 @@ static uintptr_t casehash_getuint(CTX, kmap_t *kmp, const char *name, size_t len
 	return def;
 }
 
-static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *lgo, const char *name, size_t len, kcid_t def)
+static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
 {
 	kcid_t cid;
 	//while(nsN != NULL) {
@@ -261,12 +261,12 @@ static kMethod* CT_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn)
 
 #define kKonohaSpace_getMethodNULL(ns, cid, mn)     KonohaSpace_getMethodNULL(_ctx, ns, cid, mn)
 #define kKonohaSpace_getStaticMethodNULL(ns, mn)   KonohaSpace_getStaticMethodNULL(_ctx, ns, mn)
-static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *lgo, kcid_t cid, kmethodn_t mn)
+static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kmethodn_t mn)
 {
-	while(lgo != NULL) {
-		if(lgo->methodsNULL != NULL) {
+	while(ks != NULL) {
+		if(ks->methodsNULL != NULL) {
 			size_t i;
-			kArray *methods = lgo->methodsNULL;
+			kArray *methods = ks->methodsNULL;
 			for(i = 0; i < kArray_size(methods); i++) {
 				kMethod *mtd = methods->methods[i];
 				if(mtd->cid == cid && mtd->mn == mn) {
@@ -274,41 +274,41 @@ static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *lgo, kcid_t cid, km
 				}
 			}
 		}
-		lgo = lgo->parentNULL;
+		ks = ks->parentNULL;
 	}
 	return CT_findMethodNULL(_ctx, CT_(cid), mn);
 }
 
-static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *lgo, kmethodn_t mn)
+static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *ks, kmethodn_t mn)
 {
-	while(lgo != NULL) {
-		if(lgo->static_cid != CLASS_unknown) {
-			kMethod *mtd = kKonohaSpace_getMethodNULL(lgo, lgo->static_cid, mn);
+	while(ks != NULL) {
+		if(ks->static_cid != CLASS_unknown) {
+			kMethod *mtd = kKonohaSpace_getMethodNULL(ks, ks->static_cid, mn);
 			if(mtd != NULL && kMethod_isStatic(mtd)) {
 				return mtd;
 			}
 		}
-		lgo = lgo->parentNULL;
+		ks = ks->parentNULL;
 	}
 	return NULL;
 }
 
 #define kKonohaSpace_getCastMethodNULL(ns, cid, tcid)     KonohaSpace_getCastMethodNULL(_ctx, ns, cid, tcid)
-static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *lgo, kcid_t cid, kcid_t tcid)
+static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kcid_t tcid)
 {
-	kMethod *mtd = KonohaSpace_getMethodNULL(_ctx, lgo, cid, MN_to(tcid));
+	kMethod *mtd = KonohaSpace_getMethodNULL(_ctx, ks, cid, MN_to(tcid));
 	if(mtd != NULL) {
-		mtd = KonohaSpace_getMethodNULL(_ctx, lgo, cid, MN_as(tcid));
+		mtd = KonohaSpace_getMethodNULL(_ctx, ks, cid, MN_as(tcid));
 	}
 	return mtd;
 }
 
 #define kKonohaSpace_addMethod(NS,MTD,UL)  KonohaSpace_addMethod(_ctx, NS, MTD, UL)
 
-static kbool_t KonohaSpace_addMethod(CTX, kKonohaSpace *lgo, kMethod *mtd, kline_t pline)
+static kbool_t KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kline_t pline)
 {
 	if(pline != 0) {
-		kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, lgo, mtd->cid, mtd->mn);
+		kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, ks, mtd->cid, mtd->mn);
 		if(mtdOLD != NULL) {
 			char mbuf[128];
 			kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
@@ -320,15 +320,15 @@ static kbool_t KonohaSpace_addMethod(CTX, kKonohaSpace *lgo, kMethod *mtd, kline
 		kArray_add(ct->methods, mtd);
 	}
 	else {
-		if(lgo->methodsNULL == NULL) {
-			KINITv(lgo->methodsNULL, new_(Array, 8));
+		if(ks->methodsNULL == NULL) {
+			KINITv(ks->methodsNULL, new_(Array, 8));
 		}
-		kArray_add(lgo->methodsNULL, mtd);
+		kArray_add(ks->methodsNULL, mtd);
 	}
 	return 1;
 }
 
-static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *lgo, intptr_t *data)
+static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 {
 	intptr_t *d = data;
 	kParam *prev = NULL;
@@ -359,13 +359,13 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *lgo, intptr_t *data)
 		}
 		kParam *pa = (prev == NULL) ? new_kParam(rtype, psize, p) : prev;
 		kMethod *mtd = new_kMethod(flag, cid, mn, pa, f);
-		if(lgo == NULL || kMethod_isPublic(mtd)) {
+		if(ks == NULL || kMethod_isPublic(mtd)) {
 			kArray_add(CT_(cid)->methods, mtd);
 		} else {
-			if (lgo->methodsNULL == NULL) {
-				KINITv(lgo->methodsNULL, new_(Array, 8));
+			if (ks->methodsNULL == NULL) {
+				KINITv(ks->methodsNULL, new_(Array, 8));
 			}
-			kArray_add(lgo->methodsNULL, mtd);
+			kArray_add(ks->methodsNULL, mtd);
 		}
 		prev = pa;
 	}
@@ -373,17 +373,17 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *lgo, intptr_t *data)
 
 #define kKonohaSpace_loadGlueFunc(NS, F, OPT, UL)  KonohaSpace_loadGlueFunc(_ctx, NS, F, OPT, UL)
 
-static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *lgo, const char *funcname, int DOPTION, kline_t uline)
+static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *funcname, int DOPTION, kline_t uline)
 {
 	void *f = NULL;
-	if(lgo->gluehdr != NULL) {
+	if(ks->gluehdr != NULL) {
 		char namebuf[128];
 		snprintf(namebuf, sizeof(namebuf), "D%s", funcname);
 		if(DOPTION) {
-			f = dlsym(lgo->gluehdr, (const char*)namebuf);
+			f = dlsym(ks->gluehdr, (const char*)namebuf);
 		}
 		if(f == NULL) {
-			f = dlsym(lgo->gluehdr, (const char*)namebuf+1);
+			f = dlsym(ks->gluehdr, (const char*)namebuf+1);
 		}
 		kerror(_ctx, WARN_, uline, -1, "glue method function is not found: %s", namebuf + 1);
 	}
@@ -748,10 +748,10 @@ static void dumpStmt(CTX, kStmt *stmt)
 	}
 }
 
-#define kStmt_lgo(STMT)   Stmt_lgo(_ctx, STMT)
-static kKonohaSpace *Stmt_lgo(CTX, kStmt *stmt)
+#define kStmt_ks(STMT)   Stmt_ks(_ctx, STMT)
+static kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
 {
-	return stmt->parentNULL != NULL ? stmt->parentNULL->lgo : kevalshare->rootlgo;
+	return stmt->parentNULL != NULL ? stmt->parentNULL->ks : kevalshare->rootks;
 }
 
 #define kStmt_done(STMT)  Stmt_done(_ctx, STMT)
@@ -842,9 +842,9 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 static void Block_init(CTX, kRawPtr *o, void *conf)
 {
 	kBlock *bk = (kBlock*)o;
-	kKonohaSpace *lgo = (conf != NULL) ? (kKonohaSpace*)conf : kevalshare->rootlgo;
+	kKonohaSpace *ks = (conf != NULL) ? (kKonohaSpace*)conf : kevalshare->rootks;
 	bk->parentNULL = NULL;
-	KINITv(bk->lgo, lgo);
+	KINITv(bk->ks, ks);
 	KINITv(bk->blockS, new_(Array, 0));
 	KINITv(bk->esp, new_(Expr, 0));
 }
@@ -853,7 +853,7 @@ static void Block_reftrace(CTX, kRawPtr *o)
 {
 	kBlock *bk = (kBlock*)o;
 	BEGIN_REFTRACE(4);
-	KREFTRACEv(bk->lgo);
+	KREFTRACEv(bk->ks);
 	KREFTRACEv(bk->blockS);
 	KREFTRACEv(bk->esp);
 	KREFTRACEn(bk->parentNULL);

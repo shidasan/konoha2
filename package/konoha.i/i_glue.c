@@ -96,13 +96,13 @@ static KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 	INIT_GCSTACK();
 	kArray *list = _ctx->stack->gcstack;
 	size_t start = kArray_size(list);
-	kKonohaSpace *lgo = sfp[0].lgo;
+	kKonohaSpace *ks = sfp[0].ks;
 	const kclass_t *ct = O_ct(sfp[1].o);
-	while(lgo != NULL) {
-		if(lgo->methodsNULL != NULL) {
-			copyMethodList(_ctx, ct->cid, lgo->methodsNULL, list);
+	while(ks != NULL) {
+		if(ks->methodsNULL != NULL) {
+			copyMethodList(_ctx, ct->cid, ks->methodsNULL, list);
 		}
-		lgo = lgo->parentNULL;
+		ks = ks->parentNULL;
 	}
 	copyMethodList(_ctx, ct->cid, ct->methods, list);
 	dumpMethodList(_ctx, sfp, start, list);
@@ -116,7 +116,7 @@ static KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t i_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t i_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	kclass_t *ct = (kclass_t*)kclass(TY_Method, pline);
@@ -129,14 +129,14 @@ static	kbool_t i_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char
 	return true;
 }
 
-static kbool_t i_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t i_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
 //	ksyntaxdef_t SYNTAX[] = {
@@ -145,11 +145,11 @@ static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
 //		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 //		{ .name = NULL, },
 //	};
-//	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
+//	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
-static kbool_t i_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t i_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

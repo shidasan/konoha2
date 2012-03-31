@@ -17,7 +17,7 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
 
-/* If you copackdomer tuning this algorithm, you should consult first:
+/* If you copackdomer tuning this aksrithm, you should consult first:
    Engineering a sort function; Jon Bentley and M. Douglas McIlroy;
    Software - Practice and Experience; Vol. 23 (11), 1249-1265, 1993.  */
 
@@ -46,7 +46,7 @@
 			} while (--__size > 0);						      \
 		} while (0)
 
-/* Discontinue quicksort algorithm when partition gets below this size.
+/* Discontinue quicksort aksrithm when partition gets below this size.
    This particular magic number was chosen to work best on a Sun 4/260. */
 #define MAX_THRESH 4
 
@@ -91,7 +91,7 @@ typedef struct
    sorted array segments.
 
    4. The larger of the two sub-partitions is always pushed onto the
-   stack first, with the algorithm then concentrating on the
+   stack first, with the aksrithm then concentrating on the
    smaller partition.  This *guarantees* no more than log (total_elems)
    stack size is needed (actually O(1) in this case)!  */
 
@@ -143,7 +143,7 @@ void knh_qsort (void *const pbase, size_t total_elems, size_t size,
 
 			/* Here's the famous ``collapse the walls'' section of quicksort.
              Gotta like those tight inner loops!  They are the main reason
-             that this algorithm runs much faster than others. */
+             that this aksrithm runs much faster than others. */
 			do
 			{
 				while ((*cmp) ((void *) left_ptr, (void *) mid) < 0)
@@ -305,7 +305,7 @@ void knh_qsort_r (void *const pbase, size_t total_elems, size_t size,
 
 			/* Here's the famous ``collapse the walls'' section of quicksort.
              Gotta like those tight inner loops!  They are the main reason
-             that this algorithm runs much faster than others. */
+             that this aksrithm runs much faster than others. */
 			do
 			{
 				while ((*cmp) (thunk, (void *) left_ptr, (void *) mid) < 0)

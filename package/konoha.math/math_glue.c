@@ -9,7 +9,7 @@
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t math_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t math_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 //	KREQUIRE("konoha.float");
 //	int FN_methodname = FN_("x");
@@ -26,18 +26,18 @@ static	kbool_t math_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const c
 	return true;
 }
 
-static kbool_t math_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t math_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t math_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t math_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 
 	return true;
 }
 
-static kbool_t math_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t math_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -49,7 +49,7 @@ KPACKDEF* math_init(void)
 		.initPackage = math_initPackage,
 		.setupPackage = math_setupPackage,
 		.initKonohaSpace = math_initKonohaSpace,
-		.setupPackage = math_setupKonohaSpace,
+		.setupKonohaSpace = math_setupKonohaSpace,
 	};
 	return &d;
 }

@@ -446,7 +446,7 @@ void knh_System_initPath(CTX)
 
 	// current working directory
 	knh_buff_addospath(_ctx, cwb->ba, cwb->pos, 0, STEXT("."));
-	KSETv(ctx->share->rootlgo->path, new_Path(_ctx, knh_buff_newRealPathString(_ctx, cwb->ba, cwb->pos)));
+	KSETv(ctx->share->rootks->path, new_Path(_ctx, knh_buff_newRealPathString(_ctx, cwb->ba, cwb->pos)));
 
 	home.text = (const char*)knh_getenv("KONOHAHOME");
 #if defined(K_KONOHAHOME)

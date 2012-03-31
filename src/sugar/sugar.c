@@ -53,7 +53,7 @@ static void Kraise(CTX, int isContinue);
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 #define _EXPR     .rule ="$expr"
 
-static void defineDefaultSyntax(CTX, kKonohaSpace *lgo)
+static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
@@ -101,13 +101,13 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *lgo)
 		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
-	KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
+	KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 }
 
 /* ------------------------------------------------------------------------ */
 /* kevalmod_t global functions */
 
-static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *lgo, const char *script, kline_t uline)
+static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kline_t uline)
 {
 	kstatus_t result;
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
@@ -116,7 +116,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *lgo, const char *script, kl
 		kArray *tls = kevalmod->tokens;
 		size_t pos = kArray_size(tls);
 		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
-		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), lgo);
+		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), ks);
 		kArray_clear(tls, pos);
 		result = Block_eval(_ctx, bk);
 		RESET_GCSTACK();
@@ -131,7 +131,7 @@ kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline)
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
 	}
 	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
-	return KonohaSpace_eval(_ctx, kevalshare->rootlgo, script, uline);
+	return KonohaSpace_eval(_ctx, kevalshare->rootks, script, uline);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -185,7 +185,7 @@ static void pack_reftrace(CTX, kmape_t *p)
 	kpackage_t *pack = (kpackage_t*)p->uvalue;
 	BEGIN_REFTRACE(2);
 	KREFTRACEn(pack->name);
-	KREFTRACEn(pack->lgo);
+	KREFTRACEn(pack->ks);
 	END_REFTRACE();
 }
 
@@ -239,7 +239,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->cBlock = kaddClassDef(NULL, &BlockDef, 0);
 	base->cGamma = kaddClassDef(NULL, &GammaDef, 0);
 
-	KINITv(base->rootlgo, new_(KonohaSpace, NULL));
+	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	KINITv(base->nullToken, new_(Token, NULL));
 	kObject_setNullObject(base->nullToken, 1);
 	KINITv(base->nullExpr, new_(Expr, NULL));
@@ -249,7 +249,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 
 	KINITv(base->aBuffer, new_(Array, 0));
 
-	defineDefaultSyntax(_ctx, base->rootlgo);
+	defineDefaultSyntax(_ctx, base->rootks);
 
 	base->kw_dot = KW_(".");
 	base->kw_comma = KW_(",");
@@ -446,18 +446,18 @@ static kline_t uline_init(CTX, const char *path, size_t len, int line, int isrea
 	return uline;
 }
 
-static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *lgo, const char *path, size_t len, kline_t pline)
+static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path, size_t len, kline_t pline)
 {
 	kstatus_t status = K_BREAK;
 	if(path[0] == '-' && path[1] == 0) {
 		kline_t uline = KURI("<stdin>") | 1;
-		status = KonohaSpace_loadstream(_ctx, lgo, stdin, uline);
+		status = KonohaSpace_loadstream(_ctx, ks, stdin, uline);
 	}
 	else {
 		FILE *fp = fopen(path, "r");
 		if(fp != NULL) {
 			kline_t uline = uline_init(_ctx, path, len, 1, 1);
-			status = KonohaSpace_loadstream(_ctx, lgo, fp, uline);
+			status = KonohaSpace_loadstream(_ctx, ks, fp, uline);
 			fclose(fp);
 		}
 		else {
@@ -473,7 +473,7 @@ kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline)
 		kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
 	}
 	INIT_GCSTACK();
-	kKonohaSpace *ns = new_(KonohaSpace, kevalshare->rootlgo);
+	kKonohaSpace *ns = new_(KonohaSpace, kevalshare->rootks);
 	PUSH_GCSTACK(ns);
 	kstatus_t result = KonohaSpace_loadscript(_ctx, ns, path, len, pline);
 	RESET_GCSTACK();
@@ -501,15 +501,15 @@ static KPACKDEF PKGDEFNULL = {
 	.konoha_revision = 0,
 };
 
-static KPACKDEF *KonohaSpace_openGlueHandler(CTX, kKonohaSpace *lgo, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
+static KPACKDEF *KonohaSpace_openGlueHandler(CTX, kKonohaSpace *ks, char *pathbuf, size_t bufsiz, const char *pname, kline_t pline)
 {
 	char *p = strrchr(pathbuf, '.');
 	snprintf(p, bufsiz - (p  - pathbuf), "%s", K_OSDLLEXT);
-	lgo->gluehdr = dlopen(pathbuf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);
-	if(lgo->gluehdr != NULL) {
+	ks->gluehdr = dlopen(pathbuf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);
+	if(ks->gluehdr != NULL) {
 		char funcbuf[80];
 		snprintf(funcbuf, sizeof(funcbuf), "%s_init", packname(pname));
-		Fpackageinit f = (Fpackageinit)dlsym(lgo->gluehdr, funcbuf);
+		Fpackageinit f = (Fpackageinit)dlsym(ks->gluehdr, funcbuf);
 		if(f != NULL) {
 			KPACKDEF *packdef = f();
 			return (packdef != NULL) ? packdef : &PKGDEFNULL;
@@ -556,19 +556,19 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
 		INIT_GCSTACK();
-		kKonohaSpace *lgo = new_(KonohaSpace, kevalshare->rootlgo);
+		kKonohaSpace *ks = new_(KonohaSpace, kevalshare->rootks);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
-		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, lgo, fbuf, sizeof(fbuf), S_text(pkgname), pline);
+		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), S_text(pkgname), pline);
 		if(packdef->initPackage != NULL) {
-			packdef->initPackage(_ctx, lgo, 0, NULL, pline);
+			packdef->initPackage(_ctx, ks, 0, NULL, pline);
 		}
-		if(KonohaSpace_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE) {
+		if(KonohaSpace_loadstream(_ctx, ks, fp, uline) == K_CONTINUE) {
 			if(packdef->initPackage != NULL) {
-				packdef->setupPackage(_ctx, lgo, pline);
+				packdef->setupPackage(_ctx, ks, pline);
 			}
 			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t));
 			KINITv(pack->name, pkgname);
-			KINITv(pack->lgo, lgo);
+			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
 			pack->export_script = scripturi(_ctx, fbuf, sizeof(fbuf), S_text(pkgname));
 			return pack;
@@ -608,20 +608,20 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 	return pack;
 }
 
-static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *lgo, kString *pkgname, kline_t pline)
+static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname, kline_t pline)
 {
 	kbool_t res = 0;
 	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
 	if(pack != NULL) {
 		if(pack->packdef->initKonohaSpace != NULL) {
-			res = pack->packdef->initKonohaSpace(_ctx, lgo, pline);
+			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
 		}
 		if(res && pack->export_script != 0) {
 			kString *fname = S_uri(pack->export_script);
 			kline_t uline = pack->export_script | (kline_t)1;
 			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {
-				res = (KonohaSpace_loadstream(_ctx, lgo, fp, uline) == K_CONTINUE);
+				res = (KonohaSpace_loadstream(_ctx, ks, fp, uline) == K_CONTINUE);
 				fclose(fp);
 			}
 			else {
@@ -630,7 +630,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *lgo, kString *pkgnam
 			}
 		}
 		if(res && pack->packdef->setupKonohaSpace != NULL) {
-			res = pack->packdef->setupKonohaSpace(_ctx, lgo, pline);
+			res = pack->packdef->setupKonohaSpace(_ctx, ks, pline);
 		}
 	}
 	return res;
@@ -639,7 +639,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *lgo, kString *pkgnam
 // boolean KonohaSpace.importPackage(String pkgname);
 static KMETHOD KonohaSpace_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].lgo, sfp[1].s, sfp[K_RTNIDX].uline));
+	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].ks, sfp[1].s, sfp[K_RTNIDX].uline));
 }
 
 // boolean KonohaSpace.loadScript(String path);
@@ -649,7 +649,7 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 	FILE *fp = fopen(S_text(sfp[1].s), "r");
 	if(fp != NULL) {
 		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
-		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].lgo, fp, uline);
+		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].ks, fp, uline);
 		fclose(fp);
 		RETURNb_(status == K_CONTINUE);
 	}

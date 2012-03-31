@@ -312,10 +312,10 @@ static kcontext_t* new_RootContext(void)
 	KINITv(share->tokenDictSet, new_DictSet0(_ctx, (TT_MAX - STT_MAX), 0/*isCaseMap*/, "System.tokenDictSet"));
 //	KINITv(share->URNAliasDictMap, new_DictMap0(_ctx, 0, 0/*isCaseMap*/, "System.URNAliasDictMap"));
 
-	KINITv(share->rootlgo, new_(KonohaSpace));
-	knh_loadScriptSystemData(_ctx, share->rootlgo, kapi);
-	knh_System_initPath(_ctx);                 // require rootlgo
-	KINITv(_ctx->script, new_(Script));     // require rootlgo
+	KINITv(share->rootks, new_(KonohaSpace));
+	knh_loadScriptSystemData(_ctx, share->rootks, kapi);
+	knh_System_initPath(_ctx);                 // require rootks
+	KINITv(_ctx->script, new_(Script));     // require rootks
 	KINITv(_ctx->gma, new_(GammaBuilder));         // require script
 	knh_loadScriptSystemKonohaCode(_ctx);      // require gamma
 	loadPolicy(_ctx); // added by Wakamori
@@ -477,7 +477,7 @@ static kObject **share_reftrace(CTX, kshare_t *share)
 	KREFTRACEv((share->corelang));
 //	KREFTRACEv((share->URNAliasDictMap));
 
-	KREFTRACEv(  share->rootlgo);
+	KREFTRACEv(  share->rootks);
 	KREFTRACEv(  share->funcDictSet);
 	KREFTRACEv(share->sysAliasDictMap);
 	KREFTRACEv(  share->constPtrMap);

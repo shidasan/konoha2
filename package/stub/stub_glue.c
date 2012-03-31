@@ -2,12 +2,12 @@
 #include<konoha2/sugar.h>
 
 // Expr Expr.tyCheckStub(Gamma gma, int req_tyid);
-static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ExprTyCheck(expr, gma, req_ty);
-	DBG_P("stub: size=%d", kArray_size(expr->consNUL));
-	RETURN_(K_NULLEXPR);
-}
+//static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
+//{
+//	VAR_ExprTyCheck(expr, gma, req_ty);
+//	DBG_P("stub: size=%d", kArray_size(expr->consNUL));
+//	RETURN_(K_NULLEXPR);
+//}
 
 // --------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ static KMETHOD ExprTyCheck_stub(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 //	intptr_t methoddata[] = {
 //		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
@@ -31,14 +31,14 @@ static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const c
 	return true;
 }
 
-static kbool_t stub_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t stub_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
 
-static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
 //	ksyntaxdef_t SYNTAX[] = {
@@ -47,11 +47,11 @@ static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t plin
 //		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 //		{ .name = NULL, },
 //	};
-//	SUGAR KonohaSpace_defineSyntax(_ctx, lgo, SYNTAX);
+//	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
-static kbool_t stub_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t stub_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -63,7 +63,7 @@ KPACKDEF* stub_init(void)
 		.initPackage = stub_initPackage,
 		.setupPackage = stub_setupPackage,
 		.initKonohaSpace = stub_initKonohaSpace,
-		.setupPackage = stub_setupKonohaSpace,
+		.setupKonohaSpace = stub_setupKonohaSpace,
 	};
 	return &d;
 }

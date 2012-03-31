@@ -680,7 +680,7 @@ static KMETHOD String_opTO(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t String_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static kbool_t String_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
@@ -714,17 +714,17 @@ static kbool_t String_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const
 	return true;
 }
 
-static kbool_t String_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t String_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_initKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t String_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t String_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -736,7 +736,7 @@ KPACKDEF* string_init(void)
 		.initPackage = String_initPackage,
 		.setupPackage = String_setupPackage,
 		.initKonohaSpace = String_initKonohaSpace,
-		.setupPackage = String_setupKonohaSpace,
+		.setupKonohaSpace = String_setupKonohaSpace,
 	};
 	assert(sizeof(StringBase) <= sizeof(kString));
 	assert(sizeof(ExternalString) <= sizeof(kString));

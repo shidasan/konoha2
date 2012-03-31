@@ -80,7 +80,7 @@ typedef KPACKDEF* (*Fpackageinit)(void);
 typedef struct {
 	kpkg_t               pid;
 	kString             *name;
-	struct kKonohaSpace       *lgo;
+	struct kKonohaSpace       *ks;
 	KPACKDEF            *packdef;
 	kline_t              export_script;
 } kpackage_t;
@@ -154,7 +154,7 @@ struct kKonohaSpace {
 };
 
 typedef kshort_t    ksugar_t;
-typedef kushort_t   kexpr_t;
+typedef kshort_t    kexpr_t;
 
 typedef enum {
 	TK_NONE,
@@ -273,7 +273,7 @@ struct kStmt {
 typedef struct kBlock kBlock;
 struct kBlock {
 	kObjectHeader h;
-	struct kKonohaSpace        *lgo;
+	struct kKonohaSpace        *ks;
 	struct kStmt         *parentNULL;
 	struct kArray        *blockS;
 	struct kExpr         *esp;
@@ -296,7 +296,7 @@ typedef struct gmabuf_t {
 	kflag_t                 flag;
 	kflag_t                 cflag;
 
-	struct kKonohaSpace           *lgo;
+	struct kKonohaSpace           *ks;
 	struct kScript          *scrNUL;
 
 	kcid_t                   this_cid;
@@ -380,7 +380,7 @@ typedef struct {
 	struct kmap_t         *keywordMapNN;
 	struct kArray         *packageList;
 	struct kmap_t         *packageMapNO;
-	struct kKonohaSpace         *rootlgo;
+	struct kKonohaSpace         *rootks;
 	struct kArray         *aBuffer;
 
 	struct kToken *nullToken;

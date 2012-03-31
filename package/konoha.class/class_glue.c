@@ -112,21 +112,21 @@
 // int KonohaSpace.getCid(String name, int defval)
 static KMETHOD KonohaSpace_getCid(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(kKonohaSpace_getcid(sfp[0].lgo, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue));
+	RETURNi_(kKonohaSpace_getcid(sfp[0].ks, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue));
 }
 
 // int KonohaSpace.defineClass(int flag, String name, int supcid, int fieldsize);
 static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 {
-	kKonohaSpace *lgo = sfp[0].lgo;
+	kKonohaSpace *ks = sfp[0].ks;
 	KCLASSDEF cdef = {};
 	cdef.cstruct_size = sfp[4].ivalue * sizeof(void*);
 	cdef.cflag  = (kflag_t)sfp[1].ivalue | ((cdef.cstruct_size > 0) ? kClass_UNDEF : 0);
 	cdef.cid    = CLASS_newid;
 	cdef.bcid   = CLASS_Object;
 	cdef.supcid = (kcid_t)sfp[3].ivalue;
-	cdef.packid = lgo->packid;
-	cdef.packdom = lgo->packdom;
+	cdef.packid = ks->packid;
+	cdef.packdom = ks->packdom;
 	if(cdef.supcid == 0) cdef.supcid = TY_Object;
 	const kclass_t *supct = kclass(cdef.supcid, sfp[K_RTNIDX].uline);
 	if(CT_isFinal(supct)) {
@@ -171,7 +171,7 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t class_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const char**args, kline_t pline)
+static	kbool_t class_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_flag = FN_("flag"), FN_cid = FN_("cid"), FN_name = FN_("name"), FN_defval = FN_("defval");
@@ -181,21 +181,21 @@ static	kbool_t class_initPackage(CTX, struct kKonohaSpace *lgo, int argc, const 
 		_Public, _F(KonohaSpace_defineClassField), TY_Int, TY_KonohaSpace, MN_("defineClassField"), 4, TY_Int, FN_cid, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
 		DEND,
 	};
-	kloadMethodData(lgo, methoddata);
+	kloadMethodData(ks, methoddata);
 	return true;
 }
 
-static kbool_t class_setupPackage(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t class_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_initKonohaSpace(CTX,  struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t class_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_setupKonohaSpace(CTX, struct kKonohaSpace *lgo, kline_t pline)
+static kbool_t class_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -207,7 +207,7 @@ KPACKDEF* class_init(void)
 		.initPackage = class_initPackage,
 		.setupPackage = class_setupPackage,
 		.initKonohaSpace = class_initKonohaSpace,
-		.setupPackage = class_setupKonohaSpace,
+		.setupKonohaSpace = class_setupKonohaSpace,
 	};
 	return &d;
 }
