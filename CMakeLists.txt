@@ -83,6 +83,7 @@ set(PACKAGES
 	konoha.string
 	konoha.float
 	konoha.llvm
+#	konoha.regex
 	konoha.loop
 	sugar
 	posix.process
