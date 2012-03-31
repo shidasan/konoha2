@@ -23,6 +23,16 @@
  *
  ****************************************************************************/
 
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS
+#endif
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
+
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>
 #include <llvm/Intrinsics.h>
@@ -33,7 +43,9 @@
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Utils/UnifyFunctionExitNodes.h>
+#ifdef USE_LLVM_3_1
 #include <llvm/Transforms/Vectorize.h>
+#endif
 #include <llvm/Analysis/Verifier.h>
 #include <llvm/Analysis/Passes.h>
 #include <llvm/Analysis/DomPrinter.h>
@@ -3280,6 +3292,7 @@ KMETHOD LLVM_createVerifierPass(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
+#ifdef USE_LLVM_3_1
 //## BasicBlockPass LLVM.createBBVectorizePass();
 KMETHOD LLVM_createBBVectorizePass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3287,6 +3300,7 @@ KMETHOD LLVM_createBBVectorizePass(CTX, ksfp_t *sfp _RIX)
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
+#endif
 
 //FunctionType Intrinsic::getType(int id, Type[] args);
 KMETHOD Intrinsic_getType(CTX, ksfp_t *sfp _RIX)
