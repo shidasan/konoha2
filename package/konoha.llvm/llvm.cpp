@@ -3474,21 +3474,22 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		"PointerType",
 	};
 	{
-		static KSTRUCT_DEF TypeDef;
-		bzero(&TypeDef, sizeof(KSTRUCT_DEF));
+		static KCLASSDEF TypeDef;
+		bzero(&TypeDef, sizeof(KCLASSDEF));
 		TypeDef.cid  = CLASS_newid;
 		TypeDef.init = Type_init;
 		TypeDef.free = Type_free;
 		for (int i = 0; i < 3; ++i) {
 			TypeDef.structname = TypeDefName[i];
-			kaddClassDef(lgo->pid, 0, &TypeDef);
+			kaddClassDef(NULL, &TypeDef, 0);
 		}
 	}
-	static KSTRUCT_DEF BasicBlockDef = {
+	static KCLASSDEF BasicBlockDef = {
 		"BasicBlock"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
 		0/*init*/,
 		0/*reftrace*/,
 		0/*free*/,
@@ -3499,11 +3500,12 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	static KSTRUCT_DEF PassManagerBuilderDef = {
+	static KCLASSDEF PassManagerBuilderDef = {
 		"BasicBlock"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
 		PassManagerBuilder_ptr_init/*init*/,
 		0/*reftrace*/,
 		PassManagerBuilder_ptr_free/*free*/,
@@ -3514,11 +3516,12 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	static KSTRUCT_DEF PassManagerDef = {
+	static KCLASSDEF PassManagerDef = {
 		"PassManager"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
 		PassManager_ptr_init/*init*/,
 		0/*reftrace*/,
 		PassManager_ptr_free/*free*/,
@@ -3529,11 +3532,12 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	static KSTRUCT_DEF FunctionPassManagerDef = {
+	static KCLASSDEF FunctionPassManagerDef = {
 		"FunctionPassManager"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
 		FunctionPassManager_ptr_init/*init*/,
 		0/*reftrace*/,
 		FunctionPassManager_ptr_free/*free*/,
@@ -3544,10 +3548,10 @@ static kbool_t llvm_initPackage(CTX, struct kLingo *lgo, int argc, const char **
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kaddClassDef(lgo->pid, 0, &BasicBlockDef);
-	kaddClassDef(lgo->pid, 0, &PassManagerDef);
-	kaddClassDef(lgo->pid, 0, &PassManagerBuilderDef);
-	kaddClassDef(lgo->pid, 0, &FunctionPassManagerDef);
+	kaddClassDef(NULL, &BasicBlockDef, 0);
+	kaddClassDef(NULL, &PassManagerDef, 0);
+	kaddClassDef(NULL, &PassManagerBuilderDef, 0);
+	kaddClassDef(NULL, &FunctionPassManagerDef, 0);
 	return true;
 }
 
