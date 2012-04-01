@@ -1293,7 +1293,9 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	}
 	case TEXPR_BOX   : {
-		ASM(BOX, OC_(a), NC_(a), CT_(expr->ty));
+		DBG_ASSERT(IS_Expr(expr->singleNUL));
+		EXPR_asm(_ctx, a, expr->singleNUL, espidx);
+		ASM(BOX, OC_(a), NC_(a), CT_(expr->singleNUL->ty));
 		break;
 	}
 	case TEXPR_UNBOX   : {

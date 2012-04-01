@@ -397,8 +397,11 @@ typedef kushort_t       kmethodn_t;
 #define TY_T1             TY_T(1)
 #define TY_T2             TY_T(2)
 
-#define FN_NONAME    ((ksymbol_t)-1)
-#define FN_NEWID     ((ksymbol_t)-2)
+#define FN_NONAME          ((ksymbol_t)-1)
+#define FN_NEWID           ((ksymbol_t)-2)
+#define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
+#define FN_COERCION        KFLAG_H0
+#define FN_isCOERCION(fn)  ((fn & FN_COERCION) == FN_COERCION)
 
 #define MN_NONAME    ((kmethodn_t)-1)
 #define MN_NEWID     ((kmethodn_t)-2)

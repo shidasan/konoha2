@@ -237,7 +237,8 @@ struct kExpr {
 	kToken *tkNUL;     // Term
 	union {
 		struct kObject* dataNUL;
-		struct kArray*  consNUL;  // Term
+		struct kArray*  consNUL;  // Cons
+		struct kExpr*   singleNUL;
 	};
 	union {
 		ksyntax_t *syn;

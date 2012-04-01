@@ -122,7 +122,7 @@ static	kbool_t i_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char*
 	kclass_t *ct = (kclass_t*)kclass(TY_Method, pline);
 	ct->p = Method_p;
 	intptr_t methoddata[] = {
-		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x"),
+		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
