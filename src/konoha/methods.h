@@ -2,6 +2,12 @@
 extern "C" {
 #endif
 
+/* upcast(o) */
+static KMETHOD Object_opUPCAST(CTX, ksfp_t *sfp _RIX)
+{
+	RETURN_(sfp[0].o);
+}
+
 /* !boolean */
 static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)
 {

@@ -373,7 +373,7 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 
 #define kKonohaSpace_loadGlueFunc(NS, F, OPT, UL)  KonohaSpace_loadGlueFunc(_ctx, NS, F, OPT, UL)
 
-static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *funcname, int DOPTION, kline_t uline)
+static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *funcname, int DOPTION, kline_t pline)
 {
 	void *f = NULL;
 	if(ks->gluehdr != NULL) {
@@ -385,7 +385,7 @@ static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *f
 		if(f == NULL) {
 			f = dlsym(ks->gluehdr, (const char*)namebuf+1);
 		}
-		kerror(_ctx, WARN_, uline, -1, "glue method function is not found: %s", namebuf + 1);
+		kreportf(WARN_, pline, "glue method function is not found: %s", namebuf + 1);
 	}
 	return f;
 }
@@ -623,24 +623,24 @@ void dumpExpr(CTX, int n, int nest, kExpr *expr)
 	}
 }
 
-static kToken *Expr_firstToken(CTX, kExpr *expr)
-{
-	size_t i;
-	kArray *cons = expr->consNUL;
-	if(expr->tkNUL != NULL && expr->tkNUL->uline != 0) {
-		return expr->tkNUL;
-	}
-	if(cons != NULL) {
-		for(i = 0; i < kArray_size(cons); i++) {
-			if(IS_Token(cons->list[i])) return cons->tts[i];
-			if(IS_Expr(cons->list[i])) {
-				kToken *tk = Expr_firstToken(_ctx, (kExpr*)cons->list[i]);
-				if(tk != K_NULLTOKEN) return tk;
-			}
-		}
-	}
-	return K_NULLTOKEN;
-}
+//static kToken *Expr_firstToken(CTX, kExpr *expr)
+//{
+//	size_t i;
+//	kArray *cons = expr->consNUL;
+//	if(expr->tkNUL != NULL && expr->tkNUL->uline != 0) {
+//		return expr->tkNUL;
+//	}
+//	if(cons != NULL) {
+//		for(i = 0; i < kArray_size(cons); i++) {
+//			if(IS_Token(cons->list[i])) return cons->tts[i];
+//			if(IS_Expr(cons->list[i])) {
+//				kToken *tk = Expr_firstToken(_ctx, (kExpr*)cons->list[i]);
+//				if(tk != K_NULLTOKEN) return tk;
+//			}
+//		}
+//	}
+//	return K_NULLTOKEN;
+//}
 
 static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 {

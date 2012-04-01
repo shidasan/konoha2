@@ -111,7 +111,7 @@ static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int 
 		kArray_add(tkp->sub, tk);
 	}
 	/* syntax error */ {
-		kerror(_ctx, ERR_, tk->uline, tk->lpos, "%c is expected", closech);
+		SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);
 	}
 	return e;
 }
@@ -210,14 +210,15 @@ static int Stmt_addSugarSyntax(CTX, ksyntax_t *syn, kStmt *stmt, ksymbol_t name,
 static void WARN_Ignored(CTX, kArray *tls, int s, int e)
 {
 	if(s < e) {
-		kToken *tkS = tls->tts[s];
-		kToken *tkE = tls->tts[e-1];
-		if(tkS == tkE) {
-			kerror(_ctx, WARN_, tkS->uline, tkS->lpos, "ignored token %s", kToken_s(tkS));
+		int i = s;
+		kwb_t wb;
+		kwb_init(&(_ctx->stack->cwb), &wb);
+		kwb_printf(&wb, "%s", kToken_s(tls->tts[i])); i++;
+		while(i < e) {
+			kwb_printf(&wb, "%s", kToken_s(tls->tts[i])); i++;
 		}
-		else {
-			kerror(_ctx, WARN_, tkS->uline, tkS->lpos, "ignored tokens %s .. %s", kToken_s(tkS), kToken_s(tkE));
-		}
+		SUGAR_P(WARN_, tls->tts[s]->uline, tls->tts[s]->lpos, "ignored tokens: %s", kwb_top(&wb, 1));
+		kwb_free(&wb);
 	}
 }
 
@@ -232,7 +233,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		if(rule->tt == TK_KEYWORD) {
 			if(tk->tt != TK_KEYWORD || rule->keyid != tk->keyid) {
 				if(optional) return s;
-				kerror(_ctx, ERR_, tk->uline, tk->lpos, "needs '%s'", T_kw(rule->keyid));
+				kToken_p(tk, ERR_, "needs '%s'", T_kw(rule->keyid));
 				return -1;
 			}
 			ti++;
@@ -241,14 +242,14 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		else if(rule->tt == TK_OPERATOR) {
 			ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), rule->keyid, 0);
 			if(syn == NULL || syn->StmtAdd == NULL) {
-				kerror(_ctx, ERR_, tk->uline, tk->lpos, "unknown sugar %s", T_kw(rule->keyid));
+				kToken_p(tk, ERR_, "unknown sugar %s", T_kw(rule->keyid));
 				return -1;
 			}
 			int next = Stmt_addSugarSyntax(_ctx, syn, stmt, rule->nameid, tls, ti, e);
 //			DBG_P("matched '%s' nameid='%s', next=%d=>%d", Pkeyword(rule->keyid), Pkeyword(rule->nameid), ti, next);
 			if(next == -1) {
 				if(optional) return s;
-				kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s must be %s", kToken_s(tk), T_kw(rule->keyid));
+				kToken_p(tk, ERR_, "%s must be %s", kToken_s(tk), T_kw(rule->keyid));
 				return -1;
 			}
 			optional = 0;
@@ -273,7 +274,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		for(; ri < kArray_size(rules); ri++) {
 			kToken *rule = rules->tts[ri];
 			if(rule->tt != AST_OPTIONAL) {
-				kerror(_ctx, ERR_, uline, -1, "needs %s", T_kw(rule->keyid));
+				SUGAR_P(ERR_, uline, -1, "needs %s", T_kw(rule->keyid));
 				return -1;
 			}
 		}
@@ -364,7 +365,7 @@ static kbool_t Stmt_makeTree(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		}
 	}
 	else {
-		kerror(_ctx, ERR_, stmt->uline, 0, "unknown statement %s", T_kw(keyid));
+		SUGAR_P(ERR_, stmt->uline, 0, "unknown statement %s", T_kw(keyid));
 	}
 	L_return:;
 	return ret;
@@ -469,7 +470,7 @@ static kExpr *Stmt_newTerm(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 				return tk0->expr;
 			}
 		}
-		kerror(_ctx, ERR_, tk0->uline, tk0->lpos, "not a term: %s", kToken_s(tk0));
+		kToken_p(tk0, ERR_, "not a term: %s", kToken_s(tk0));
 		return NULL;
 	}
 }
@@ -557,7 +558,7 @@ static kExpr* Stmt_newExpr(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 		return Stmt_newExprLeft(_ctx, stmt, tls, s, e, next);
 	}
 	else {
-		kerror(_ctx, ERR_, stmt->uline, 0, "empty");
+		SUGAR_P(ERR_, stmt->uline, 0, "empty");
 		if(next != NULL) *next = e;
 		return NULL;
 	}

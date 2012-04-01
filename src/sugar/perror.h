@@ -36,64 +36,77 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* [perror] */
 
-
-/* ------------------------------------------------------------------------ */
-/* [perror] */
-
-static void kvperror(CTX, int pe, const char *msg, kline_t uline, int lpos, const char *fmt, va_list ap)
+static const char* T_emsg(CTX, int pe)
 {
-	kevalmod_t *base = kevalmod;
-	kwb_t wb;
-	kwb_init(&base->cwb, &wb);
-	kwb_write(&wb, msg, strlen(msg));
-	if(uline > 0) {
-		const char *file = S_text(S_uri(uline));
-		if(lpos != -1) {
-			kwb_printf(&wb, "(%s:%d+%d) " , filename(file), (kushort_t)uline, (int)lpos+1);
+	switch(pe) {
+		case ERR_: return "(error)";
+		case WARN_: return "(warning)";
+		case INFO_:
+			if(CTX_isInteractive() || CTX_isCompileOnly() || CTX_isDebug()) {
+				return "(info)";
+			}
+			return NULL;
+		case DEBUG_:
+			if(CTX_isDebug()) {
+				return "(debug)";
+			}
+			return NULL;
+	}
+	return "(unknown)";
+}
+
+static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_list ap)
+{
+	const char *msg = T_emsg(_ctx, pe);
+	if(msg != NULL) {
+		kevalmod_t *base = kevalmod;
+		kwb_t wb;
+		kwb_init(&base->cwb, &wb);
+		if(uline > 0) {
+			const char *file = S_text(S_uri(uline));
+			if(lpos != -1) {
+				kwb_printf(&wb, "%s (%s:%d+%d) " , msg, filename(file), (kushort_t)uline, (int)lpos+1);
+			}
+			else {
+				kwb_printf(&wb, "%s (%s:%d) " , msg, filename(file), (kushort_t)uline);
+			}
 		}
 		else {
-			kwb_printf(&wb, "(%s:%d) " , filename(file), (kushort_t)uline);
+			kwb_printf(&wb, "%s " , msg);
 		}
+		kwb_vprintf(&wb, fmt, ap);
+		msg = kwb_top(&wb, 1);
+		kString *emsg = new_kString(msg, strlen(msg), 0);
+		kArray_add(base->errors, emsg);
+		kreport(pe, S_text(emsg));
 	}
-	kwb_vprintf(&wb, fmt, ap);
-	msg = kwb_top(&wb, 1);
-	kString *emsg = new_kString(msg, strlen(msg), 0);
-	kArray_add(base->errors, emsg);
-	kreport(pe, S_text(emsg));
 }
 
-#define ERR_Undefined()  kerror(_ctx, ERR_, 0, -1, "undefined error at %s:%d", __FUNCTION__, __LINE__);
+#define SUGAR_P(PE, UL, POS, FMT, ...)  Kpef(_ctx, PE, UL, POS, FMT,  ## __VA_ARGS__)
 
-static void kerror(CTX, int level, kline_t uline, int lpos, const char *fmt, ...)
+#define ERR_Undefined()  SUGAR_P(_ctx, ERR_, 0, -1, "undefined error at %s:%d", __FUNCTION__, __LINE__);
+
+
+static void Kpef(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
 {
-	int isPRINT = 0;
-	const char *emsg = "(error) ";
-	switch(level) {
-		case ERR_:
-			isPRINT = 1;
-			break;
-		case WARN_:
-			emsg = "(warning) "; isPRINT = 1;
-			break;
-		case INFO_:
-			emsg = "(info) ";
-//			if((CTX_isInteractive() || CTX_isCompileOnly() || CTX_isDebug()) {
-				isPRINT = 1;
-//			}
-			break;
-		case DEBUG_:
-			emsg = "(debug) ";
-			if(CTX_isDebug()) {
-				isPRINT = 1;
-			}
-	}
-	if(isPRINT) {
-		va_list ap;
-		va_start(ap, fmt);
-		kvperror(_ctx, level, emsg, uline, lpos, fmt, ap);
-		va_end(ap);
-	}
+	va_list ap;
+	va_start(ap, fmt);
+	vperrorf(_ctx, pe, uline, lpos, fmt, ap);
+	va_end(ap);
 }
+
+#define kToken_p(TK, PE, FMT, ...)   Token_p(_ctx, TK, PE, FMT, ## __VA_ARGS__)
+#define kExpr_p(E, PE, FMT, ...)     Expr_p(_ctx, E, PE, FMT, ## __VA_ARGS__)
+static kExpr* Token_p(CTX, kToken *tk, int pe, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vperrorf(_ctx, pe, tk->uline, tk->lpos, fmt, ap);
+	va_end(ap);
+	return K_NULLEXPR;
+}
+
+
 
 #define kerrno   Kerrno(_ctx)
 #define kstrerror(ENO)  Kstrerror(_ctx, ENO)
@@ -120,14 +133,14 @@ static kString* Kstrerror(CTX, int eno)
 
 static void WARN_MustCloseWith(CTX, kline_t uline, int ch)
 {
-	kerror(_ctx, WARN_, uline, 0, "must close with %c", ch);
+	SUGAR_P(WARN_, uline, 0, "must close with %c", ch);
 }
 
 static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *text, size_t len)
 {
 	int ch = text[len];
 	text[len] = 0;
-	kerror(_ctx, WARN_, uline, lpos, "unexpected multi-byte character: %s", text);
+	SUGAR_P(WARN_, uline, lpos, "unexpected multi-byte character: %s", text);
 	text[len] = ch; // danger a little
 }
 
