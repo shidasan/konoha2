@@ -51,6 +51,6 @@ add_definitions(-USE_LLVM_3_1=1)
 endif(${LLVM_VERSION} VERSION_GREATER "3.0")
 
 set(PACKAGE_EXTRA_LIBRARY ${ExtraLibs})
-add_konoha_package(llvm)
+add_konoha_package(konoha.llvm)
 endif("${LLVM_VERSION}" MATCHES "3.")
 endif(LLVM_CONFIG)
