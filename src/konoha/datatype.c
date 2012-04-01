@@ -736,6 +736,21 @@ static void Array_add(CTX, kArray *a, kObject *value)
 	a->size++;
 }
 
+static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
+{
+	if(!(n < a->size)) {
+		Array_add(_ctx, a, v);
+	}
+	else {
+		if(a->size == a->capacity) {
+			Array_expand(_ctx, (kArray_*)a, a->size + 1);
+		}
+		memmove(a->list+(n+1), a->list+n, sizeof(kObject*) * (a->size - n));
+		KINITv(a->list[n], v);
+		a->size++;
+	}
+}
+
 //KNHAPI2(void) kArray_remove_(CTX, kArray *a, size_t n)
 //{
 //	DBG_ASSERT(n < a->size);
@@ -910,12 +925,13 @@ static void kshare_initklib2(klib2_t *l)
 	l->Knew_Object = new_Object;
 	l->KObject_getObjectNULL = Object_getObjectNULL;
 	l->KObject_setObject = Object_setObject;
-	l->Knew_String = new_String;
-	l->KArray_add  = Array_add;
-	l->KArray_clear = Array_clear;
-	l->Knew_Param  = new_Param;
-	l->Knew_Method = new_Method;
-	l->KaddClassDef = addClassDef;
+	l->Knew_String   = new_String;
+	l->KArray_add    = Array_add;
+	l->KArray_insert = Array_insert;
+	l->KArray_clear  = Array_clear;
+	l->Knew_Param    = new_Param;
+	l->Knew_Method   = new_Method;
+	l->KaddClassDef  = addClassDef;
 	l->Knull = CT_null;
 }
 

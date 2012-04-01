@@ -1747,26 +1747,6 @@ static void ASM_SAFEPOINT(CTX, int espidx)
 
 static void BLOCK_asm(CTX, kBlock *bk);
 
-#define kStmt_expr(STMT, KW, DEF)  Stmt_expr(_ctx, STMT, KW, DEF)
-static kExpr* Stmt_expr(CTX, kStmt *stmt, keyword_t kw, kExpr *def)
-{
-	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
-	if(expr != NULL && IS_Expr(expr)) {
-		return expr;
-	}
-	return def;
-}
-
-#define kStmt_block(STMT, KW, DEF)  Stmt_block(_ctx, STMT, KW, DEF)
-static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
-{
-	kBlock *bk = (kBlock*)kObject_getObjectNULL(stmt, kw);
-	if(bk != NULL && IS_Block(bk)) {
-		return bk;
-	}
-	return def;
-}
-
 static void ErrStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	kString *msg = (kString*)kObject_getObjectNULL(stmt, 0);
@@ -1784,11 +1764,13 @@ static void ExprStmt_asm(CTX, kStmt *stmt, int espidx)
 
 static void BlockStmt_asm(CTX, kStmt *stmt, int espidx)
 {
+	USING_SUGAR;
 	BLOCK_asm(_ctx, kStmt_block(stmt, KW_BLOCK, K_NULLBLOCK));
 }
 
 static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
 {
+	USING_SUGAR;
 	kBasicBlock*  lbELSE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbEND  = new_BasicBlockLABEL(_ctx);
 	/* if */
@@ -1814,6 +1796,7 @@ static void ReturnStmt_asm(CTX, kStmt *stmt, int espidx)
 
 static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 {
+	USING_SUGAR;
 	kBasicBlock* lbCONTINUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbBREAK = new_BasicBlockLABEL(_ctx);
 	BUILD_pushLABEL(_ctx, stmt, lbCONTINUE, lbBREAK);

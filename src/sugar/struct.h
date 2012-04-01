@@ -194,8 +194,10 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
 	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
 	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
-	base->syn_break = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
+//	base->syn_break = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
 	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
+	base->syn_comma    = KonohaSpace_syntax(_ctx, base->rootks, KW_(","), 0);
+	base->syn_let      = KonohaSpace_syntax(_ctx, base->rootks, KW_("="), 0);
 }
 
 // KonohaSpace
@@ -623,25 +625,6 @@ void dumpExpr(CTX, int n, int nest, kExpr *expr)
 	}
 }
 
-//static kToken *Expr_firstToken(CTX, kExpr *expr)
-//{
-//	size_t i;
-//	kArray *cons = expr->consNUL;
-//	if(expr->tkNUL != NULL && expr->tkNUL->uline != 0) {
-//		return expr->tkNUL;
-//	}
-//	if(cons != NULL) {
-//		for(i = 0; i < kArray_size(cons); i++) {
-//			if(IS_Token(cons->list[i])) return cons->tts[i];
-//			if(IS_Expr(cons->list[i])) {
-//				kToken *tk = Expr_firstToken(_ctx, (kExpr*)cons->list[i]);
-//				if(tk != K_NULLTOKEN) return tk;
-//			}
-//		}
-//	}
-//	return K_NULLTOKEN;
-//}
-
 static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 {
 	if(expr == NULL) {
@@ -800,17 +783,24 @@ static kbool_t Stmt_is(CTX, kStmt *stmt, keyword_t kw)
 	return (kObject_getObjectNULL(stmt, kw) != NULL);
 }
 
-//#define kStmt_expr(STMT, KW, DEF)  Stmt_expr(_ctx, STMT, KW, DEF)
-//static kExpr* Stmt_expr(CTX, kStmt *stmt, keyword_t kw, kExpr *def)
-//{
-//	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
-//	if(expr != NULL && IS_Expr(expr)) {
-//		return expr;
-//	}
-//	return def;
-//}
+static kToken* Stmt_token(CTX, kStmt *stmt, keyword_t kw, kToken *def)
+{
+	kToken *tk = (kToken*)kObject_getObjectNULL(stmt, kw);
+	if(tk != NULL && IS_Token(tk)) {
+		return tk;
+	}
+	return def;
+}
 
-#define kStmt_text(STMT, KW, DEF) Stmt_text(_ctx, STMT, KW, DEF)
+static kExpr* Stmt_expr(CTX, kStmt *stmt, keyword_t kw, kExpr *def)
+{
+	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
+	if(expr != NULL && IS_Expr(expr)) {
+		return expr;
+	}
+	return def;
+}
+
 static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
@@ -826,15 +816,26 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 	return def;
 }
 
-//#define kStmt_block(STMT, KW, DEF)  Stmt_block(_ctx, STMT, KW, DEF)
-//static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
-//{
-//	kBlock *bk = (kBlock*)kObject_getObjectNULL(stmt, kw);
-//	if(bk != NULL && IS_Block(bk)) {
-//		return bk;
-//	}
-//	return def;
-//}
+static kbool_t Token_toBRACE(CTX, kToken *tk);
+static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks);
+static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
+{
+	kBlock *bk = (kBlock*)kObject_getObjectNULL(stmt, kw);
+	if(bk != NULL) {
+		if(IS_Token(bk)) {
+			kToken *tk = (kToken*)bk;
+			if (tk->tt == TK_CODE) {
+				Token_toBRACE(_ctx, tk);
+			}
+			if (tk->tt == AST_BRACE) {
+				bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_ks(stmt));
+				kObject_setObject(stmt, kw, bk);
+			}
+		}
+		if(IS_Block(bk)) return bk;
+	}
+	return def;
+}
 
 /* --------------- */
 /* Block */
@@ -866,6 +867,19 @@ static KCLASSDEF BlockDef = {
 	.reftrace = Block_reftrace,
 };
 
+static void Block_insertAfter(CTX, kBlock *bk, kStmt *target, kStmt *stmt)
+{
+	DBG_ASSERT(stmt->parentNULL == NULL);
+	KSETv(stmt->parentNULL, bk);
+	size_t i;
+	for(i = 0; i < kArray_size(bk->blockS); i++) {
+		if(bk->blockS->stmts[i] == target) {
+			kArray_insert(bk->blockS, i+1, stmt);
+			return;
+		}
+	}
+	DBG_ABORT("target was not found!!");
+}
 
 /* --------------- */
 /* Block */

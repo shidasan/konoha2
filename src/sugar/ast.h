@@ -42,7 +42,7 @@ extern "C" {
 static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e);
 
-kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
+static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
 {
 	kBlock *bk = new_(Block, ks);
 	PUSH_GCSTACK(bk);
@@ -71,7 +71,7 @@ static void checkKeyword(CTX, kKonohaSpace *ns, kToken *tk)
 	}
 }
 
-static kbool_t kToken_toBRACE(CTX, kToken *tk)
+static kbool_t Token_toBRACE(CTX, kToken *tk)
 {
 	if(tk->tt == TK_CODE) {
 		INIT_GCSTACK();
@@ -155,7 +155,7 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 		}
 //		if(tk->tt == TK_CODE) {  ???
 //			if (kflag_test(kevalmod->flags, FLAG_METHOD_LAZYCOMPILE)) {
-//				kToken_toBRACE(_ctx, tk);
+//				Token_toBRACE(_ctx, tk);
 //			}
 //		}
 		if(tk->tt == TK_INDENT) {

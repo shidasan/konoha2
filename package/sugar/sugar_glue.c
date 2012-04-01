@@ -1,7 +1,7 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
 
-#define KW_s(s) export->keyword(_ctx, S_text(s), S_size(s), FN_NONAME)
+#define KW_s(s) SUGAR keyword(_ctx, S_text(s), S_size(s), FN_NONAME)
 
 //## void Stmt.setBuild(int buildid);
 static KMETHOD Stmt_setBuild(CTX, ksfp_t *sfp _RIX)
@@ -12,22 +12,22 @@ static KMETHOD Stmt_setBuild(CTX, ksfp_t *sfp _RIX)
 //## Block Stmt.getBlock(String key, Block def);
 static KMETHOD Stmt_getBlock(CTX, ksfp_t *sfp _RIX)
 {
-	kevalshare_t *export = kevalshare;
-	RETURN_(export->Stmt_getBlock(_ctx, sfp[0].stmt, KW_s(sfp[1].s), sfp[2].bk));
+	USING_SUGAR;
+	RETURN_(kStmt_block(sfp[0].stmt, KW_s(sfp[1].s), sfp[2].bk));
 }
 
 //## boolean Stmt.tyCheckExpr(String key, Gamma gma, int typeid, int pol);
 static KMETHOD Stmt_tyCheckExpr(CTX, ksfp_t *sfp _RIX)
 {
-	kevalshare_t *export = kevalshare;
-	RETURNb_(export->Stmt_tyCheckExpr(_ctx, sfp[0].stmt, KW_s(sfp[1].s), sfp[2].gma, (ktype_t)sfp[3].ivalue, (int)sfp[4].ivalue));
+	USING_SUGAR;
+	RETURNb_(SUGAR Stmt_tyCheckExpr(_ctx, sfp[0].stmt, KW_s(sfp[1].s), sfp[2].gma, (ktype_t)sfp[3].ivalue, (int)sfp[4].ivalue));
 }
 
 //## boolean Blook.tyCheckAll(Gamma gma);
 static KMETHOD Block_tyCheckAll(CTX, ksfp_t *sfp _RIX)
 {
-	kevalshare_t *export = kevalshare;
-	RETURNb_(export->Block_tyCheckAll(_ctx, sfp[0].bk, sfp[1].gma));
+	USING_SUGAR;
+	RETURNb_(SUGAR Block_tyCheckAll(_ctx, sfp[0].bk, sfp[1].gma));
 }
 
 static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
@@ -38,8 +38,8 @@ static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
 //## void KonohaSpace.defineSyntaxRule(String keyword, String rule);
 static KMETHOD KonohaSpace_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 {
-	kevalshare_t *export = kevalshare;
-	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
+	USING_SUGAR;
+	ksyntax_t *syn = SUGAR KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->syntaxRule != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding SyntaxRule: %s", S_text(sfp[1].s));
 		KSETv(syn->syntaxRule, new_(Array, 0));
@@ -47,22 +47,22 @@ static KMETHOD KonohaSpace_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 	else {
 		KINITv(syn->syntaxRule, new_(Array, 0));
 	}
-	export->parseSyntaxRule(_ctx, S_text(sfp[2].s), sfp[K_RTNIDX].uline, syn->syntaxRule);
+	SUGAR parseSyntaxRule(_ctx, S_text(sfp[2].s), sfp[K_RTNIDX].uline, syn->syntaxRule);
 }
 
 //## void KonohaSpace.defineStmtTyCheck(String keyword, String methodname);
 static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 {
-	kevalshare_t *export = kevalshare;
+	USING_SUGAR;
 	kmethodn_t mn = ksymbol(S_text(sfp[2].s), S_size(sfp[2].s), MN_NONAME, SYMPOL_METHOD);
-	kMethod *mtd = export->KonohaSpace_getMethodNULL(_ctx, sfp[0].ks, export->cStmt->cid, mn);
+	kMethod *mtd = SUGAR KonohaSpace_getMethodNULL(_ctx, sfp[0].ks, SUGAR cStmt->cid, mn);
 	if(mtd == NULL) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "undefined method: Stmt.%s", S_text(sfp[2].s));
 	}
 	if(!isStmtTyCheck(_ctx, mtd->pa)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "mismatched method: Stmt.%s", S_text(sfp[2].s));
 	}
-	ksyntax_t *syn = export->KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
+	ksyntax_t *syn = SUGAR KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
 	if(syn->StmtTyCheck != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding StmtTyCheck: %s", S_text(sfp[1].s));
 	}

@@ -282,31 +282,37 @@ struct kBlock {
 typedef struct kGamma kGamma;
 
 typedef struct {
-	kflag_t    flag;  kushort_t  index;
+//	kflag_t    flag;  kushort_t  index;
 	ktype_t    ty;    ksymbol_t  fn;
-	union {
-		kToken   *name;
-	};
-	union {
-		kExpr    *value;
-	};
+//	union {
+//		kToken   *name;
+//	};
+//	union {
+//		kExpr    *value;
+//	};
 } gammastack_t ;
 
-typedef struct gmabuf_t {
-	kflag_t                 flag;
-	kflag_t                 cflag;
+#define kGamma_TOPLEVEL        (kflag_t)(1)
+#define kGamma_isTOPLEVEL(GMA)  TFLAG_is(kflag_t, GMA->genv->flag, kGamma_TOPLEVEL)
 
-	struct kKonohaSpace           *ks;
+typedef struct {
+	gammastack_t *vars;
+	size_t varsize;
+	size_t capacity;
+	size_t allocsize;
+} gstack_t ;
+
+typedef struct gmabuf_t {
+	kflag_t  flag;    kflag_t  cflag;
+
+	struct kKonohaSpace     *ks;
 	struct kScript          *scrNUL;
 
 	kcid_t                   this_cid;
 	kcid_t                   static_cid;
 	struct kMethod*          mtd;
-
-	gammastack_t* fvars;
-	int fvarsize; int fcapacity; int fallocsize;
-	gammastack_t* lvars;
-	int lvarsize; int lcapacity; int lallocsize;
+	gstack_t f;
+	gstack_t l;
 	struct kArray           *lvarlst;
 	size_t lvarlst_top;
 } gmabuf_t;
@@ -340,6 +346,7 @@ struct kGamma {
 #define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
 #define KW_EXPR     1
 #define KW_BLOCK    2
+#define KW_TYPE     kevalshare->kw_type
 #define KW_DOT      kevalshare->kw_dot
 #define KW_COMMA    kevalshare->kw_comma
 #define KW_COLON    kevalshare->kw_colon
@@ -360,6 +367,8 @@ struct kGamma {
 #define SYN_RETURN   kevalshare->syn_return
 #define SYN_BREAK    kevalshare->syn_break
 #define SYN_TYPEDECL kevalshare->syn_typedecl
+#define SYN_COMMA    kevalshare->syn_comma
+#define SYN_LET      kevalshare->syn_let
 
 #define FN_this      FN_("this")
 
@@ -393,6 +402,7 @@ typedef struct {
 	keyword_t kw_declmethod;
 	keyword_t kw_decltype;
 	keyword_t kw_params;
+	keyword_t kw_type;
 	keyword_t kw_then;
 	keyword_t kw_else;
 
@@ -402,8 +412,10 @@ typedef struct {
 	struct ksyntax_t *syn_invoke;
 	struct ksyntax_t *syn_params;
 	struct ksyntax_t *syn_return;
-	struct ksyntax_t *syn_break;
+//	struct ksyntax_t *syn_break;
 	struct ksyntax_t *syn_typedecl;
+	struct ksyntax_t *syn_comma;
+	struct ksyntax_t *syn_let;
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
@@ -412,14 +424,19 @@ typedef struct {
 	kExpr* (*Expr_setNConstValue)(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata);
 	kExpr* (*Expr_setVariable)(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int index, int xindex, kGamma *gma);
 
-	kExpr* (*Expr_tyCheckAt)(CTX, kExpr *, size_t, kGamma *, ktype_t, int);
+	kToken* (*Stmt_token)(CTX, kStmt *stmt, keyword_t kw, kToken *def);
+	kExpr* (*Stmt_expr)(CTX, kStmt *stmt, keyword_t kw, kExpr *def);
+	const char* (*Stmt_text)(CTX, kStmt *stmt, keyword_t kw, const char *def);
+	kBlock* (*Stmt_block)(CTX, kStmt *stmt, keyword_t kw, kBlock *def);
+
+	kExpr*     (*Expr_tyCheckAt)(CTX, kExpr *, size_t, kGamma *, ktype_t, int);
 	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
-	kBlock*    (*Stmt_getBlock)(CTX, kStmt *, ksymbol_t, kBlock*);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, ksyntaxdef_t *);
 	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
+
 } kevalshare_t;
 
 typedef struct {
@@ -443,6 +460,12 @@ typedef struct {
 #define TPOL_COERCION       (1 << 2)
 
 #ifdef USING_SUGAR_AS_BUILTIN
+
+#define kStmt_token(STMT, KW, DEF)  Stmt_token(_ctx, STMT, KW, DEF)
+#define kStmt_expr(STMT, KW, DEF)   Stmt_expr(_ctx, STMT, KW, DEF)
+#define kStmt_text(STMT, KW, DEF)   Stmt_text(_ctx, STMT, KW, DEF)
+#define kStmt_block(STMT, KW, DEF)  Stmt_block(_ctx, STMT, KW, DEF)
+
 #define new_ConstValue(T, O)  Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
 #define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
@@ -451,15 +474,21 @@ typedef struct {
 #define kExpr_setVariable(E, B, T, I, I2, G) Expr_setVariable(_ctx, E, B, T, I, I2, G)
 #define kExpr_tyCheckAt(E, N, GMA, T, P)     Expr_tyCheckAt(_ctx, E, N, GMA, T, P)
 #define kStmt_tyCheck(E, NI, GMA, T, P)      Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
+
 #else/*SUGAR_EXPORTS*/
 #define USING_SUGAR                          const kevalshare_t *_e = (const kevalshare_t *)kevalshare
 #define SUGAR                                _e->
-#define TY_KonohaSpace                             _e->cKonohaSpace->cid
+#define TY_KonohaSpace                       _e->cKonohaSpace->cid
 #define TY_Token                             _e->cToken->cid
 #define TY_Stmt                              _e->cStmt->cid
 #define TY_Block                             _e->cBlock->cid
 #define TY_Expr                              _e->cExpr->cid
 #define TY_Gamma                             _e->cGamma->cid
+#define kStmt_token(STMT, KW, DEF)           _e->Stmt_token(_ctx, STMT, KW, DEF)
+#define kStmt_expr(STMT, KW, DEF)            _e->Stmt_expr(_ctx, STMT, KW, DEF)
+#define kStmt_text(STMT, KW, DEF)            _e->Stmt_text(_ctx, STMT, KW, DEF)
+#define kStmt_block(STMT, KW, DEF)           _e->Stmt_block(_ctx, STMT, KW, DEF)
+
 #define new_ConstValue(T, O)                 _e->Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
 #define kExpr_setConstValue(EXPR, T, O)      _e->Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)                _e->Expr_setNConstValue(_ctx, NULL, T, D)

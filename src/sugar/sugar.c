@@ -82,7 +82,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$cname '.'] $name $params [$block]", .StmtTyCheck = StmtTyCheck_declMethod},
-		{ TOKEN("var"),  .type = TY_var, .rule ="$type $expr", },
+		{ TOKEN("var"),  .type = TY_var, .rule ="$type $expr", .StmtTyCheck = StmtTyCheck_declType},
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
 		//	{ TOKEN("dynamic"), .type = TY_dynamic, },
@@ -256,16 +256,21 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->kw_colon = KW_(":");
 	base->kw_declmethod = KW_("void");
 	base->kw_decltype = KW_("var");
+	base->kw_type   = KW_("$type");
 	base->kw_params = KW_("$params");
 	base->kw_then = KW_("then");
 	base->kw_else = KW_("else");
 
 	// export
 	base->keyword             = keyword;
+	base->Stmt_token          = Stmt_token;
+	base->Stmt_block          = Stmt_block;
+	base->Stmt_expr           = Stmt_expr;
+	base->Stmt_text           = Stmt_text;
+
 	base->Expr_setConstValue  = Expr_setConstValue;
 	base->Expr_setNConstValue  = Expr_setNConstValue;
 	base->Expr_setVariable    = Expr_setVariable;
-	base->Stmt_getBlock       = Stmt_getBlock;
 	base->Expr_tyCheckAt      = Expr_tyCheckAt;
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
 	base->Block_tyCheckAll    = Block_tyCheckAll;

@@ -1029,6 +1029,7 @@ typedef struct klib2_t {
 	struct kString* (*Knew_String)(CTX, const char *, size_t, int);
 
 	void (*KArray_add)(CTX, kArray *, kObject *);
+	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
 	void (*KArray_clear)(CTX, kArray *, size_t);
 
 	struct kParam * (*Knew_Param)(CTX, ktype_t, int, kparam_t *);
@@ -1117,6 +1118,7 @@ typedef struct klib2_t {
 
 #define kArray_size(A)            (A)->size
 #define kArray_add(A, V)          (KPI)->KArray_add(_ctx, A, UPCAST(V))
+#define kArray_insert(A, N, V)    (KPI)->KArray_insert(_ctx, A, N, UPCAST(V))
 #define kArray_clear(A, S)        (KPI)->KArray_clear(_ctx, A, S)
 
 #define new_kParam(R,S,P)        (KPI)->Knew_Param(_ctx, R, S, P)
@@ -1218,11 +1220,13 @@ REF_t *kstack_tail(CTX, size_t min);
 #define KNH_ASSERT(a)    assert(a)
 #define DBG_ASSERT(a)    assert(a)
 #define DBG_P(fmt, ...)  _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__)
+#define DBG_ABORT(fmt, ...) _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__); abort()
 #define DUMP_P(fmt, ...)  fprintf(stderr, fmt, ## __VA_ARGS__)
 #else
 #define KNH_ASSERT(a)
 #define DBG_ASSERT(a)
 #define DBG_P(fmt, ...)
+#define DBG_ABORT(fmt, ...)
 #define DUMP_P(fmt, ...)
 #endif
 
