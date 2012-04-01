@@ -39,12 +39,13 @@ static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 
 static void syntax_reftrace(CTX, kmape_t *p)
 {
-	ksyntax_t *kw = (ksyntax_t*)p->uvalue;
-	BEGIN_REFTRACE(4);
-	KREFTRACEn(kw->syntaxRule);
-	KREFTRACEn(kw->StmtAdd);
-	KREFTRACEn(kw->StmtTyCheck);
-	KREFTRACEn(kw->ExprTyCheck);
+	ksyntax_t *syn = (ksyntax_t*)p->uvalue;
+	BEGIN_REFTRACE(5);
+	KREFTRACEn(syn->syntaxRule);
+	KREFTRACEn(syn->StmtAdd);
+	KREFTRACEn(syn->TopStmtTyCheck);
+	KREFTRACEn(syn->StmtTyCheck);
+	KREFTRACEn(syn->ExprTyCheck);
 	END_REFTRACE();
 }
 
@@ -140,9 +141,15 @@ static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
 
 static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef)
 {
+	knh_Fmethod pStmtAdd = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
+	kMethod *mStmtAdd = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
+	ksyntax_t *syn_expr = KonohaSpace_syntax(_ctx, ks, 1, 0);
 	while(syndef->name != NULL) {
 		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
 		ksyntax_t* syn = KonohaSpace_syntax(_ctx, ks, keyid, 1);
+		if(keyid == 1 && syn_expr == NULL) {
+			syn_expr = syn;
+		}
 		syn->token = syndef->name;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
@@ -168,19 +175,37 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 			syn->right = syndef->right;
 		}
 		if(syndef->StmtAdd != NULL) {
-			KINITv(syn->StmtAdd, new_kMethod(0, 0, 0, NULL, syndef->StmtAdd));
+			if(syndef->StmtAdd != pStmtAdd) {
+				pStmtAdd = syndef->StmtAdd;
+				mStmtAdd = new_kMethod(0, 0, 0, NULL, pStmtAdd);
+			}
+			KINITv(syn->StmtAdd, mStmtAdd);
+		}
+		if(syndef->TopStmtTyCheck != NULL) {
+			if(syndef->TopStmtTyCheck != pStmtTyCheck) {
+				pStmtTyCheck = syndef->TopStmtTyCheck;
+				mStmtTyCheck = new_kMethod(0, 0, 0, NULL, pStmtTyCheck);
+			}
+			KINITv(syn->TopStmtTyCheck, mStmtTyCheck);
 		}
 		if(syndef->StmtTyCheck != NULL) {
-			KINITv(syn->StmtTyCheck, new_kMethod(0, 0, 0, NULL, syndef->StmtTyCheck));
+			if(syndef->StmtTyCheck != pStmtTyCheck) {
+				pStmtTyCheck = syndef->StmtTyCheck;
+				mStmtTyCheck = new_kMethod(0, 0, 0, NULL, pStmtTyCheck);
+			}
+			KINITv(syn->StmtTyCheck, mStmtTyCheck);
 		}
 		if(syndef->ExprTyCheck != NULL) {
-			KINITv(syn->ExprTyCheck, new_kMethod(0, 0, 0, NULL, syndef->ExprTyCheck));
-			ksyntax_t *e = KonohaSpace_syntax(_ctx, ks, 1, 0);
+			if(syndef->ExprTyCheck != pExprTyCheck) {
+				pExprTyCheck = syndef->ExprTyCheck;
+				mExprTyCheck = new_kMethod(0, 0, 0, NULL, pExprTyCheck);
+			}
+			KINITv(syn->ExprTyCheck, mExprTyCheck);
 			if(syn->syntaxRule == NULL) {
-				KINITv(syn->syntaxRule, e->syntaxRule);
+				KINITv(syn->syntaxRule, syn_expr->syntaxRule);
 			}
 			if(syn->StmtTyCheck == NULL) {
-				KINITv(syn->StmtTyCheck, e->StmtTyCheck);
+				KINITv(syn->StmtTyCheck, syn_expr->StmtTyCheck);
 			}
 		}
 		DBG_ASSERT(syn == KonohaSpace_syntax(_ctx, ks, keyid, 0));

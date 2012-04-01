@@ -57,7 +57,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
-		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
+		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .TopStmtTyCheck = StmtTyCheck_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
 		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
 		{ TOKEN("$type"),  .StmtAdd = StmtAdd_type, },
 		{ TOKEN("$cname"), .StmtAdd = StmtAdd_cname, },

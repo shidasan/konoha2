@@ -110,12 +110,12 @@ typedef struct {
 
 typedef struct ksyntax_t {
 	const char *token;
-	keyword_t keyid;
-	kflag_t   flag;
+	keyword_t keyid;  kflag_t flag;
 	kArray   *syntaxRule;
 	kMethod  *StmtAdd;
-	kMethod  *ExprTyCheck;
+	kMethod  *TopStmtTyCheck;
 	kMethod  *StmtTyCheck;
+	kMethod  *ExprTyCheck;
 	// binary
 	kshort_t priority;   kshort_t right;//
 	kmethodn_t op2;      // a if b
@@ -133,6 +133,7 @@ typedef struct ksyntaxdef_t {
 	int priority_op2; int right;
 	int type;
 	knh_Fmethod StmtAdd;
+	knh_Fmethod TopStmtTyCheck;
 	knh_Fmethod StmtTyCheck;
 	knh_Fmethod ExprTyCheck;
 } ksyntaxdef_t;
