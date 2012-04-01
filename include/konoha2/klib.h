@@ -41,7 +41,11 @@ static inline kString* S_cid_(CTX, ktype_t ty)
 
 static inline kString* S_ty_(CTX, ktype_t ty)
 {
-	return CT_(ty)->name;
+	if(ty < _ctx->share->ca.max) {
+		return CT_(ty)->name;
+	}
+	DBG_P("undefined type sym=%d", ty);
+	return TS_EMPTY;
 }
 
 #define S_fn(fn)   S_fn_(_ctx, fn)

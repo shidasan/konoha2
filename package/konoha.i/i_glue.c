@@ -41,6 +41,7 @@ static void Method_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kMethod *mtd = sfp[pos].mtd;
 	kParam *pa = mtd->pa;
 	char mbuf[128];
+	DBG_ASSERT(IS_Method(mtd));
 	if(level != 0) {
 		MethodAttribute_p(_ctx, mtd, wb);
 	}
@@ -51,6 +52,9 @@ static void Method_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 		for(i = 0; i < pa->psize; i++) {
 			if(i > 0) {
 				kwb_putc(wb, ',', ' ');
+			}
+			if(FN_isCOERCION(pa->p[i].fn)) {
+				kwb_printf(wb, "@Coercion ");
 			}
 			kwb_printf(wb, "%s %s", T_ty(pa->p[i].ty), T_fn(MN_UNMASK(pa->p[i].fn)));
 		}
@@ -77,6 +81,7 @@ static void dumpMethod(CTX, ksfp_t *sfp, kMethod *mtd)
 {
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
+	KSETv(sfp[2].o, mtd);
 	O_ct(mtd)->p(_ctx, sfp, 2, &wb, 1);
 	fprintf(stdout, "%s\n", kwb_top(&wb, 1));
 	kwb_free(&wb);
@@ -91,13 +96,15 @@ static void dumpMethodList(CTX, ksfp_t *sfp, size_t start, kArray *list)
 	}
 }
 
-static KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
+KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 {
 	INIT_GCSTACK();
 	kArray *list = _ctx->stack->gcstack;
 	size_t start = kArray_size(list);
 	kKonohaSpace *ks = sfp[0].ks;
 	const kclass_t *ct = O_ct(sfp[1].o);
+	DBG_P("*** man %s", T_cid(ct->cid));
+//	((kclass_t*)CT_Method)->p = Method_p;
 	while(ks != NULL) {
 		if(ks->methodsNULL != NULL) {
 			copyMethodList(_ctx, ct->cid, ks->methodsNULL, list);

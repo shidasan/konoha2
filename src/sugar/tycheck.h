@@ -211,7 +211,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 		}
 		if(CT_isa(_ctx, texpr->ty, req_ty)) {
 			DBG_P("SUBTYPE type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
-			if(TY_isUnbox(texpr->ty) && TY_isUnbox(req_ty)) {
+			if(TY_isUnbox(texpr->ty) && !TY_isUnbox(req_ty)) {
 				DBG_P("BOXING type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
 				return new_BoxingExpr(_ctx, expr, req_ty);
 			}

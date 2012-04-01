@@ -676,6 +676,8 @@ static KMETHOD KonohaSpace_p(CTX, ksfp_t *sfp _RIX)
 #define _F(F)   (intptr_t)(F)
 #define TY_KonohaSpace  (CT_KonohaSpace)->cid
 
+KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX);
+
 void MODEVAL_defMethods(CTX)
 {
 	int FN_msg = FN_("msg");
@@ -684,6 +686,7 @@ void MODEVAL_defMethods(CTX)
 		_Public, _F(KonohaSpace_p), TY_void, TY_KonohaSpace, MN_("p"), 1, TY_String, FN_msg,
 		_Public, _F(KonohaSpace_importPackage_), TY_Boolean, TY_KonohaSpace, MN_("importPackage"), 1, TY_String, FN_pkgname,
 		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("loadScript"), 1, TY_String, FN_("path"),
+//		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
