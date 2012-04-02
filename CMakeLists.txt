@@ -219,39 +219,15 @@ macro(add_konoha_test scr)
 set(TEST_CMD ${CMAKE_CURRENT_SOURCE_DIR}/misc/check_stmt.sh)
 set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)
 set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
-add_test(NAME ${scr} COMMAND ${TEST_CMD} ${TEST_BIN} ${TEST_DIR} ${scr})
-add_test(NAME "${scr}_run" COMMAND ${TEST_BIN} "${TEST_DIR}/${scr}.k")
+#add_test(NAME ${scr} COMMAND ${TEST_CMD} ${TEST_BIN} ${TEST_DIR} ${scr})
+add_test(NAME "${scr}_run" COMMAND ${TEST_BIN} "${TEST_DIR}/${scr}")
 endmacro(add_konoha_test scr)
 
-set(TEST_CODE
-	"20120227_leak"
-	"20120227_return"
-	"20120328_int_call"
-	"binop"
-	"call"
-	"empty"
-	"expr"
-	"fact"
-	"fibo"
-	"fibo2"
-	"fibo_call"
-	"float"
-	"getter"
-	"if"
-	"if2"
-	"if3"
-	"method"
-	"p"
-	"return"
-	"ropestring"
-	"string"
-	"usymbol"
-	"var"
-	"while"
-)
-
-foreach(arg ${TEST_CODE})
-	add_konoha_test(${arg})
+file(GLOB test_files "${CMAKE_CURRENT_SOURCE_DIR}/test/parser/*.k")
+foreach(f ${test_files})
+	set(_tmp)
+	POP(${f} "/" _tmp)
+	add_konoha_test(${_tmp})
 endforeach()
 
 add_executable(test_Kmalloc ./test/test_Kmalloc.c)
