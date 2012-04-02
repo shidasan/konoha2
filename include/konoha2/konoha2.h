@@ -192,12 +192,12 @@ typedef struct {
 		void  *body;
 		char  *buf;
 		const struct kclass_t **ClassTBL;
+		struct keyvals_t *keyvals;
 		REF_t *refhead;
 	};
 	size_t size;
 	size_t max;
 } karray_t ;
-
 
 typedef struct kwb_t {
 	karray_t *w;
@@ -402,6 +402,10 @@ typedef kushort_t       kmethodn_t;
 #define FN_NONAME          ((ksymbol_t)-1)
 #define FN_NEWID           ((ksymbol_t)-2)
 #define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
+#define FN_BOXED           KFLAG_H0
+#define FN_UNBOX(fn)       (fn & ~(FN_BOXED))
+#define FN_isBOXED(fn)     ((fn & FN_BOXED) == FN_BOXED)
+
 #define FN_COERCION        KFLAG_H0
 #define FN_Coersion        FN_COERCION
 #define FN_isCOERCION(fn)  ((fn & FN_COERCION) == FN_COERCION)
@@ -650,7 +654,6 @@ typedef struct kpromap_t {
 } kpromap_t;
 
 extern void kpromap_each(CTX, kpromap_t *p, void *arg, void (*f)(CTX, void *, kprodata_t *d));
-#define OBJECT_MASK KFLAG_H0
 #define O_cid(o)            (((o)->h.ct)->cid)
 #define O_bcid(o)           (((o)->h.ct)->bcid)
 #define O_ct(o)             ((o)->h.ct)
@@ -708,7 +711,9 @@ struct kInt {
 #define CFLAG_String              kClass_Immutable|kClass_Final
 #define OFLAG_String              MAGICFLAG(0)
 #define TY_String                 CLASS_String
+#define TY_TEXT                   TY_void    /*special use for const char*/
 #define IS_String(o)              (O_cid(o) == CLASS_String)
+
 /*
  * Bit encoding for Rope String
  * 5432109876543210
@@ -1003,6 +1008,7 @@ typedef struct klib2_t {
 	void  (*Kfree)(CTX, void *, size_t);
 
 	void  (*Karray_init)(CTX, karray_t *, size_t, size_t);
+	void  (*Karray_resize)(CTX, karray_t *, size_t, size_t);
 	void  (*Karray_expand)(CTX, karray_t *, size_t, size_t);
 	void  (*Karray_free)(CTX, karray_t *, size_t);
 
@@ -1076,6 +1082,8 @@ typedef struct klib2_t {
 #define KNH_FREE(p, size)      (KPI)->Kfree(_ctx, p, size)
 
 #define KARRAY_INIT(VAR, init, STRUCT)      (KPI)->Karray_init(_ctx, (karray_t*)&(VAR), init, sizeof(STRUCT))
+#define KARRAY_RESIZE(VAR, newsize, STRUCT)      (KPI)->Karray_resize(_ctx, (karray_t*)&(VAR), newsize, sizeof(STRUCT))
+
 #define KARRAY_EXPAND(VAR, min, STRUCT)     (KPI)->Karray_expand(_ctx, (karray_t*)&(VAR), min, sizeof(STRUCT))
 #define KARRAY_FREE(VAR, STRUCT)            (KPI)->Karray_free(_ctx, (karray_t*)&(VAR), sizeof(STRUCT))
 

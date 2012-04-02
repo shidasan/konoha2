@@ -17,6 +17,23 @@ static void karray_init(CTX, karray_t *m, size_t max, size_t w)
 	m->body = (void*)KNH_ZMALLOC(max * w);
 }
 
+static void karray_resize(CTX, karray_t *m, size_t newitems, size_t w)
+{
+	size_t oldsize = m->max * w;
+	size_t newsize = newitems * w;
+	char *newbody = (char*)KNH_MALLOC(newsize);
+	if(oldsize < newsize) {
+		memcpy(newbody, m->body, oldsize);
+		bzero(newbody + oldsize, newsize - oldsize);
+	}
+	else {
+		memcpy(newbody, m->body, newsize);
+	}
+	KNH_FREE(m->body, oldsize);
+	m->buf = newbody;
+	m->max = newitems;
+}
+
 static void karray_expand(CTX, karray_t *m, size_t min, size_t w)
 {
 	DBG_ASSERT(m->size <= m->max);
@@ -387,6 +404,7 @@ static void Kdbg_p(const char *file, const char *func, int line, const char *fmt
 void klib2_init(klib2_t *l)
 {
 	l->Karray_init   = karray_init;
+	l->Karray_resize = karray_resize;
 	l->Karray_expand = karray_expand;
 	l->Karray_free   = karray_free;
 	l->Kwb_init      = Kwb_init;

@@ -132,7 +132,7 @@ void kpromap_each(CTX, kpromap_t *p, void *arg, void (*f)(CTX, void *, kprodata_
 
 static kObject* Object_getObjectNULL(CTX, kObject *o, ksymbol_t key)
 {
-	kprodata_t *d = kpromap_get(o->h.proto, key | OBJECT_MASK);
+	kprodata_t *d = kpromap_get(o->h.proto, key | FN_BOXED);
 	if(d != NULL) {
 		return d->oval;
 	}
@@ -141,7 +141,7 @@ static kObject* Object_getObjectNULL(CTX, kObject *o, ksymbol_t key)
 
 static void Object_setObject(CTX, kObject *o, ksymbol_t key, ktype_t ty, kObject *val)
 {
-	kpromap_set(_ctx, &o->h.proto, key | OBJECT_MASK, ty, (uintptr_t)val);
+	kpromap_set(_ctx, &o->h.proto, key | FN_BOXED, ty, (uintptr_t)val);
 }
 
 void kpromap_reftrace(CTX, kpromap_t *p)
@@ -150,7 +150,7 @@ void kpromap_reftrace(CTX, kpromap_t *p)
 	kprodata_t *d = p->datamap;
 	BEGIN_REFTRACE(p->capacity);
 	for(i = 0; i < p->capacity; i++) {
-		if((d->key & OBJECT_MASK) == OBJECT_MASK) {
+		if((d->key & FN_BOXED) == FN_BOXED) {
 			KREFTRACEv(d->oval);
 		}
 		d++;

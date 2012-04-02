@@ -49,13 +49,13 @@ static void syntax_reftrace(CTX, kmape_t *p)
 	END_REFTRACE();
 }
 
-static void symtbl_reftrace(CTX, kmape_t *p)
-{
-	BEGIN_REFTRACE(2);
-	KREFTRACEn(p->skey);
-	KREFTRACEn(p->ovalue);
-	END_REFTRACE();
-}
+//static void symtbl_reftrace(CTX, kmape_t *p)
+//{
+//	BEGIN_REFTRACE(2);
+//	KREFTRACEn(p->skey);
+//	KREFTRACEn(p->ovalue);
+//	END_REFTRACE();
+//}
 
 static void KonohaSpace_reftrace(CTX, kRawPtr *o)
 {
@@ -63,10 +63,18 @@ static void KonohaSpace_reftrace(CTX, kRawPtr *o)
 	if(ks->syntaxMapNN != NULL) {
 		kmap_reftrace(ks->syntaxMapNN, syntax_reftrace);
 	}
-	if(ks->symtblMapSO != NULL) {
-		kmap_reftrace(ks->symtblMapSO, symtbl_reftrace);
+//	if(ks->symtblMapSO != NULL) {
+//		kmap_reftrace(ks->symtblMapSO, symtbl_reftrace);
+//	}
+	BEGIN_REFTRACE(ks->cl.size + 3);
+	if(ks->cl.size > 0) {
+		size_t i;
+		for(i = 0; i < ks->cl.size; i++) {
+			if(FN_isBOXED(ks->cl.keyvals[i].key)) {
+				KREFTRACEv(ks->cl.keyvals[i].value);
+			}
+		}
 	}
-	BEGIN_REFTRACE(3);
 	KREFTRACEn(ks->parentNULL);
 	KREFTRACEn(ks->script);
 	KREFTRACEn(ks->methodsNULL);
@@ -84,6 +92,9 @@ static void KonohaSpace_free(CTX, kRawPtr *o)
 	if(ks->syntaxMapNN != NULL) {
 		kmap_free(ks->syntaxMapNN, syntax_free);
 	}
+	if(ks->cl.size > 0) {
+		KARRAY_FREE(ks->cl, keyvals_t);
+	}
 }
 
 static KCLASSDEF KonohaSpaceDef = {
@@ -92,6 +103,69 @@ static KCLASSDEF KonohaSpaceDef = {
 	.reftrace = KonohaSpace_reftrace,
 	.free = KonohaSpace_free,
 };
+
+
+static keyvals_t* KonohaSpace_findConstValue(CTX, kKonohaSpace *ks, ksymbol_t ukey)
+{
+	size_t min = 0, max = ks->cl.size;
+	while(min < max) {
+		size_t p = (max + min) / 2;
+		ksymbol_t key = FN_UNBOX(ks->cl.keyvals[p].key);
+		if(key == ukey) return ks->cl.keyvals + p;
+		if(key < ukey) {
+			min = p;
+		}
+		else {
+			max = p;
+		}
+	}
+	return NULL;
+}
+
+static int comprKeyVal(const void *a, const void *b)
+{
+	int akey = FN_UNBOX(((keyvals_t*)a)->key);
+	int bkey = FN_UNBOX(((keyvals_t*)b)->key);
+	return akey - bkey;
+}
+
+static KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d)
+{
+	INIT_GCSTACK();
+	keyvals_t kv;
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	while(d[0] != NULL) {
+		kv.key = kusymbol(d[0], (size_t)d[1]) | FN_BOXED;
+		kv.ty  = (ktype_t)(uintptr_t)d[2];
+		if(kv.ty == TY_TEXT) {
+			kv.ty = TY_String;
+			kv.svalue = new_kString(d[3], strlen(d[3]), 0);
+			PUSH_GCSTACK(kv.value);
+		}
+		else if(TY_isUnbox(kv.ty)) {
+			kv.key = FN_UNBOX(kv.key);
+			kv.uvalue = (uintptr_t)d[3];
+		}
+		else {
+			kv.value = (kObject*)d[3];
+		}
+		kwb_write(&wb, (const char*)(&kv), sizeof(keyvals_t));
+	}
+	keyvals_t *v = (keyvals_t*)kwb_top(&wb, 0);
+	size_t nitems = kwb_size(&wb) / sizeof(keyvals_t);
+	if(ks->cl.size == 0) {
+		KARRAY_INIT(ks->cl, nitems, keyvals_t);
+	}
+	else {
+		size_t s = ks->cl.size;
+		KARRAY_RESIZE(ks->cl, ks->cl.size + nitems, keyvals_t);
+		memcpy(ks->cl.keyvals + s, v, kwb_size(&wb));
+	}
+	qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
+	kwb_free(&wb);
+	RESET_GCSTACK();
+}
 
 static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, int isnew)
 {
@@ -219,7 +293,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
 	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
 	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
-//	base->syn_break = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
+//	base->syn_break  = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
 	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
 	base->syn_comma    = KonohaSpace_syntax(_ctx, base->rootks, KW_(","), 0);
 	base->syn_let      = KonohaSpace_syntax(_ctx, base->rootks, KW_("="), 0);
@@ -723,8 +797,8 @@ static KCLASSDEF StmtDef = {
 
 static void _dumpToken(CTX, void *arg, kprodata_t *d)
 {
-	if((d->key & OBJECT_MASK) == OBJECT_MASK) {
-		keyword_t key = ~OBJECT_MASK & d->key;
+	if((d->key & FN_BOXED) == FN_BOXED) {
+		keyword_t key = ~FN_BOXED & d->key;
 		DUMP_P("key='%s': ", T_kw(key));
 		if(IS_Token(d->oval)) {
 			dumpToken(_ctx, (kToken*)d->oval);

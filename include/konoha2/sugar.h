@@ -78,11 +78,11 @@ typedef const KPACKDEF_ KPACKDEF;
 typedef KPACKDEF* (*Fpackageinit)(void);
 
 typedef struct {
-	kpkg_t               pid;
-	kString             *name;
+	kpkg_t                    pid;
+	kString                  *name;
 	struct kKonohaSpace       *ks;
-	KPACKDEF            *packdef;
-	kline_t              export_script;
+	KPACKDEF                  *packdef;
+	kline_t                    export_script;
 } kpackage_t;
 
 #define VAR_StmtAdd(STMT, NAME, TLS, S, E) \
@@ -138,6 +138,16 @@ typedef struct ksyntaxdef_t {
 	knh_Fmethod ExprTyCheck;
 } ksyntaxdef_t;
 
+typedef struct keyvals_t {
+	ksymbol_t key;
+	ktype_t   ty;
+	union {
+		kObject *value;
+		kString *svalue;
+		uintptr_t uvalue;
+	};
+} keyvals_t;
+
 typedef struct kKonohaSpace kKonohaSpace;
 
 struct kKonohaSpace {
@@ -145,13 +155,13 @@ struct kKonohaSpace {
 	kpkg_t packid;  kpkg_t packdom;
 	struct kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
-	struct kmap_t   *symtblMapSO;
+//	struct kmap_t   *symtblMapSO;
 	//
 	void                *gluehdr;
 	struct kObject      *script;
-	kcid_t static_cid;    // kKonohaSpace_getStaticMethodNULL
-	kcid_t function_cid;
+	kcid_t static_cid;   kcid_t function_cid;
 	struct kArray*       methodsNULL;
+	karray_t cl;
 };
 
 typedef kshort_t    ksugar_t;
