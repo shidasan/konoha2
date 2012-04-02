@@ -92,6 +92,7 @@ set(PACKAGES
 	konoha.i
 	konoha.assert
 	posix.process
+	konoha.socket
 )
 
 find_library(HAVE_LIBDL NAMES dl)
