@@ -65,7 +65,7 @@ static kbool_t assert_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pli
 {
 	USING_SUGAR;
 	ksyntaxdef_t SYNTAX[] = {
-		{ TOKEN("assert"), .rule = "'assert' '(' $expr ')'", .StmtTyCheck = StmtTyCheck_assert},
+		{ TOKEN("assert"), .rule = "'assert' '(' $expr ')'", .TopStmtTyCheck = StmtTyCheck_assert, .StmtTyCheck = StmtTyCheck_assert},
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
