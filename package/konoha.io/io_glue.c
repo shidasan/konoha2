@@ -9,6 +9,7 @@
 } while (0)
 #define KNH_NTRACE2(...) KNH_TODO("ntrace")
  #define knh_stack_argc(_ctx, sfp)   (_ctx->esp - (sfp))
+
 static kString *kwb_newString(CTX, kwb_t *wb, int flg)
 {
 	return new_kString(kwb_top(wb, flg), kwb_size(wb), SPOL_POOL);

@@ -87,6 +87,7 @@ set(PACKAGES
 	konoha.pcre
 	konoha.io
 	konoha.loop
+	konoha.bytes
 	konoha.class
 	konoha.assignment
 	konoha.i
