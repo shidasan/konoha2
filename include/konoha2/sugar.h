@@ -434,11 +434,11 @@ typedef struct {
 	kExpr*     (*Expr_tyCheckAt)(CTX, kExpr *, size_t, kGamma *, ktype_t, int);
 	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
+	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, ksyntaxdef_t *);
 	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
-
 } kevalshare_t;
 
 typedef struct {

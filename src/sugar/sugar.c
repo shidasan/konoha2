@@ -274,6 +274,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->Expr_tyCheckAt      = Expr_tyCheckAt;
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
 	base->Block_tyCheckAll    = Block_tyCheckAll;
+	base->Stmt_toExprCall     = Stmt_toExprCall;
 	base->parseSyntaxRule     = parseSyntaxRule;
 	base->KonohaSpace_syntax        = KonohaSpace_syntax;
 	base->KonohaSpace_defineSyntax  = KonohaSpace_defineSyntax;

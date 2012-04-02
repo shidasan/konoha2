@@ -643,24 +643,25 @@ static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(r);
 }
 
-///* ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------ */
 
-//static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
-//{
-//	kExpr *expr = new_ConsExpr(_ctx, SYN_CALL, 0);
-//	int i;
-//	va_list ap;
-//	va_start(ap, n);
-//	for(i = 0; i < n; i++) {
-//		kObject *v =  (kObject*)va_arg(ap, kObject*);
-//		assert(v != NULL);
-//		kArray_add(expr->consNUL, v);
-//	}
-//	va_end(ap);
-//	kObject_setObject(stmt, 1, expr);
-//	stmt->syn = SYN_EXPR;
-//	stmt->build = TSTMT_EXPR;
-//}
+static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
+{
+	kExpr *expr = new_ConsExpr(_ctx, SYN_CALL, 0);
+	int i;
+	va_list ap;
+	va_start(ap, n);
+	kArray_add(expr->consNUL, mtd);
+	for(i = 0; i < n; i++) {
+		kObject *v =  (kObject*)va_arg(ap, kObject*);
+		assert(v != NULL);
+		kArray_add(expr->consNUL, v);
+	}
+	va_end(ap);
+	kObject_setObject(stmt, 1, expr);
+	stmt->syn = SYN_EXPR;
+	stmt->build = TSTMT_EXPR;
+}
 
 ///* ------------------------------------------------------------------------ */
 

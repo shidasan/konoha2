@@ -90,6 +90,7 @@ set(PACKAGES
 	konoha.class
 	konoha.assignment
 	konoha.i
+	konoha.assert
 	posix.process
 )
 
