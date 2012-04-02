@@ -976,12 +976,12 @@ void kshare_init(CTX, kcontext_t *ctx)
 	share->usymbolMapNN = kmap_init(0);
 }
 
-static void key_reftrace(CTX, kmape_t *p)
-{
-	BEGIN_REFTRACE(1);
-	KREFTRACEv(p->skey);
-	END_REFTRACE();
-}
+//static void key_reftrace(CTX, kmape_t *p)
+//{
+//	BEGIN_REFTRACE(1);
+//	KREFTRACEv(p->skey);
+//	END_REFTRACE();
+//}
 
 static void val_reftrace(CTX, kmape_t *p)
 {
@@ -1020,12 +1020,11 @@ void kshare_reftrace(CTX, kcontext_t *ctx)
 		if (ct->constNameMapSO) kmap_reftrace(ct->constNameMapSO, keyval_reftrace);
 		if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
 	}
-	kmap_reftrace(share->symbolMapNN, key_reftrace);
-	kmap_reftrace(share->usymbolMapNN, NULL);
-	kmap_reftrace(share->classnameMapNN, key_reftrace);
-	/* TODO(imasahiro) what is typeof urnMapNN? Map<String, int>? */
-	kmap_reftrace(share->uriMapNN, key_reftrace);
-	kmap_reftrace(share->pkgMapNN, key_reftrace);
+	//kmap_reftrace(share->symbolMapNN, key_reftrace);
+	//kmap_reftrace(share->usymbolMapNN, key_reftrace);
+	//kmap_reftrace(share->classnameMapNN, key_reftrace);
+	//kmap_reftrace(share->uriMapNN, key_reftrace);
+	//kmap_reftrace(share->pkgMapNN, key_reftrace);
 
 	BEGIN_REFTRACE(10);
 	KREFTRACEv(share->constNull);
