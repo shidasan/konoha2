@@ -84,7 +84,7 @@ set(PACKAGES
 	konoha.string
 	konoha.float
 	konoha.llvm
-	konoha.regex
+	konoha.pcre
 	konoha.io
 	konoha.loop
 	konoha.class
