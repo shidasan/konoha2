@@ -304,51 +304,32 @@ static const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body
 	return ct;
 }
 
-static kuri_t Kuri(CTX, const char *name, size_t len)
+static ksymbol_t KMAP_getcode(CTX, kmap_t *symmap, kArray *list, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
 {
-	kmap_t *kmp = _ctx->share->uriMapNN;
-	uintptr_t hcode = strhash(name, len);
-	kmape_t *e = kmap_get(kmp, hcode);
-	while(e != NULL) {
-		if(e->hcode == hcode && S_size(e->skey) == len && strncmp(S_text(e->skey), name, len) == 0) {
-			return (kuri_t)e->uvalue;
-		}
-	}
-	kline_t uri = kArray_size(_ctx->share->uriList) << (sizeof(kushort_t) * 8);
-	kString *sname = new_kString(name, len, SPOL_POOL);
-	kArray_add(_ctx->share->uriList, sname);
-	e = kmap_newentry(kmp, hcode);
-	KINITv(e->skey, sname);
-	e->uvalue = uri;
-	kmap_add(kmp, e);
-	return uri;
-}
-
-// symbol
-
-static ksymbol_t ksymbol_gethcode(CTX, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
-{
-	kmap_t  *symmap = _ctx->share->symbolMapNN;
 	kmape_t *e = kmap_get(symmap, hcode);
 	while(e != NULL) {
 		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
-//			DBG_P("GET symbol='%s', hcode=%ld, symbol=%d", name, hcode, (ksymbol_t)e->uvalue);
 			return (ksymbol_t)e->uvalue;
 		}
 		e = e->next;
 	}
 	if(def == FN_NEWID) {
 		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
-		uintptr_t sym = kArray_size(_ctx->share->symbolList);
-		kArray_add(_ctx->share->symbolList, skey);
+		uintptr_t sym = kArray_size(list);
+		kArray_add(list, skey);
 		e = kmap_newentry(symmap, hcode);
 		KINITv(e->skey, skey);
 		e->uvalue = sym;
 		kmap_add(symmap, e);
-//		DBG_P("NEW symbol='%s', hcode=%ld, symbol=%d", name, hcode, (ksymbol_t)e->uvalue);
 		return (ksymbol_t)e->uvalue;
 	}
 	return def;
+}
+
+static kuri_t Kuri(CTX, const char *name, size_t len)
+{
+	uintptr_t hcode = strhash(name, len);
+	return KMAP_getcode(_ctx, _ctx->share->uriMapNN, _ctx->share->uriList, name, len, hcode, FN_NEWID);
 }
 
 static const char* ksymbol_norm(char *buf, const char *t, size_t *lenR, uintptr_t *hcodeR, ksymbol_t *mask, int pol)
@@ -408,16 +389,39 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 			}
 			hcode = ch + (31 * hcode);
 		}
-		return ksymbol_gethcode(_ctx, name, len, hcode, def);
+		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
 	}
 	else {
 		char buf[256];
 		ksymbol_t sym, mask = 0;
 		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
-		sym = ksymbol_gethcode(_ctx, name, len, hcode, def);
+		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
 		if(def == sym) return def;
 		return sym | mask;
 	}
+}
+
+static const char* usymbol_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
+{
+	uintptr_t i, hcode = 0;
+	char *p = (char*)t;
+	for(i = 0; i < len; i++) {
+		int ch = toupper(t[i]);     // Int_MAX and INT_MAX are same
+		if(ch == '_') continue;   // INT_MAX and INTMAX  are same
+		*p = ch; p++;
+		hcode = ch + (31 * hcode);
+	}
+	*p=0;
+	return t;
+}
+
+static ksymbol_t Kusymbol(CTX, const char *name, size_t len)
+{
+	uintptr_t hcode = 0;
+	char buf[len+1];
+	name = usymbol_norm(buf, len+1, name, len, &hcode);
+	len = strlen(name);
+	return KMAP_getcode(_ctx, _ctx->share->usymbolMapNN, _ctx->share->usymbolList, name, len, hcode, FN_NEWID);
 }
 
 // -------------------------------------------------------------------------
@@ -919,9 +923,10 @@ static const kclass_t *addClassDef(CTX, kString *name, KCLASSDEF *cdef, kline_t 
 
 static void kshare_initklib2(klib2_t *l)
 {
-	l->Kclass  = Kclass;
-	l->Kuri    = Kuri;
-	l->Ksymbol = Ksymbol;
+	l->Kclass   = Kclass;
+	l->Kuri     = Kuri;
+	l->Ksymbol  = Ksymbol;
+	l->Kusymbol = Kusymbol;
 	l->Knew_Object = new_Object;
 	l->KObject_getObjectNULL = Object_getObjectNULL;
 	l->KObject_setObject = Object_setObject;
@@ -963,8 +968,10 @@ void kshare_init(CTX, kcontext_t *ctx)
 	share->uriMapNN = kmap_init(0);
 	KINITv(share->pkgList, new_(Array, 8));
 	share->pkgMapNN = kmap_init(0);
-	KINITv(share->symbolList, new_(Array, 0));
+	KINITv(share->symbolList, new_(Array, 32));
 	share->symbolMapNN = kmap_init(0);
+	KINITv(share->usymbolList, new_(Array, 32));
+	share->usymbolMapNN = kmap_init(0);
 }
 
 static void key_reftrace(CTX, kmape_t *p)
@@ -1011,14 +1018,14 @@ void kshare_reftrace(CTX, kcontext_t *ctx)
 		if (ct->constNameMapSO) kmap_reftrace(ct->constNameMapSO, keyval_reftrace);
 		if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
 	}
-
 	kmap_reftrace(share->symbolMapNN, key_reftrace);
+	kmap_reftrace(share->usymbolMapNN, NULL);
 	kmap_reftrace(share->classnameMapNN, key_reftrace);
 	/* TODO(imasahiro) what is typeof urnMapNN? Map<String, int>? */
 	kmap_reftrace(share->uriMapNN, key_reftrace);
 	kmap_reftrace(share->pkgMapNN, key_reftrace);
 
-	BEGIN_REFTRACE(8);
+	BEGIN_REFTRACE(10);
 	KREFTRACEv(share->constNull);
 	KREFTRACEv(share->constTrue);
 	KREFTRACEv(share->constFalse);
@@ -1028,6 +1035,7 @@ void kshare_reftrace(CTX, kcontext_t *ctx)
 	KREFTRACEv(share->uriList);
 	KREFTRACEv(share->pkgList);
 	KREFTRACEv(share->symbolList);
+	KREFTRACEv(share->usymbolList);
 	END_REFTRACE();
 }
 
@@ -1052,6 +1060,7 @@ void kshare_free(CTX, kcontext_t *ctx)
 	kmap_free(share->uriMapNN, NULL);
 	kmap_free(share->pkgMapNN, NULL);
 	kmap_free(share->symbolMapNN, NULL);
+	kmap_free(share->usymbolMapNN, NULL);
 
 	kshare_freeCT(_ctx);
 	KARRAY_FREE(share->ca, kclass_t);

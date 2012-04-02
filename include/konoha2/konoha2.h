@@ -292,11 +292,13 @@ typedef struct kshare_t {
 	struct kArray        *emptyArray;
 	struct kParam        *nullParam;
 
-	struct kArray         *uriList;
-	struct kmap_t         *uriMapNN;
-	struct kArray         *symbolList;
+	struct kArray         *uriList;    // file, http://
+	struct kmap_t         *uriMapNN;   //
+	struct kArray         *symbolList;   // name, f,
 	struct kmap_t         *symbolMapNN;
-	struct kArray         *pkgList;
+	struct kArray         *usymbolList;  // NAME, Name, INT_MAX Int_MAX
+	struct kmap_t         *usymbolMapNN;
+	struct kArray         *pkgList;   // are you using this?
 	struct kmap_t         *pkgMapNN;
 } kshare_t ;
 
@@ -1022,6 +1024,7 @@ typedef struct klib2_t {
 
 	const kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
 	ksymbol_t (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
+	ksymbol_t (*Kusymbol)(CTX, const char*, size_t);
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 	kuri_t    (*Kuri)(CTX, const char *, size_t);
 
@@ -1105,6 +1108,7 @@ typedef struct klib2_t {
 #define MN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_METHOD)
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
 
+#define kusymbol(T, L)            (KPI)->Kusymbol(_ctx, T, L)
 
 #define kuri(T,L)                 (KPI)->Kuri(_ctx, T, L)
 #define KURI(T)                   (KPI)->Kuri(_ctx, T, sizeof(T)-1)
