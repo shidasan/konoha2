@@ -401,6 +401,7 @@ typedef kushort_t       kmethodn_t;
 #define FN_NEWID           ((ksymbol_t)-2)
 #define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
 #define FN_COERCION        KFLAG_H0
+#define FN_Coersion        FN_COERCION
 #define FN_isCOERCION(fn)  ((fn & FN_COERCION) == FN_COERCION)
 
 #define MN_NONAME    ((kmethodn_t)-1)
@@ -1135,10 +1136,11 @@ typedef struct klib2_t {
 #define kloadMethodData(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)
 
 #define CRIT_  0
-#define ERR_   0
-#define WARN_  1
-#define INFO_  2
-#define DEBUG_ 3
+#define ERR_   1
+#define WARN_  2
+#define INFO_  3
+#define PRINT_ 4
+#define DEBUG_ 5
 
 #define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)

@@ -216,7 +216,7 @@ static kclass_t* new_CT(CTX, KCLASSDEF *s, kline_t pline)
 	if(s != NULL) {
 		ct->cflag  = s->cflag;
 		ct->bcid   = s->bcid;
-		ct->supcid = s->supcid;
+		ct->supcid = s->supcid == 0 ? CLASS_Object : s->supcid;
 		ct->fields = s->fields;
 		ct->fsize  = s->fsize;
 		ct->fallocsize = s->fallocsize;
@@ -1083,6 +1083,7 @@ void kshare_init_methods(CTX)
 		_Public, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
 		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
 		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
+		_Public, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);

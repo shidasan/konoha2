@@ -301,15 +301,19 @@ static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 
 // -------------------------------------------------------------------------
 
-#define CTX_isTERM()     1
+/* debug mode */
+int konoha_debug;
+#define CTX_isTERM()     CTX_isInteractive()
 
 static const char* T_BEGIN(CTX, int pe)
 {
 	if(CTX_isTERM()) {
 		switch(pe) {
-			case 0/*ERROR*/: return "\x1b[1m\x1b[31m";
-			case 1/*WARNING*/: return "\x1b[1m\x1b[31m";
-			case 2/*INFO*/: return "\x1b[1m";
+			case CRIT_:
+			case ERR_/*ERROR*/: return "\x1b[1m\x1b[31m";
+			case WARN_/*WARNING*/: return "\x1b[1m\x1b[31m";
+			case INFO_/*INFO*/: return "\x1b[1m";
+			case PRINT_/*INFO*/: return "\x1b[1m";
 			default:/*DEBUG*/ return "";
 		}
 	}
@@ -334,25 +338,28 @@ static void Kreport(CTX, int level, const char *msg)
 static const char *T_ERR(int level)
 {
 	switch(level) {
-		case 0/*ERROR*/: return "(error)";
-		case 1/*WARNING*/: return "(warning)";
-		case 2/*INFO, NOTICE*/: return "(info)";
-		default/*DEBUG*/: return "(debug)";
+		case CRIT_:
+		case ERR_/*ERROR*/: return "(error) ";
+		case WARN_/*WARNING*/: return "(warning) ";
+		case INFO_/*INFO, NOTICE*/: return "(info) ";
+		case PRINT_: return "";
+		default/*DEBUG*/: return "(debug) ";
 	}
 }
 
 static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
+	if(level == DEBUG_ && !konoha_debug) return;
 	va_list ap;
 	va_start(ap , fmt);
 	fflush(stdout);
 	fputs(T_BEGIN(_ctx, level), stdout);
 	if(pline != 0) {
 		const char *file = S_text(S_uri(pline));
-		fprintf(stdout, " - (%s:%d) %s " , filename(file), (kushort_t)pline, T_ERR(level));
+		fprintf(stdout, " - (%s:%d) %s" , filename(file), (kushort_t)pline, T_ERR(level));
 	}
 	else {
-		fprintf(stdout, " - %s " , T_ERR(level));
+		fprintf(stdout, " - %s" , T_ERR(level));
 	}
 	vfprintf(stdout, fmt, ap);
 	fputs(T_END(_ctx, level), stdout);
@@ -360,9 +367,6 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	va_end(ap);
 }
 
-// -------------------------------------------------------------------------
-/* debug mode */
-int konoha_debug;
 
 // -------------------------------------------------------------------------
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)

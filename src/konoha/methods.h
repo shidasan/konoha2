@@ -94,6 +94,14 @@ static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)
 	RETURNi_((kint_t)strtoll(S_text(sfp[0].s), NULL, 10));
 }
 
+
+// void System.p(@Coercion String msg);
+static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
+{
+	kline_t uline = sfp[K_RTNIDX].uline;
+	kreportf(PRINT_, uline, "%s\n", S_text(sfp[1].s));
+}
+
 #ifdef __cplusplus
 }
 #endif
