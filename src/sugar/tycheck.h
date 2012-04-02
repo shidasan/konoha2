@@ -347,10 +347,23 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
 	kToken *tk = expr->tkNUL;
-	kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->ks, S_text(tk->text), S_size(tk->text));
-	kExpr *texpr = (v == NULL) ?
-		kToken_p(tk, ERR_, "undefined symbol: %s", kToken_s(tk)) : kExpr_setConstValue(expr, O_cid(v), v);
-	RETURN_(texpr);
+	ksymbol_t ukey = kusymbol(S_text(tk->text), S_size(tk->text));
+	keyvals_t *kv = KonohaSpace_getConstNULL(_ctx, gma->genv->ks, ukey);
+	if(kv != NULL) {
+		if(FN_isBOXED(kv->key)) {
+			kExpr_setConstValue(expr, kv->ty, kv->value);
+		}
+		else {
+			kExpr_setNConstValue(expr, kv->ty, kv->uvalue);
+		}
+		RETURN_(expr);
+	}
+	else {
+		kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->ks, S_text(tk->text), S_size(tk->text));
+		kExpr *texpr = (v == NULL) ?
+			kToken_p(tk, ERR_, "undefined symbol: %s", kToken_s(tk)) : kExpr_setConstValue(expr, O_cid(v), v);
+		RETURN_(texpr);
+	}
 }
 
 

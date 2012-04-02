@@ -1054,6 +1054,7 @@ typedef struct klib2_t {
 
 	kcid_t  (*KKonohaSpace_getcid)(CTX, struct kKonohaSpace *, const char *, size_t, kcid_t def);
 	void    (*KloadMethodData)(CTX, struct kKonohaSpace *, intptr_t *d);
+	void    (*KloadConstData)(CTX, struct kKonohaSpace *, const char **d, kline_t);
 
 	void  (*KCodeGen)(CTX, struct kMethod *, struct kBlock *);
 	void (*Kreport)(CTX, int level, const char *msg);
@@ -1146,6 +1147,27 @@ typedef struct klib2_t {
 #define ksetModule(N,D,P)        (KPI)->KsetModule(_ctx, N, D, P)
 #define kaddClassDef(NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, NAME, DEF, UL)
 #define kloadMethodData(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)
+
+#define kloadConstData(KS, DEF, UL)    (KPI)->KloadConstData(_ctx, KS, (const char**)&(DEF), UL)
+
+typedef struct {
+	const char *key;
+	uintptr_t ty;
+	kint_t value;
+} KDEFINE_INT_CONST;
+
+typedef struct {
+	const char *key;
+	uintptr_t ty;
+	const char* value;
+} KDEFINE_TEXT_CONST;
+
+typedef struct {
+	const char *key;
+	uintptr_t ty;
+	kfloat_t value;
+} KDEFINE_FLOAT_CONST;
+
 
 #define CRIT_  0
 #define ERR_   1

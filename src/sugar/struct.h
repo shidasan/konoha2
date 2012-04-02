@@ -104,8 +104,7 @@ static KCLASSDEF KonohaSpaceDef = {
 	.free = KonohaSpace_free,
 };
 
-
-static keyvals_t* KonohaSpace_findConstValue(CTX, kKonohaSpace *ks, ksymbol_t ukey)
+static keyvals_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey)
 {
 	size_t min = 0, max = ks->cl.size;
 	while(min < max) {
@@ -129,40 +128,56 @@ static int comprKeyVal(const void *a, const void *b)
 	return akey - bkey;
 }
 
-static KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d)
+static void KonohaSpace_mergeConstData(CTX, kKonohaSpace *ks, keyvals_t *kvs, size_t nitems, kline_t pline)
+{
+	if(nitems > 0) {
+		size_t s = ks->cl.size;
+		if(s == 0) {
+			KARRAY_INIT(ks->cl, nitems, keyvals_t);
+		}
+		else {
+			KARRAY_RESIZE(ks->cl, s + nitems, keyvals_t);
+		}
+		memcpy(ks->cl.keyvals + s, kvs, nitems * sizeof(keyvals_t));
+		ks->cl.size = s + nitems;
+		qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
+		int i, pkey = FN_UNBOX(ks->cl.keyvals[0].key);
+		for(i=1; i < ks->cl.size; i++) {
+			int key = FN_UNBOX(ks->cl.keyvals[i].key);
+			if(pkey == key) {
+
+			}
+			pkey = key;
+		}
+	}
+}
+
+static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kline_t pline)
 {
 	INIT_GCSTACK();
 	keyvals_t kv;
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(d[0] != NULL) {
-		kv.key = kusymbol(d[0], (size_t)d[1]) | FN_BOXED;
-		kv.ty  = (ktype_t)(uintptr_t)d[2];
+		DBG_P("key='%s'", d[0]);
+		kv.key = kusymbol(d[0], 255) | FN_BOXED;
+		kv.ty  = (ktype_t)(uintptr_t)d[1];
 		if(kv.ty == TY_TEXT) {
 			kv.ty = TY_String;
-			kv.svalue = new_kString(d[3], strlen(d[3]), 0);
+			kv.svalue = new_kString(d[2], strlen(d[2]), 0);
 			PUSH_GCSTACK(kv.value);
 		}
 		else if(TY_isUnbox(kv.ty)) {
 			kv.key = FN_UNBOX(kv.key);
-			kv.uvalue = (uintptr_t)d[3];
+			kv.uvalue = (uintptr_t)d[2];
 		}
 		else {
-			kv.value = (kObject*)d[3];
+			kv.value = (kObject*)d[2];
 		}
 		kwb_write(&wb, (const char*)(&kv), sizeof(keyvals_t));
+		d += 3;
 	}
-	keyvals_t *v = (keyvals_t*)kwb_top(&wb, 0);
-	size_t nitems = kwb_size(&wb) / sizeof(keyvals_t);
-	if(ks->cl.size == 0) {
-		KARRAY_INIT(ks->cl, nitems, keyvals_t);
-	}
-	else {
-		size_t s = ks->cl.size;
-		KARRAY_RESIZE(ks->cl, ks->cl.size + nitems, keyvals_t);
-		memcpy(ks->cl.keyvals + s, v, kwb_size(&wb));
-	}
-	qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
+	KonohaSpace_mergeConstData(_ctx, ks, (keyvals_t*)kwb_top(&wb, 0), kwb_size(&wb) / sizeof(keyvals_t), pline);
 	kwb_free(&wb);
 	RESET_GCSTACK();
 }

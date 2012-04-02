@@ -404,15 +404,17 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 static const char* usymbol_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
 {
 	uintptr_t i, hcode = 0;
-	char *p = (char*)t;
+	char *p = buf;
 	for(i = 0; i < len; i++) {
+		if(t[i]==0) break;
 		int ch = toupper(t[i]);     // Int_MAX and INT_MAX are same
 		if(ch == '_') continue;   // INT_MAX and INTMAX  are same
 		*p = ch; p++;
 		hcode = ch + (31 * hcode);
 	}
 	*p=0;
-	return t;
+	*hcodeR=hcode;
+	return (const char*)buf;
 }
 
 static ksymbol_t Kusymbol(CTX, const char *name, size_t len)

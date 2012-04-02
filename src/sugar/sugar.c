@@ -224,6 +224,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	klib2_t *l = ctx->lib2;
 	l->KKonohaSpace_getcid   = KonohaSpace_getcid;
 	l->KloadMethodData = KonohaSpace_loadMethodData;
+	l->KloadConstData  = KonohaSpace_loadConstData;
 	l->Kraise = Kraise;
 
 	KINITv(base->keywordList, new_(Array, 32));
@@ -682,6 +683,12 @@ void MODEVAL_defMethods(CTX)
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
+	KDEFINE_INT_CONST IntData[] = {
+		{"INT_MAX", TY_Int, KINT_MAX},
+		{"INT_MIN", TY_Int, KINT_MIN},
+		{}
+	};
+	kloadConstData(kevalshare->rootks, IntData, 0);
 }
 
 #ifdef __cplusplus

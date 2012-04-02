@@ -168,7 +168,6 @@ static	kbool_t float_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 		.p     = Float_p,
 	};
 	base->cFloat = kaddClassDef(NULL, &FloatDef, pline);
-
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
 		_Public|_Const, _F(Float_opADD), TY_Float, TY_Float, MN_("opADD"), 1, TY_Float, FN_x,
@@ -187,7 +186,12 @@ static	kbool_t float_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 		_Public|_Const, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(ks, methoddata);
+	KDEFINE_FLOAT_CONST FloatData[] = {
+		{"PI", TY_Float, 3.14159},
+		{}
+	};
+	kloadConstData(ks, FloatData, pline);
 	return true;
 }
 
@@ -209,6 +213,8 @@ static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t plin
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+
+
 	return true;
 }
 
