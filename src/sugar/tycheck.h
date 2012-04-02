@@ -37,7 +37,6 @@ static gmabuf_t *Gamma_push(CTX, kGamma *gma, gmabuf_t *newone)
 	gma->genv = newone;
 	newone->lvarlst = kevalmod->lvarlst;
 	newone->lvarlst_top = kArray_size(kevalmod->lvarlst);
-	DBG_P("push lvarlst.. size=%d", newone->lvarlst_top);
 	return oldone;
 }
 
@@ -46,8 +45,13 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 	gmabuf_t *newone = gma->genv;
 	assert(checksum == newone);
 	gma->genv = oldone;
-	DBG_P("pop lvarlst.. size%d=>%d", kArray_size(newone->lvarlst), newone->lvarlst_top);
 	kArray_clear(newone->lvarlst, newone->lvarlst_top);
+	if(newone->l.allocsize > 0) {
+		KNH_FREE(newone->l.vars, newone->l.allocsize);
+	}
+	if(newone->f.allocsize > 0) {
+		KNH_FREE(newone->f.vars, newone->f.allocsize);
+	}
 	return newone;
 }
 
@@ -552,12 +556,12 @@ static KMETHOD StmtTyCheck_expr(CTX, ksfp_t *sfp _RIX)  // $expr
 	RETURNb_(r);
 }
 
-static kbool_t Stmt_TyCheck(CTX, ksyntax_t *syn, kStmt *stmt, kGamma *gma)
+static kbool_t Stmt_TyCheck(CTX, kMethod *mtd, kStmt *stmt, kGamma *gma)
 {
 	BEGIN_LOCAL(lsfp, 5);
 	KSETv(lsfp[K_CALLDELTA+0].o, (kObject*)stmt);
 	KSETv(lsfp[K_CALLDELTA+1].o, (kObject*)gma);
-	KCALL(lsfp, 0, syn->StmtTyCheck, 1);
+	KCALL(lsfp, 0, mtd, 1);
 	END_LOCAL();
 	return lsfp[0].bvalue;
 }
@@ -572,11 +576,13 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 		dumpStmt(_ctx, stmt);
 		if(syn == NULL) continue;
 		int estart = kerrno;
-		if(syn->StmtTyCheck == NULL) {
-			SUGAR_P(ERR_, stmt->uline, 0, "undefined statement type checker: %s", syn->token);
+		kMethod *mtd = kGamma_isTOPLEVEL(gma) ? syn->TopStmtTyCheck : syn->StmtTyCheck;
+		if(mtd == NULL) {
+			const char *msg = kGamma_isTOPLEVEL(gma) ? "at the top level" : "inside method";
+			SUGAR_P(ERR_, stmt->uline, -1, "'%s' is not available %s", syn->token, msg);
 			kStmt_toERR(stmt, estart);
 		}
-		else if(!Stmt_TyCheck(_ctx, syn, stmt, gma)) {
+		else if(!Stmt_TyCheck(_ctx, mtd, stmt, gma)) {
 			kStmt_toERR(stmt, estart);
 		}
 		if(stmt->syn == SYN_ERR) {
@@ -780,7 +786,7 @@ static kParam *Stmt_newMethodParam(CTX, kStmt *stmt, kGamma* gma)
 {
 	kParam *pa = (kParam*)kObject_getObjectNULL(stmt, KW_PARAMS);
 	if(pa == NULL || !IS_Param(pa)) {
-		if(!Stmt_TyCheck(_ctx, SYN_PARAMS, stmt, gma)) {
+		if(!Stmt_TyCheck(_ctx, SYN_PARAMS->TopStmtTyCheck, stmt, gma)) {
 			return NULL;
 		}
 	}
@@ -951,7 +957,6 @@ static void Gamma_shiftBlockIndex(CTX, gmabuf_t *genv)
 	int shift = genv->f.varsize;
 	for(i = genv->lvarlst_top; i < size; i++) {
 		kExpr *expr = a->exprs[i];
-		DBG_P("i=%d expr %p", i, expr);
 		DBG_ASSERT(expr->build == TEXPR_BLOCKLOCAL_);
 		expr->index += shift;
 		expr->build = TEXPR_LOCAL;
@@ -968,8 +973,8 @@ static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, k
 		.mtd = mtd,
 		.ks = ks,
 		.this_cid = (mtd)->cid,
-		.f.vars = fvars, .f.capacity = 32,
-		.l.vars = lvars, .l.capacity = 32,
+		.f.vars = fvars, .f.capacity = 32, .f.varsize = 0, .f.allocsize = 0,
+		.l.vars = lvars, .l.capacity = 32, .l.varsize = 0, .l.allocsize = 0,
 	};
 	GAMMA_PUSH(gma, &newgma);
 	Gamma_initParam(_ctx, &newgma, mtd->pa);
@@ -1060,8 +1065,8 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *k
 		.mtd = mtd,
 		.ks = ks,
 		.this_cid     = (mtd)->cid,
-		.f.vars = fvars, .f.capacity = 32,
-		.l.vars = lvars, .l.capacity = 32,
+		.f.vars = fvars, .f.capacity = 32, .f.varsize = 0, .f.allocsize = 0,
+		.l.vars = lvars, .l.capacity = 32, .l.varsize = 0, .l.allocsize = 0,
 	};
 	GAMMA_PUSH(gma, &newgma);
 	Gamma_initIt(_ctx, &newgma, mtd->pa);

@@ -3,109 +3,96 @@
 
 // --------------------------------------------------------------------------
 
-//const char *structname;
-//kcid_t     cid;         kflag_t    cflag;
-//kcid_t     bcid;        kcid_t     supcid;
-//size_t     cstruct_size;
-//kfield_t   *fields;
-//kushort_t  fsize;        kushort_t fallocsize;
-//KCLASSSPI;
+static KMETHOD Fmethod_getter(CTX, ksfp_t *sfp _RIX)
+{
+	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	RETURN_((sfp[0].o)->fields[delta]);
+}
+static KMETHOD Fmethod_ngetter(CTX, ksfp_t *sfp _RIX)
+{
+	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	RETURNd_((sfp[0].o)->ndata[delta]);
+}
+static KMETHOD Fmethod_setter(CTX, ksfp_t *sfp _RIX)
+{
+	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	KSETv((sfp[0].o)->fields[delta], sfp[1].o);
+	RETURN_(sfp[1].o);
+}
+static KMETHOD Fmethod_nsetter(CTX, ksfp_t *sfp _RIX)
+{
+	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	(sfp[0].o)->ndata[delta] = sfp[1].ndata;
+	RETURNd_(sfp[1].ndata);
+}
 
-//static KMETHOD Fmethod_getter(CTX, ksfp_t *sfp _RIX)
+static KMETHOD Fmethod_getterP(CTX, ksfp_t *sfp _RIX)
+{
+	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+	ksymbol_t key = (ksymbol_t)mtd->delta;
+	kObject *v = kObject_getObjectNULL(sfp[0].o, key);
+	if(v == NULL) v = knull(CT_(mtd->pa->rtype));
+	RETURN_(v);
+}
+
+static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
+{
+	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_ngetter : Fmethod_getter;
+	kParam *pa = new_kParam(type, 0, NULL);
+	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
+	mtd->delta = idx;
+	return mtd;
+}
+
+static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
+{
+	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_nsetter : Fmethod_setter;
+	kparam_t p = {type, FN_("x")};
+	kParam *pa = new_kParam(type, 1, &p);
+	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
+	mtd->delta = idx;
+	return mtd;
+}
+
+static intptr_t Method_indexOfGetterSetterField(kMethod *mtd)
+{
+	knh_Fmethod f = mtd->fcall_1;
+	if(f== Fmethod_getter || f == Fmethod_ngetter || f == Fmethod_setter || f == Fmethod_nsetter) {
+		return (intptr_t)mtd->delta;
+	}
+	return -1;
+}
+
+//static KMETHOD Fmethod_ngetterP(CTX, ksfp_t *sfp _RIX)
 //{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	RETURN_((sfp[0].ox)->fields[delta]);
+//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+//	ksymbol_t key = (ksymbol_t)mtd->delta;
+//	uintptr_t u = kObject_getNDATA(sfp[0].o, key);
+//	RETURNd_(v);
 //}
-//static KMETHOD Fmethod_ngetter(CTX, ksfp_t *sfp _RIX)
+//static KMETHOD Fmethod_setterP(CTX, ksfp_t *sfp _RIX)
 //{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	kunbox_t *data = (kunbox_t*)(&(sfp[0].ox->fields[delta]));
-//	RETURNd_(data[0]);
-//}
-//static KMETHOD Fmethod_setter(CTX, ksfp_t *sfp _RIX)
-//{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	KSETv((sfp[0].ox)->fields[delta], sfp[1].o);
+//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+//	ksymbol_t key = (ksymbol_t)mtd->delta;
+//	kObject_setObject(sfp[0].o, key, sfp[1].o);
 //	RETURN_(sfp[1].o);
 //}
-//static KMETHOD Fmethod_nsetter(CTX, ksfp_t *sfp _RIX)
+//static KMETHOD Fmethod_nsetterP(CTX, ksfp_t *sfp _RIX)
 //{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	kunbox_t *ndata = (kunbox_t*)(&((sfp[0].ox)->fields[delta]));
-//	ndata[0] = sfp[1].ndata;
-//	RETURNd_(ndata[0]);
+//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+//	ksymbol_t key = (ksymbol_t)mtd->delta;
+//	kObject_setDATA(sfp[0].o, key, sfp[1].ndata);
+//	RETURNd_(sfp[1].ndata);
 //}
-//static KMETHOD Fmethod_kgetter(CTX, ksfp_t *sfp _RIX)
-//{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	RETURN_((sfp[0].p)->kfields[delta]);
-//}
-//static KMETHOD Fmethod_kngetter(CTX, ksfp_t *sfp _RIX)
-//{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	kunbox_t *data = (kunbox_t*)(&(sfp[0].p->kfields[delta]));
-//	RETURNd_(data[0]);
-//}
-//static KMETHOD Fmethod_ksetter(CTX, ksfp_t *sfp _RIX)
-//{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	KSETv((sfp[0].p)->kfields[delta], sfp[1].o);
-//	RETURN_(sfp[1].o);
-//}
-//static KMETHOD Fmethod_knsetter(CTX, ksfp_t *sfp _RIX)
-//{
-//	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-//	kunbox_t *ndata = (kunbox_t*)(&((sfp[0].p)->kfields[delta]));
-//	ndata[0] = sfp[1].ndata;
-//	RETURNd_(ndata[0]);
-//}
-//
-//static knh_Fmethod accessors[8] = {
-//	Fmethod_getter, Fmethod_setter, Fmethod_ngetter, Fmethod_nsetter,
-//	Fmethod_kgetter, Fmethod_ksetter, Fmethod_kngetter, Fmethod_knsetter,
-//};
-//
-//#define _SETTER  1
-//#define _NDATA   2
-//#define _CPPOBJ  4
-//
-//static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
-//{
-//	//knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_ngetter : Fmethod_getter;
-//	knh_Fmethod f = accessors[(TY_isUnbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
-//	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
-//	DP(mtd)->delta = idx;
-//	KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
-//	return mtd;
-//}
-//
-//static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
-//{
-//	//knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_nsetter : Fmethod_setter;
-//	knh_Fmethod f = accessors[_SETTER|(TY_isUnbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
-//	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
-//	DP(mtd)->delta = idx;
-//	KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, FN_UNMASK(mn)));
-//	return mtd;
-//}
-//
-//kindex_t knh_Method_indexOfGetterField(kMethod *o)
-//{
-//	knh_Fmethod f = SP(o)->fcall_1;
-//	if(f== Fmethod_getter || f == Fmethod_ngetter) {
-//		return (kindex_t)DP(o)->delta;
-//	}
-//	return -1;
-//}
-//
-//kindex_t knh_Method_indexOfSetterField(kMethod *o)
-//{
-//	knh_Fmethod f = SP(o)->fcall_1;
-//	if(f == Fmethod_setter || f == Fmethod_nsetter) {
-//		return (kindex_t)DP(o)->delta;
-//	}
-//	return -1;
-//}
+
+static intptr_t CT_indexOfClassField(const kclass_t *ct, ksymbol_t fn)
+{
+	intptr_t i = ct->fsize;
+	for(i = ct->fsize - 1; i >=0; i--) {
+		if(ct->fields[i].fn == fn) break;
+	}
+	return i;
+}
 
 // --------------------------------------------------------------------------
 
@@ -137,24 +124,29 @@ static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(c->cid);
 }
 
-// int KonohaSpace.defineClassField(int cid, int ty, String name, Object *value);
+// int KonohaSpace.defineClassField(int cid, int flag, int ty, String name, Object *value);
 static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 {
-	kclass_t *ct = (kclass_t*)kclass((kcid_t)sfp[1].ivalue, sfp[K_RTNIDX].uline);
+	kcid_t cid = (kcid_t)sfp[1].ivalue;
+	kflag_t flag = (kflag_t)sfp[2].ivalue;
+	ktype_t ty = (ktype_t)sfp[3].ivalue;
+	kString *name = sfp[4].s;
+	kObject *value = sfp[5].o;
+	kclass_t *ct = (kclass_t*)kclass(cid, sfp[K_RTNIDX].uline);
 	if(!CT_isUNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "all fields are defined: %s", T_cid(ct->cid));
 		kraise(0);
 	}
 	int pos = ct->fsize;
-	ktype_t ty = (ktype_t)sfp[2].ivalue;
 	ct->fsize += 1;
+	ct->fields[pos].flag = flag;
 	ct->fields[pos].ty = ty;
-	ct->fields[pos].fn = ksymbol(S_text(sfp[3].s), S_size(sfp[3].s), FN_NEWID, SYMPOL_NAME);
+	ct->fields[pos].fn = ksymbol(S_text(name), S_size(name), FN_NEWID, SYMPOL_NAME);
 	if(TY_isUnbox(ty)) {
-		ct->nulvalNUL->ndata[pos] = O_unbox(sfp[4].o);
+		ct->nulvalNUL->ndata[pos] = O_unbox(value);
 	}
 	else {
-		kObject *v = (IS_NULL(sfp[4].o)) ? knull(O_ct(sfp[4].o)) : sfp[4].o;
+		kObject *v = (IS_NULL(value)) ? knull(O_ct(value)) : value;
 		KSETv(ct->nulvalNUL->ndata[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
