@@ -1,6 +1,7 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
 #include <unistd.h>
+#include <signal.h>
 
 //## @Static @Public Int System.getpid();
 static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
@@ -17,13 +18,23 @@ static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
+#define _KVi(T) #T, TY_Int, T
+
 static	kbool_t process_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
+	KDEFINE_INT_CONST IntData[] = {
+		{_KVi(SIGHUP)},
+		{_KVi(SIGINT)},
+		{_KVi(SIGABRT)},
+		{_KVi(SIGKILL)},
+		{}
+	};
+	kloadConstData(kevalshare->rootks, IntData, 0);
 	return true;
 }
 

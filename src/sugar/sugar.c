@@ -615,11 +615,19 @@ static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
 	return pack;
 }
 
+static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline_t pline)
+{
+	if(target->cl.size > 0) {
+		KonohaSpace_mergeConstData(_ctx, ks, target->cl.keyvals, target->cl.size, pline);
+	}
+}
+
 static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname, kline_t pline)
 {
 	kbool_t res = 0;
 	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
 	if(pack != NULL) {
+		KonohaSpace_merge(_ctx, ks, pack->ks, pline);
 		if(pack->packdef->initKonohaSpace != NULL) {
 			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
 		}

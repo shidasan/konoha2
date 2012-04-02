@@ -112,7 +112,7 @@ static keyvals_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey
 		ksymbol_t key = FN_UNBOX(ks->cl.keyvals[p].key);
 		if(key == ukey) return ks->cl.keyvals + p;
 		if(key < ukey) {
-			min = p;
+			min = p + 1;
 		}
 		else {
 			max = p;
