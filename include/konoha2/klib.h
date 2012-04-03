@@ -62,7 +62,8 @@ static inline kString* S_fn_(CTX, ksymbol_t sym)
 
 static inline const char* filename(const char *str)
 {
-	char *p = strrchr(str, '/');
+	/*XXX g++ 4.4.5 need char* cast to compile it. */
+	char *p = (char *) strrchr(str, '/');
 	return (p == NULL) ? str : (const char*)p+1;
 }
 
