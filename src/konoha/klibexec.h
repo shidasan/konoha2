@@ -713,6 +713,10 @@ void klib2_init(klib2_t *l)
 	l->Kmap_get      = Kmap_getentry;
 	l->Kmap_add      = Kmap_add;
 	l->Kmap_remove   = Kmap_remove;
+	l->Kfileid     = Kfileid;
+	l->Kpack         = Kpack;
+	l->Kuname = Kuname;
+	l->Ksymbol  = Ksymbol;
 	l->KTsymbol      = KTsymbol;
 	l->Kreport       = Kreport;
 	l->Kreportf      = Kreportf;

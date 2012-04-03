@@ -1036,7 +1036,7 @@ typedef struct klib2_t {
 	void (*Kmap_reftrace)(CTX, kmap_t *, void (*)(CTX, kmape_t*));
 	void (*Kmap_free)(CTX, kmap_t *, void (*)(CTX, void *));
 
-	kfileid_t   (*Kfileid)(CTX, const char *, size_t, ksymbol_t def);
+	kline_t     (*Kfileid)(CTX, const char *, size_t, ksymbol_t def);
 	kpack_t     (*Kpack)(CTX, const char *, size_t, ksymbol_t def);
 	kuname_t    (*Kuname)(CTX, const char*, size_t, ksymbol_t def);
 	ksymbol_t   (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
@@ -1129,13 +1129,15 @@ typedef struct klib2_t {
 #define MN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_METHOD)
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
 
+#define FILEID_NATIVE             0
 #define FILEID_(T)                (KPI)->Kfileid(_ctx, T, sizeof(T)-1, FN_NEWID)
 #define kfileid(T,L,DEF)          (KPI)->Kfileid(_ctx, T, L, DEF)
+#define PN_konoha                 0
+#define PN_sugar                  1
 #define PN_(T)                    (KPI)->Kpack(_ctx, T, sizeof(T)-1, FN_NEWID)
 #define kpack(T,L,DEF)            (KPI)->Kpack(_ctx, T, L, DEF)
 #define UN_(T)                    (KPI)->Kuname(_ctx, T, sizeof(T)-1, FN_NEWID)
 #define kuname(T, L, DEF)         (KPI)->Kuname(_ctx, T, L, DEF)
-
 
 #define new_kObject(C, A)         (KPI)->Knew_Object(_ctx, C, (void*)(A))
 #define new_(C, A)                (k##C*)(KPI)->Knew_Object(_ctx, CT_##C, (void*)(A))

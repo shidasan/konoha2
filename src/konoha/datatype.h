@@ -663,9 +663,6 @@ static const kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, klin
 static void kshare_initklib2(klib2_t *l)
 {
 	l->Kclass   = Kclass;
-	l->Kfileid     = Kfileid;
-	l->Ksymbol  = Ksymbol;
-	l->Kuname = Kuname;
 	l->Knew_Object = new_Object;
 	l->KObject_getObject = Object_getObjectNULL;
 	l->KObject_setObject = Object_setObject;
@@ -688,24 +685,12 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	ctx->share = share;
 	kshare_initklib2(_ctx->lib2);
 	KARRAY_INIT(share->ca, K_CLASSTABLE_INIT, kclass_t);
-	share->classnameMapNN = kmap_init(0);
 	KDEFINE_CLASS **dd = DATATYPES;
 	while(*dd != NULL) {
 		new_CT(_ctx, NULL, *dd, 0);
 		dd++;
 	}
-//	knh_ClassTBL_setConstPool(_ctx, ClassTBL(CLASS_Int));
-//	knh_ClassTBL_setConstPool(_ctx, ClassTBL(CLASS_String));
-	//
-	KINITv(share->constNull, new_(Object, NULL));
-	kObject_setNullObject(share->constNull, 1);
-	KINITv(share->constTrue, new_(Boolean, 1));
-	KINITv(share->constFalse, new_(Boolean, 0));
-	KINITv(share->nullParam,  new_(Param, NULL));
-	KINITv(share->emptyString, new_(String, NULL));
-	KINITv(share->emptyArray, new_(Array, 0));
-	initStructData(_ctx);
-
+	share->classnameMapNN = kmap_init(0);
 	KINITv(share->fileidList, new_(Array, 8));
 	share->fileidMapNN = kmap_init(0);
 	KINITv(share->packList, new_(Array, 8));
@@ -714,6 +699,18 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	share->symbolMapNN = kmap_init(0);
 	KINITv(share->unameList, new_(Array, 32));
 	share->unameMapNN = kmap_init(0);
+	//
+	KINITv(share->constNull, new_(Object, NULL));
+	kObject_setNullObject(share->constNull, 1);
+	KINITv(share->constTrue, new_(Boolean, 1));
+	KINITv(share->constFalse, new_(Boolean, 0));
+	KINITv(share->nullParam,  new_(Param, NULL));
+	KINITv(share->emptyString, new_(String, NULL));
+	KINITv(share->emptyArray, new_(Array, 0));
+	FILEID_("(konoha.c)");
+	PN_("konoha");    // PKG_konoha
+	PN_("sugar");     // PKG_sugar
+	initStructData(_ctx);
 }
 
 //static void key_reftrace(CTX, kmape_t *p)
