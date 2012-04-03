@@ -4186,7 +4186,7 @@ static kmethodn_t METHOD_name(CTX, kStmtExpr *stmt)
 static kTerm* knh_StmtMTD_typing(CTX, kStmtExpr *stmt, kMethod *mtd, kcid_t mtd_cid)
 {
 	knh_Fmethod func = NULL;
-	DP(mtd)->uri = ULINE_uri(stmt->uline);
+	DP(mtd)->fileid = ULINE_fileid(stmt->uline);
 	Term_setCONST(_ctx, tkNN(stmt, 2/*method*/), mtd);
 	func = GammaBuilder_loadMethodFunc(_ctx, mtd_cid, (mtd)->mn, knh_StmtMETA_is(_ctx, stmt, "Native"));
 	if(func != NULL) {
@@ -4239,7 +4239,7 @@ L_CheckScope:;
 			Method_setOverload(mtd, 1);
 		}
 		knh_KonohaSpace_addMethod(_ctx, mtd_cid, mtd);
-//		DP(mtd)->uri = ULINE_uri(stmtM->uline);
+//		DP(mtd)->fileid = ULINE_fileid(stmtM->uline);
 //		Term_setCONST(_ctx, tkNN(stmtM, 2/*method*/), mtd);
 		mp = new_Param(_ctx);
 		KSETv(DP(mtd)->mp, mp);
@@ -4329,7 +4329,7 @@ L_CheckScope:;
 			KSETv(DP(mtd)->mp, mp);
 			KSETv(DP(mtd)->proceed, promtd);
 		}
-//		DP(mtd)->uri = ULINE_uri(stmtM->uline);
+//		DP(mtd)->fileid = ULINE_fileid(stmtM->uline);
 //		Term_setCONST(_ctx, tkNN(stmtM, 2/*method*/), mtd);
 	}
 
@@ -4424,7 +4424,7 @@ static kTerm* TYPEMAP_typing(CTX, kStmtExpr *stmt)
 	KSETv(DP(mtd)->mp, pa);
 	knh_Param_addParam(_ctx, pa, scid, Term_fn(_ctx, tkNN(stmtNN(stmt, 2), 1)));
 	knh_Param_addReturnType(_ctx, pa, tcid);
-	DP(mtd)->uri = ULINE_uri(stmt->uline);
+	DP(mtd)->fileid = ULINE_fileid(stmt->uline);
 	tmr = new_TypeMapMethod(_ctx, TYPEMAP_flag(_ctx, stmt), mtd);
 	knh_addTypeMap(_ctx, tmr, 1/*initCache*/);
 	DBG_ASSERT(TT_(tkNN(stmt, 3)) == TT_ASIS);

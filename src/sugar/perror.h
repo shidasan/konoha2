@@ -63,7 +63,7 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 		kwb_t wb;
 		kwb_init(&base->cwb, &wb);
 		if(uline > 0) {
-			const char *file = S_text(S_uri(uline));
+			const char *file = T_file(uline);
 			if(lpos != -1) {
 				kwb_printf(&wb, "%s (%s:%d+%d) " , msg, filename(file), (kushort_t)uline, (int)lpos+1);
 			}

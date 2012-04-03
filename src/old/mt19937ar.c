@@ -100,7 +100,7 @@ void init_by_array(unsigned long init_key[], int key_length)
 		if (i>=N) { mt[0] = mt[N-1]; i=1; }
 	}
 
-	mt[0] = 0x80000000UL; /* MSB is 1; assuring non-zero initial array */
+	mt[0] = 0x80000000UL; /* MSB is 1; assfileidng non-zero initial array */
 }
 
 /* generates a random number on [0,0xffffffff]-interval */
@@ -298,7 +298,7 @@ void init_by_array64(unsigned long long init_key[], unsigned long long key_lengt
         if (i>=NN) { mt[0] = mt[NN-1]; i=1; }
     }
 
-    mt[0] = 1ULL << 63; /* MSB is 1; assuring non-zero initial array */
+    mt[0] = 1ULL << 63; /* MSB is 1; assfileidng non-zero initial array */
 }
 
 /* generates a random number on [0, 2^64-1]-interval */

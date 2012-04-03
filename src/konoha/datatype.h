@@ -663,9 +663,9 @@ static const kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, klin
 static void kshare_initklib2(klib2_t *l)
 {
 	l->Kclass   = Kclass;
-	l->Kuri     = Kuri;
+	l->Kfileid     = Kfileid;
 	l->Ksymbol  = Ksymbol;
-	l->Kusymbol = Kusymbol;
+	l->Kuname = Kuname;
 	l->Knew_Object = new_Object;
 	l->KObject_getObject = Object_getObjectNULL;
 	l->KObject_setObject = Object_setObject;
@@ -706,14 +706,14 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	KINITv(share->emptyArray, new_(Array, 0));
 	initStructData(_ctx);
 
-	KINITv(share->uriList, new_(Array, 8));
-	share->uriMapNN = kmap_init(0);
-	KINITv(share->pkgList, new_(Array, 8));
-	share->pkgMapNN = kmap_init(0);
+	KINITv(share->fileidList, new_(Array, 8));
+	share->fileidMapNN = kmap_init(0);
+	KINITv(share->packList, new_(Array, 8));
+	share->packMapNN = kmap_init(0);
 	KINITv(share->symbolList, new_(Array, 32));
 	share->symbolMapNN = kmap_init(0);
-	KINITv(share->usymbolList, new_(Array, 32));
-	share->usymbolMapNN = kmap_init(0);
+	KINITv(share->unameList, new_(Array, 32));
+	share->unameMapNN = kmap_init(0);
 }
 
 //static void key_reftrace(CTX, kmape_t *p)
@@ -759,9 +759,9 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 		if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
 	}
 	//kmap_reftrace(share->symbolMapNN, key_reftrace);
-	//kmap_reftrace(share->usymbolMapNN, key_reftrace);
+	//kmap_reftrace(share->unameMapNN, key_reftrace);
 	//kmap_reftrace(share->classnameMapNN, key_reftrace);
-	//kmap_reftrace(share->uriMapNN, key_reftrace);
+	//kmap_reftrace(share->fileidMapNN, key_reftrace);
 	//kmap_reftrace(share->pkgMapNN, key_reftrace);
 
 	BEGIN_REFTRACE(10);
@@ -771,10 +771,11 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	KREFTRACEv(share->emptyString);
 	KREFTRACEv(share->emptyArray);
 	KREFTRACEv(share->nullParam);
-	KREFTRACEv(share->uriList);
-	KREFTRACEv(share->pkgList);
+
+	KREFTRACEv(share->fileidList);
+	KREFTRACEv(share->packList);
 	KREFTRACEv(share->symbolList);
-	KREFTRACEv(share->usymbolList);
+	KREFTRACEv(share->unameList);
 	END_REFTRACE();
 }
 
@@ -794,10 +795,10 @@ void kshare_free(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
 	kmap_free(share->classnameMapNN, NULL);
-	kmap_free(share->uriMapNN, NULL);
-	kmap_free(share->pkgMapNN, NULL);
+	kmap_free(share->fileidMapNN, NULL);
+	kmap_free(share->packMapNN, NULL);
 	kmap_free(share->symbolMapNN, NULL);
-	kmap_free(share->usymbolMapNN, NULL);
+	kmap_free(share->unameMapNN, NULL);
 	kshare_freeCT(_ctx);
 	KARRAY_FREE(share->ca, kclass_t);
 	KNH_FREE(share, sizeof(kshare_t));

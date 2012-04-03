@@ -283,6 +283,182 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 	kmap_unuse(kmap, oe);
 }
 
+// key management
+
+static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *skey, uintptr_t uvalue)
+{
+	kmape_t *e = kmap_newentry(kmp, hcode);
+	KINITv(e->skey, skey);
+	e->uvalue = uvalue;
+	kmap_add(kmp, e);
+}
+
+static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
+{
+	kmape_t *e = kmap_get(kmp, hcode);
+	while(e != NULL) {
+		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
+			return (ksymbol_t)e->uvalue;
+		}
+		e = e->next;
+	}
+	if(def == FN_NEWID) {
+		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
+		uintptr_t sym = kArray_size(list);
+		kArray_add(list, skey);
+		map_addStringUnboxValue(_ctx, kmp, hcode, skey, sym);
+		return (ksymbol_t)sym;
+	}
+	return def;
+}
+
+static kline_t Kfileid(CTX, const char *name, size_t len, ksymbol_t def)
+{
+	uintptr_t hcode = strhash(name, len);
+	kline_t uline = KMAP_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, def);
+	return uline << (sizeof(kshort_t) * 8);
+}
+
+static kpack_t Kpack(CTX, const char *name, size_t len, ksymbol_t def)
+{
+	uintptr_t hcode = strhash(name, len);
+	return KMAP_getcode(_ctx, _ctx->share->packMapNN, _ctx->share->packList, name, len, hcode, def);
+}
+
+static kpack_t Kuname(CTX, const char *name, size_t len, ksymbol_t def)
+{
+	uintptr_t hcode = strhash(name, len);
+	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, def);
+}
+
+//static const char* uname_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
+//{
+//	uintptr_t i, hcode = 0;
+//	char *p = buf;
+//	for(i = 0; i < len; i++) {
+//		if(t[i]==0) break;
+//		int ch = toupper(t[i]);     // Int_MAX and INT_MAX are same
+//		if(ch == '_') continue;   // INT_MAX and INTMAX  are same
+//		*p = ch; p++;
+//		hcode = ch + (31 * hcode);
+//	}
+//	*p=0;
+//	*hcodeR=hcode;
+//	return (const char*)buf;
+//}
+//
+//static ksymbol_t Kuname(CTX, const char *name, size_t len)
+//{
+//	uintptr_t hcode = 0;
+//	char buf[len+1];
+//	name = uname_norm(buf, len+1, name, len, &hcode);
+//	len = strlen(name);
+//	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, FN_NEWID);
+//}
+
+static const char* ksymbol_norm(char *buf, const char *t, size_t *lenR, uintptr_t *hcodeR, ksymbol_t *mask, int pol)
+{
+	int i, toup = 0, len = (*lenR > 128) ? 128 : *lenR;
+	char *w = buf;
+	for(i = 0; i < len; i++) {
+		int ch = t[i];
+		if(ch == 0) break;
+		if(ch == '_') {
+			if(toup > 0) toup = 2;
+			continue;
+		}
+		ch = (toup == 2) ? toupper(ch) : ch;
+		toup = 1;
+		*w = ch; w++;
+	}
+	*w = 0;
+	*lenR = w - buf;
+	t = buf;
+	if(pol == SYMPOL_METHOD) {
+		if(buf[1] == 'e' && buf[2] == 't') {
+			if(buf[0] == 'g') {
+				*lenR -= 3; *mask = MN_GETTER;
+				t = buf + 3;
+			}
+			else if(buf[0] == 's') {
+				*lenR -= 3; *mask = MN_SETTER;
+				t = buf + 3;
+			}
+		}
+		else if(buf[0] == 'i' && buf[1] == 's') {
+			*lenR -= 2; *mask = MN_ISBOOL;
+			t = buf + 2;
+		}
+	}
+	w = (char*)t;
+	uintptr_t hcode = 0;
+	while(*w != 0) {
+		int ch = *w;
+		hcode = tolower(ch) + (31 * hcode);
+		w++;
+	}
+	*hcodeR = hcode;
+	return t;
+}
+
+static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int pol)
+{
+	uintptr_t hcode = 0;
+	if(pol == SYMPOL_RAW) {
+		size_t i;
+		for(i = 0; i < len; i++) {
+			int ch = name[i];
+			if(ch == 0) {
+				len = i; break;
+			}
+			hcode = ch + (31 * hcode);
+		}
+		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+	}
+	else {
+		char buf[256];
+		ksymbol_t sym, mask = 0;
+		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
+		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+		if(def == sym) return def;
+		return sym | mask;
+	}
+}
+
+// -------------------
+
+static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
+{
+	int index = MN_UNMASK(sym);
+	if(MN_isTOCID(sym)) {
+		snprintf(buf, bufsiz, "to%s", T_cid(index));
+	}
+	else if(index < kArray_size(_ctx->share->symbolList)) {
+		const char *name = S_text(_ctx->share->symbolList->strings[index]);
+		if(MN_isISBOOL(sym)) {
+			snprintf(buf, bufsiz, "is%s", name);
+			buf[2] = toupper(buf[2]);
+		}
+		else if(MN_isGETTER(sym)) {
+			snprintf(buf, bufsiz, "get%s", name);
+			buf[3] = toupper(buf[3]);
+		}
+		else if(MN_isSETTER(sym)) {
+			snprintf(buf, bufsiz, "set%s", name);
+			buf[3] = toupper(buf[3]);
+		}
+		else {
+			snprintf(buf, bufsiz, "%s", name);
+		}
+	}
+	else {
+		snprintf(buf, bufsiz, "unknown symbol=%d !< %ld", index, kArray_size(_ctx->share->symbolList));
+	}
+	return (const char*)buf;
+}
+
+// -------------------------------------------------------------------------
+
 // library
 
 #define KPROMAP_DELTA 3
@@ -429,166 +605,6 @@ static void Object_setUnboxedValue(CTX, kObject *o, ksymbol_t key, ktype_t ty, u
 	kpromap_set(_ctx, &o->h.proto, key, ty, uval);
 }
 
-static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *skey, uintptr_t uvalue)
-{
-	kmape_t *e = kmap_newentry(kmp, hcode);
-	KINITv(e->skey, skey);
-	e->uvalue = uvalue;
-	kmap_add(kmp, e);
-}
-
-// key management
-
-static ksymbol_t KMAP_getcode(CTX, kmap_t *symmap, kArray *list, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
-{
-	kmape_t *e = kmap_get(symmap, hcode);
-	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
-			return (ksymbol_t)e->uvalue;
-		}
-		e = e->next;
-	}
-	if(def == FN_NEWID) {
-		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
-		uintptr_t sym = kArray_size(list);
-		kArray_add(list, skey);
-		map_addStringUnboxValue(_ctx, symmap, hcode, skey, sym);
-		return (ksymbol_t)sym;
-	}
-	return def;
-}
-
-static kuri_t Kuri(CTX, const char *name, size_t len)
-{
-	uintptr_t hcode = strhash(name, len);
-	return KMAP_getcode(_ctx, _ctx->share->uriMapNN, _ctx->share->uriList, name, len, hcode, FN_NEWID);
-}
-
-static const char* ksymbol_norm(char *buf, const char *t, size_t *lenR, uintptr_t *hcodeR, ksymbol_t *mask, int pol)
-{
-	int i, toup = 0, len = (*lenR > 128) ? 128 : *lenR;
-	char *w = buf;
-	for(i = 0; i < len; i++) {
-		int ch = t[i];
-		if(ch == 0) break;
-		if(ch == '_') {
-			if(toup > 0) toup = 2;
-			continue;
-		}
-		ch = (toup == 2) ? toupper(ch) : ch;
-		toup = 1;
-		*w = ch; w++;
-	}
-	*w = 0;
-	*lenR = w - buf;
-	t = buf;
-	if(pol == SYMPOL_METHOD) {
-		if(buf[1] == 'e' && buf[2] == 't') {
-			if(buf[0] == 'g') {
-				*lenR -= 3; *mask = MN_GETTER;
-				t = buf + 3;
-			}
-			else if(buf[0] == 's') {
-				*lenR -= 3; *mask = MN_SETTER;
-				t = buf + 3;
-			}
-		}
-		else if(buf[0] == 'i' && buf[1] == 's') {
-			*lenR -= 2; *mask = MN_ISBOOL;
-			t = buf + 2;
-		}
-	}
-	w = (char*)t;
-	uintptr_t hcode = 0;
-	while(*w != 0) {
-		int ch = *w;
-		hcode = tolower(ch) + (31 * hcode);
-		w++;
-	}
-	*hcodeR = hcode;
-	return t;
-}
-
-static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int pol)
-{
-	uintptr_t hcode = 0;
-	if(pol == SYMPOL_RAW) {
-		size_t i;
-		for(i = 0; i < len; i++) {
-			int ch = name[i];
-			if(ch == 0) {
-				len = i; break;
-			}
-			hcode = ch + (31 * hcode);
-		}
-		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
-	}
-	else {
-		char buf[256];
-		ksymbol_t sym, mask = 0;
-		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
-		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
-		if(def == sym) return def;
-		return sym | mask;
-	}
-}
-
-static const char* usymbol_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
-{
-	uintptr_t i, hcode = 0;
-	char *p = buf;
-	for(i = 0; i < len; i++) {
-		if(t[i]==0) break;
-		int ch = toupper(t[i]);     // Int_MAX and INT_MAX are same
-		if(ch == '_') continue;   // INT_MAX and INTMAX  are same
-		*p = ch; p++;
-		hcode = ch + (31 * hcode);
-	}
-	*p=0;
-	*hcodeR=hcode;
-	return (const char*)buf;
-}
-
-static ksymbol_t Kusymbol(CTX, const char *name, size_t len)
-{
-	uintptr_t hcode = 0;
-	char buf[len+1];
-	name = usymbol_norm(buf, len+1, name, len, &hcode);
-	len = strlen(name);
-	return KMAP_getcode(_ctx, _ctx->share->usymbolMapNN, _ctx->share->usymbolList, name, len, hcode, FN_NEWID);
-}
-
-// -------------------
-
-static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
-{
-	int index = MN_UNMASK(sym);
-	if(MN_isTOCID(sym)) {
-		snprintf(buf, bufsiz, "to%s", T_cid(index));
-	}
-	else if(index < kArray_size(_ctx->share->symbolList)) {
-		const char *name = S_text(_ctx->share->symbolList->strings[index]);
-		if(MN_isISBOOL(sym)) {
-			snprintf(buf, bufsiz, "is%s", name);
-			buf[2] = toupper(buf[2]);
-		}
-		else if(MN_isGETTER(sym)) {
-			snprintf(buf, bufsiz, "get%s", name);
-			buf[3] = toupper(buf[3]);
-		}
-		else if(MN_isSETTER(sym)) {
-			snprintf(buf, bufsiz, "set%s", name);
-			buf[3] = toupper(buf[3]);
-		}
-		else {
-			snprintf(buf, bufsiz, "%s", name);
-		}
-	}
-	else {
-		snprintf(buf, bufsiz, "unknown symbol=%d !< %ld", index, kArray_size(_ctx->share->symbolList));
-	}
-	return (const char*)buf;
-}
 
 // -------------------------------------------------------------------------
 
@@ -646,7 +662,7 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	fflush(stdout);
 	fputs(T_BEGIN(_ctx, level), stdout);
 	if(pline != 0) {
-		const char *file = S_text(S_uri(pline));
+		const char *file = T_file(pline);
 		fprintf(stdout, " - (%s:%d) %s" , filename(file), (kushort_t)pline, T_ERR(level));
 	}
 	else {

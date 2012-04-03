@@ -382,9 +382,9 @@ kstatus_t knh_loadPackage(CTX, kbytes_t pkgname)
 				kScript *newscr = new_(Script);
 				knh_Script_setNSName(_ctx, newscr, pname);
 				knh_DictMap_set(_ctx, dmap, pname, newscr);
-				kuri_t uri = knh_getURI(_ctx, CWB_tobytes(cwb));
+				kfileid_t fileid = knh_getURI(_ctx, CWB_tobytes(cwb));
 				kline_t uline = 1;
-				ULINE_setURI(uline, uri);
+				ULINE_setURI(uline, fileid);
 				KSETv(newscr->ns->path, new_Path(_ctx, knh_buff_newRealPathString(_ctx, cwb->ba, cwb->pos)));
 				/* */
 				kInputStream *in = new_InputStream(_ctx, new_FILE(_ctx, fp, 256), newscr->ns->path);
@@ -584,7 +584,7 @@ static void SCRIPT_eval(CTX, kStmtExpr *stmtORIG, int isCompileOnly)
 	}
 	if(!isCompileOnly) {
 		int rtnidx=3+1, thisidx = rtnidx + K_CALLDELTA;
-		DP(mtd)->uri = ULINE_uri(stmt->uline);
+		DP(mtd)->fileid = ULINE_fileid(stmt->uline);
 		KSETv(lsfp[1+1].o, DP(mtd)->kcode);
 		lsfp[thisidx+K_PCIDX].pc = NULL;
 		klr_setmtdNC(_ctx, lsfp[thisidx+K_MTDIDX], mtd);
@@ -1047,8 +1047,8 @@ kstatus_t knh_load(CTX, kPath *pth)
 	if(io2 != NULL) {
 		kline_t uline = 1;
 		kInputStream *in = new_InputStream(_ctx, io2, pth);
-		kuri_t uri = knh_getURI(_ctx, S_tobytes(pth->urn));
-		ULINE_setURI(uline, uri);
+		kfileid_t fileid = knh_getURI(_ctx, S_tobytes(pth->urn));
+		ULINE_setURI(uline, fileid);
 		KSETv((K_GMANS)->path, pth);
 		return knh_InputStream_load(_ctx, in, uline);
 	}
@@ -1081,8 +1081,8 @@ kstatus_t knh_startScript(CTX, const char *path)
 	kline_t uline = 1;
 	if(path[0] == '-' && path[1] == 0) {
 		kInputStream *in = KNH_STDIN;
-		kuri_t uri = knh_getURI(_ctx, STEXT("stdin"));
-		ULINE_setURI(uline, uri);
+		kfileid_t fileid = knh_getURI(_ctx, STEXT("stdin"));
+		ULINE_setURI(uline, fileid);
 		status = knh_InputStream_load(_ctx, in, uline);
 	}
 	else {
@@ -1090,10 +1090,10 @@ kstatus_t knh_startScript(CTX, const char *path)
 		knh_buff_addStartPath(_ctx, cwb->ba, cwb->pos, B(path));
 		FILE *fp = fopen(CWB_totext(_ctx, cwb), "r");
 		if(fp != NULL) {
-			kuri_t uri = knh_getURI(_ctx, CWB_tobytes(cwb));
+			kfileid_t fileid = knh_getURI(_ctx, CWB_tobytes(cwb));
 			KSETv(ns->path, new_Path(_ctx, knh_buff_newRealPathString(_ctx, cwb->ba, cwb->pos)));
 			kInputStream *in = new_InputStream(_ctx, new_FILE(_ctx, fp, 256), ns->path);
-			ULINE_setURI(uline, uri);
+			ULINE_setURI(uline, fileid);
 			status = knh_InputStream_load(_ctx, in, uline);
 		}
 		else {

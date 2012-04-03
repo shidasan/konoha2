@@ -166,20 +166,20 @@ typedef kushort_t        kflag_t;    /* flag field */
 
 /* uline */
 
-typedef kushort_t                 kuri_t;
-#define URI_unknown               ((kuri_t)-1)
-#define URI_EVAL                  ((kuri_t)0)
-#define URI_UNMASK(uri)           (uri)
+typedef kushort_t                 kfileid_t;
+#define URI_unknown               ((kfileid_t)-1)
+#define URI_EVAL                  ((kfileid_t)0)
+#define URI_UNMASK(fileid)           (fileid)
 
-#define URI__(uri) S_text(knh_getURN(_ctx, uri))
-#define FILENAME__(uri) knh_sfile(URI__(uri))
+#define URI__(fileid) S_text(knh_getURN(_ctx, fileid))
+#define FILENAME__(fileid) knh_sfile(URI__(fileid))
 
 typedef uintptr_t                 kline_t;
 #define NOPLINE                   0
-#define new_ULINE(uri, line)       ((((kline_t)uri) << (sizeof(kuri_t) * 8)) | ((kushort_t)line))
-#define ULINE_setURI(line, uri)    line |= (((kline_t)uri) << (sizeof(kuri_t) * 8))
-#define ULINE_uri(line)            ((kuri_t)(line >> (sizeof(kuri_t) * 8)))
-#define ULINE_line(line)           (line & (kline_t)((kuri_t)-1))
+#define new_ULINE(fileid, line)       ((((kline_t)fileid) << (sizeof(kfileid_t) * 8)) | ((kushort_t)line))
+#define ULINE_setURI(line, fileid)    line |= (((kline_t)fileid) << (sizeof(kfileid_t) * 8))
+#define ULINE_fileid(line)            ((kfileid_t)(line >> (sizeof(kfileid_t) * 8)))
+#define ULINE_line(line)           (line & (kline_t)((kfileid_t)-1))
 
 #define kjmpbuf_t       sigjmp_buf
 #define ksetjmp(B)      sigsetjmp(B, 0)
@@ -296,14 +296,14 @@ typedef struct kshare_t {
 	struct kArray        *emptyArray;
 	struct kParam        *nullParam;
 
-	struct kArray         *uriList;    // file, http://
-	struct kmap_t         *uriMapNN;   //
+	struct kArray         *fileidList;    // file, http://
+	struct kmap_t         *fileidMapNN;   //
+	struct kArray         *packList;   // are you using this?
+	struct kmap_t         *packMapNN;
+	struct kArray         *unameList;  // NAME, Name, INT_MAX Int_MAX
+	struct kmap_t         *unameMapNN;
 	struct kArray         *symbolList;   // name, f,
 	struct kmap_t         *symbolMapNN;
-	struct kArray         *usymbolList;  // NAME, Name, INT_MAX Int_MAX
-	struct kmap_t         *usymbolMapNN;
-	struct kArray         *pkgList;   // are you using this?
-	struct kmap_t         *pkgMapNN;
 } kshare_t ;
 
 #define K_FRAME_NCMEMBER \
@@ -384,10 +384,11 @@ typedef struct kstack_t {
 
 // classdef_t
 
-typedef kushort_t       kpkg_t;   /* package id*/
+typedef kushort_t       kpack_t;   /* package id*/
 typedef kushort_t       kcid_t;    /* class id */
 typedef kushort_t       ktype_t;     /* extended ktype_t */
 typedef kushort_t       ksymbol_t;
+typedef kushort_t       kuname_t;
 typedef kushort_t       kmethodn_t;
 
 /* kcid_t */
@@ -405,6 +406,7 @@ typedef kushort_t       kmethodn_t;
 
 #define FN_NONAME          ((ksymbol_t)-1)
 #define FN_NEWID           ((ksymbol_t)-2)
+#define _NEWID             FN_NEWID
 #define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
 #define FN_BOXED           KFLAG_H0
 #define FN_UNBOX(fn)       (fn & ~(FN_BOXED))
@@ -470,7 +472,7 @@ typedef struct KDEFINE_CLASS {
 	size_t     cstruct_size;
 	kfield_t   *fields;
 	kushort_t  fsize;        kushort_t fallocsize;
-	kpkg_t     packid;       kpkg_t packdom;
+	kpack_t     packid;       kpack_t packdom;
 	KCLASSSPI;
 } KDEFINE_CLASS;
 
@@ -489,7 +491,7 @@ typedef uintptr_t kmagicflag_t;
 
 typedef struct kclass_t {
 	KCLASSSPI;
-	kpkg_t   packid;       kpkg_t   packdom;
+	kpack_t   packid;       kpack_t   packdom;
 	kcid_t   cid;          kflag_t  cflag;
 	kcid_t   bcid;         kcid_t   supcid;
 	ktype_t  p1;           ktype_t  p2_optvalue;
@@ -913,7 +915,7 @@ struct kMethod {
 	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
 	struct kParam     *pa;
-	kshort_t delta;          kpkg_t packid;
+	kshort_t delta;          kpack_t packid;
 	union {
 		struct kToken *tcode;
 	};
@@ -921,7 +923,7 @@ struct kMethod {
 		kObject            *objdata;
 		struct kKonohaCode *kcode;
 		struct kKonohaSpace      *lazyns;       // lazy compilation
-		struct kMethod     *proceed;      // during typing, asm
+		struct kMethod     *proceed;      // dfileidng typing, asm
 	};
 	union {
 		knh_Fmethod       fcall_1;
@@ -1034,12 +1036,13 @@ typedef struct klib2_t {
 	void (*Kmap_reftrace)(CTX, kmap_t *, void (*)(CTX, kmape_t*));
 	void (*Kmap_free)(CTX, kmap_t *, void (*)(CTX, void *));
 
-	const kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
-	ksymbol_t (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
-	ksymbol_t (*Kusymbol)(CTX, const char*, size_t);
+	kfileid_t   (*Kfileid)(CTX, const char *, size_t, ksymbol_t def);
+	kpack_t     (*Kpack)(CTX, const char *, size_t, ksymbol_t def);
+	kuname_t    (*Kuname)(CTX, const char*, size_t, ksymbol_t def);
+	ksymbol_t   (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
-	kuri_t    (*Kuri)(CTX, const char *, size_t);
 
+	const kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
 	struct kObject* (*Knew_Object)(CTX, const kclass_t *, void *);
 	struct kObject* (*Knull)(CTX, const kclass_t *);
 	kObject* (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
@@ -1126,11 +1129,13 @@ typedef struct klib2_t {
 #define MN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_METHOD)
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
 
-#define kusymbol(T, L)            (KPI)->Kusymbol(_ctx, T, L)
+#define FILEID_(T)                (KPI)->Kfileid(_ctx, T, sizeof(T)-1, FN_NEWID)
+#define kfileid(T,L,DEF)          (KPI)->Kfileid(_ctx, T, L, DEF)
+#define PN_(T)                    (KPI)->Kpack(_ctx, T, sizeof(T)-1, FN_NEWID)
+#define kpack(T,L,DEF)            (KPI)->Kpack(_ctx, T, L, DEF)
+#define UN_(T)                    (KPI)->Kuname(_ctx, T, sizeof(T)-1, FN_NEWID)
+#define kuname(T, L, DEF)         (KPI)->Kuname(_ctx, T, L, DEF)
 
-#define kuri(T,L)                 (KPI)->Kuri(_ctx, T, L)
-#define KURI(T)                   (KPI)->Kuri(_ctx, T, sizeof(T)-1)
-#define kpkg(T,L)                 (KPI)->Kpkg(_ctx, T, L)
 
 #define new_kObject(C, A)         (KPI)->Knew_Object(_ctx, C, (void*)(A))
 #define new_(C, A)                (k##C*)(KPI)->Knew_Object(_ctx, CT_##C, (void*)(A))

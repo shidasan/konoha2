@@ -1564,7 +1564,7 @@ static void Term_toBRACE(CTX, kTerm *tk, int isEXPANDING)
 		TT_(tk) = TT_BRACE;
 		TokenArray_parseTerm(_ctx, a, 0, tk, -1);
 		DBG_(
-		if(knh_isVerboseLang() && ULINE_uri(tk->uline) == URI_EVAL) {
+		if(knh_isVerboseLang() && ULINE_fileid(tk->uline) == URI_EVAL) {
 			knh_write_Object(_ctx, KNH_STDOUT, UPCAST(tk), FMT_dump);
 			knh_flush(_ctx, KNH_STDOUT);
 		});
@@ -1587,7 +1587,7 @@ static void Term_toBRACE(CTX, kTerm *tk, int isEXPANDING)
                 kline_t uline = tk->uline;
                 InputStream_parseTerm(_ctx, in, &uline, tk);
                 DBG_(
-                if(knh_isVerboseLang() && ULINE_uri(uline) == URI_EVAL) {
+                if(knh_isVerboseLang() && ULINE_fileid(uline) == URI_EVAL) {
                         knh_write_Object(_ctx, KNH_STDOUT, UPCAST(tk), FMT_dump);
                 });
                 END_LOCAL(_ctx, lsfp);
@@ -3709,7 +3709,7 @@ kStmtExpr *knh_parseStmt(CTX, const char *script, kline_t uline)
 		kTerm *tm = new_Term(_ctx, TT_BRACE);
 		PUSH_GCSTACK(_ctx, tm);
 		TokenArray_parseTerm(_ctx, a, 0, tm, -1);
-		DBG_(if(knh_isVerboseLang() /*&& DP(in)->uri == URI_EVAL*/) {
+		DBG_(if(knh_isVerboseLang() /*&& DP(in)->fileid == URI_EVAL*/) {
 			knh_write_Object(_ctx, KNH_STDOUT, UPCAST(tm), FMT_dump);
 			knh_flush(_ctx, KNH_STDOUT);
 
@@ -3720,7 +3720,7 @@ kStmtExpr *knh_parseStmt(CTX, const char *script, kline_t uline)
 			DBG_ASSERT(DP(rVALUE)->size == 1);
 			if(IS_StmtExpr(stmtNN(rVALUE, 0))) {
 				rVALUE = stmtNN(rVALUE, 0);
-				DBG_(if(knh_isVerboseLang() /*&& DP(in)->uri == URI_EVAL*/) {
+				DBG_(if(knh_isVerboseLang() /*&& DP(in)->fileid == URI_EVAL*/) {
 					knh_write_Object(_ctx, KNH_STDOUT, UPCAST(rVALUE), FMT_dump);
 					knh_flush(_ctx, KNH_STDOUT);
 				})
@@ -3745,7 +3745,7 @@ kStmtExpr *knh_InputStream_parseStmt(CTX, kInputStream *in, kline_t *ul)
 	KSETv(lsfp[0].o, rVALUE);
 	KSETv(lsfp[1].o, tk);
 	InputStream_parseTerm(_ctx, in, ul, tk);
-	DBG_(if(knh_isVerboseLang() /*&& DP(in)->uri == URI_EVAL*/) {
+	DBG_(if(knh_isVerboseLang() /*&& DP(in)->fileid == URI_EVAL*/) {
 		knh_write_Object(_ctx, KNH_STDOUT, UPCAST(tk), FMT_dump);
 	})
 	if(TT_(tk) != TT_ERR) {
@@ -3754,7 +3754,7 @@ kStmtExpr *knh_InputStream_parseStmt(CTX, kInputStream *in, kline_t *ul)
 		DBG_ASSERT(DP(rVALUE)->size == 1);
 		if(IS_StmtExpr(stmtNN(rVALUE, 0))) {
 			rVALUE = stmtNN(rVALUE, 0);
-			DBG_(if(knh_isVerboseLang() /*&& DP(in)->uri == URI_EVAL*/) {
+			DBG_(if(knh_isVerboseLang() /*&& DP(in)->fileid == URI_EVAL*/) {
 				knh_write_Object(_ctx, KNH_STDOUT, UPCAST(rVALUE), FMT_dump);
 			})
 			goto L_RETURN;

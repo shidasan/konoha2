@@ -78,7 +78,7 @@ typedef const KPACKDEF_ KPACKDEF;
 typedef KPACKDEF* (*Fpackageinit)(void);
 
 typedef struct {
-	kpkg_t                    pid;
+	kpack_t                    pid;
 	kString                  *name;
 	struct kKonohaSpace       *ks;
 	KPACKDEF                  *packdef;
@@ -152,7 +152,7 @@ typedef struct kKonohaSpace kKonohaSpace;
 
 struct kKonohaSpace {
 	kObjectHeader h;
-	kpkg_t packid;  kpkg_t packdom;
+	kpack_t packid;  kpack_t packdom;
 	struct kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
 //	struct kmap_t   *symtblMapSO;

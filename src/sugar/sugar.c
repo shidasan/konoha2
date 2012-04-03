@@ -443,13 +443,13 @@ static kline_t uline_init(CTX, const char *path, size_t len, int line, int isrea
 	if(isreal) {
 		char buf[256];
 		char *ptr = realpath(path, buf);
-		uline |= kuri((const char*)buf, strlen(ptr));
+		uline |= kfileid((const char*)buf, strlen(ptr), _NEWID);
 		if(ptr != buf && ptr != NULL) {
 			free(ptr);
 		}
 	}
 	else {
-		uline |= kuri(path, len);
+		uline |= kfileid(path, len, _NEWID);
 	}
 	return uline;
 }
@@ -458,7 +458,7 @@ static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path,
 {
 	kstatus_t status = K_BREAK;
 	if(path[0] == '-' && path[1] == 0) {
-		kline_t uline = KURI("<stdin>") | 1;
+		kline_t uline = FILEID_("<stdin>") | 1;
 		status = KonohaSpace_loadstream(_ctx, ks, stdin, uline);
 	}
 	else {
@@ -544,14 +544,14 @@ static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
 	return (const char*)buf;
 }
 
-static kline_t scripturi(CTX, char *pathbuf, size_t bufsiz, const char *pname)
+static kline_t scriptfileid(CTX, char *pathbuf, size_t bufsiz, const char *pname)
 {
 	char *p = strrchr(pathbuf, '/');
 	snprintf(p, bufsiz - (p  - pathbuf), "/%s_exports.k", packname(pname));
 	FILE *fp = fopen(pathbuf, "r");
 	if(fp != NULL) {
 		fclose(fp);
-		return kuri(pathbuf, strlen(pathbuf)) | 1;
+		return kfileid(pathbuf, strlen(pathbuf), _NEWID) | 1;
 	}
 	return 0;
 }
@@ -578,7 +578,7 @@ static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
 			KINITv(pack->name, pkgname);
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
-			pack->export_script = scripturi(_ctx, fbuf, sizeof(fbuf), S_text(pkgname));
+			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), S_text(pkgname));
 			return pack;
 		}
 		fclose(fp);
@@ -633,7 +633,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname
 			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
 		}
 		if(res && pack->export_script != 0) {
-			kString *fname = S_uri(pack->export_script);
+			kString *fname = S_file(pack->export_script);
 			kline_t uline = pack->export_script | (kline_t)1;
 			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {

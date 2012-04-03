@@ -279,9 +279,9 @@ const char* knh_getmnname(CTX, kmethodn_t mn)
 }
 
 /* ------------------------------------------------------------------------ */
-/* [uri] */
+/* [fileid] */
 
-kuri_t knh_getURI(CTX, kbytes_t t)
+kfileid_t knh_getURI(CTX, kbytes_t t)
 {
 	OLD_LOCK(_ctx, LOCK_SYSTBL, NULL);
 	kindex_t idx = knh_DictSet_index(_ctx->share->urnDictSet, t);
@@ -290,26 +290,26 @@ kuri_t knh_getURI(CTX, kbytes_t t)
 		idx = kArray_size(_ctx->share->urns);
 		knh_DictSet_set(_ctx, ctx->share->urnDictSet, s, idx);
 		kArray_add(ctx->share->urns, s);
-		KNH_NTRACE2(_ctx, "konoha:newuri", K_OK, KNH_LDATA(LOG_s("urn", S_text(s)), LOG_i("uri", idx)));
+		KNH_NTRACE2(_ctx, "konoha:newfileid", K_OK, KNH_LDATA(LOG_s("urn", S_text(s)), LOG_i("fileid", idx)));
 	}
 	else {
 		idx = knh_DictSet_valueAt(_ctx->share->urnDictSet, idx);
 	}
 	OLD_UNLOCK(_ctx, LOCK_SYSTBL, NULL);
-	return (kuri_t)idx;
+	return (kfileid_t)idx;
 }
 
 /* ------------------------------------------------------------------------ */
 
-kString *knh_getURN(CTX, kuri_t uri)
+kString *knh_getURN(CTX, kfileid_t fileid)
 {
-	size_t n = URI_UNMASK(uri);
+	size_t n = URI_UNMASK(fileid);
 	kArray *a = ctx->share->urns;
 	if(n < kArray_size(a)) {
 		return (kString*)(a)->list[n];
 	}
 	else {
-		DBG_ASSERT(uri == URI_unknown);
+		DBG_ASSERT(fileid == URI_unknown);
 		return TS_EMPTY;
 	}
 }

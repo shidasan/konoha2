@@ -289,7 +289,7 @@ static kcontext_t* new_RootContext(void)
 	/* These are not shared, but needed to initialize System*/
 	knh_stack_initexpand(_ctx, NULL, K_STACKSIZE);
 	KINITv(share->packageDictMap, new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "packageDictMap"));
-	KINITv(share->securityDictMap, new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "securityDictMap")); // added by Wakamori
+	KINITv(share->secfileidtyDictMap, new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "secfileidtyDictMap")); // added by Wakamori
 	KINITv(share->classNameDictSet, new_DictSet0(_ctx, 128, 1/*isCaseMap*/, "classNameDictSet"));
 	KINITv(share->eventDictSet, new_DictSet0(_ctx, 32, 1/*isCaseMap*/, "eventDictSet"));
 	KINITv(share->streamDpiDictSet, new_DictSet0(_ctx, 0, 1/*isCaseMap*/, "streamDpiDictSet"));
@@ -485,7 +485,7 @@ static kObject **share_reftrace(CTX, kshare_t *share)
 	KREFTRACEv(  share->xdataPtrMap);
 	KREFTRACEv(  share->constPools);
 	KREFTRACEv(  share->packageDictMap);
-	KREFTRACEv(  share->securityDictMap); // added by Wakamori
+	KREFTRACEv(  share->secfileidtyDictMap); // added by Wakamori
 	KREFTRACEv(  share->classNameDictSet);
 	KREFTRACEv(  share->eventDictSet);
 	KREFTRACEv(  share->streamDpiDictSet);

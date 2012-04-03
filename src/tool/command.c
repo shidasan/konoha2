@@ -251,7 +251,7 @@ static void shell(CTX)
 {
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
-	kline_t uline = KURI("(shell)") | 1;
+	kline_t uline = FILEID_("(shell)") | 1;
 	void *handler = dlopen("libreadline" K_OSDLLEXT, RTLD_LAZY);
 	void *f = (handler != NULL) ? dlsym(handler, "readline") : NULL;
 	kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;

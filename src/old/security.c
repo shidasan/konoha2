@@ -78,16 +78,16 @@ extern "C" {
 #endif
 
 /* ------------------------------------------------------------------------ */
-/* [security alert] */
+/* [secfileidty alert] */
 
 #ifdef K_USING_SECURITY_ALERT
 #define UPDATE_HOST "konoha.sourceforge.jp"
 #define PORT 80
 #define BUF_LEN 4096
 #ifdef K_PREVIEW
-#define UPDATE_PATH "/cgi-bin/security-alert/server?dist=%s&ver=%s&arch=%s&cpu=%s&rev=%d&clock=%u&mem=%u&ncpu=%d&preview=yes"
+#define UPDATE_PATH "/cgi-bin/secfileidty-alert/server?dist=%s&ver=%s&arch=%s&cpu=%s&rev=%d&clock=%u&mem=%u&ncpu=%d&preview=yes"
 #else
-#define UPDATE_PATH "/cgi-bin/security-alert/server?dist=%s&ver=%s&arch=%s&cpu=%s&rev=%d&clock=%u&mem=%u&ncpu=%d"
+#define UPDATE_PATH "/cgi-bin/secfileidty-alert/server?dist=%s&ver=%s&arch=%s&cpu=%s&rev=%d&clock=%u&mem=%u&ncpu=%d"
 #endif
 
 ///* ------------------------------------------------------------------------ */
@@ -127,7 +127,7 @@ extern "C" {
 //				len = strlen(version_str) + 1;
 //				str = (char *)malloc(strlen(version_str));
 //				strncpy(str, version_str, len);
-//				knh_setSecurityAlertMessage(str, 1);
+//				knh_setSecfileidtyAlertMessage(str, 1);
 //			}
 //		}
 //	}
@@ -235,7 +235,7 @@ extern "C" {
 //#elif defined(K_USING_WIN32_) && !defined(K_USING_MINGW_)
 //	HRESULT hres;
 //	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-//	hres = CoInitializeSecurity(
+//	hres = CoInitializeSecfileidty(
 //		NULL,
 //		-1,                          // COM authentication
 //		NULL,                        // Authentication services
@@ -258,7 +258,7 @@ extern "C" {
 //		NULL,                    // User name. NULL = current user
 //		NULL,                    // User password. NULL = current
 //		0,                       // Locale. NULL indicates current
-//		NULL,                    // Security flags.
+//		NULL,                    // Secfileidty flags.
 //		0,                       // Authority (e.g. Kerberos)
 //		0,                       // Context object
 //		&pSvc                    // pointer to IWbemServices proxy
@@ -326,7 +326,7 @@ extern "C" {
 
 /* ------------------------------------------------------------------------ */
 
-//static void *knh_checkSecurityAlert(void * ptr)
+//static void *knh_checkSecfileidtyAlert(void * ptr)
 //{
 //	char path[BUF_LEN] = {'\0'};
 //	unsigned int clock = getclock();
@@ -340,7 +340,7 @@ extern "C" {
 //	return NULL;
 //}
 
-void knh_askSecurityAlert(CTX)
+void knh_askSecfileidtyAlert(CTX)
 {
 //	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 //	knh_Bytes_write(_ctx, cwb->ba, S_tobytes(knh_getPropertyNULL(_ctx, STEXT("user.path"))));
@@ -349,7 +349,7 @@ void knh_askSecurityAlert(CTX)
 //	if(!knh_path_isfile(_ctx, cwb)) {
 //		char buf[80];
 //		fprintf(stdout,
-//"IMPORTANT: For improving Konoha experience and delivering security updates,\n"
+//"IMPORTANT: For improving Konoha experience and delivering secfileidty updates,\n"
 //"Konoha development team is collecting the following information:\n"
 //"\tversion: version=%s distribution=%s revision=%d\n"
 //"\tsystem: %s %dbits LANG=%s\n"
@@ -372,7 +372,7 @@ void knh_askSecurityAlert(CTX)
 //	CWB_close(cwb);
 //	{
 //		kthread_t th;
-//		kthread_create(_ctx, &th, NULL, knh_checkSecurityAlert, (void*)ctx);
+//		kthread_create(_ctx, &th, NULL, knh_checkSecfileidtyAlert, (void*)ctx);
 //		kthread_detach(_ctx, th);
 //	}
 }
@@ -412,15 +412,15 @@ void knh_askSecurityAlert(CTX)
 /* ------------------------------------------------------------------------ */
 /* [Trusted] */
 
-void knh_checkSecurityManager(CTX, ksfp_t *sfp)
+void knh_checkSecfileidtyManager(CTX, ksfp_t *sfp)
 {
 //	/* VERY SLOW */
 //	ksfp_t *sp = sfp - 2;
 //	while(_ctx->stack < sp) {
 //		if(IS_Method(sp[0].mtd)) {
-//			if(!URI_ISTRUSTED(DP(sp[0].mtd)->uri)) {
+//			if(!URI_ISTRUSTED(DP(sp[0].mtd)->fileid)) {
 //				char buf[K_PATHMAX];
-//				knh_snprintf(buf, sizeof(buf), "Security!!: untrusted domain='%s'", URI__(DP(sp[0].mtd)->uri));
+//				knh_snprintf(buf, sizeof(buf), "Secfileidty!!: untrusted domain='%s'", URI__(DP(sp[0].mtd)->fileid));
 //				KNH_THROW__T(_ctx, buf);
 //			}
 //		}

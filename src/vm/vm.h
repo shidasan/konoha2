@@ -159,7 +159,7 @@ struct kKonohaCode {
 	kopl_t*  code;
 	size_t   codesize;
 	kString *source;
-	kline_t   uri;
+	kline_t   fileid;
 };
 
 //-------------------------------------------------------------------------
@@ -633,7 +633,7 @@ struct kKonohaCode {
 		goto L_RETURN;\
 	}\
 
-#define KLR_THCODE(ctx, th, uri) { \
+#define KLR_THCODE(ctx, th, fileid) { \
 		th(ctx, pc, OPJUMP); \
 		pc = PC_NEXT(pc);\
 		goto L_RETURN; \

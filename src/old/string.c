@@ -1025,7 +1025,7 @@ static int re2_regex_regcomp(CTX, kregex_t *reg, const char *pattern, int cflags
 static int re2_regex_nmatchsize(CTX, kregex_t *reg)
 {
 	re2::RE2 *r = static_cast<re2::RE2*>(((RE2_regex_t*)reg)->r);
-	return 1 + (*r).NumberOfCapturingGroups(); // patern + groups
+	return 1 + (*r).NumberOfCaptfileidngGroups(); // patern + groups
 }
 
 static int re2_regex_parseeflags(CTX, const char *option)
@@ -1048,10 +1048,10 @@ static int re2_regex_regexec(CTX, kregex_t *reg, const char *str, size_t nmatch,
 	size_t remain = nmatch;
 	p[0].rm_so = -1;
 	if ((*r).Match(base, 0, re2::RE2::UNANCHORED, sp, nmatch)) {
-		size_t grpcount = (*r).NumberOfCapturingGroups();
+		size_t grpcount = (*r).NumberOfCaptfileidngGroups();
 		std::vector<std::string> names(grpcount+1);
 		if (grpcount > 0) {
-			std::map<std::string, int> m = (*r).NamedCapturingGroups();
+			std::map<std::string, int> m = (*r).NamedCaptfileidngGroups();
 			std::map<std::string, int>::iterator it, m_end = m.end();
 			for (it = m.begin(); it != m_end; it++) {
 				names[(*it).second] = (*it).first;

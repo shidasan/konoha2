@@ -660,7 +660,7 @@ kopl_t* knh_VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(THCODE) {
 		klr_THCODE_t *op = (klr_THCODE_t*)pc; (void)op;
-		KLR_THCODE(_ctx, op->th, op->uri);
+		KLR_THCODE(_ctx, op->th, op->fileid);
 		pc++;
 		GOTO_NEXT();
 	} 

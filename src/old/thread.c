@@ -377,12 +377,12 @@ knh_cond_t *kthread_cond_init(CTX)
 {
 	knh_cond_t *c = (knh_cond_t *)KNH_ZMALLOC(sizeof(knh_cond_t));
 	// Create an auto-reset event.
-	c->events_[E_SIGNAL] = CreateEvent(NULL,  // no security
+	c->events_[E_SIGNAL] = CreateEvent(NULL,  // no secfileidty
 			FALSE, // auto-reset event
 			FALSE, // non-signaled initially
 			NULL); // unnamed
 	// Create a manual-reset event.
-	c->events_[E_BROADCAST] = CreateEvent(NULL,  // no security
+	c->events_[E_BROADCAST] = CreateEvent(NULL,  // no secfileidty
 			TRUE,  // manual-reset
 			FALSE, // non-signaled initially
 			NULL); // unnamed

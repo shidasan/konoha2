@@ -160,7 +160,7 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(d[0] != NULL) {
 		DBG_P("key='%s'", d[0]);
-		kv.key = kusymbol(d[0], 255) | FN_BOXED;
+		kv.key = kuname(d[0], strlen(d[0]), _NEWID) | FN_BOXED;
 		kv.ty  = (ktype_t)(uintptr_t)d[1];
 		if(kv.ty == TY_TEXT) {
 			kv.ty = TY_String;

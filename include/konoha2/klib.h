@@ -37,6 +37,38 @@ static inline uintptr_t casehash(const char *name, size_t len)
 
 // --------------------------------------------------------------------------
 
+static inline const char* filename(const char *str)
+{
+	/*XXX g++ 4.4.5 need char* cast to compile it. */
+	char *p = (char *) strrchr(str, '/');
+	return (p == NULL) ? str : (const char*)p+1;
+}
+
+#define S_file(X)  S_fileid(_ctx, X)
+#define T_file(X)  S_text(S_fileid(_ctx, X))
+static inline kString* S_fileid(CTX, kline_t fileid)
+{
+	kline_t n = (fileid >> (sizeof(kshort_t) * 8));
+	DBG_ASSERT(n < kArray_size(_ctx->share->fileidList));
+	return _ctx->share->fileidList->strings[n];
+}
+
+#define S_pack(X)  S_pack_(_ctx, X)
+#define T_pack(X)  S_text(S_pack_(_ctx, X))
+static inline kString* S_pack_(CTX, kpack_t packid)
+{
+	DBG_ASSERT(packid < kArray_size(_ctx->share->packList));
+	return _ctx->share->packList->strings[packid];
+}
+
+#define S_un(X)  S_un_(_ctx, X)
+#define T_un(X)  S_text(S_un_(_ctx, X))
+static inline kString* S_un_(CTX, kuname_t un)
+{
+	DBG_ASSERT(un < kArray_size(_ctx->share->unameList));
+	return _ctx->share->unameList->strings[un];
+}
+
 #define S_cid(X)  S_cid_(_ctx, X)
 #define T_cid(X)  S_text(S_cid(X))
 
@@ -57,6 +89,7 @@ static inline kString* S_ty_(CTX, ktype_t ty)
 	return TS_EMPTY;
 }
 
+
 #define S_fn(fn)   S_fn_(_ctx, fn)
 #define T_fn(fn)   S_text(S_fn_(_ctx, fn))
 static inline kString* S_fn_(CTX, ksymbol_t sym)
@@ -69,23 +102,5 @@ static inline kString* S_fn_(CTX, ksymbol_t sym)
 	return TS_EMPTY;
 }
 
-static inline const char* filename(const char *str)
-{
-	/*XXX g++ 4.4.5 need char* cast to compile it. */
-	char *p = (char *) strrchr(str, '/');
-	return (p == NULL) ? str : (const char*)p+1;
-}
-
-#define S_uri(I)  Suri(_ctx, I)
-static inline kString* Suri(CTX, kline_t uri)
-{
-	kline_t n = (uri >> (sizeof(kshort_t) * 8));
-	if(n < kArray_size(_ctx->share->uriList)) {
-		return _ctx->share->uriList->strings[n];
-	}
-	DBG_P("unknown uri=%d", n);
-	abort();
-	return TS_EMPTY;
-}
 
 #endif /* KONOHA2_INLINELIBS_H_ */

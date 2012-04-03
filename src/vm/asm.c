@@ -600,7 +600,7 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 {
 	kKonohaCode *kcode = new_(KonohaCode, NULL);
 	kBasicBlock *prev[1] = {};
-	kcode->uri = kcodemod->uline; //TODO
+	kcode->fileid = kcodemod->uline; //TODO
 	kcode->codesize = BasicBlock_size(_ctx, bb, 0) * sizeof(kopl_t);
 	kcode->code = (kopl_t*)KNH_ZMALLOC(kcode->codesize);
 	DP(bbRET)->code = kcode->code; // dummy
@@ -1910,7 +1910,7 @@ static void KonohaCode_init(CTX, kRawPtr *o, void *conf)
 	kKonohaCode *b = (kKonohaCode*)o;
 	b->codesize = 0;
 	b->code = NULL;
-	b->uri = 0;
+	b->fileid = 0;
 	KINITv(b->source, TS_EMPTY);
 }
 

@@ -376,14 +376,14 @@ static void opt_verbose_pref(int mode, const char *optstr)
 	isVerbosePref = 1;
 }
 
-static int enforce_security = 0;
+static int enforce_secfileidty = 0;
 /* added by Wakamori */
 static char role[64] = {0};
 
 /* added by Wakamori */
 static kbool_t method_isPermissionAllowed(CTX, kMethod *mtd)
 {
-	kDictMap *dmap = ctx->share->securityDictMap;
+	kDictMap *dmap = ctx->share->secfileidtyDictMap;
 	CWB_t cwbbuf, *cwb = CWB_open0(_ctx, &cwbbuf);
 	CWB_write(_ctx, cwb, S_tobytes(ClassTBL(mtd->cid)->sname));
 	CWB_putc(_ctx, cwb, '.');
@@ -420,7 +420,7 @@ static kbool_t method_isPermissionAllowed(CTX, kMethod *mtd)
 /* added by Wakamori */
 void loadPolicy(CTX)
 {
-	if (enforce_security == 0) return;
+	if (enforce_secfileidty == 0) return;
 	// load $konoha.home.path/policy
 	knh_setProperty(_ctx, new_String(_ctx, "role"), (dynamic *)new_String(_ctx, role));
 	CWB_t cwbbuf, *cwb = CWB_open0(_ctx, &cwbbuf);
@@ -434,15 +434,15 @@ void loadPolicy(CTX)
 	}
 	else {
 		/*
-		if (enforce_security == 0) {
-			enforce_security = 1;
+		if (enforce_secfileidty == 0) {
+			enforce_secfileidty = 1;
 			knh_memcpy(role, "Default", 7);
 			role[7] = '\0';
 		}
 		*/
 		// parse policy file written in JSON
 		// it must be refactored in the future
-		kDictMap *dmap = ctx->share->securityDictMap;
+		kDictMap *dmap = ctx->share->secfileidtyDictMap;
 		kString *line = knh_InputStream_readLine(_ctx, is);
 		while (IS_NOTNULL(line)) {
 			//fprintf(stderr, "line=%s\n", S_text(line));
@@ -489,12 +489,12 @@ void loadPolicy(CTX)
 }
 
 /* modified by Wakamori */
-void knh_enforceSecurity(CTX, kMethod *mtd)
+void knh_enforceSecfileidty(CTX, kMethod *mtd)
 {
-	if (enforce_security == 0) {
+	if (enforce_secfileidty == 0) {
 		Method_setRestricted(mtd, 0);
 	} else if (Method_isRestricted(mtd)) {
-		DBG_P("=== enforce security ===");
+		DBG_P("=== enforce secfileidty ===");
 		DBG_P("[      role] : %s", role);
 
 		if (method_isPermissionAllowed(_ctx, mtd)) {
@@ -510,7 +510,7 @@ void knh_enforceSecurity(CTX, kMethod *mtd)
 }
 
 /* modified by Wakamori */
-static void opt_enforce_security(int mode, const char *optstr)
+static void opt_enforce_secfileidty(int mode, const char *optstr)
 {
 	if(optstr != NULL) {
 		int len = knh_strlen(optstr);
@@ -523,7 +523,7 @@ static void opt_enforce_security(int mode, const char *optstr)
 		knh_memcpy(role, "Default", 7);
 		role[7] = '\0';
 	}
-	enforce_security = 1;
+	enforce_secfileidty = 1;
 }
 
 void knh_PleaseLetUsKnowYourOS(CTX, const char *msg, const char *file, int line)
@@ -836,7 +836,7 @@ static knh_optdata_t optdata[] = {
 	{OPT_("-v"), OPT_NUMBER, opt_v},
 	{OPT_("-a"), OPT_NUMBER, opt_a},
 	{OPT_("-l"), OPT_STRING, opt_l},
-	{OPT_("--enforce-security"), OPT_STRING, opt_enforce_security},
+	{OPT_("--enforce-secfileidty"), OPT_STRING, opt_enforce_secfileidty},
 	{OPT_("--logcached"), OPT_STRING, opt_logcached},
 	{OPT_("--verbose:gc"), OPT_EMPTY, opt_verbose_gc},
 	{OPT_("--verbose:lang"), OPT_EMPTY, opt_verbose_lang},
@@ -949,20 +949,20 @@ static void knh_write_cline(CTX, kOutputStream *w, const char *file, uintptr_t l
 
 void knh_write_uline(CTX, kOutputStream *w, kline_t uline)
 {
-	kuri_t uri = ULINE_uri(uline);
+	kfileid_t fileid = ULINE_fileid(uline);
 	uintptr_t line = ULINE_line(uline);
-	if(uline != 0 && uri != URI_unknown && line != 0) {
-		knh_write_cline(_ctx, w, FILENAME__(uri), line);
+	if(uline != 0 && fileid != URI_unknown && line != 0) {
+		knh_write_cline(_ctx, w, FILENAME__(fileid), line);
 	}
 }
 
 void knh_write_mline(CTX, kOutputStream *w, kmethodn_t mn, kline_t uline)
 {
-	kuri_t uri = ULINE_uri(uline);
+	kfileid_t fileid = ULINE_fileid(uline);
 	uintptr_t line = ULINE_line(uline);
-	if(uline != 0 && uri != URI_unknown && line != 0) {
+	if(uline != 0 && fileid != URI_unknown && line != 0) {
 		if(mn == MN_) {
-			knh_write_cline(_ctx, w, FILENAME__(uri), line);
+			knh_write_cline(_ctx, w, FILENAME__(fileid), line);
 		}
 		else {
 			kwb_putc(wb, '(');
@@ -994,11 +994,11 @@ static void readuline(FILE *fp, char *buf, size_t bufsiz)
 
 static const char* knh_readuline(CTX, kline_t uline, char *buf, size_t bufsiz)
 {
-	kuri_t uri = ULINE_uri(uline);
+	kfileid_t fileid = ULINE_fileid(uline);
 	size_t line = ULINE_line(uline);
 	buf[0] = 0;
-	if(uline != 0 && uri > URI_EVAL && line != 0) {
-		char const *fname = URI__(uri);
+	if(uline != 0 && fileid > URI_EVAL && line != 0) {
+		char const *fname = URI__(fileid);
 		FILE *fp = fopen(fname, "r");
 		if(fp != NULL) {
 			if(line == 1) {
@@ -1044,8 +1044,8 @@ static kline_t sfp_uline(CTX, ksfp_t *sfp)
 	{
 		int line = (pc-1)->line;
 		while(pc->opcode != OPCODE_THCODE) pc--;
-		kuri_t uri = ((klr_THCODE_t*)pc)->uri;
-		return new_ULINE(uri, line);
+		kfileid_t fileid = ((klr_THCODE_t*)pc)->fileid;
+		return new_ULINE(fileid, line);
 	}
 }
 
@@ -1171,9 +1171,9 @@ static kException* new_Assertion(CTX, kline_t uline)
 	char *mbuf = buf + 13;
 	knh_readuline(_ctx, uline, mbuf, sizeof(buf)-13);
 	if(mbuf[0] == 0) {
-		kuri_t uri = ULINE_uri(uline);
+		kfileid_t fileid = ULINE_fileid(uline);
 		size_t line = ULINE_line(uline);
-		knh_snprintf(buf, sizeof(buf), "Assertion!!: %s at line %lu", FILENAME__(uri), line);
+		knh_snprintf(buf, sizeof(buf), "Assertion!!: %s at line %lu", FILENAME__(fileid), line);
 	}
 	KSETv(e->emsg, new_kString((const char*)buf, knh_strlen(buf), SPOL_ASCII));
 	e->uline = uline;

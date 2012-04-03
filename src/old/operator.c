@@ -3085,9 +3085,9 @@ static Object *knh_KonohaSpace_getLinkObjectNULL(CTX, kKonohaSpace *ns, kbytes_t
 void knh_DataMap_log(CTX, kDictMap *conf, ktype_t type, const char *key)
 {
 	if(conf->uline != 0) {
-		kuri_t uri = ULINE_uri(conf->uline);
+		kfileid_t fileid = ULINE_fileid(conf->uline);
 		uintptr_t line = ULINE_line(conf->uline);
-		knh_logprintf("CONFIG", 1, "(%s:%ld) key='%s' must have type %s", FILENAME__(uri), line, key, T__(type));
+		knh_logprintf("CONFIG", 1, "(%s:%ld) key='%s' must have type %s", FILENAME__(fileid), line, key, T__(type));
 	}
 	else {
 		knh_logprintf("CONFIG", 1, "key='%s' must have type %s", key, T__(type));

@@ -1325,7 +1325,7 @@ void knh_ClassTBL_addMethod(CTX, const kclass_t *t, kMethod *mtd, int isCHECK)
 	if(FLAG_is(t->cflag, FLAG_Class_Immutable)) {
 		DP(mtd)->flag = DP(mtd)->flag | FLAG_Method_Immutable;
 	}
-	knh_enforceSecurity(_ctx, mtd);
+	knh_enforceSecfileidty(_ctx, mtd);
 	kArray_add(a, mtd);
 	Cache_setMethod(_ctx->mtdcache, mtd->cid, mtd->mn, mtd);
 }

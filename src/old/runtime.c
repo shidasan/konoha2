@@ -223,7 +223,7 @@ static knh_optdata_t optdata[] = {
 	{OPT_("--verbose:pref"), OPT_EMPTY, opt_dummy},
 //	{"--utest", OPT_EMPTY, opt_utest},
 	{OPT_("--help"), OPT_EMPTY, opt_help},
-	{OPT_("--enforce-security"), OPT_STRING, opt_dummy},
+	{OPT_("--enforce-secfileidty"), OPT_STRING, opt_dummy},
 	{OPT_("--logcached"), OPT_STRING, opt_dummy},
 	{OPT_("-V"), OPT_NUMBER, opt_version},
 	{OPT_("--version"), OPT_NUMBER, opt_version},
@@ -449,7 +449,7 @@ static int konoha_shell(CTX, char *optstr)
 	KONOHA_BEGIN(_ctx);
 	knh_loadScriptPackageList(_ctx, "konoha.i?");
 #ifdef K_USING_SECURITY_ALERT
-	knh_askSecurityAlert(_ctx);
+	knh_askSecfileidtyAlert(_ctx);
 #endif
 	CTX_setInteractive(_ctx, 1);
 	knh_shell(_ctx);

@@ -182,7 +182,7 @@ static kloaddata_t ClassData0[] = {
 	DATA_EXPT, _DATA("Assertion"), 0, EVENT_Assertion, EVENT_Exception, 
 	DATA_EXPT, _DATA("Script"), 0, EVENT_Script, EVENT_Exception, 
 	DATA_EXPT, _DATA("StackOverflow"), 0, EVENT_StackOverflow, EVENT_Script, 
-	DATA_EXPT, _DATA("Security"), 0, EVENT_Security, EVENT_Exception, 
+	DATA_EXPT, _DATA("Secfileidty"), 0, EVENT_Secfileidty, EVENT_Exception, 
 	0
 };
 

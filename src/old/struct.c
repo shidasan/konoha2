@@ -1681,7 +1681,7 @@ static void Method_init(CTX, kRawPtr *o)
 	b->paramsNULL = NULL;
 //	b->flag   = 0;
 //	b->delta  = 0;
-//	b->uri  = 0;  b->domain = 0;
+//	b->fileid  = 0;  b->domain = 0;
 }
 
 static void Method_reftrace(CTX, kRawPtr *o)
@@ -3004,7 +3004,7 @@ static void KonohaCode_init(CTX, kRawPtr *o)
 	kKonohaCode *b = (kKonohaCode*)o;
 	b->codesize = 0;
 	b->code = NULL;
-	b->uri = 0;
+	b->fileid = 0;
 	KINITv(b->source, TS_EMPTY);
 }
 

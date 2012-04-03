@@ -183,10 +183,10 @@ void knh_checkSafePoint(CTX, ksfp_t *sfp, const char *file, int line)
 
 ///* ------------------------------------------------------------------------ */
 //
-//KNHAPI2(void) konoha_throwSecurityException(void)
+//KNHAPI2(void) konoha_throwSecfileidtyException(void)
 //{
 //	CTX = knh_getCurrentContext();
-//	knh_stack_throw(_ctx, new_Exception(_ctx, knh_getEventName(_ctx, EVENT_Security)), NULL, 0);
+//	knh_stack_throw(_ctx, new_Exception(_ctx, knh_getEventName(_ctx, EVENT_Secfileidty)), NULL, 0);
 //}
 
 
