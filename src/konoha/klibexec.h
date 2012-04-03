@@ -283,6 +283,281 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 	kmap_unuse(kmap, oe);
 }
 
+// library
+
+#define KPROMAP_DELTA 3
+
+static inline kvsarray_t * kpromap_null(void)  // for proto_get safe null
+{
+	static kvs_t dnull[3] = {};
+	static kvsarray_t pnull = {
+		.kvs = dnull, .size = 1, .capacity = 0,
+	};
+	return &pnull;
+}
+
+static kvs_t* kpromap_get(kvsarray_t *p, ksymbol_t key)
+{
+	kvs_t *d = p->kvs + (((size_t)key) % p->size);
+	if(d->key == key) return d; else d++;
+	if(d->key == key) return d; else d++;
+	if(d->key == key) return d; else d++;
+	size_t i;
+	for(i = 0; i < KPROMAP_DELTA - 3; i++) {
+		if(d->key == key) return d;
+		d++;
+	}
+	return NULL;
+}
+
+static inline void kpromap_findset(kvs_t *d, kvs_t *newd)
+{
+	size_t i;
+	for(i = 0; i < KPROMAP_DELTA - 1; i++) {
+		if(newd->key == 0) {
+			*newd = *d;
+			return;
+		}
+		newd++;
+	}
+}
+
+static void kpromap_rehash(CTX, kvsarray_t *p)
+{
+	size_t i, newcapacity = p->capacity * 2, newsize = newcapacity - KPROMAP_DELTA;
+	kvs_t *newdatamap = (kvs_t*)KNH_MALLOC(sizeof(kvs_t) * newcapacity);
+	for(i = 0; i < p->capacity; i++) {
+		kvs_t *d = p->kvs + i;
+		if(d->key != 0) {
+			kvs_t *newd = newdatamap + ((size_t)d->key) % newsize;
+			if(newd->key == 0) {
+				*newd = *d;
+			}
+			else {
+				kpromap_findset(d, newd+1);
+			}
+		}
+	}
+	KNH_FREE(p->kvs, sizeof(kvs_t) * p->capacity);
+	p->kvs = newdatamap;
+	p->capacity = newcapacity;
+	p->size = newsize;
+}
+
+static kvsarray_t *kpromap_new(CTX)
+{
+	kvsarray_t *p;
+	p = (kvsarray_t*)KNH_MALLOC(sizeof(kvsarray_t));
+	p->kvs = (kvs_t*)KNH_MALLOC(sizeof(kvs_t) * 8);
+	p->capacity = 8;
+	p->size = p->capacity - KPROMAP_DELTA;
+	return p;
+}
+
+void kpromap_reftrace(CTX, kvsarray_t *p)
+{
+	size_t i;
+	kvs_t *d = p->kvs;
+	BEGIN_REFTRACE(p->capacity);
+	for(i = 0; i < p->capacity; i++) {
+		if(FN_isBOXED(d->key)) {
+			KREFTRACEv(d->oval);
+		}
+		d++;
+	}
+	END_REFTRACE();
+}
+
+void kpromap_free(CTX, kvsarray_t *p)
+{
+	if(p->size > 1) {
+		KNH_FREE(p->kvs, p->capacity * sizeof(kvs_t));
+		KNH_FREE(p, sizeof(kvsarray_t));
+	}
+}
+
+static void kpromap_set(CTX, kvsarray_t **pval, ksymbol_t key, ktype_t ty, uintptr_t uval)
+{
+	kvsarray_t *p = pval[0];
+	if(p->size == 1) {
+		p = kpromap_new(_ctx);
+		pval[0] = p;
+	}
+	do {
+		size_t i;
+		kvs_t *d = p->kvs + (((size_t)key) % p->size);
+		for(i = 0; i < KPROMAP_DELTA; i++) {
+			if(d->key == key || d->key == 0) {
+				d->key = key; d->ty = ty; d->uval = uval;
+				return;
+			}
+			d++;
+		}
+		kpromap_rehash(_ctx, p);
+	}
+	while(1);
+}
+
+void kpromap_each(CTX, kvsarray_t *p, void *arg, void (*f)(CTX, void *, kvs_t *d))
+{
+	size_t i;
+	kvs_t *d = p->kvs;
+	for (i = 0; i < p->capacity; ++i, ++d) {
+		f(_ctx, arg, d);
+	}
+}
+
+static kObject* Object_getObjectNULL(CTX, kObject *o, ksymbol_t key, kObject *defval)
+{
+	kvs_t *d = kpromap_get(o->h.proto, key | FN_BOXED);
+	return (d != NULL) ? d->oval : defval;
+}
+
+static void Object_setObject(CTX, kObject *o, ksymbol_t key, ktype_t ty, kObject *val)
+{
+	kpromap_set(_ctx, &o->h.proto, key | FN_BOXED, ty, (uintptr_t)val);
+}
+
+static uintptr_t Object_getUnboxedValue(CTX, kObject *o, ksymbol_t key, uintptr_t defval)
+{
+	kvs_t *d = kpromap_get(o->h.proto, key);
+	return (d != NULL) ? d->uval : defval;
+}
+
+static void Object_setUnboxedValue(CTX, kObject *o, ksymbol_t key, ktype_t ty, uintptr_t uval)
+{
+	kpromap_set(_ctx, &o->h.proto, key, ty, uval);
+}
+
+static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *skey, uintptr_t uvalue)
+{
+	kmape_t *e = kmap_newentry(kmp, hcode);
+	KINITv(e->skey, skey);
+	e->uvalue = uvalue;
+	kmap_add(kmp, e);
+}
+
+// key management
+
+static ksymbol_t KMAP_getcode(CTX, kmap_t *symmap, kArray *list, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
+{
+	kmape_t *e = kmap_get(symmap, hcode);
+	while(e != NULL) {
+		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
+			return (ksymbol_t)e->uvalue;
+		}
+		e = e->next;
+	}
+	if(def == FN_NEWID) {
+		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
+		uintptr_t sym = kArray_size(list);
+		kArray_add(list, skey);
+		map_addStringUnboxValue(_ctx, symmap, hcode, skey, sym);
+		return (ksymbol_t)sym;
+	}
+	return def;
+}
+
+static kuri_t Kuri(CTX, const char *name, size_t len)
+{
+	uintptr_t hcode = strhash(name, len);
+	return KMAP_getcode(_ctx, _ctx->share->uriMapNN, _ctx->share->uriList, name, len, hcode, FN_NEWID);
+}
+
+static const char* ksymbol_norm(char *buf, const char *t, size_t *lenR, uintptr_t *hcodeR, ksymbol_t *mask, int pol)
+{
+	int i, toup = 0, len = (*lenR > 128) ? 128 : *lenR;
+	char *w = buf;
+	for(i = 0; i < len; i++) {
+		int ch = t[i];
+		if(ch == 0) break;
+		if(ch == '_') {
+			if(toup > 0) toup = 2;
+			continue;
+		}
+		ch = (toup == 2) ? toupper(ch) : ch;
+		toup = 1;
+		*w = ch; w++;
+	}
+	*w = 0;
+	*lenR = w - buf;
+	t = buf;
+	if(pol == SYMPOL_METHOD) {
+		if(buf[1] == 'e' && buf[2] == 't') {
+			if(buf[0] == 'g') {
+				*lenR -= 3; *mask = MN_GETTER;
+				t = buf + 3;
+			}
+			else if(buf[0] == 's') {
+				*lenR -= 3; *mask = MN_SETTER;
+				t = buf + 3;
+			}
+		}
+		else if(buf[0] == 'i' && buf[1] == 's') {
+			*lenR -= 2; *mask = MN_ISBOOL;
+			t = buf + 2;
+		}
+	}
+	w = (char*)t;
+	uintptr_t hcode = 0;
+	while(*w != 0) {
+		int ch = *w;
+		hcode = tolower(ch) + (31 * hcode);
+		w++;
+	}
+	*hcodeR = hcode;
+	return t;
+}
+
+static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int pol)
+{
+	uintptr_t hcode = 0;
+	if(pol == SYMPOL_RAW) {
+		size_t i;
+		for(i = 0; i < len; i++) {
+			int ch = name[i];
+			if(ch == 0) {
+				len = i; break;
+			}
+			hcode = ch + (31 * hcode);
+		}
+		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+	}
+	else {
+		char buf[256];
+		ksymbol_t sym, mask = 0;
+		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
+		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+		if(def == sym) return def;
+		return sym | mask;
+	}
+}
+
+static const char* usymbol_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
+{
+	uintptr_t i, hcode = 0;
+	char *p = buf;
+	for(i = 0; i < len; i++) {
+		if(t[i]==0) break;
+		int ch = toupper(t[i]);     // Int_MAX and INT_MAX are same
+		if(ch == '_') continue;   // INT_MAX and INTMAX  are same
+		*p = ch; p++;
+		hcode = ch + (31 * hcode);
+	}
+	*p=0;
+	*hcodeR=hcode;
+	return (const char*)buf;
+}
+
+static ksymbol_t Kusymbol(CTX, const char *name, size_t len)
+{
+	uintptr_t hcode = 0;
+	char buf[len+1];
+	name = usymbol_norm(buf, len+1, name, len, &hcode);
+	len = strlen(name);
+	return KMAP_getcode(_ctx, _ctx->share->usymbolMapNN, _ctx->share->usymbolList, name, len, hcode, FN_NEWID);
+}
+
 // -------------------
 
 static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
