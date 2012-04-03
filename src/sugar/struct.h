@@ -413,7 +413,7 @@ static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *ks, kmethodn_
 static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kcid_t tcid)
 {
 	kMethod *mtd = KonohaSpace_getMethodNULL(_ctx, ks, cid, MN_to(tcid));
-	if(mtd != NULL) {
+	if(mtd == NULL) {
 		mtd = KonohaSpace_getMethodNULL(_ctx, ks, cid, MN_as(tcid));
 	}
 	return mtd;

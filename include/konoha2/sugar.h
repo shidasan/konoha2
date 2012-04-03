@@ -226,11 +226,11 @@ struct kToken {
 #define TEXPR_BLOCKLOCAL_   -2   /*THIS IS NEVER PASSED*/
 #define TEXPR_UNTYPED       -1   /*THIS MUST NOT HAPPEN*/
 #define TEXPR_CONST          0
-#define TEXPR_NCONST         1
-#define TEXPR_LOCAL          2
-#define TEXPR_FIELD          3
-#define TEXPR_NEW            4
-#define TEXPR_NULL           5
+#define TEXPR_NEW            1
+#define TEXPR_NULL           2
+#define TEXPR_NCONST         3
+#define TEXPR_LOCAL          4
+#define TEXPR_FIELD          5
 #define TEXPR_BOX            6
 #define TEXPR_UNBOX          7
 #define TEXPR_CALL           8
@@ -238,6 +238,7 @@ struct kToken {
 #define TEXPR_OR            10
 #define TEXPR_LET           11
 
+#define Expr_isCONST(o)     (TEXPR_CONST <= (o)->build && (o)->build <= TEXPR_NCONST)
 #define Expr_isTerm(o)      (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define Expr_setTerm(o,B)   TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,B)
 
@@ -294,14 +295,7 @@ struct kBlock {
 typedef struct kGamma kGamma;
 
 typedef struct {
-//	kflag_t    flag;  kushort_t  index;
 	ktype_t    ty;    ksymbol_t  fn;
-//	union {
-//		kToken   *name;
-//	};
-//	union {
-//		kExpr    *value;
-//	};
 } gammastack_t ;
 
 #define kGamma_TOPLEVEL        (kflag_t)(1)

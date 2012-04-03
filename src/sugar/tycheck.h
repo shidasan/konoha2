@@ -195,6 +195,8 @@ static kExpr *new_BoxingExpr(CTX, kExpr *expr, ktype_t req_ty)
 	}
 }
 
+static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty);
+
 static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int pol)
 {
 	kExpr *texpr = K_NULLEXPR;
@@ -222,13 +224,10 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 			return texpr;
 		}
 		kMethod *mtd = kKonohaSpace_getCastMethodNULL(gma->genv->ks, texpr->ty, req_ty);
+		DBG_P("finding cast %s => %s: %p", T_ty(texpr->ty), T_ty(req_ty), mtd);
 		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, TPOL_COERCION))) {
-			kExpr *Cexpr = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
-			Cexpr->ty = req_ty;
-			if(kMethod_isConst(mtd) && (Cexpr->build == TEXPR_CONST || Cexpr->build == TEXPR_NCONST)) {
-				return ExprCall_toConstValue(_ctx, Cexpr, Cexpr->consNUL, req_ty);
-			}
-			return Cexpr;
+			kExpr *exprCAST = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
+			return ExprCall_tycheckParams(_ctx, exprCAST, gma, req_ty);
 		}
 		return K_NULLEXPR;
 	}
@@ -361,7 +360,7 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 	else {
 		kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->ks, S_text(tk->text), S_size(tk->text));
 		kExpr *texpr = (v == NULL) ?
-			kToken_p(tk, ERR_, "undefined symbol: %s", kToken_s(tk)) : kExpr_setConstValue(expr, O_cid(v), v);
+			kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk)) : kExpr_setConstValue(expr, O_cid(v), v);
 		RETURN_(texpr);
 	}
 }
@@ -381,43 +380,47 @@ static int param_policy(ksymbol_t fn)
 	return pol;
 }
 
-static kExpr *Cons_tycheckParams(CTX, kExpr *expr, ktype_t cid, kGamma *gma, ktype_t req_ty)
+static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty)
 {
 	kArray *cons = expr->consNUL;
 	size_t i, size = kArray_size(cons);
 	kMethod *mtd = cons->methods[0];
-	if(IS_Method(mtd)) {
-		kParam *pa = mtd->pa;
-		ktype_t rtype = ktype_var(_ctx, pa->rtype, cid);
-		int isConst = 1;
+	kExpr *expr1 = cons->exprs[1];
+	ktype_t cid = expr1->ty;
+	DBG_ASSERT(IS_Method(mtd) && cid != TY_var);
+	if(!TY_isUnbox(mtd->cid) && TY_isUnbox(cid)) {
+		expr1 = new_BoxingExpr(_ctx, cons->exprs[1], cid);
+		KSETv(cons->exprs[1], expr1);
+	}
+	kParam *pa = mtd->pa;
+	ktype_t rtype = ktype_var(_ctx, pa->rtype, cid);
+	int isConst = (Expr_isCONST(expr1)) ? 1 : 0;
 	//	if(rtype == TY_var && gma->genv->mtd == mtd) {
 	//		return ERROR_Unsupported(_ctx, "type inference of recursive calls", CLASS_unknown, NULL);
 	//	}
-		if(pa->psize + 2 != size) {
-			char mbuf[128];
-			return kExpr_p(expr, ERR_, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_cid(cid), T_mn(mbuf, mtd->mn), (int)pa->psize, (int)size-2);
-		}
-		for(i = 0; i < pa->psize; i++) {
-			size_t n = i + 2;
-			ktype_t ptype = ktype_var(_ctx, pa->p[i].ty, cid);
-			int pol = param_policy(pa->p[i].fn);
-			kExpr *texpr = kExpr_tyCheckAt(expr, n, gma, ptype, pol);
-			if(texpr == K_NULLEXPR) {
-				char mbuf[128];
-				return kExpr_p(expr, ERR_, "%s.%s accepts %s at the parameter %d", T_cid(cid), T_mn(mbuf, mtd->mn), T_ty(ptype), (int)i+1);
-			}
-			if(texpr->build != TEXPR_CONST && texpr->build != TEXPR_NEW) isConst = 0;
-		}
-		if(isConst && kMethod_isConst(mtd)) {
-			return ExprCall_toConstValue(_ctx, expr, cons, rtype);
-		}
-		else {
-			expr->build = TEXPR_CALL;
-			expr->ty = rtype;
-		}
-		return expr;
+	if(pa->psize + 2 != size) {
+		char mbuf[128];
+		return kExpr_p(expr, ERR_, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_cid(cid), T_mn(mbuf, mtd->mn), (int)pa->psize, (int)size-2);
 	}
-	return kExpr_p(expr, ERR_, "method was not found");
+	for(i = 0; i < pa->psize; i++) {
+		size_t n = i + 2;
+		ktype_t ptype = ktype_var(_ctx, pa->p[i].ty, cid);
+		int pol = param_policy(pa->p[i].fn);
+		kExpr *texpr = kExpr_tyCheckAt(expr, n, gma, ptype, pol);
+		if(texpr == K_NULLEXPR) {
+			char mbuf[128];
+			return kExpr_p(expr, ERR_, "%s.%s accepts %s at the parameter %d", T_cid(cid), T_mn(mbuf, mtd->mn), T_ty(ptype), (int)i+1);
+		}
+		if(!Expr_isCONST(expr)) isConst = 0;
+	}
+	expr->build = TEXPR_CALL;
+	if(isConst && kMethod_isConst(mtd)) {
+		return ExprCall_toConstValue(_ctx, expr, cons, rtype);
+	}
+	else {
+		expr->ty = rtype;
+	}
+	return expr;
 }
 
 static void Cons_setMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma)
@@ -480,7 +483,7 @@ static KMETHOD ExprTyCheck_call(CTX, ksfp_t *sfp _RIX)
 	kcid_t this_cid = texpr->ty;
 	//DBG_P("this_cid=%s", T_cid(this_cid));
 	Cons_setMethod(_ctx, expr, this_cid, gma);
-	RETURN_(Cons_tycheckParams(_ctx, expr, this_cid, gma, req_ty));
+	RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
 }
 
 static kmethodn_t Token_mn(CTX, kToken *tk, const char *name)
@@ -511,7 +514,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 				mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, gma->genv->this_cid, tk->mn);
 				if(mtd != NULL) {
 					if(!kMethod_isStatic(mtd)) {
-						KSETv(cons->tts[1], new_Variable(TEXPR_LOCAL, gma->genv->this_cid, 0, 0, gma));
+						KSETv(cons->exprs[1], new_Variable(TEXPR_LOCAL, gma->genv->this_cid, 0, 0, gma));
 						this_cid = gma->genv->this_cid;
 					}
 				}
@@ -527,8 +530,10 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	if(IS_Method(cons->methods[0])) {
-		if(this_cid == CLASS_unknown) this_cid = cons->methods[0]->cid;
-		RETURN_(Cons_tycheckParams(_ctx, expr, this_cid, gma, req_ty));
+		if(this_cid == CLASS_unknown) {
+			KSETv(cons->exprs[1], new_Variable(TEXPR_NULL, cons->methods[0]->cid, 0, 0, gma));
+		}
+		RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
 	}
 	else {
 		RETURN_(kExpr_p(expr, ERR_, "must be a function name"));
@@ -547,8 +552,8 @@ static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
 		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, texpr->ty, MN_toGETTER(mn));
 		if(mtd != NULL) {
 			KSETv(expr->consNUL->methods[0], mtd);
-			KSETv(expr->consNUL->exprs[1], texpr); // GC_UNSAFE
-			RETURN_(Cons_tycheckParams(_ctx, expr, expr->ty, gma, req_ty));
+			KSETv(expr->consNUL->exprs[1], texpr); // GC_UNSAFE (swaping)
+			RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
 		}
 		RETURN_(kToken_p(tkF, ERR_, "undefined field accessor: %s", kToken_s(tkF)));
 	}
