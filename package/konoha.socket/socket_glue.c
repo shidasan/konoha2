@@ -23,7 +23,7 @@
 
 #define MOD_SOCKET 21
 
-#define ksocketmod 				((ksocketmod_t *))_ctx->mod[MOD_SOCKET])
+#define ksocketmod 				((ksocketmod_t *)_ctx->mod[MOD_SOCKET])
 #define ksocketshare				((ksocketshare_t *)_ctx->modshare[MOD_SOCKET])
 #define CT_CSock				ksocketshare->cCSock
 #define TY_CSock				ksocketshare->cCSock->cid
@@ -550,7 +550,6 @@ KMETHOD CSock_socketpair(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = -2;
 	kArray *a = sfp[4].a;
-
 	if( a->size >= 2 ) {
 		int pairFd[2];
 		if( (ret = socketpair( (int)sfp[1].ivalue,
@@ -561,7 +560,6 @@ KMETHOD CSock_socketpair(CTX, ksfp_t* sfp _RIX)
 			a->ilist[1] = pairFd[1];
 		}
 	}
-
 	RETURNi_( ret );
 }
 
@@ -585,15 +583,66 @@ static	kbool_t socket_initPackage(CTX, struct kKonohaSpace *ks, int argc, const 
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
 		_Public, _F(CSock_accept), TY_CSock, TY_Int, MN_("accept"), 1, TY_String, FN_x,
-//		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
-//		_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
-//		_Public, _F(Stmt_tyCheckExpr), TY_Boolean, TY_Stmt, MN_("tyCheckExpr"), 4, TY_String, FN_key, TY_Gamma, FN_gma, TY_Int, FN_typeid, TY_Int, FN_pol,
-//		_Public, _F(Block_tyCheckAll), TY_Boolean, TY_Block, MN_("tyCheckAll"), 1, TY_Gamma, FN_gma,
-//		_Public, _F(KonohaSpace_defineSyntaxRule), TY_void, TY_KonohaSpace, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
-//		_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(ks, methoddata);
+	KDEFINE_INT_CONST IntData[] = {
+			{"PF_LOCAL",TY_Int, PF_LOCAL},
+			{"PF_UNIX", TY_Int, PF_UNIX},
+			{"PF_INET", TY_Int, PF_INET},
+			{"PF_INET6", TY_Int, PF_INET6},
+			{"PF_APPLETALK", TY_Int, PF_APPLETALK},
+#ifndef __APPLE__
+			{"PF_PACKET", TY_Int, PF_PACKET},
+#endif
+			{"AF_LOCAL", TY_Int, AF_LOCAL},
+			{"AF_UNIX", TY_Int, AF_UNIX},
+			{"AF_INET", TY_Int, AF_INET},
+			{"AF_INET6", TY_Int, AF_INET6},
+			{"AF_APPLETALK", TY_Int, AF_APPLETALK},
+#ifndef __APPLE__
+			{"AF_PACKET", TY_Int, AF_PACKET},
+#endif
+			// Types of sockets
+			{"SOCK_STREAM", TY_Int, SOCK_STREAM},
+			{"SOCK_DGRAM", TY_Int, SOCK_DGRAM},
+			{"SOCK_RAW", TY_Int, SOCK_RAW},
+			{"SOCK_RDM", TY_Int, SOCK_RDM},
+			// send & recv flags
+			{"MSG_OOB", TY_Int, MSG_OOB},
+			{"MSG_PEEK", TY_Int, MSG_PEEK},
+			{"MSG_DONTROUTE", TY_Int, MSG_DONTROUTE},
+			{"MSG_OOB", TY_Int, MSG_OOB},
+			{"MSG_TRUNC", TY_Int, MSG_TRUNC},
+			{"MSG_DONTWAIT", TY_Int, MSG_DONTWAIT},
+			{"MSG_EOR", TY_Int, MSG_EOR},
+			{"MSG_WAITALL", TY_Int, MSG_WAITALL},
+#ifndef	__APPLE__
+			{"MSG_CONFIRM", TY_Int, MSG_CONFIRM},
+			{"MSG_ERRQUEUE", TY_Int, MSG_ERRQUEUE},
+			{"MSG_NOSIGNAL", TY_Int, MSG_NOSIGNAL},
+			{"MSG_MORE", TY_Int, MSG_MORE},
+#endif
+			// socket options
+			{"SO_REUSEADDR", TY_Int, SO_REUSEADDR},
+			{"SO_TYPE", TY_Int, SO_TYPE},
+			{"SO_ERROR", TY_Int, SO_ERROR},
+			{"SO_DONTROUTE", TY_Int, SO_DONTROUTE},
+			{"SO_BROADCAST", TY_Int, SO_BROADCAST},
+			{"SO_SNDBUF", TY_Int, SO_SNDBUF},
+			{"SO_RCVBUF", TY_Int, SO_RCVBUF},
+			{"SO_KEEPALIVE", TY_Int, SO_KEEPALIVE},
+			{"SO_OOBINLINE", TY_Int, SO_OOBINLINE},
+#ifndef __APPLE__
+			{"SO_NO_CHECK", TY_Int, SO_NO_CHECK},
+			{"SO_PRIORITY", TY_Int, SO_PRIORITY},
+#endif
+			{"SHUT_RD", TY_Int, SHUT_RD},
+			{"SHUT_WR", TY_Int, SHUT_WR},
+			{"SHUT_RDWR", TY_Int, SHUT_RDWR},
+			{}
+	};
+	kloadConstData(ks, IntData, pline);
 	return true;
 }
 
@@ -602,18 +651,8 @@ static kbool_t socket_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
-
 static kbool_t socket_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
-//	USING_SUGAR;
-//	ksyntaxdef_t SYNTAX[] = {
-//		{ TOKEN("float"), .type = TY_Float, },
-//		{ TOKEN("double"), .type = TY_Float, },
-//		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
-//		{ .name = NULL, },
-//	};
-//	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
