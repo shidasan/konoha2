@@ -182,7 +182,6 @@ static void OutputStream_free(CTX, kRawPtr *o)
 {
 	kInputStream *in = (kInputStream*)o;
 	if (in->io2) {
-		asm volatile("int3");
 		io2_free(_ctx, in->io2);
 		in->io2 = NULL;
 	}
@@ -320,153 +319,153 @@ static kio_t* new_FILE(CTX, FILE *fp, size_t bufsiz)
 	return io2;
 }
 
-static kbool_t io2_blockread(CTX, kio_t *io2)
-{
-	io2_check_buffer_inited(_ctx, io2, K_PAGESIZE);
-	int fd = io2->fd;
-	ssize_t size = read(fd, io2->buffer.buf, io2->buffer.max);
-	if(size == -1) {
-		KNH_NTRACE2(_ctx, "read", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
-		io2->_close(_ctx, io2);
-		return 0;
-	}
-	else {
-		io2->top = 0;
-		io2->tail = size;
-		if(size == 0) {
-			io2->_close(_ctx, io2);
-		}
-		return 1;
-	}
-}
-
-static kbool_t io2_unblockread(CTX, kio_t *io2)
-{
-	int fd = io2->fd;
-	fd_set fds;
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	int rc = select(fd + 1, &fds, NULL, NULL, NULL);
-	if(rc != -1) {
-		if(FD_ISSET((int)fd, &fds)) {
-			return io2->_blockread(_ctx, io2);
-		}
-		bzero(io2->buffer.buf, io2->buffer.max);
-		io2->top  = 0;
-		io2->tail = 0;
-		return 1;
-	}
-	{
-		KNH_NTRACE2(_ctx, "select", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
-	}
-	return 0;
-}
-
-static size_t io2_blockwrite(CTX, kio_t *io2, const char *buf, size_t bufsiz)
-{
-	int fd = io2->fd;
-	ssize_t size = write(fd, buf, bufsiz);
-	if(size == -1) {
-		KNH_NTRACE2(_ctx, "write", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
-		io2->_close(_ctx, io2);
-	}
-	return 0;
-}
-
-static size_t io2_unblockwrite(CTX, kio_t *io2, const char *buf, size_t size)
-{
-	int fd = io2->fd;
-	fd_set fds;
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	int rc = select(fd + 1, NULL, &fds, NULL, NULL);
-	if(rc != -1) {
-		if(FD_ISSET((int)fd,&fds)) {
-			return io2->_blockwrite(_ctx, io2, buf, size);
-		}
-		return 0;
-	}
-	{
-		KNH_NTRACE2(_ctx, "select", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
-	}
-	return 0;
-}
-
-static void io2_closeFD(CTX, kio_t *io2)
-{
-	DBG_ASSERT(io2->isRunning == 1);
-	close(io2->fd);
-	io2->isRunning = 0;
-}
-
-static void io2_closeFD_stdio(CTX, kio_t *io2)
-{
-	DBG_ASSERT(io2->isRunning == 1);
-	io2->isRunning = 0;
-}
-
-static kio_t* new_io2_(CTX, int fd, size_t bufsiz, void (*_close)(CTX, struct kio_t *))
-{
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
-	io2->handler  = NULL;
-	io2->handler2 = NULL;
-	io2->fd = fd;
-	io2->isRunning = 1;
-	if(bufsiz > 0) {
-		KARRAY_INIT(io2->buffer, K_PAGESIZE, char);
-	}
-	io2->top  = 0;
-	io2->tail = 0;
-	io2->_close         = _close;
-	io2->_blockread     = io2_blockread;
-	io2->_unblockread   = io2_unblockread;
-	io2->_read          = io2_blockread;
-	io2->_blockwrite    = io2_blockwrite;
-	io2->_unblockwrite  = io2_unblockwrite;
-	io2->_write         = io2_blockwrite;
-	return io2;
-}
-
-static kio_t* new_io2(CTX, int fd, size_t bufsiz)
-{
-	return new_io2_(_ctx, fd, bufsiz, io2_closeFD);
-}
-
-static kio_t* new_io2_stdio(CTX, int fd, size_t bufsiz)
-{
-	return new_io2_(_ctx, fd, bufsiz, io2_closeFD_stdio);
-}
-
-static kio_t* new_io2ReadBuffer(CTX, const char *buf, size_t bufsiz)
-{
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
-	io2->handler  = NULL;
-	io2->handler2 = NULL;
-	io2->fd = -1;
-	io2->isRunning = 0;
-	KARRAY_INIT(io2->buffer, bufsiz, char);
-	memcpy(io2->buffer.body, buf, bufsiz);
-	io2->buffer.size = bufsiz;
-	io2->top  = 0;
-	io2->tail = bufsiz;
-	io2->_close         = io2_close;
-	io2->_blockread     = io2_readNOP;
-	io2->_unblockread   = io2_readNOP;
-	io2->_read          = io2_readNOP;
-	io2->_blockwrite    = io2_writeNOP;
-	io2->_unblockwrite  = io2_writeNOP;
-	io2->_write         = io2_writeNOP;
-	return io2;
-}
-
-static void io2_closeBytes(CTX, kio_t *io2)
-{
-	io2->_blockwrite    = io2_writeNOP;
-	io2->_unblockwrite  = io2_writeNOP;
-	io2->_write         = io2_writeNOP;
-	io2->isRunning = 0;
-}
-
+//static kbool_t io2_blockread(CTX, kio_t *io2)
+//{
+//	io2_check_buffer_inited(_ctx, io2, K_PAGESIZE);
+//	int fd = io2->fd;
+//	ssize_t size = read(fd, io2->buffer.buf, io2->buffer.max);
+//	if(size == -1) {
+//		KNH_NTRACE2(_ctx, "read", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
+//		io2->_close(_ctx, io2);
+//		return 0;
+//	}
+//	else {
+//		io2->top = 0;
+//		io2->tail = size;
+//		if(size == 0) {
+//			io2->_close(_ctx, io2);
+//		}
+//		return 1;
+//	}
+//}
+//
+//static kbool_t io2_unblockread(CTX, kio_t *io2)
+//{
+//	int fd = io2->fd;
+//	fd_set fds;
+//	FD_ZERO(&fds);
+//	FD_SET(fd, &fds);
+//	int rc = select(fd + 1, &fds, NULL, NULL, NULL);
+//	if(rc != -1) {
+//		if(FD_ISSET((int)fd, &fds)) {
+//			return io2->_blockread(_ctx, io2);
+//		}
+//		bzero(io2->buffer.buf, io2->buffer.max);
+//		io2->top  = 0;
+//		io2->tail = 0;
+//		return 1;
+//	}
+//	{
+//		KNH_NTRACE2(_ctx, "select", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
+//	}
+//	return 0;
+//}
+//
+//static size_t io2_blockwrite(CTX, kio_t *io2, const char *buf, size_t bufsiz)
+//{
+//	int fd = io2->fd;
+//	ssize_t size = write(fd, buf, bufsiz);
+//	if(size == -1) {
+//		KNH_NTRACE2(_ctx, "write", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
+//		io2->_close(_ctx, io2);
+//	}
+//	return 0;
+//}
+//
+//static size_t io2_unblockwrite(CTX, kio_t *io2, const char *buf, size_t size)
+//{
+//	int fd = io2->fd;
+//	fd_set fds;
+//	FD_ZERO(&fds);
+//	FD_SET(fd, &fds);
+//	int rc = select(fd + 1, NULL, &fds, NULL, NULL);
+//	if(rc != -1) {
+//		if(FD_ISSET((int)fd,&fds)) {
+//			return io2->_blockwrite(_ctx, io2, buf, size);
+//		}
+//		return 0;
+//	}
+//	{
+//		KNH_NTRACE2(_ctx, "select", K_PERROR, KNH_LDATA(LOG_i("fd", fd), LOG_s("path", io2->DBG_NAME)));
+//	}
+//	return 0;
+//}
+//
+//static void io2_closeFD(CTX, kio_t *io2)
+//{
+//	DBG_ASSERT(io2->isRunning == 1);
+//	close(io2->fd);
+//	io2->isRunning = 0;
+//}
+//
+//static void io2_closeFD_stdio(CTX, kio_t *io2)
+//{
+//	DBG_ASSERT(io2->isRunning == 1);
+//	io2->isRunning = 0;
+//}
+//
+//static kio_t* new_io2_(CTX, int fd, size_t bufsiz, void (*_close)(CTX, struct kio_t *))
+//{
+//	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+//	io2->handler  = NULL;
+//	io2->handler2 = NULL;
+//	io2->fd = fd;
+//	io2->isRunning = 1;
+//	if(bufsiz > 0) {
+//		KARRAY_INIT(io2->buffer, K_PAGESIZE, char);
+//	}
+//	io2->top  = 0;
+//	io2->tail = 0;
+//	io2->_close         = _close;
+//	io2->_blockread     = io2_blockread;
+//	io2->_unblockread   = io2_unblockread;
+//	io2->_read          = io2_blockread;
+//	io2->_blockwrite    = io2_blockwrite;
+//	io2->_unblockwrite  = io2_unblockwrite;
+//	io2->_write         = io2_blockwrite;
+//	return io2;
+//}
+//
+//static kio_t* new_io2(CTX, int fd, size_t bufsiz)
+//{
+//	return new_io2_(_ctx, fd, bufsiz, io2_closeFD);
+//}
+//
+//static kio_t* new_io2_stdio(CTX, int fd, size_t bufsiz)
+//{
+//	return new_io2_(_ctx, fd, bufsiz, io2_closeFD_stdio);
+//}
+//
+//static kio_t* new_io2ReadBuffer(CTX, const char *buf, size_t bufsiz)
+//{
+//	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+//	io2->handler  = NULL;
+//	io2->handler2 = NULL;
+//	io2->fd = -1;
+//	io2->isRunning = 0;
+//	KARRAY_INIT(io2->buffer, bufsiz, char);
+//	memcpy(io2->buffer.body, buf, bufsiz);
+//	io2->buffer.size = bufsiz;
+//	io2->top  = 0;
+//	io2->tail = bufsiz;
+//	io2->_close         = io2_close;
+//	io2->_blockread     = io2_readNOP;
+//	io2->_unblockread   = io2_readNOP;
+//	io2->_read          = io2_readNOP;
+//	io2->_blockwrite    = io2_writeNOP;
+//	io2->_unblockwrite  = io2_writeNOP;
+//	io2->_write         = io2_writeNOP;
+//	return io2;
+//}
+//
+//static void io2_closeBytes(CTX, kio_t *io2)
+//{
+//	io2->_blockwrite    = io2_writeNOP;
+//	io2->_unblockwrite  = io2_writeNOP;
+//	io2->_write         = io2_writeNOP;
+//	io2->isRunning = 0;
+//}
+//
 static kio_t *io2_null(void)
 {
 	static kio_t io2_dummy = {
@@ -699,26 +698,26 @@ static void knh_OutputStream_putc(CTX, kOutputStream *w, int ch)
 	io2_write(_ctx, w->io2, buf, 1);
 }
 
-static void knh_OutputStream_write(CTX, kOutputStream *w, kbytes_t buf)
-{
-	io2_write(_ctx, w->io2, buf.text, buf.len);
-}
-
-static void knh_OutputStream_p(CTX, kOutputStream *w, kbytes_t buf)
-{
-	if(w->encNULL != NULL) {
-		size_t i;
-		for(i = 0; i < buf.len; i++) {
-			int ch = buf.ubuf[i];
-			if(ch > 127) {
-				io2_writeMultiByteChar(_ctx, w->io2, buf.text, buf.len);
-				return;
-			}
-		}
-	}
-	io2_write(_ctx, w->io2, buf.text, buf.len);
-}
-
+//static void knh_OutputStream_write(CTX, kOutputStream *w, kbytes_t buf)
+//{
+//	io2_write(_ctx, w->io2, buf.text, buf.len);
+//}
+//
+//static void knh_OutputStream_p(CTX, kOutputStream *w, kbytes_t buf)
+//{
+//	if(w->encNULL != NULL) {
+//		size_t i;
+//		for(i = 0; i < buf.len; i++) {
+//			int ch = buf.ubuf[i];
+//			if(ch > 127) {
+//				io2_writeMultiByteChar(_ctx, w->io2, buf.text, buf.len);
+//				return;
+//			}
+//		}
+//	}
+//	io2_write(_ctx, w->io2, buf.text, buf.len);
+//}
+//
 /* ------------------------------------------------------------------------ */
 //## method @public Int InputStream.getByte()
 static KMETHOD InputStream_getByte(CTX, ksfp_t *sfp _RIX)

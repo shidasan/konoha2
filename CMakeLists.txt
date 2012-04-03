@@ -205,15 +205,9 @@ macro(add_konoha_package PKGNAME)
 	endif (__BUILD)
 endmacro(add_konoha_package)
 
-#file(GLOB dirs "${CMAKE_CURRENT_SOURCE_DIR}/package/konoha.*")
-#foreach(dir ${dirs})
-#	add_subdirectory(${dir})
-#endforeach()
-
 foreach(dir ${PACKAGES})
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/package/${dir})
 endforeach()
-
 
 # test cases
 enable_testing()
@@ -233,49 +227,22 @@ foreach(f ${test_files})
 	add_konoha_test(${_tmp})
 endforeach()
 
-add_executable(test_Kmalloc ./test/test_Kmalloc.c)
-target_link_libraries(test_Kmalloc ${ExtraLibs})
-add_test(test_Kmalloc test_Kmalloc)
+macro(add_clib_test test_name)
+	add_executable(${test_name} ${ARGN})
+	target_link_libraries(${test_name} ${ExtraLibs})
+	add_test(${test_name} ${test_name})
+endmacro(add_clib_test sources)
 
-add_executable(test_vm_add0 ./test/vm/test_add0.c)
-target_link_libraries(test_vm_add0 ${ExtraLibs})
-add_test(test_vm_add0 test_vm_add0)
-
-add_executable(test_vm_int ./test/vm/test_int.c)
-target_link_libraries(test_vm_int ${ExtraLibs})
-add_test(test_vm_int test_vm_int)
-
-add_executable(test_Karray ./test/test_Karray.c)
-target_link_libraries(test_Karray ${ExtraLibs})
-add_test(test_Karray test_Karray)
-
-add_executable(test_gc ./test/test_gc.c)
-target_link_libraries(test_gc ${ExtraLibs})
-add_test(test_gc test_gc)
-
-add_executable(test_Kwb ./test/test_Kwb.c)
-target_link_libraries(test_Kwb ${ExtraLibs})
-add_test(test_Kwb test_Kwb)
-
-add_executable(test_map ./test/test_map.c)
-target_link_libraries(test_map ${ExtraLibs})
-add_test(test_map test_map)
-
-add_executable(test_string ./test/test_string.c)
-target_link_libraries(test_string ${ExtraLibs})
-add_test(test_string test_string)
-
-#add_executable(test_loadMethodData ./test/test_loadMethodData.c)
-#target_link_libraries(test_loadMethodData ${ExtraLibs})
-#add_test(test_loadMethodData test_loadMethodData)
-#
-#add_executable(test_getMethod ./test/test_getMethod.c)
-#target_link_libraries(test_getMethod ${ExtraLibs})
-#add_test(test_getMethod test_getMethod)
-
-add_executable(test_sizeof ./test/test_sizeof.c)
-target_link_libraries(test_sizeof ${ExtraLibs})
-add_test(test_sizeof test_sizeof)
+add_clib_test(test_Kmalloc ./test/test_Kmalloc.c)
+add_clib_test(test_vm_add0 ./test/vm/test_add0.c)
+add_clib_test(test_vm_int ./test/vm/test_int.c)
+add_clib_test(test_Karray ./test/test_Karray.c)
+add_clib_test(test_gc ./test/test_gc.c)
+add_clib_test(test_Kwb ./test/test_Kwb.c)
+add_clib_test(test_map ./test/test_map.c)
+add_clib_test(test_string ./test/test_string.c)
+add_clib_test(test_cpp ./test/test_cpp.cpp)
+add_clib_test(test_sizeof ./test/test_sizeof.c)
 
 install(TARGETS konoha2 konoha2_bin
 		RUNTIME DESTINATION bin

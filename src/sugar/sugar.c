@@ -327,16 +327,17 @@ static ksymbol_t keyword_get(CTX, const char *name, size_t len, uintptr_t hcode,
 
 static uintptr_t keyword_hash(const char *name, size_t len)
 {
-	uintptr_t hcode = 0;
-	size_t i;
-	for(i = 0; i < len; i++) {
-		int ch = name[i];
-		if(ch == 0) {
-			len = i; break;
-		}
-		hcode = ch + (31 * hcode);
-	}
-	return hcode;
+	return strhash(name, len);
+	//uintptr_t hcode = 0;
+	//size_t i;
+	//for(i = 0; i < len; i++) {
+	//	int ch = name[i];
+	//	if(ch == 0) {
+	//		len = i; break;
+	//	}
+	//	hcode = ch + (31 * hcode);
+	//}
+	//return hcode;
 }
 
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def)
@@ -418,7 +419,7 @@ static int isemptychunk(const char *t, size_t len)
 
 static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t uline)
 {
-	kstatus_t status;
+	kstatus_t status = K_FAILED;
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(!feof(fp)) {
