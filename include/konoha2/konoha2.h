@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
@@ -174,6 +175,7 @@ typedef kushort_t                 kuri_t;
 #define FILENAME__(uri) knh_sfile(URI__(uri))
 
 typedef uintptr_t                 kline_t;
+#define NOPLINE                   0
 #define new_ULINE(uri, line)       ((((kline_t)uri) << (sizeof(kuri_t) * 8)) | ((kushort_t)line))
 #define ULINE_setURI(line, uri)    line |= (((kline_t)uri) << (sizeof(kuri_t) * 8))
 #define ULINE_uri(line)            ((kuri_t)(line >> (sizeof(kuri_t) * 8)))
@@ -192,6 +194,8 @@ typedef struct {
 		void  *body;
 		char  *buf;
 		const struct kclass_t **ClassTBL;
+		struct kObject   *list;
+		uintptr_t        *ndata;
 		struct keyvals_t *keyvals;
 		REF_t *refhead;
 	};
@@ -393,11 +397,11 @@ typedef kushort_t       kmethodn_t;
 #define CT_(t)              (_ctx->share->ca.ClassTBL[t])
 #define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UnboxType)
 
-#define TY_T0             ((ktype_t)KFLAG_H2)
-#define TY_This           TY_T0
-#define TY_T(n)           (TY_T0+(n))
-#define TY_T1             TY_T(1)
-#define TY_T2             TY_T(2)
+//#define TY_T0             ((ktype_t)KFLAG_H2)
+//#define TY_This           TY_T0
+//#define TY_T(n)           (TY_T0+(n))
+//#define TY_T1             TY_T(1)
+//#define TY_T2             TY_T(2)
 
 #define FN_NONAME          ((ksymbol_t)-1)
 #define FN_NEWID           ((ksymbol_t)-2)
@@ -452,9 +456,12 @@ struct kp_api;
 		void (*p)(CTX, ksfp_t *, int, kwb_t *, int);\
 		uintptr_t (*unbox)(CTX, struct kObject*);\
 		int  (*compareTo)(struct kRawPtr*, struct kRawPtr*);\
-		struct kString* (*getkey)(CTX, struct kRawPtr*);\
-		kuint_t (*hashCode)(CTX, struct kRawPtr*);\
-		void (*initdef)(CTX, struct kclass_t *, kline_t)
+		void (*initdef)(CTX, struct kclass_t *, kline_t);\
+		kbool_t (*issubtype)(CTX, const struct kclass_t*, const struct kclass_t*);\
+		const struct kclass_t* (*realtype)(CTX, const struct kclass_t*, const struct kclass_t*)
+
+//struct kString* (*getkey)(CTX, struct kRawPtr*);
+//kuint_t (*hashCode)(CTX, struct kRawPtr*);
 
 typedef struct KDEFINE_CLASS {
 	const char *structname;
@@ -482,19 +489,18 @@ typedef uintptr_t kmagicflag_t;
 
 typedef struct kclass_t {
 	KCLASSSPI;
+	kpkg_t   packid;       kpkg_t   packdom;
 	kcid_t   cid;          kflag_t  cflag;
 	kcid_t   bcid;         kcid_t   supcid;
-	kcid_t   p1;           kcid_t   p2;
-	kpkg_t   packid;       kpkg_t   packdom;
+	ktype_t  p1;           ktype_t  p2_optvalue;
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
 	kushort_t  fsize;      kushort_t fallocsize;
-//	void *fieldinit;
-	//
-	struct kClass            *typeNUL;
-	struct kParam            *cparam;
+	const char               *DBG_NAME;
+
 	struct kString           *name;
+	struct kParam            *cparam;
 	struct kString           *fullnameNUL;
 	struct kArray            *methods;
 	union {
@@ -504,7 +510,6 @@ typedef struct kclass_t {
 	struct kmap_t            *constNameMapSO;
 	struct kmap_t            *constPoolMapNO;
 	const struct kclass_t    *simbody;
-	const char               *DBG_NAME;
 } kclass_t;
 
 /* ----------------------------------------------------------------------- */
@@ -790,7 +795,7 @@ typedef struct kArray kArray;
 struct kArray {
 	kObjectHeader h;
 	union {
-		intptr_t               *nlist;
+		uintptr_t              *ndata;
 		kint_t                 *ilist;
 #ifdef K_USING_FLOAT
 		kfloat_t               *flist;
@@ -1042,7 +1047,8 @@ typedef struct klib2_t {
 	uintptr_t (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
 	void (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
 
-	struct kString* (*Knew_String)(CTX, const char *, size_t, int);
+	kString* (*Knew_String)(CTX, const char *, size_t, int);
+	kString* (*Knew_Stringf)(CTX, int, const char *, ...);
 
 	void (*KArray_add)(CTX, kArray *, kObject *);
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
@@ -1138,6 +1144,7 @@ typedef struct klib2_t {
 #define kObject_setUnboxedValue(O, K, V)       (KPI)->KObject_setUnboxedValue(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
 
 #define new_kString(T,S,P)        (KPI)->Knew_String(_ctx, T, S, P)
+#define new_kStringf(P, FMT, ...) (KPI)->Knew_Stringf(_ctx, P, FMT, ## __VA_ARGS__)
 
 #define kArray_size(A)            (A)->size
 #define kArray_add(A, V)          (KPI)->KArray_add(_ctx, A, UPCAST(V))
