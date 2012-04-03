@@ -62,8 +62,6 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Small")
 endif()
 
 set(RUNTIME
-	src/konoha/datatype.c
-	src/konoha/klib.c
 	src/konoha/konoha2.c
 )
 
@@ -233,6 +231,7 @@ macro(add_clib_test test_name)
 	add_test(${test_name} ${test_name})
 endmacro(add_clib_test sources)
 
+add_clib_test(test_sizeof ./test/test_sizeof.c)
 add_clib_test(test_Kmalloc ./test/test_Kmalloc.c)
 add_clib_test(test_vm_add0 ./test/vm/test_add0.c)
 add_clib_test(test_vm_int ./test/vm/test_int.c)
@@ -242,7 +241,6 @@ add_clib_test(test_Kwb ./test/test_Kwb.c)
 add_clib_test(test_map ./test/test_map.c)
 add_clib_test(test_string ./test/test_string.c)
 add_clib_test(test_cpp ./test/test_cpp.cpp)
-add_clib_test(test_sizeof ./test/test_sizeof.c)
 
 install(TARGETS konoha2 konoha2_bin
 		RUNTIME DESTINATION bin

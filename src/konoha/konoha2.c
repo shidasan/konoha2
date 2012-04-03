@@ -32,10 +32,12 @@
 #include <logpool.h>
 #endif
 
+#include "klibexec.h"
+#include "datatype.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 void MODCODE_init(CTX, kcontext_t *ctx);
 void MODEVAL_init(CTX, kcontext_t *ctx);

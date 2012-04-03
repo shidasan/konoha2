@@ -744,7 +744,8 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 	if(expr == NULL) {
 		expr = new_(Expr, 0);
 	}
-	DBG_ASSERT(expr->dataNUL == NULL);
+	//DBG_ASSERT(expr->dataNUL == NULL);
+	expr->dataNUL = NULL;   // consNUL is used in context of constant folding
 	expr->ty = ty;
 	if(TY_isUnbox(ty)) {
 		expr->build = TEXPR_NCONST;

@@ -130,19 +130,19 @@ static kExpr *Expr_typed(CTX, kExpr *expr, kGamma *gma, int req_ty)
 	}
 }
 
-static kObject *ConstValue(CTX, kObject *o)
+static void Expr_putConstValue(CTX, kExpr *expr, ksfp_t *sfp)
 {
-	if(IS_Expr(o)) {
-		kExpr *expr = (kExpr*)o;
-		if(expr->build == TEXPR_CONST) {
-			return expr->dataNUL;
-		}
-		if(expr->build == TEXPR_NEW) {
-			return new_kObject(CT_(expr->ty), NULL);
-		}
+	if(expr->build == TEXPR_CONST) {
+		KSETv(sfp[0].o, expr->dataNUL);
+	}else if(expr->build == TEXPR_NCONST) {
+		sfp[0].ndata = expr->ndata;
+	}else if(expr->build == TEXPR_NEW) {
+		KSETv(sfp[0].o, new_kObject(CT_(expr->ty), expr->ndata /*FIXME*/));
+	}else {
 		assert(expr->build == TEXPR_NULL);
+		KSETv(sfp[0].o, knull(CT_(expr->ty)));
+		sfp[0].ndata = 0;
 	}
-	return o;
 }
 
 static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtype)
@@ -153,9 +153,7 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 	KSETv(lsfp[K_CALLDELTA+0].o, (kObject*)expr);
 	kExpr_p(expr, DEBUG_, "constant folding of %s", T_ty(expr->ty));
 	for(i = 1; i < size; i++) {
-		kObject *o = ConstValue(_ctx, cons->list[i]);
-		KSETv(lsfp[K_CALLDELTA + i - 1].o, o);
-		lsfp[K_CALLDELTA + i - 1].ivalue = N_toint(o);
+		Expr_putConstValue(_ctx, cons->exprs[i], lsfp + K_CALLDELTA + i - 1);
 	}
 	KCALL(lsfp, 0, mtd, psize);
 	END_LOCAL();
@@ -414,11 +412,9 @@ static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_
 		if(!Expr_isCONST(expr)) isConst = 0;
 	}
 	expr->build = TEXPR_CALL;
+	expr->ty = rtype;
 	if(isConst && kMethod_isConst(mtd)) {
 		return ExprCall_toConstValue(_ctx, expr, cons, rtype);
-	}
-	else {
-		expr->ty = rtype;
 	}
 	return expr;
 }
