@@ -187,14 +187,14 @@ static void OutputStream_free(CTX, kRawPtr *o)
 	}
 }
 
-static KCLASSDEF InputStreamDef = {
+static KDEFINE_CLASS InputStreamDef = {
 	STRUCTNAME(InputStream),
 	.cflag = 0,
 	.init = Stream_init,
 	.free = Stream_free,
 };
 
-static KCLASSDEF OutputStreamDef = {
+static KDEFINE_CLASS OutputStreamDef = {
 	STRUCTNAME(OutputStream),
 	.cflag = 0,
 	.init = Stream_init,

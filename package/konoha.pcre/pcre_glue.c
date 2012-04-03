@@ -693,7 +693,7 @@ static kbool_t regex_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 	base->h.free     = kregexshare_free;
 	ksetModule(MOD_REGEX, &base->h, pline);
 
-	KCLASSDEF RegexDef = {
+	KDEFINE_CLASS RegexDef = {
 		STRUCTNAME(Regex),
 		.cflag = 0,
 		.init = Regex_init,

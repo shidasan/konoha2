@@ -97,7 +97,7 @@ static void KonohaSpace_free(CTX, kRawPtr *o)
 	}
 }
 
-static KCLASSDEF KonohaSpaceDef = {
+static KDEFINE_CLASS KonohaSpaceDef = {
 	STRUCTNAME(KonohaSpace), PACKSUGAR,
 	.init = KonohaSpace_init,
 	.reftrace = KonohaSpace_reftrace,
@@ -527,7 +527,7 @@ static void Token_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static KCLASSDEF TokenDef = {
+static KDEFINE_CLASS TokenDef = {
 	STRUCTNAME(Token), PACKSUGAR,
 	.init = Token_init,
 	.reftrace = Token_reftrace,
@@ -653,7 +653,7 @@ static void Expr_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static KCLASSDEF ExprDef = {
+static KDEFINE_CLASS ExprDef = {
 	STRUCTNAME(Expr), PACKSUGAR,
 	.init = Expr_init,
 	.reftrace = Expr_reftrace,
@@ -805,13 +805,13 @@ static void Stmt_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static KCLASSDEF StmtDef = {
+static KDEFINE_CLASS StmtDef = {
 	STRUCTNAME(Stmt), PACKSUGAR,
 	.init = Stmt_init,
 	.reftrace = Stmt_reftrace,
 };
 
-static void _dumpToken(CTX, void *arg, kprodata_t *d)
+static void _dumpToken(CTX, void *arg, kvs_t *d)
 {
 	if((d->key & FN_BOXED) == FN_BOXED) {
 		keyword_t key = ~FN_BOXED & d->key;
@@ -976,7 +976,7 @@ static void Block_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static KCLASSDEF BlockDef = {
+static KDEFINE_CLASS BlockDef = {
 	STRUCTNAME(Block), PACKSUGAR,
 	.init = Block_init,
 	.reftrace = Block_reftrace,
@@ -1005,7 +1005,7 @@ static void Gamma_init(CTX, kRawPtr *o, void *conf)
 	gma->genv = NULL;
 }
 
-static KCLASSDEF GammaDef = {
+static KDEFINE_CLASS GammaDef = {
 	STRUCTNAME(Gamma), PACKSUGAR,
 	.init = Gamma_init,
 };

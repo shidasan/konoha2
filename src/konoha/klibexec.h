@@ -1,13 +1,10 @@
 /*
- * klib.c
+ * klibexec.h
  *
  *  Created on: Jan 28, 2012
  *      Author: kimio
  */
 
-#include <konoha2/konoha2.h>
-#include <konoha2/klib.h>
-#include "konoha2/gc.h"
 
 static void karray_init(CTX, karray_t *m, size_t max, size_t w)
 {
@@ -286,6 +283,8 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 	kmap_unuse(kmap, oe);
 }
 
+// -------------------
+
 static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 {
 	int index = MN_UNMASK(sym);
@@ -382,8 +381,10 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	fputs(T_END(_ctx, level), stdout);
 	fprintf(stdout, "\n");
 	va_end(ap);
+	if(level == CRIT_) {
+		kraise(0);
+	}
 }
-
 
 // -------------------------------------------------------------------------
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)

@@ -159,7 +159,7 @@ static	kbool_t float_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 	base->h.free     = kfloatshare_free;
 	ksetModule(MOD_FLOAT, &base->h, pline);
 
-	KCLASSDEF FloatDef = {
+	KDEFINE_CLASS FloatDef = {
 		STRUCTNAME(Float),
 		.packid  = ks->packid,
 		.packdom = 0,

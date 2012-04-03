@@ -456,7 +456,7 @@ struct kp_api;
 		kuint_t (*hashCode)(CTX, struct kRawPtr*);\
 		void (*initdef)(CTX, struct kclass_t *, kline_t)
 
-typedef struct KCLASSDEF {
+typedef struct KDEFINE_CLASS {
 	const char *structname;
 	kcid_t     cid;         kflag_t    cflag;
 	kcid_t     bcid;        kcid_t     supcid;
@@ -465,9 +465,9 @@ typedef struct KCLASSDEF {
 	kushort_t  fsize;        kushort_t fallocsize;
 	kpkg_t     packid;       kpkg_t packdom;
 	KCLASSSPI;
-} KCLASSDEF;
+} KDEFINE_CLASS;
 
-//typedef const KCLASSDEF KCLASSDEF;
+//typedef const KDEFINE_CLASS KDEFINE_CLASS;
 
 #define STRUCTNAME(C) \
 	.structname = #C,\
@@ -624,7 +624,7 @@ typedef struct kObjectHeader {
 		uintptr_t refc;  // RCGC
 		void *gcinfo;
 	};
-	struct kpromap_t *proto;
+	struct kvsarray_t *proto;
 } kObjectHeader ;
 
 typedef struct kObject kObject;
@@ -638,22 +638,23 @@ struct kObject {
 };
 //#endif
 
-typedef struct kprodata_t {
+typedef struct kvs_t {
 	ksymbol_t key;
-	ktype_t   type;
+	ktype_t   ty;
 	union {
-		uintptr_t val;
-		kObject *oval;
+		uintptr_t         uval;
+		kObject          *oval;
+		struct kString   *sval;
 	};
-} kprodata_t;
+} kvs_t;
 
-typedef struct kpromap_t {
-	kprodata_t *datamap;
+typedef struct kvsarray_t {
+	kvs_t *kvs;
 	size_t size;
 	size_t capacity;
-} kpromap_t;
+} kvsarray_t;
 
-extern void kpromap_each(CTX, kpromap_t *p, void *arg, void (*f)(CTX, void *, kprodata_t *d));
+extern void kpromap_each(CTX, kvsarray_t *p, void *arg, void (*f)(CTX, void *, kvs_t *d));
 #define O_cid(o)            (((o)->h.ct)->cid)
 #define O_bcid(o)           (((o)->h.ct)->bcid)
 #define O_ct(o)             ((o)->h.ct)
@@ -1036,8 +1037,10 @@ typedef struct klib2_t {
 
 	struct kObject* (*Knew_Object)(CTX, const kclass_t *, void *);
 	struct kObject* (*Knull)(CTX, const kclass_t *);
-	kObject* (*KObject_getObjectNULL)(CTX, kObject *, ksymbol_t);
+	kObject* (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
 	void (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
+	uintptr_t (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
+	void (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
 
 	struct kString* (*Knew_String)(CTX, const char *, size_t, int);
 
@@ -1050,7 +1053,7 @@ typedef struct klib2_t {
 	void (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
 
 	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
-	const kclass_t* (*KaddClassDef)(CTX, kString *, KCLASSDEF *, kline_t);
+	const kclass_t* (*KaddClassDef)(CTX, kString *, KDEFINE_CLASS *, kline_t);
 
 	kcid_t  (*KKonohaSpace_getcid)(CTX, struct kKonohaSpace *, const char *, size_t, kcid_t def);
 	void    (*KloadMethodData)(CTX, struct kKonohaSpace *, intptr_t *d);
@@ -1128,8 +1131,11 @@ typedef struct klib2_t {
 #define knull(C)                  (KPI)->Knull(_ctx, C)
 #define KNULL(C)                  (k##C*)(KPI)->Knull(_ctx, CT_##C)
 
-#define kObject_getObjectNULL(O, K)      (KPI)->KObject_getObjectNULL(_ctx, UPCAST(O), K)
+#define kObject_getObjectNULL(O, K)      (KPI)->KObject_getObject(_ctx, UPCAST(O), K, NULL)
+#define kObject_getObject(O, K, DEF)      (KPI)->KObject_getObject(_ctx, UPCAST(O), K, DEF)
 #define kObject_setObject(O, K, V)       (KPI)->KObject_setObject(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
+#define kObject_getUnboxedValue(O, K, DEF)      (KPI)->KObject_getUnboxedValue(_ctx, UPCAST(O), K, DEF)
+#define kObject_setUnboxedValue(O, K, V)       (KPI)->KObject_setUnboxedValue(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
 
 #define new_kString(T,S,P)        (KPI)->Knew_String(_ctx, T, S, P)
 
@@ -1284,14 +1290,9 @@ extern void knh_beginContext(CTX, void **bottom);
 extern void knh_endContext(CTX);
 #define BEGIN_CONTEXT(_ctx) knh_beginContext(_ctx, (void**)&_ctx)
 #define END_CONTEXT(_ctx) knh_endContext(_ctx)
-extern void klib2_init(klib2_t *klib2);
-extern void kshare_init(CTX, kcontext_t *ctx);
 extern void MODEVAL_init(CTX, kcontext_t *ctx);
-extern void kshare_reftrace(CTX, kcontext_t *ctx);
-extern void kshare_free(CTX, kcontext_t *ctx);
-extern void kpromap_free(CTX, struct kpromap_t *p);
-extern void kpromap_reftrace(CTX, struct kpromap_t *p);
-extern void kshare_init_methods(CTX);
+extern void kpromap_free(CTX, struct kvsarray_t *p);
+extern void kpromap_reftrace(CTX, struct kvsarray_t *p);
 
 /* for debug mode */
 extern int konoha_debug;

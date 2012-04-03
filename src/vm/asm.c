@@ -1899,7 +1899,7 @@ static void BasicBlock_free(CTX, kRawPtr *o)
 	}
 }
 
-static KCLASSDEF BasicBlockDef = {
+static KDEFINE_CLASS BasicBlockDef = {
 	STRUCTNAME(BasicBlock), PACKSUGAR,
 	.init = BasicBlock_init,
 	.free = BasicBlock_free,
@@ -1928,7 +1928,7 @@ static void KonohaCode_free(CTX, kRawPtr *o)
 	KNH_FREE(b->code, b->codesize);
 }
 
-static KCLASSDEF KonohaCodeDef = {
+static KDEFINE_CLASS KonohaCodeDef = {
 	STRUCTNAME(KonohaCode), PACKSUGAR,
 	.init = KonohaCode_init,
 	.reftrace = KonohaCode_reftrace,

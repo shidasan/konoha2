@@ -30,7 +30,7 @@ static void Dummy_free(CTX, kRawPtr *o)
     __free__++;
 }
 
-static KCLASSDEF DummyDef = {
+static KDEFINE_CLASS DummyDef = {
     .structname   = "Dummy",
     .cid          = 100,
     .cflag        = 0,

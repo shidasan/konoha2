@@ -106,7 +106,7 @@ static KMETHOD KonohaSpace_getCid(CTX, ksfp_t *sfp _RIX)
 static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 {
 	kKonohaSpace *ks = sfp[0].ks;
-	KCLASSDEF cdef = {};
+	KDEFINE_CLASS cdef = {};
 	cdef.cstruct_size = sfp[4].ivalue * sizeof(void*);
 	cdef.cflag  = (kflag_t)sfp[1].ivalue | ((cdef.cstruct_size > 0) ? kClass_UNDEF : 0);
 	cdef.cid    = CLASS_newid;

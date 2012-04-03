@@ -76,7 +76,7 @@ static void Bytes_free(CTX, kRawPtr *o)
 #define BA_text(o)      ((const char*) (O_ct(o)->unbox(_ctx, (kObject*)(o))))
 #define k_grow(N)       ((N)*2)
 
-static KCLASSDEF BytesDef = {
+static KDEFINE_CLASS BytesDef = {
 	STRUCTNAME(Bytes),
 	.cflag = 0,
 	.init = Bytes_init,
@@ -115,7 +115,7 @@ typedef struct kStringEncoder {
 	const struct knh_ConverterDPI_t *dpi;
 } kStringEncoder;
 
-static KCLASSDEF StringEncoderDef = {
+static KDEFINE_CLASS StringEncoderDef = {
 	STRUCTNAME(StringEncoder),
 	.cflag = 0,
 };
@@ -129,7 +129,7 @@ typedef struct kStringDecoder {
 	const struct knh_ConverterDPI_t *dpi;
 } kStringDecoder;
 
-static KCLASSDEF StringDecoderDef = {
+static KDEFINE_CLASS StringDecoderDef = {
 	STRUCTNAME(StringDecoder),
 	.cflag = 0,
 };

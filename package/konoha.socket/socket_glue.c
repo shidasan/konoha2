@@ -217,7 +217,7 @@ static int getNfd( kArray *a1, kArray *a2, kArray *a3 )
 }
 /* ------------------------------------------------------------------------ */
 
-//static const kclass_t *addClassDef(CTX, kString *name, KCLASSDEF *cdef, kline_t pline)
+//static const kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
 ////DEFAPI(void) defCSock(CTX, kclass_t cid, kclassdef_t *cdef)
 //{
 //	kclass_t *ct = new_CT(_ctx, cdef, pline);
@@ -245,7 +245,7 @@ typedef struct kCSock	kCSock;
 struct kCSock {
 	kObjectHeader h;
 };
-static KCLASSDEF CSockDef = {
+static KDEFINE_CLASS CSockDef = {
 		STRUCTNAME(CSock),
 		.cflag = 0,
 		.init = CSock_init,

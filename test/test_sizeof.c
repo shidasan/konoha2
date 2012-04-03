@@ -5,7 +5,6 @@ int main(int argc, const char *argv[])
     assert(sizeof(kObject) <= 64);
     assert(sizeof(knh_Fmethod) == sizeof(void*));
     assert(sizeof(float) <= sizeof(void*));
-
     assert(sizeof(kint_t) == sizeof(kfloat_t));
     assert(sizeof(kint_t) == sizeof(void*));
     assert(sizeof(ksfp_t) == sizeof(krbp_t) * 2);

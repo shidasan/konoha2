@@ -15,7 +15,7 @@ static void Sample_free(CTX, kRawPtr *o)
 	__free__++;
 }
 
-KCLASSDEF SampleDef = {
+KDEFINE_CLASS SampleDef = {
 	.structname   = "Sample",
 	.cid          = 200,/*TODO*/
 	.cflag        = 2,

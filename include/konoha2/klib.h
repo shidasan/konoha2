@@ -8,6 +8,15 @@
 #ifndef KONOHA2_INLINELIBS_H_
 #define KONOHA2_INLINELIBS_H_
 
+static inline size_t size64(size_t s)
+{
+	size_t base = sizeof(kObject);
+	while(base < s) {
+		base *= 2;
+	}
+	return base;
+}
+
 static inline uintptr_t strhash(const char *name, size_t len)
 {
 	uintptr_t i, hcode = 0;
