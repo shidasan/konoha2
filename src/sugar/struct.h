@@ -35,6 +35,7 @@ static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 	bzero(&ks->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
 	ks->parentNULL = conf;
 	ks->static_cid = CLASS_unknown;
+	ks->function_cid = TY_System;
 }
 
 static void syntax_reftrace(CTX, kmape_t *p)

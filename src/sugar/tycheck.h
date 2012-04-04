@@ -490,7 +490,7 @@ static kmethodn_t Token_mn(CTX, kToken *tk, const char *name)
 		tk->tt = TK_MN;
 		tk->mn = ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_METHOD);
 	}
-	if(tk->mn != TK_MN) {
+	if(tk->tt != TK_MN) {
 		kToken_p(tk, ERR_, "%s is not a %s name", kToken_s(tk), name);
 		return MN_NONAME;
 	}
@@ -1081,7 +1081,9 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *k
 		.flag = kGamma_TOPLEVEL,
 		.mtd = mtd,
 		.ks = ks,
-		.this_cid     = (mtd)->cid,
+		// FIXME
+		//.this_cid     = (mtd)->cid,
+		.this_cid     = TY_System,
 		.f.vars = fvars, .f.capacity = 32, .f.varsize = 0, .f.allocsize = 0,
 		.l.vars = lvars, .l.capacity = 32, .l.varsize = 0, .l.allocsize = 0,
 	};
