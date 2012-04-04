@@ -819,6 +819,7 @@ static void kshare_init_methods(CTX)
 		_Public, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
 		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
 		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
+		_Public|_Const, _F(Boolean_toString), TY_String, TY_Boolean, MN_to(TY_String), 0,
 		_Public, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};

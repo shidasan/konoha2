@@ -721,7 +721,7 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 {
 	DBG_ASSERT(IS_Expr(expr));
 	if(Expr_isTerm(expr)) {
-		ksymbol_t fn;
+		ksymbol_t fn = FN_NONAME;
 		return (Token_checkVariableSymbol(_ctx, expr->tkNUL, &fn) && Expr_declLocalVariable(_ctx, expr, gma, ty, fn));
 	}
 	else {

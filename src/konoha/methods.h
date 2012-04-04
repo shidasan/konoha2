@@ -94,6 +94,15 @@ static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)
 	RETURNi_((kint_t)strtoll(S_text(sfp[0].s), NULL, 10));
 }
 
+/* ------------------------------------------------------------------------ */
+//## @Const method String Boolean.toString();
+/* Booelan to String */
+static KMETHOD Boolean_toString(CTX, ksfp_t *sfp _RIX)
+{
+	kbool_t b = sfp[0].bvalue;
+	const char *s[] = {"false", "true"};
+	RETURN_(new_kString(s[b], strlen(s[b]), SPOL_ASCII));
+}
 
 // void System.p(@Coercion String msg);
 static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
