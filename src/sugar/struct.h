@@ -155,7 +155,7 @@ static void KonohaSpace_mergeConstData(CTX, kKonohaSpace *ks, keyvals_t *kvs, si
 		for(i = 0; i < nitems; i++) {
 			if(kvs[i].ty == TY_TYPE) continue;  // class table
 			if(checkConflictedConst(_ctx, ks, kvs+i, pline)) continue;
-			kwb_write(&wb, (const char*)kvs+i, sizeof(keyvals_t));
+			kwb_write(&wb, (const char*)(kvs+i), sizeof(keyvals_t));
 		}
 		kvs = (keyvals_t*)kwb_top(&wb, 0);
 		nitems = kwb_size(&wb)/sizeof(keyvals_t);
