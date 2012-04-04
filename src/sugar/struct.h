@@ -104,6 +104,13 @@ static KDEFINE_CLASS KonohaSpaceDef = {
 	.free = KonohaSpace_free,
 };
 
+static int comprKeyVal(const void *a, const void *b)
+{
+	int akey = FN_UNBOX(((keyvals_t*)a)->key);
+	int bkey = FN_UNBOX(((keyvals_t*)b)->key);
+	return akey - bkey;
+}
+
 static keyvals_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey)
 {
 	size_t min = 0, max = ks->cl.size;
@@ -121,34 +128,84 @@ static keyvals_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey
 	return NULL;
 }
 
-static int comprKeyVal(const void *a, const void *b)
+static kbool_t checkConflictedConst(CTX, kKonohaSpace *ks, keyvals_t *kvs, kline_t pline)
 {
-	int akey = FN_UNBOX(((keyvals_t*)a)->key);
-	int bkey = FN_UNBOX(((keyvals_t*)b)->key);
-	return akey - bkey;
+	ksymbol_t ukey = FN_UNBOX(kvs->key);
+	keyvals_t* ksval = KonohaSpace_getConstNULL(_ctx, ks, ukey);
+	if(ksval != NULL) {
+		if(kvs->ty == ksval->ty && kvs->uvalue == ksval->uvalue) {
+			return true;  // same value
+		}
+		kreportf(WARN_, pline, "conflict name: %s", T_un(ukey));
+		return true;
+	}
+	return false;
 }
 
 static void KonohaSpace_mergeConstData(CTX, kKonohaSpace *ks, keyvals_t *kvs, size_t nitems, kline_t pline)
 {
-	if(nitems > 0) {
-		size_t s = ks->cl.size;
-		if(s == 0) {
-			KARRAY_INIT(ks->cl, nitems, keyvals_t);
+	size_t i, s = ks->cl.size;
+	if(s == 0) {
+		KARRAY_INIT(ks->cl, nitems + 8, keyvals_t);
+		memcpy(ks->cl.keyvals, kvs, nitems * sizeof(keyvals_t));
+	}
+	else {
+		kwb_t wb;
+		kwb_init(&(kevalmod->cwb), &wb);
+		for(i = 0; i < nitems; i++) {
+			if(kvs[i].ty == TY_TYPE) continue;  // class table
+			if(checkConflictedConst(_ctx, ks, kvs+i, pline)) continue;
+			kwb_write(&wb, (const char*)kvs+i, sizeof(keyvals_t));
 		}
-		else {
-			KARRAY_RESIZE(ks->cl, s + nitems, keyvals_t);
+		kvs = (keyvals_t*)kwb_top(&wb, 0);
+		nitems = kwb_size(&wb)/sizeof(keyvals_t);
+		if(nitems > 0) {
+			KARRAY_RESIZE(ks->cl, s + nitems + 8, keyvals_t);
+			memcpy(ks->cl.keyvals + s, kvs, nitems * sizeof(keyvals_t));
 		}
-		memcpy(ks->cl.keyvals + s, kvs, nitems * sizeof(keyvals_t));
-		ks->cl.size = s + nitems;
-		qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
-		int i, pkey = FN_UNBOX(ks->cl.keyvals[0].key);
-		for(i=1; i < ks->cl.size; i++) {
-			int key = FN_UNBOX(ks->cl.keyvals[i].key);
-			if(pkey == key) {
+		kwb_free(&wb);
+	}
+	ks->cl.size = s + nitems;
+	qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
+}
 
-			}
-			pkey = key;
+static void KonohaSpace_importClassName(CTX, kKonohaSpace *ks, kpack_t packdom, kline_t pline)
+{
+	keyvals_t kv;
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	size_t i, size = _ctx->share->ca.size;
+	for(i = 0; i < size; i++) {
+		const kclass_t *ct = CT_(i);
+		if(ct->packdom == packdom) {
+			kv.key = ct->nameid;
+			kv.ty  = TY_TYPE;
+			kv.uvalue = (uintptr_t)ct;
 		}
+		kwb_write(&wb, (const char*)(&kv), sizeof(keyvals_t));
+	}
+	size_t nitems = kwb_size(&wb) / sizeof(keyvals_t);
+	if(nitems > 0) {
+		KonohaSpace_mergeConstData(_ctx, ks, (keyvals_t*)kwb_top(&wb, 0), nitems, pline);
+	}
+	kwb_free(&wb);
+}
+
+static void KonohaSpace_addConstData(CTX, kKonohaSpace *ks, keyvals_t *kvs, kline_t pline)
+{
+	size_t s = ks->cl.size;
+	if(s == 0) {
+		KARRAY_INIT(ks->cl, 8, keyvals_t);
+	}
+	else if(!(s < ks->cl.max)) {
+		if(checkConflictedConst(_ctx, ks, kvs, pline)) return;
+		KARRAY_RESIZE(ks->cl, s + 8, keyvals_t);
+	}
+	DBG_ASSERT(s == ks->cl.size);
+	ks->cl.keyvals[s] = *kvs;
+	ks->cl.size +=1;
+	if(ks->cl.size>1) {
+		qsort(ks->cl.keyvals, ks->cl.size, sizeof(keyvals_t), comprKeyVal);
 	}
 }
 
@@ -160,11 +217,11 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(d[0] != NULL) {
 		DBG_P("key='%s'", d[0]);
-		kv.key = kuname(d[0], strlen(d[0]), _NEWID) | FN_BOXED;
+		kv.key = kuname(d[0], strlen(d[0]), SPOL_TEXT|SPOL_ASCII, _NEWID) | FN_BOXED;
 		kv.ty  = (ktype_t)(uintptr_t)d[1];
 		if(kv.ty == TY_TEXT) {
 			kv.ty = TY_String;
-			kv.svalue = new_kString(d[2], strlen(d[2]), 0);
+			kv.svalue = new_kString(d[2], strlen(d[2]), SPOL_TEXT);
 			PUSH_GCSTACK(kv.value);
 		}
 		else if(TY_isUnbox(kv.ty)) {
@@ -177,7 +234,10 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 		kwb_write(&wb, (const char*)(&kv), sizeof(keyvals_t));
 		d += 3;
 	}
-	KonohaSpace_mergeConstData(_ctx, ks, (keyvals_t*)kwb_top(&wb, 0), kwb_size(&wb) / sizeof(keyvals_t), pline);
+	size_t nitems = kwb_size(&wb) / sizeof(keyvals_t);
+	if(nitems > 0) {
+		KonohaSpace_mergeConstData(_ctx, ks, (keyvals_t*)kwb_top(&wb, 0), nitems, pline);
+	}
 	kwb_free(&wb);
 	RESET_GCSTACK();
 }
@@ -324,35 +384,11 @@ static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *ks, const char
 	return NULL;
 }
 
-//static void casehash_add(CTX, kmap_t *kmp, kString *skey, uintptr_t uvalue)
-//{
-//	uintptr_t hcode = casehash(S_text(skey), S_size(skey));
-//	kmape_t *e = kmap_newentry(kmp, hcode);
-//	KINITv(e->skey, skey);
-//	e->uvalue = uvalue;
-//	kmap_add(kmp, e);
-//}
-
-static uintptr_t casehash_getuint(CTX, kmap_t *kmp, const char *name, size_t len, uintptr_t def)
-{
-	uintptr_t hcode = casehash(name, len);
-	kmape_t *e = kmap_get(kmp, hcode);
-	while(e != NULL) {
-		if(e->hcode == hcode && S_size(e->skey) == len && strncasecmp(S_text(e->skey), name, len) == 0) {
-			return e->uvalue;
-		}
-	}
-	return def;
-}
-
 static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
 {
-	kcid_t cid;
-	//while(nsN != NULL) {
-	//	nsN = nsN->parentNULL;
-	//}
-	cid = (kcid_t)casehash_getuint(_ctx, _ctx->share->classnameMapNN, name, len, def);
-	return (cid != CLASS_unknown && CT_(cid)->packdom == 0) ? cid : def;
+	uintptr_t hcode = longid(PN_konoha, kuname(name, len, 0, FN_NONAME));
+	const kclass_t *ct = (const kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+	return (ct != NULL) ? ct->cid : def;
 }
 
 /* KonohaSpace/Class/Method */
@@ -431,8 +467,11 @@ static kbool_t KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kline_
 			return 0;
 		}
 	}
-	if(kMethod_isPublic(mtd)) {
-		const kclass_t *ct = CT_(mtd->cid);
+	if(mtd->packid == 0) {
+		mtd->packid = ks->packid;
+	}
+	const kclass_t *ct = CT_(mtd->cid);
+	if(ct->packdom == ks->packdom && kMethod_isPublic(mtd)) {
 		kArray_add(ct->methods, mtd);
 	}
 	else {
@@ -724,14 +763,14 @@ void dumpExpr(CTX, int n, int nest, kExpr *expr)
 					dumpIndent(nest+1);
 					if(O_ct(o) == CT_Token) {
 						kToken *tk = (kToken*)o;
-						DUMP_P("[%d] O: %s ", i, S_text(o->h.ct->name));
+						DUMP_P("[%d] O: %s ", i, T_ct(o->h.ct));
 						dumpToken(_ctx, tk);
 					}
 					else if(o == K_NULL) {
 						DUMP_P("[%d] O: null\n", i);
 					}
 					else {
-						DUMP_P("[%d] O: %s\n", i, S_text(o->h.ct->name));
+						DUMP_P("[%d] O: %s\n", i, T_ct(o->h.ct));
 					}
 				}
 			}

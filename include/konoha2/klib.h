@@ -55,6 +55,8 @@ static inline kString* S_fileid(CTX, kline_t fileid)
 
 #define S_pack(X)  S_pack_(_ctx, X)
 #define T_pack(X)  S_text(S_pack_(_ctx, X))
+#define S_pn(X)    S_pack_(_ctx, X)
+#define T_pn(X)    S_text(S_pack_(_ctx, X))
 static inline kString* S_pack_(CTX, kpack_t packid)
 {
 	DBG_ASSERT(packid < kArray_size(_ctx->share->packList));
@@ -69,37 +71,55 @@ static inline kString* S_un_(CTX, kuname_t un)
 	return _ctx->share->unameList->strings[un];
 }
 
-#define S_cid(X)  S_cid_(_ctx, X)
-#define T_cid(X)  S_text(S_cid(X))
+#define S_ct(X)   S_ct_(_ctx, X)
+#define T_ct(X)   S_text(S_ct_(_ctx, X))
 
-static inline kString* S_cid_(CTX, ktype_t ty)
+static inline kString* S_ct_(CTX, const kclass_t *ct)
 {
-	return CT_(ty)->name;
+	return S_un(ct->nameid);
 }
 
+#define S_cid(X)  S_ty_(_ctx, X)
+#define T_cid(X)  S_text(S_ty(X))
 #define S_ty(X)  S_ty_(_ctx, X)
 #define T_ty(X)  S_text(S_ty(X))
 
 static inline kString* S_ty_(CTX, ktype_t ty)
 {
-	if(ty < _ctx->share->ca.max) {
-		return CT_(ty)->name;
-	}
-	DBG_P("undefined type sym=%d", ty);
-	return TS_EMPTY;
+	DBG_ASSERT(ty < _ctx->share->ca.max);
+	return S_un_(_ctx, CT_(ty)->nameid);
 }
-
 
 #define S_fn(fn)   S_fn_(_ctx, fn)
 #define T_fn(fn)   S_text(S_fn_(_ctx, fn))
 static inline kString* S_fn_(CTX, ksymbol_t sym)
 {
 	size_t index = (size_t) MN_UNMASK(sym);
-	if(index < kArray_size(_ctx->share->symbolList)) {
-		return _ctx->share->symbolList->strings[index];
+	DBG_ASSERT(index < kArray_size(_ctx->share->symbolList));
+	return _ctx->share->symbolList->strings[index];
+}
+
+static inline uintptr_t longid(kushort_t packdom, kushort_t un)
+{
+	uintptr_t hcode = packdom;
+	return (hcode << (sizeof(kshort_t)*8)) | un;
+}
+
+#define uNULL   ((uintptr_t)NULL)
+static inline void map_addu(CTX, kmap_t *kmp, uintptr_t hcode, uintptr_t uvalue)
+{
+	kmape_t *e = kmap_newentry(kmp, hcode);
+	e->uvalue = uvalue;
+	kmap_add(kmp, e);
+}
+
+static inline uintptr_t map_getu(CTX, kmap_t *kmp, uintptr_t hcode, uintptr_t def)
+{
+	kmape_t *e = kmap_get(kmp, hcode);
+	while(e != NULL) {
+		if(e->hcode == hcode) return e->uvalue;
 	}
-	DBG_P("undefined symbol sym=%d", sym);
-	return TS_EMPTY;
+	return def;
 }
 
 

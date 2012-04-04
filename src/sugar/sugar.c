@@ -183,8 +183,7 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 static void pack_reftrace(CTX, kmape_t *p)
 {
 	kpackage_t *pack = (kpackage_t*)p->uvalue;
-	BEGIN_REFTRACE(2);
-	KREFTRACEn(pack->name);
+	BEGIN_REFTRACE(1);
 	KREFTRACEn(pack->ks);
 	END_REFTRACE();
 }
@@ -417,9 +416,9 @@ static int isemptychunk(const char *t, size_t len)
 	return 0;
 }
 
-static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t uline)
+static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t uline, kline_t pline)
 {
-	kstatus_t status = K_FAILED;
+	kstatus_t status = K_CONTINUE;
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(!feof(fp)) {
@@ -434,6 +433,9 @@ static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t
 		kwb_free(&wb);
 	}
 	kwb_free(&wb);
+	if(status != K_CONTINUE) {
+		kreportf(WARN_, pline, "script is failed, status=%d", status);
+	}
 	return status;
 }
 
@@ -443,13 +445,13 @@ static kline_t uline_init(CTX, const char *path, size_t len, int line, int isrea
 	if(isreal) {
 		char buf[256];
 		char *ptr = realpath(path, buf);
-		uline |= kfileid((const char*)buf, strlen(ptr), _NEWID);
+		uline |= kfileid((const char*)buf, strlen(ptr), 0, _NEWID);
 		if(ptr != buf && ptr != NULL) {
 			free(ptr);
 		}
 	}
 	else {
-		uline |= kfileid(path, len, _NEWID);
+		uline |= kfileid(path, len, 0, _NEWID);
 	}
 	return uline;
 }
@@ -459,13 +461,13 @@ static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path,
 	kstatus_t status = K_BREAK;
 	if(path[0] == '-' && path[1] == 0) {
 		kline_t uline = FILEID_("<stdin>") | 1;
-		status = KonohaSpace_loadstream(_ctx, ks, stdin, uline);
+		status = KonohaSpace_loadstream(_ctx, ks, stdin, uline, pline);
 	}
 	else {
 		FILE *fp = fopen(path, "r");
 		if(fp != NULL) {
 			kline_t uline = uline_init(_ctx, path, len, 1, 1);
-			status = KonohaSpace_loadstream(_ctx, ks, fp, uline);
+			status = KonohaSpace_loadstream(_ctx, ks, fp, uline, pline);
 			fclose(fp);
 		}
 		else {
@@ -551,83 +553,85 @@ static kline_t scriptfileid(CTX, char *pathbuf, size_t bufsiz, const char *pname
 	FILE *fp = fopen(pathbuf, "r");
 	if(fp != NULL) {
 		fclose(fp);
-		return kfileid(pathbuf, strlen(pathbuf), _NEWID) | 1;
+		return kfileid(pathbuf, strlen(pathbuf), 0, _NEWID) | 1;
 	}
 	return 0;
 }
 
-static kpackage_t *loadPackageNULL(CTX, kString *pkgname, kline_t pline)
+static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 {
 	char fbuf[256];
-	const char *path = packagepath(_ctx, fbuf, sizeof(fbuf), pkgname);
+	const char *path = packagepath(_ctx, fbuf, sizeof(fbuf), S_pn(packid));
 	FILE *fp = fopen(path, "r");
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
 		INIT_GCSTACK();
 		kKonohaSpace *ks = new_(KonohaSpace, kevalshare->rootks);
+		PUSH_GCSTACK(ks);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
-		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), S_text(pkgname), pline);
+		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), T_pn(packid), pline);
 		if(packdef->initPackage != NULL) {
 			packdef->initPackage(_ctx, ks, 0, NULL, pline);
 		}
-		if(KonohaSpace_loadstream(_ctx, ks, fp, uline) == K_CONTINUE) {
+		if(KonohaSpace_loadstream(_ctx, ks, fp, uline, pline) == K_CONTINUE) {
 			if(packdef->initPackage != NULL) {
 				packdef->setupPackage(_ctx, ks, pline);
 			}
 			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t));
-			KINITv(pack->name, pkgname);
+			pack->packid = packid;
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
-			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), S_text(pkgname));
+			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), T_pn(packid));
 			return pack;
 		}
 		fclose(fp);
 		RESET_GCSTACK();
 	}
 	else {
-		kreportf(ERR_, pline, "package not found: %s path=%s", S_text(pkgname), path);
-		kraise(0);
+		kreportf(CRIT_, pline, "package not found: %s path=%s", T_pn(packid), path);
 	}
 	return NULL;
 }
 
-static kpackage_t *getPackageNULL(CTX, kString *pkgname, kline_t pline)
+static kpackage_t *getPackageNULL(CTX, kpack_t packid, kline_t pline)
 {
-	kmap_t *kmp = kevalshare->packageMapNO;
-	size_t len = S_size(pkgname);
-	uintptr_t hcode = strhash(S_text(pkgname), len);
-	kmape_t *e = kmap_get(kmp, hcode);
-	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), S_text(pkgname), len) == 0) {
-			return (kpackage_t*)e->pvalue;
-		}
-		e = e->next;
-	}
-	kpackage_t *pack = loadPackageNULL(_ctx, pkgname, pline);
+	kpackage_t *pack = (kpackage_t*)map_getu(_ctx, kevalshare->packageMapNO, packid, uNULL);
+	if(pack != NULL) return pack;
+	pack = loadPackageNULL(_ctx, packid, pline);
 	if(pack != NULL) {
-		pack->pid = kArray_size(kevalshare->packageList);
-		kArray_add(kevalshare->packageList, pkgname);
-		e = kmap_newentry(kmp, hcode);
-		KINITv(e->skey, pkgname);
-		e->pvalue = pack;
-		kmap_add(kmp, e);
-		return (kpackage_t*)e->pvalue;
+		map_addu(_ctx, kevalshare->packageMapNO, packid, (uintptr_t)pack);
 	}
 	return pack;
 }
 
 static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline_t pline)
 {
+	if(target->packid != PN_konoha) {
+		KonohaSpace_importClassName(_ctx, ks, target->packid, pline);
+	}
 	if(target->cl.size > 0) {
 		KonohaSpace_mergeConstData(_ctx, ks, target->cl.keyvals, target->cl.size, pline);
 	}
+	if(target->methodsNULL != NULL) {
+		size_t i;
+		if(ks->methodsNULL == NULL) {
+			KINITv(ks->methodsNULL, new_(Array, 8));
+		}
+		for(i = 0; i < kArray_size(target->methodsNULL); i++) {
+			kMethod *mtd = target->methodsNULL->methods[i];
+			if(kMethod_isPublic(mtd) && mtd->packid == target->packid) {
+				kArray_add(ks->methodsNULL, mtd);
+			}
+		}
+	}
 }
 
-static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname, kline_t pline)
+static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kpack_t packid, kline_t pline)
 {
 	kbool_t res = 0;
-	kpackage_t *pack = getPackageNULL(_ctx, pkgname, pline);
+	kpackage_t *pack = getPackageNULL(_ctx, packid, pline);
 	if(pack != NULL) {
+		res = 1;
 		KonohaSpace_merge(_ctx, ks, pack->ks, pline);
 		if(pack->packdef->initKonohaSpace != NULL) {
 			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
@@ -637,7 +641,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname
 			kline_t uline = pack->export_script | (kline_t)1;
 			FILE *fp = fopen(S_text(fname), "r");
 			if(fp != NULL) {
-				res = (KonohaSpace_loadstream(_ctx, ks, fp, uline) == K_CONTINUE);
+				res = (KonohaSpace_loadstream(_ctx, ks, fp, uline, pline) == K_CONTINUE);
 				fclose(fp);
 			}
 			else {
@@ -655,7 +659,8 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kString *pkgname
 // boolean KonohaSpace.importPackage(String pkgname);
 static KMETHOD KonohaSpace_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].ks, sfp[1].s, sfp[K_RTNIDX].uline));
+	kpack_t packid = kpack(S_text(sfp[1].s), S_size(sfp[1].s), 0, _NEWID);
+	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].ks, packid, sfp[K_RTNIDX].uline));
 }
 
 // boolean KonohaSpace.loadScript(String path);
@@ -665,7 +670,7 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 	FILE *fp = fopen(S_text(sfp[1].s), "r");
 	if(fp != NULL) {
 		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
-		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].ks, fp, uline);
+		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].ks, fp, uline, 0);
 		fclose(fp);
 		RETURNb_(status == K_CONTINUE);
 	}

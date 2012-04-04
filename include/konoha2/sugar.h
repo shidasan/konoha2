@@ -78,8 +78,7 @@ typedef const KPACKDEF_ KPACKDEF;
 typedef KPACKDEF* (*Fpackageinit)(void);
 
 typedef struct {
-	kpack_t                    pid;
-	kString                  *name;
+	kpack_t                    packid;
 	struct kKonohaSpace       *ks;
 	KPACKDEF                  *packdef;
 	kline_t                    export_script;

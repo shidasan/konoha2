@@ -648,9 +648,9 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 		case VMT_F:
 			DUMP_P("function(%p)", c->p[i]); break;
 		case VMT_CID:
-			DUMP_P("CT(%s)", S_text((c->ct[i])->name)); break;
+			DUMP_P("CT(%s)", T_ct(c->ct[i])); break;
 		case VMT_CO:
-			DUMP_P("CT(%s)", S_text(O_ct(c->o[i])->name)); break;
+			DUMP_P("CT(%s)", T_ct(O_ct(c->o[i]))); break;
 
 //		case VMT_HCACHE: {
 //			kcachedata_t *hc = (kcachedata_t*)&(c->p[i]);

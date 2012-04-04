@@ -293,7 +293,7 @@ static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *
 	kmap_add(kmp, e);
 }
 
-static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
+static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, size_t len, uintptr_t hcode, int spol, ksymbol_t def)
 {
 	kmape_t *e = kmap_get(kmp, hcode);
 	while(e != NULL) {
@@ -303,7 +303,7 @@ static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, 
 		e = e->next;
 	}
 	if(def == FN_NEWID) {
-		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
+		kString *skey = new_kString(name, len, spol);
 		uintptr_t sym = kArray_size(list);
 		kArray_add(list, skey);
 		map_addStringUnboxValue(_ctx, kmp, hcode, skey, sym);
@@ -312,23 +312,23 @@ static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, 
 	return def;
 }
 
-static kline_t Kfileid(CTX, const char *name, size_t len, ksymbol_t def)
+static kline_t Kfileid(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	kline_t uline = KMAP_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, def);
+	kline_t uline = KMAP_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, spol, def);
 	return uline << (sizeof(kshort_t) * 8);
 }
 
-static kpack_t Kpack(CTX, const char *name, size_t len, ksymbol_t def)
+static kpack_t Kpack(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	return KMAP_getcode(_ctx, _ctx->share->packMapNN, _ctx->share->packList, name, len, hcode, def);
+	return KMAP_getcode(_ctx, _ctx->share->packMapNN, _ctx->share->packList, name, len, hcode, spol | SPOL_ASCII, def);
 }
 
-static kpack_t Kuname(CTX, const char *name, size_t len, ksymbol_t def)
+static kpack_t Kuname(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, def);
+	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, spol | SPOL_ASCII, def);
 }
 
 //static const char* uname_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
@@ -413,13 +413,13 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 			}
 			hcode = ch + (31 * hcode);
 		}
-		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
 	}
 	else {
 		char buf[256];
 		ksymbol_t sym, mask = 0;
 		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
-		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, def);
+		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
 		if(def == sym) return def;
 		return sym | mask;
 	}

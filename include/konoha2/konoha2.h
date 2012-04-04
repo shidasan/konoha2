@@ -287,7 +287,7 @@ typedef struct kcontext_t {
 
 typedef struct kshare_t {
 	karray_t ca;
-	struct kmap_t         *classnameMapNN;
+	struct kmap_t         *lcnameMapNN;
 	/* system shared const */
 	struct kObject       *constNull;
 	struct kBoolean      *constTrue;
@@ -494,22 +494,22 @@ typedef struct kclass_t {
 	kpack_t   packid;       kpack_t   packdom;
 	kcid_t   cid;          kflag_t  cflag;
 	kcid_t   bcid;         kcid_t   supcid;
-	ktype_t  p1;           ktype_t  p2_optvalue;
+	ktype_t  p1;           ktype_t  p2;
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
 	kushort_t  fsize;      kushort_t fallocsize;
 	const char               *DBG_NAME;
 
-	struct kString           *name;
+	kuname_t                  nameid;
+	kushort_t                 optvalue;
 	struct kParam            *cparam;
-	struct kString           *fullnameNUL;
 	struct kArray            *methods;
 	union {
 		struct kObject       *nulvalNUL;
 //		struct kFunc         *deffunc;
 	};
-	struct kmap_t            *constNameMapSO;
+//	struct kmap_t            *constNameMapSO;
 	struct kmap_t            *constPoolMapNO;
 	const struct kclass_t    *simbody;
 } kclass_t;
@@ -720,6 +720,7 @@ struct kInt {
 #define OFLAG_String              MAGICFLAG(0)
 #define TY_String                 CLASS_String
 #define TY_TEXT                   TY_void    /*special use for const char*/
+#define TY_TYPE                   TY_var     /*special use for kclass_t*/
 #define IS_String(o)              (O_cid(o) == CLASS_String)
 
 /*
@@ -1036,9 +1037,9 @@ typedef struct klib2_t {
 	void (*Kmap_reftrace)(CTX, kmap_t *, void (*)(CTX, kmape_t*));
 	void (*Kmap_free)(CTX, kmap_t *, void (*)(CTX, void *));
 
-	kline_t     (*Kfileid)(CTX, const char *, size_t, ksymbol_t def);
-	kpack_t     (*Kpack)(CTX, const char *, size_t, ksymbol_t def);
-	kuname_t    (*Kuname)(CTX, const char*, size_t, ksymbol_t def);
+	kline_t     (*Kfileid)(CTX, const char *, size_t, int spol, ksymbol_t def);
+	kpack_t     (*Kpack)(CTX, const char *, size_t, int spol, ksymbol_t def);
+	kuname_t    (*Kuname)(CTX, const char*, size_t, int spol, ksymbol_t def);
 	ksymbol_t   (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 
@@ -1130,14 +1131,14 @@ typedef struct klib2_t {
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
 
 #define FILEID_NATIVE             0
-#define FILEID_(T)                (KPI)->Kfileid(_ctx, T, sizeof(T)-1, FN_NEWID)
-#define kfileid(T,L,DEF)          (KPI)->Kfileid(_ctx, T, L, DEF)
+#define FILEID_(T)                (KPI)->Kfileid(_ctx, T, sizeof(T)-1, SPOL_TEXT|SPOL_ASCII, _NEWID)
+#define kfileid(T,L,SPOL,DEF)          (KPI)->Kfileid(_ctx, T, L, SPOL, DEF)
 #define PN_konoha                 0
 #define PN_sugar                  1
-#define PN_(T)                    (KPI)->Kpack(_ctx, T, sizeof(T)-1, FN_NEWID)
-#define kpack(T,L,DEF)            (KPI)->Kpack(_ctx, T, L, DEF)
-#define UN_(T)                    (KPI)->Kuname(_ctx, T, sizeof(T)-1, FN_NEWID)
-#define kuname(T, L, DEF)         (KPI)->Kuname(_ctx, T, L, DEF)
+#define PN_(T)                    (KPI)->Kpack(_ctx, T, sizeof(T)-1, SPOL_TEXT|SPOL_ASCII|SPOL_POOL, _NEWID)
+#define kpack(T,L,SPOL,DEF)       (KPI)->Kpack(_ctx, T, L, SPOL, DEF)
+#define UN_(T)                    (KPI)->Kuname(_ctx, T, sizeof(T)-1, SPOL_TEXT|SPOL_ASCII|SPOL_POOL, _NEWID)
+#define kuname(T, L, SPOL,DEF)    (KPI)->Kuname(_ctx, T, L, SPOL, DEF)
 
 #define new_kObject(C, A)         (KPI)->Knew_Object(_ctx, C, (void*)(A))
 #define new_(C, A)                (k##C*)(KPI)->Knew_Object(_ctx, CT_##C, (void*)(A))
