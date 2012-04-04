@@ -49,6 +49,7 @@ static inline const char* filename(const char *str)
 static inline kString* S_fileid(CTX, kline_t fileid)
 {
 	kline_t n = (fileid >> (sizeof(kshort_t) * 8));
+	DBG_P("n=%d, size=%d", n, kArray_size(_ctx->share->fileidList));
 	DBG_ASSERT(n < kArray_size(_ctx->share->fileidList));
 	return _ctx->share->fileidList->strings[n];
 }

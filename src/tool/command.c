@@ -209,11 +209,10 @@ static int checkstmt(const char *t, size_t len)
 	return 1;
 }
 
-static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
+static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 {
 	int line = 1;
 	kstatus_t status = K_CONTINUE;
-//	CWB_clear(cwb, 0);
 //	fputs(TERM_BBOLD(_ctx), stdout);
 	while(1) {
 		int check;
@@ -227,7 +226,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
 		kwb_write(wb, ln, strlen(ln));
 		free(ln);
 		if((check = checkstmt(kwb_top(wb, 0), kwb_size(wb))) > 0) {
-			uline[1]++;
+			uline[0]++;
 			line++;
 			continue;
 		}
@@ -242,6 +241,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kushort_t *uline)
 	}
 //	fputs(TERM_EBOLD(_ctx), stdout);
 	fflush(stdout);
+	uline[0]++;
 	return status;
 }
 
@@ -260,7 +260,7 @@ static void shell(CTX)
 	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d,%s)\n", K_REVISION, __DATE__);
 	fprintf(stdout, "[gcc %s]\n", __VERSION__);
 	while(1) {
-		kstatus_t status = readstmt(_ctx, &wb, (kushort_t*)&uline);
+		kstatus_t status = readstmt(_ctx, &wb, &uline);
 		if(status == K_CONTINUE && kwb_size(&wb) > 0) {
 			status = MODEVAL_eval(_ctx, kwb_top(&wb, 1), kwb_size(&wb), uline);
 			if(status != K_FAILED) {
