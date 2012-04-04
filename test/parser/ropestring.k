@@ -1,5 +1,5 @@
 
-KonohaSpace.importPackage("konoha.string");
+Konoha.importPackage("konoha.string");
 
 String f(String x, String y) {
     return x + y;

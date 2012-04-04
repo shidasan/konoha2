@@ -1,12 +1,12 @@
-KonohaSpace.importPackage("konoha.float");
-1.0;
-1.0+2.0;
-1.0-2.0;
-1.0*2.0;
-1.0/2.0;
-1.0==2.0;
-1.0!=2.0;
-1.0< 2.0;
-1.0<=2.0;
-1.0> 2.0;
-1.0>=2.0;
+Konoha.importPackage("konoha.float");
+
+System.p(1.0);
+System.p(1.0+2.0);
+System.p(1.0-2.0);
+System.p(1.0*2.0);
+System.p(1.0==2.0);
+System.p(1.0!=2.0);
+System.p(1.0< 2.0);
+System.p(1.0<=2.0);
+System.p(1.0> 2.0);
+System.p(1.0>=2.0);
