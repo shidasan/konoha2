@@ -98,6 +98,7 @@ set(PACKAGES
 	konoha.assert
 	posix.process
 	konoha.socket
+	konoha.rope
 )
 
 find_library(HAVE_LIBDL NAMES dl)

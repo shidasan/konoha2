@@ -1053,6 +1053,7 @@ typedef struct klib2_t {
 
 	kString* (*Knew_String)(CTX, const char *, size_t, int);
 	kString* (*Knew_Stringf)(CTX, int, const char *, ...);
+	kString* (*KString)(CTX, int, kString *, kString *);
 
 	void (*KArray_add)(CTX, kArray *, kObject *);
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
