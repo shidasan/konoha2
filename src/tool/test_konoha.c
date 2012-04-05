@@ -77,7 +77,7 @@ static int check_result(char *fname0, char *fname1)
     L_end:;
     fclose(fp0);
     fclose(fp1);
-    return 0;
+    return res;
 
 }
 
@@ -93,15 +93,12 @@ int main(int argc, const char *argv[])
     snprintf(script_file, 256, "%s/%s", argv[1], argv[3]);
     snprintf(output_file, 256, "%s/%s.output.txt", argv[1], argv[3]);
     snprintf(result_file, 256, "%s/%s.txt", argv[2], argv[3]);
-    //fclose(stderr);
-    //fclose(stdout);
-    //stderr = stdlog;
-    //stdout = stdlog;
     stdlog = fopen(result_file, "w");
     konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     konoha->lib2->Kreport  = Kreport;
     konoha->lib2->Kreportf = Kreportf;
+    BEGIN_CONTEXT(konoha);
     MODEVAL_loadscript((CTX_t)konoha, script_file, strlen(script_file), 0);
     END_CONTEXT(konoha);
     konoha_close(konoha);
