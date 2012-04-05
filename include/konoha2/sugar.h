@@ -506,7 +506,7 @@ typedef struct {
 #endif/*SUGAR_EXPORTS*/
 ///* ------------------------------------------------------------------------ */
 ///* Sugar API */
-//extern kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ns, kcid_t cid, kmethodn_t mn);
+kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,2 @@
+ - (error) (var.k:1) 'var' is not available at the top level
+ - (warning) script is failed, status=0

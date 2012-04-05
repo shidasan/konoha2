@@ -216,12 +216,14 @@ endforeach()
 # test cases
 enable_testing()
 
+add_executable(test_konoha src/tool/test_konoha.c)
+target_link_libraries(test_konoha ${ExtraLibs})
+
 macro(add_konoha_test scr)
-set(TEST_CMD ${CMAKE_CURRENT_SOURCE_DIR}/misc/check_stmt.sh)
 set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)
-set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
-#add_test(NAME ${scr} COMMAND ${TEST_CMD} ${TEST_BIN} ${TEST_DIR} ${scr})
-add_test(NAME "${scr}_run" COMMAND ${TEST_BIN} "${TEST_DIR}/${scr}")
+set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/test_konoha)
+add_test(NAME ${scr} COMMAND ${TEST_BIN} ${TEST_DIR}
+		${CMAKE_CURRENT_BINARY_DIR} ${scr})
 endmacro(add_konoha_test scr)
 
 file(GLOB test_files "${CMAKE_CURRENT_SOURCE_DIR}/test/parser/*.k")

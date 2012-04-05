@@ -1,0 +1,16 @@
+ - (error) (20120227_return.k:1+1) not a term: 
+    return 1;
+    return 1;
+    return 1;
+    return 1;
+    return 1;
+
+ - (error) (20120227_return.k:1+1) 
+    return 1;
+    return 1;
+    return 1;
+    return 1;
+    return 1;
+ must be $expr
+ - (error) (20120227_return.k:1) '$ERR' is not available at the top level
+ - (warning) script is failed, status=0

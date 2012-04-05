@@ -1,0 +1,11 @@
+ - (debug) (float.k:3) constant folding of String
+ - (float.k:3) 1.000000
+ - (float.k:4) 3.000000
+ - (float.k:5) -1.000000
+ - (float.k:6) 2.000000
+ - (float.k:7) false
+ - (float.k:8) true
+ - (float.k:9) true
+ - (float.k:10) true
+ - (float.k:11) false
+ - (float.k:12) false

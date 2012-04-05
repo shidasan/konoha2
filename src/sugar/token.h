@@ -395,6 +395,7 @@ static size_t addNumber(CTX, tenv_t *tenv, int tok_start)
 		if(ch == '_') continue; // nothing
 		if(ch == '.') {
 			if(!isdigit(tenv->source[pos])) {
+				//XXX(imasahiro) Comment outed to fix 20120328_int_call.k
 				pos--;
 				break;
 			}
