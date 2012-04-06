@@ -12,7 +12,6 @@ execute_process(
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
-if("${LLVM_VERSION}" MATCHES "3.")
 execute_process(
 		COMMAND ${LLVM_CONFIG} --cppflags
 		OUTPUT_VARIABLE LLVM_CFLAGS
@@ -44,13 +43,15 @@ string(REPLACE " " ";" v ${LLVM_JIT_LIBS})
 link_directories(${LINK_DIRECTORIES} ${LLVM_LIBDIR})
 set(ExtraLibs ${ExtraLibs} ${v})
 
-## TODO support llvm2.9
+if("${LLVM_VERSION}" MATCHES "2.9")
+add_definitions(-DUSE_LLVM_2_9=1)
+endif("${LLVM_VERSION}" MATCHES "2.9")
+
 if(${LLVM_VERSION} VERSION_GREATER "3.0")
 set(PKG_USE_LLVM_3_1 1)
-add_definitions(-USE_LLVM_3_1=1)
+add_definitions(-DUSE_LLVM_3_1=1)
 endif(${LLVM_VERSION} VERSION_GREATER "3.0")
 
 set(PACKAGE_EXTRA_LIBRARY ${ExtraLibs})
 add_konoha_package(konoha.llvm)
-endif("${LLVM_VERSION}" MATCHES "3.")
 endif(LLVM_CONFIG)

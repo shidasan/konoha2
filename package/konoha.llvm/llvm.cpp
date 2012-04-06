@@ -40,7 +40,12 @@
 #include <llvm/PassManager.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/IPO.h>
+#ifndef USE_LLVM_2_9
+#error
+#endif
+#ifndef USE_LLVM_2_9
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
+#endif
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Utils/UnifyFunctionExitNodes.h>
 #ifdef USE_LLVM_3_1
@@ -58,8 +63,13 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/Support/IRBuilder.h>
 #include <llvm/Support/DynamicLibrary.h>
+#ifdef USE_LLVM_2_9
+#include <llvm/Target/TargetSelect.h>
+#include <llvm/Target/TargetRegistry.h>
+#else
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/TargetRegistry.h>
+#endif
 #include <llvm/Support/Host.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/system_error.h>
@@ -81,6 +91,7 @@
 #undef PACKAGE_VERSION
 #include <konoha2/konoha2.h>
 #include <konoha2/sugar.h>
+#include <konoha2/float.h>
 
 namespace konoha {
 template <class T>
@@ -99,6 +110,18 @@ inline void convert_array(std::vector<T> &vec, kArray *a)
 	}
 }
 }
+
+#ifdef USE_LLVM_2_9
+#define _ITERATOR(ITR) (ITR).begin(), (ITR).end()
+#else
+#define _ITERATOR(ITR) (ITR)
+#endif
+
+#ifdef USE_LLVM_2_9
+#define CONST_CAST(T, V) (const_cast<T>(V))
+#else
+#define CONST_CAST(T, V) (V)
+#endif
 
 using namespace llvm;
 
@@ -941,7 +964,8 @@ KMETHOD GetElementPtrInst_create(CTX, ksfp_t *sfp _RIX)
 	kArray *IdxList = sfp[2].a;
 	std::vector<Value*> List;
 	konoha::convert_array(List, IdxList);
-	GetElementPtrInst *ptr = GetElementPtrInst::Create(Ptr, List);
+
+	GetElementPtrInst *ptr = GetElementPtrInst::Create(Ptr, _ITERATOR(List));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -953,7 +977,7 @@ KMETHOD GetElementPtrInst_createInBounds(CTX, ksfp_t *sfp _RIX)
 	kArray *IdxList = sfp[2].a;
 	std::vector<Value*> List;
 	konoha::convert_array(List, IdxList);
-	GetElementPtrInst *ptr = GetElementPtrInst::CreateInBounds(Ptr, List);
+	GetElementPtrInst *ptr = GetElementPtrInst::CreateInBounds(Ptr, _ITERATOR(List));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -966,7 +990,7 @@ KMETHOD IRBuilder_createGEP(CTX, ksfp_t *sfp _RIX)
 	kArray *IdxList = sfp[2].a;
 	std::vector<Value*> List;
 	konoha::convert_array(List, IdxList);
-	Value *ptr = self->CreateGEP(Ptr, List);
+	Value *ptr = self->CreateGEP(Ptr, _ITERATOR(List));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -979,7 +1003,7 @@ KMETHOD IRBuilder_createInBoundsGEP(CTX, ksfp_t *sfp _RIX)
 	kArray *IdxList = sfp[2].a;
 	std::vector<Value*> List;
 	konoha::convert_array(List, IdxList);
-	Value *ptr = self->CreateInBoundsGEP(Ptr, List);
+	Value *ptr = self->CreateInBoundsGEP(Ptr, _ITERATOR(List));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -1595,10 +1619,15 @@ KMETHOD IRBuilder_createFCmpUNE(CTX, ksfp_t *sfp _RIX)
 //## PHINode IRBuilder.CreatePHI(Type Ty, int numReservedValues);
 KMETHOD IRBuilder_createPHI(CTX, ksfp_t *sfp _RIX)
 {
+	PHINode *ptr;
 	IRBuilder<> *self = konoha::object_cast<IRBuilder<> *>(sfp[0].p);
 	Type *Ty = konoha::object_cast<Type *>(sfp[1].p);
+#ifdef USE_LLVM_2_9
+	ptr = self->CreatePHI(Ty, "");
+#else
 	kint_t num = sfp[2].ivalue;
-	PHINode *ptr = self->CreatePHI(Ty, num);
+	ptr = self->CreatePHI(Ty, num);
+#endif
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -1686,7 +1715,7 @@ KMETHOD IRBuilder_createCall(CTX, ksfp_t *sfp _RIX)
 	kArray *Args = sfp[2].a;
 	std::vector<Value*> List;
 	konoha::convert_array(List, Args);
-	CallInst *ptr = self->CreateCall(Callee, List);
+	CallInst *ptr = self->CreateCall(Callee, _ITERATOR(List));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -1965,7 +1994,7 @@ KMETHOD Module_getTypeByName(CTX, ksfp_t *sfp _RIX)
 {
 	Module *self = konoha::object_cast<Module *>(sfp[0].p);
 	kString *name = sfp[1].s;
-	Type *ptr = self->getTypeByName(S_text(name));
+	Type *ptr = CONST_CAST(Type*, self->getTypeByName(S_text(name)));
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -2060,7 +2089,11 @@ KMETHOD FunctionType_get(CTX, ksfp_t *sfp _RIX)
 	Type *retTy = konoha::object_cast<Type *>(sfp[1].p);
 	kArray * args = sfp[2].a;
 	kbool_t b = sfp[3].bvalue;
+#ifdef USE_LLVM_2_9
+	std::vector<const Type*> List;
+#else
 	std::vector<Type*> List;
+#endif
 	konoha::convert_array(List, args);
 	FunctionType *ptr = FunctionType::get(retTy, List, b);
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
@@ -2113,7 +2146,11 @@ KMETHOD StructType_get(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *args = sfp[1].a;
 	kbool_t isPacked = sfp[2].bvalue;
+#ifdef USE_LLVM_2_9
+	std::vector<const Type*> List;
+#else
 	std::vector<Type*> List;
+#endif
 	konoha::convert_array(List, args);
 	StructType *ptr = StructType::get(getGlobalContext(), List, isPacked);
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
@@ -2124,19 +2161,36 @@ KMETHOD StructType_get(CTX, ksfp_t *sfp _RIX)
 KMETHOD StructType_create(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *args = sfp[1].a;
+#ifndef USE_LLVM_2_9
 	kString *name = sfp[2].s;
+#endif
 	kbool_t isPacked = sfp[3].bvalue;
 	StructType *ptr;
 	if (IS_NULL(args)) {
+#ifdef USE_LLVM_2_9
+		ptr = StructType::get(getGlobalContext());
+#else
 		ptr = StructType::create(getGlobalContext(), S_text(name));
+#endif
 	} else if (kArray_size(args) == 0) {
+#ifdef USE_LLVM_2_9
+		std::vector<const Type*> List;
+		ptr = StructType::get(getGlobalContext(), List, isPacked);
+#else
 		std::vector<Type*> List;
 		ptr = StructType::create(getGlobalContext(), S_text(name));
 		ptr->setBody(List, isPacked);
+#endif
 	} else {
+#ifdef USE_LLVM_2_9
+		std::vector<const Type*> List;
+		konoha::convert_array(List, args);
+		ptr = StructType::get(getGlobalContext(), List, isPacked);
+#else
 		std::vector<Type*> List;
 		konoha::convert_array(List, args);
 		ptr = StructType::create(List, S_text(name), isPacked);
+#endif
 	}
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
@@ -2155,20 +2209,29 @@ KMETHOD ArrayType_get(CTX, ksfp_t *sfp _RIX)
 //## @Native void StructType.setBody(Array<Type> args, boolean isPacked);
 KMETHOD StructType_setBody(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
+#ifdef USE_LLVM_2_9
+	LLVM_TODO("NO SUPPORT");
+#else
 	StructType *type  = konoha::object_cast<StructType *>(sfp[0].p);
 	kArray *args = sfp[1].a;
 	kbool_t isPacked = sfp[2].bvalue;
 	std::vector<Type*> List;
 	konoha::convert_array(List, args);
 	type->setBody(List, isPacked);
+#endif
 	RETURNvoid_();
 }
 
 //## @Native boolean StructType.isOpaque();
 KMETHOD StructType_isOpaque(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
+	bool ret = false;
+#ifdef USE_LLVM_2_9
+	LLVM_TODO("NO SUPPORT");
+#else
 	StructType *type  = konoha::object_cast<StructType *>(sfp[0].p);
-	bool ret = type->isOpaque();
+	ret = type->isOpaque();
+#endif
 	RETURNb_(ret);
 }
 
@@ -2204,6 +2267,7 @@ KMETHOD GlobalVariable_new(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
+#ifndef USE_LLVM_2_9
 static void PassManagerBuilder_ptr_init(CTX _UNUSED_, kRawPtr *po, void *conf)
 {
 	po->rawptr = conf;
@@ -2222,6 +2286,7 @@ KMETHOD PassManagerBuilder_new(CTX, ksfp_t *sfp _RIX)
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(self) K_RIXPARAM);
 	RETURN_(p);
 }
+
 KMETHOD PassManagerBuilder_populateModulePassManager(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
 	PassManagerBuilder *self = konoha::object_cast<PassManagerBuilder *>(sfp[0].p);
@@ -2229,6 +2294,7 @@ KMETHOD PassManagerBuilder_populateModulePassManager(CTX _UNUSED_, ksfp_t *sfp _
 	self->populateModulePassManager(*manager);
 	RETURNvoid_();
 }
+#endif
 
 static void PassManager_ptr_init(CTX _UNUSED_, kRawPtr *po, void *conf)
 {
@@ -3035,10 +3101,15 @@ KMETHOD LLVM_createLoopInstSimplifyPass(CTX, ksfp_t *sfp _RIX)
 //## Pass LLVM.createLoopUnrollPass(int threshold, int count, int allowPartial);
 KMETHOD LLVM_createLoopUnrollPass(CTX, ksfp_t *sfp _RIX)
 {
+	Pass *ptr;
+#ifdef USE_LLVM_2_9
+	ptr = createLoopUnrollPass();
+#else
 	int threshold = sfp[0].ivalue;
 	int count = sfp[1].ivalue;
 	int allowPartial = sfp[2].ivalue;
-	Pass *ptr = createLoopUnrollPass(threshold,count,allowPartial);
+	ptr = createLoopUnrollPass(threshold,count,allowPartial);
+#endif
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -3220,6 +3291,7 @@ KMETHOD LLVM_createCorrelatedValuePropagationPass(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
+#ifndef USE_LLVM_2_9
 //## Pass LLVM.createObjCARCExpandPass();
 KMETHOD LLVM_createObjCARCExpandPass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3243,6 +3315,7 @@ KMETHOD LLVM_createObjCARCOptPass(CTX, ksfp_t *sfp _RIX)
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
+#endif
 
 //## FunctionPass LLVM.createInstructionSimplifierPass();
 KMETHOD LLVM_createInstructionSimplifierPass(CTX, ksfp_t *sfp _RIX)
@@ -3252,6 +3325,7 @@ KMETHOD LLVM_createInstructionSimplifierPass(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
+#ifndef USE_LLVM_2_9
 //## FunctionPass LLVM.createLowerExpectIntrinsicPass();
 KMETHOD LLVM_createLowerExpectIntrinsicPass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3259,6 +3333,7 @@ KMETHOD LLVM_createLowerExpectIntrinsicPass(CTX, ksfp_t *sfp _RIX)
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
+#endif
 
 //## Pass LLVM.createUnifyFunctionExitNodesPass();
 KMETHOD LLVM_createUnifyFunctionExitNodesPass(CTX, ksfp_t *sfp _RIX)
@@ -3307,9 +3382,15 @@ KMETHOD Intrinsic_getType(CTX, ksfp_t *sfp _RIX)
 {
 	Intrinsic::ID id = (Intrinsic::ID) sfp[1].ivalue;
 	kArray *args = sfp[2].a;
+#ifdef USE_LLVM_2_9
+	const FunctionType *ptr;
+	ptr = Intrinsic::getType(getGlobalContext(), id, (const Type **) args->list);
+#else
 	std::vector<Type*> List;
+	FunctionType *ptr;
 	konoha::convert_array(List, args);
-	FunctionType *ptr = Intrinsic::getType(getGlobalContext(), id, List);
+	ptr = Intrinsic::getType(getGlobalContext(), id, List);
+#endif
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -3320,9 +3401,14 @@ KMETHOD Intrinsic_getDeclaration(CTX, ksfp_t *sfp _RIX)
 	Module *m = konoha::object_cast<Module *>(sfp[1].p);
 	Intrinsic::ID id = (Intrinsic::ID) sfp[2].ivalue;
 	kArray *args = sfp[3].a;
+	Function *ptr;
+#ifdef USE_LLVM_2_9
+	ptr = Intrinsic::getDeclaration(m, id, (const Type **) args->list);
+#else
 	std::vector<Type*> List;
 	konoha::convert_array(List, args);
-	Function *ptr = Intrinsic::getDeclaration(m, id, List);
+	ptr = Intrinsic::getDeclaration(m, id, List);
+#endif
 	kRawPtr *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
 }
@@ -3473,16 +3559,29 @@ static kbool_t llvm_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 		"Type",
 		"IntegerType",
 		"PointerType",
+		"FunctionType",
+		"ArrayType",
+		"StructType"
 	};
+	const kclass_t *CT_TypeTBL[6];
+	const kclass_t *CT_BasicBlock, *CT_IRBuilder;
+#define TY_BasicBlock  (CT_BasicBlock)->cid
+#define TY_IRBuilder   (CT_BasicBlock)->cid
+#define TY_Type         (CT_TypeTBL[0])->cid
+#define TY_IntegerType  (CT_TypeTBL[1])->cid
+#define TY_PointerType  (CT_TypeTBL[2])->cid
+#define TY_FunctionType (CT_TypeTBL[3])->cid
+#define TY_ArrayType    (CT_TypeTBL[4])->cid
+#define TY_StructType   (CT_TypeTBL[5])->cid
 	{
 		static KDEFINE_CLASS TypeDef;
 		bzero(&TypeDef, sizeof(KDEFINE_CLASS));
 		TypeDef.cid  = CLASS_newid;
 		TypeDef.init = Type_init;
 		TypeDef.free = Type_free;
-		for (int i = 0; i < 3; ++i) {
+		for (int i = 0; i < 6; i++) {
 			TypeDef.structname = TypeDefName[i];
-			kaddClassDef(NULL, &TypeDef, 0);
+			CT_TypeTBL[i] = kaddClassDef(NULL, &TypeDef, 0);
 		}
 	}
 	static KDEFINE_CLASS BasicBlockDef = {
@@ -3501,8 +3600,28 @@ static kbool_t llvm_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 		0/*hashCode*/,
 		0/*initdef*/
 	};
+	CT_BasicBlock = kaddClassDef(NULL, &BasicBlockDef, pline);
+
+	static KDEFINE_CLASS IRBuilderDef = {
+		"IRBuilder"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		0/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	CT_IRBuilder = kaddClassDef(NULL, &IRBuilderDef, pline);
+#ifndef USE_LLVM_2_9
 	static KDEFINE_CLASS PassManagerBuilderDef = {
-		"BasicBlock"/*structname*/,
+		"PassManagerBuilder"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
@@ -3517,6 +3636,9 @@ static kbool_t llvm_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 		0/*hashCode*/,
 		0/*initdef*/
 	};
+	const kclass_t *CT_PassManagerBuilder = kaddClassDef(NULL, &PassManagerBuilderDef, pline);
+#define TY_PassManagerBuilder         (CT_PassManagerBuilder)->cid
+#endif
 	static KDEFINE_CLASS PassManagerDef = {
 		"PassManager"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
@@ -3549,316 +3671,421 @@ static kbool_t llvm_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kaddClassDef(NULL, &BasicBlockDef, pline);
-	kaddClassDef(NULL, &PassManagerDef, pline);
-	kaddClassDef(NULL, &PassManagerBuilderDef, pline);
-	kaddClassDef(NULL, &FunctionPassManagerDef, pline);
+	const kclass_t *CT_PassManager = kaddClassDef(NULL, &PassManagerDef, pline);
+	const kclass_t *CT_FunctionPassManager = kaddClassDef(NULL, &FunctionPassManagerDef, pline);
+	const kclass_t *CT_InstTBL[19];
+	{
+		static const char *InstDefName[] = {
+			"Instruction",
+			"AllocaInst",
+			"LoadInst",
+			"StoreInst",
+			"GetElementPtrInst",
+			"PHINode",
+			"Module",/*TODO*/
+			"Function",
+			"ExecutionEngine",/*TODO*/
+			"GlobalVariable",
+			"Argument",
+			"Constant",
+			"ConstantInt",
+			"ConstantFP",
+			"ConstantStruct",
+			"ConstantPointerNull",
+			"LLVM",
+			"LibCallInfo",
+			"DynamicLibrary",
+			"Intrinsic",
+		};
+		static KDEFINE_CLASS InstDef;
+		bzero(&InstDef, sizeof(KDEFINE_CLASS));
+		InstDef.cid  = CLASS_newid;
+		//InstDef.init = Inst_init;
+		//InstDef.free = Inst_free;
+		for (int i = 0; i < 19; i++) {
+			InstDef.structname = InstDefName[i];
+			CT_InstTBL[i] = kaddClassDef(NULL, &InstDef, pline);
+		}
+	}
+#define TY_Instruction         (CT_InstTBL[ 0])->cid
+#define TY_AllocaInst          (CT_InstTBL[ 1])->cid
+#define TY_LoadInst            (CT_InstTBL[ 2])->cid
+#define TY_StoreInst           (CT_InstTBL[ 3])->cid
+#define TY_GetElementPtrInst   (CT_InstTBL[ 4])->cid
+#define TY_PHINode             (CT_InstTBL[ 5])->cid
+#define TY_Module              (CT_InstTBL[ 6])->cid
+#define TY_Function            (CT_InstTBL[ 7])->cid
+#define TY_ExecutionEngine     (CT_InstTBL[ 8])->cid
+#define TY_GlobalVariable      (CT_InstTBL[ 9])->cid
+#define TY_Argument            (CT_InstTBL[10])->cid
+#define TY_Constant            (CT_InstTBL[11])->cid
+#define TY_ConstantInt         (CT_InstTBL[12])->cid
+#define TY_ConstantFP          (CT_InstTBL[13])->cid
+#define TY_ConstantStruct      (CT_InstTBL[14])->cid
+#define TY_ConstantPointerNull (CT_InstTBL[15])->cid
+#define TY_LLVM                (CT_InstTBL[16])->cid
+#define TY_LibCallInfo         (CT_InstTBL[17])->cid
+#define TY_DynamicLibrary      (CT_InstTBL[18])->cid
+#define TY_Intrinsic           (CT_InstTBL[19])->cid
+
+	static KDEFINE_CLASS ValueDef = {
+		"Value"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		0/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	const kclass_t *CT_Value = kaddClassDef(NULL, &ValueDef, pline);
+	const kclass_t *CT_PassTBL[4];
+	{
+		static const char *PassDefName[] = {
+			"Pass",
+			"ImmutablePass",
+			"FunctionPass",
+			"ModulePass",
+		};
+		static KDEFINE_CLASS PassDef;
+		bzero(&PassDef, sizeof(KDEFINE_CLASS));
+		PassDef.cid  = CLASS_newid;
+		//InstDef.init = Inst_init;
+		//InstDef.free = Inst_free;
+		for (int i = 0; i < 4; i++) {
+			PassDef.structname = PassDefName[i];
+			CT_PassTBL[i] = kaddClassDef(NULL, &PassDef, pline);
+		}
+	}
+#define TY_Pass          (CT_PassTBL[0])->cid
+#define TY_ImmutablePass (CT_PassTBL[1])->cid
+#define TY_FunctionPass  (CT_PassTBL[2])->cid
+#define TY_ModulePass    (CT_PassTBL[3])->cid
+
+#define TY_PassManager         (CT_PassManager)->cid
+#define TY_FunctionPassManager (CT_FunctionPassManager)->cid
+#define TY_Value               (CT_Value)->cid
+	/* TODO */
+#define TY_Array_Value    (0)
+#define TY_Array_Type     (0)
+#define TY_Array_Constant (0)
+#define TY_NativeFunction (TY_Int)
 	intptr_t methoddata[] = {
-		//_Public|_Static, _F(Type_getVoidTy), TY_Type, MN_("getVoidTy"), 0, 
-		//_Public|_Static, _F(Type_getLabelTy), TY_Type, MN_("getLabelTy"), 0, 
-		//_Public|_Static, _F(Type_getFloatTy), TY_Type, MN_("getFloatTy"), 0, 
-		//_Public|_Static, _F(Type_getDoubleTy), TY_Type, MN_("getDoubleTy"), 0, 
-		//_Public|_Static, _F(Type_getMetadataTy), TY_Type, MN_("getMetadataTy"), 0, 
-		//_Public|_Static, _F(Type_getX86_FP80Ty), TY_Type, MN_("getX86_FP80Ty"), 0, 
-		//_Public|_Static, _F(Type_getFP128Ty), TY_Type, MN_("getFP128Ty"), 0, 
-		//_Public|_Static, _F(Type_getPPC_FP128Ty), TY_Type, MN_("getPPC_FP128Ty"), 0, 
-		//_Public|_Static, _F(Type_getX86_MMXTy), TY_Type, MN_("getX86_MMXTy"), 0, 
-		//_Public|_Static, _F(Type_getInt1Ty), TY_Type, MN_("getInt1Ty"), 0, 
-		//_Public|_Static, _F(Type_getInt8Ty), TY_Type, MN_("getInt8Ty"), 0, 
-		//_Public|_Static, _F(Type_getInt16Ty), TY_Type, MN_("getInt16Ty"), 0, 
-		//_Public|_Static, _F(Type_getInt32Ty), TY_Type, MN_("getInt32Ty"), 0, 
-		//_Public|_Static, _F(Type_getInt64Ty), TY_Type, MN_("getInt64Ty"), 0, 
-		//_Public|_Static, _F(PointerType_get), TY_PointerType, MN_("get"), 1, TY_Type, MN_("type"),
-		//_Public|_Static, _F(Type_getFloatPtrTy), TY_Type, MN_("getFloatPtrTy"), 0, 
-		//_Public|_Static, _F(Type_getDoublePtrTy), TY_Type, MN_("getDoublePtrTy"), 0, 
-		//_Public|_Static, _F(Type_getX86_FP80PtrTy), TY_Type, MN_("getX86_FP80PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getFP128PtrTy), TY_Type, MN_("getFP128PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getPPC_FP128PtrTy), TY_Type, MN_("getPPC_FP128PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getX86_MMXPtrTy), TY_Type, MN_("getX86_MMXPtrTy"), 0, 
-		//_Public|_Static, _F(Type_getInt1PtrTy), TY_Type, MN_("getInt1PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getInt8PtrTy), TY_Type, MN_("getInt8PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getInt16PtrTy), TY_Type, MN_("getInt16PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getInt32PtrTy), TY_Type, MN_("getInt32PtrTy"), 0, 
-		//_Public|_Static, _F(Type_getInt64PtrTy), TY_Type, MN_("getInt64PtrTy"), 0, 
-		//_Public, _F(IRBuilder_new), TY_IRBuilder, MN_("new"), 1, TY_BasicBlock, MN_("bb"),
-		//_Public, _F(IRBuilder_createRetVoid), TY_IRBuilder, MN_("createRetVoid"), 0, 
-		//_Public, _F(IRBuilder_createRet), TY_IRBuilder, MN_("createRet"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createBr), TY_IRBuilder, MN_("createBr"), 1, TY_BasicBlock, MN_("dest"),
-		//_Public, _F(IRBuilder_createCondBr), TY_IRBuilder, MN_("createCondBr"), 3, TY_Value, MN_("cond"),TY_BasicBlock, MN_("trueBB"),TY_BasicBlock, MN_("falseBB"),
-		//_Public, _F(IRBuilder_createSwitch), TY_IRBuilder, MN_("createSwitch"), 2, TY_Value, MN_("v"),TY_BasicBlock, MN_("dest"),
-		//_Public, _F(IRBuilder_createIndirectBr), TY_IRBuilder, MN_("createIndirectBr"), 1, TY_Value, MN_("addr"),
-		//_Public, _F(IRBuilder_createInvoke0), TY_IRBuilder, MN_("createInvoke0"), 3, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),
-		//_Public, _F(IRBuilder_createInvoke1), TY_IRBuilder, MN_("createInvoke1"), 4, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),TY_Value, MN_("arg1"),
-		//_Public, _F(IRBuilder_createInvoke3), TY_IRBuilder, MN_("createInvoke3"), 6, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),
-		//_Public, _F(IRBuilder_createUnreachable), TY_IRBuilder, MN_("createUnreachable"), 0, 
-		//_Public, _F(IRBuilder_createAdd), TY_IRBuilder, MN_("createAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNSWAdd), TY_IRBuilder, MN_("createNSWAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNUWAdd), TY_IRBuilder, MN_("createNUWAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFAdd), TY_IRBuilder, MN_("createFAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createSub), TY_IRBuilder, MN_("createSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNSWSub), TY_IRBuilder, MN_("createNSWSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNUWSub), TY_IRBuilder, MN_("createNUWSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFSub), TY_IRBuilder, MN_("createFSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createMul), TY_IRBuilder, MN_("createMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNSWMul), TY_IRBuilder, MN_("createNSWMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNUWMul), TY_IRBuilder, MN_("createNUWMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFMul), TY_IRBuilder, MN_("createFMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createUDiv), TY_IRBuilder, MN_("createUDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createExactUDiv), TY_IRBuilder, MN_("createExactUDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createSDiv), TY_IRBuilder, MN_("createSDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createExactSDiv), TY_IRBuilder, MN_("createExactSDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFDiv), TY_IRBuilder, MN_("createFDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createURem), TY_IRBuilder, MN_("createURem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createSRem), TY_IRBuilder, MN_("createSRem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFRem), TY_IRBuilder, MN_("createFRem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createShl), TY_IRBuilder, MN_("createShl"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createLShr), TY_IRBuilder, MN_("createLShr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createAShr), TY_IRBuilder, MN_("createAShr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createAnd), TY_IRBuilder, MN_("createAnd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createOr), TY_IRBuilder, MN_("createOr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createXor), TY_IRBuilder, MN_("createXor"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createNeg), TY_IRBuilder, MN_("createNeg"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createNSWNeg), TY_IRBuilder, MN_("createNSWNeg"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createNUWNeg), TY_IRBuilder, MN_("createNUWNeg"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createFNeg), TY_IRBuilder, MN_("createFNeg"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createNot), TY_IRBuilder, MN_("createNot"), 1, TY_Value, MN_("v"),
-		//_Public, _F(IRBuilder_createAlloca), TY_IRBuilder, MN_("createAlloca"), 2, TY_Type, MN_("ty"),TY_Value, MN_("arraySize"),
-		//_Public, _F(AllocaInst_new), TY_AllocaInst, MN_("new"), 2, TY_Type, MN_("ty"),TY_Value, MN_("arraySize"),
-		//_Public, _F(IRBuilder_createLoad), TY_IRBuilder, MN_("createLoad"), 2, TY_Value, MN_("ptr"),TY_boolean, MN_("isVolatile"),
-		//_Public, _F(LoadInst_new), TY_LoadInst, MN_("new"), 1, TY_Value, MN_("ptr"),
-		//_Public, _F(IRBuilder_createStore), TY_IRBuilder, MN_("createStore"), 3, TY_Value, MN_("val"),TY_Value, MN_("ptr"),TY_boolean, MN_("isVolatile"),
-		//_Public, _F(StoreInst_new), TY_StoreInst, MN_("new"), 2, TY_Value, MN_("val"),TY_Value, MN_("ptr"),
-		//_Public|_Static, _F(GetElementPtrInst_create), TY_GetElementPtrInst, MN_("create"), 2, TY_Value, MN_("ptr"),TY_Array<Value>, MN_("idxList"),
-		//_Public|_Static, _F(GetElementPtrInst_createInBounds), TY_GetElementPtrInst, MN_("createInBounds"), 2, TY_Value, MN_("ptr"),TY_Array<Value>, MN_("idxList"),
-		//_Public, _F(IRBuilder_createGEP), TY_IRBuilder, MN_("createGEP"), 2, TY_Value, MN_("ptr"),TY_Array<Value>, MN_("idxList"),
-		//_Public, _F(IRBuilder_createInBoundsGEP), TY_IRBuilder, MN_("createInBoundsGEP"), 2, TY_Value, MN_("ptr"),TY_Array<Value>, MN_("idxList"),
-		//_Public, _F(IRBuilder_createGEP1), TY_IRBuilder, MN_("createGEP1"), 2, TY_Value, MN_("ptr"),TY_Value, MN_("idx"),
-		//_Public, _F(IRBuilder_createInBoundsGEP1), TY_IRBuilder, MN_("createInBoundsGEP1"), 2, TY_Value, MN_("ptr"),TY_Value, MN_("idx"),
-		//_Public, _F(IRBuilder_createConstGEP1_32), TY_IRBuilder, MN_("createConstGEP1_32"), 2, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),
-		//_Public, _F(IRBuilder_createConstInBoundsGEP1_32), TY_IRBuilder, MN_("createConstInBoundsGEP1_32"), 2, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),
-		//_Public, _F(IRBuilder_createConstGEP2_32), TY_IRBuilder, MN_("createConstGEP2_32"), 3, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),TY_int, MN_("idx1"),
-		//_Public, _F(IRBuilder_createConstInBoundsGEP2_32), TY_IRBuilder, MN_("createConstInBoundsGEP2_32"), 3, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),TY_int, MN_("idx1"),
-		//_Public, _F(IRBuilder_createConstGEP1_64), TY_IRBuilder, MN_("createConstGEP1_64"), 2, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),
-		//_Public, _F(IRBuilder_createConstInBoundsGEP1_64), TY_IRBuilder, MN_("createConstInBoundsGEP1_64"), 2, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),
-		//_Public, _F(IRBuilder_createConstGEP2_64), TY_IRBuilder, MN_("createConstGEP2_64"), 3, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),TY_int, MN_("idx1"),
-		//_Public, _F(IRBuilder_createConstInBoundsGEP2_64), TY_IRBuilder, MN_("createConstInBoundsGEP2_64"), 3, TY_Value, MN_("ptr"),TY_int, MN_("idx0"),TY_int, MN_("idx1"),
-		//_Public, _F(IRBuilder_createStructGEP), TY_IRBuilder, MN_("createStructGEP"), 2, TY_Value, MN_("ptr"),TY_int, MN_("idx"),
-		//_Public, _F(IRBuilder_createGlobalString), TY_IRBuilder, MN_("createGlobalString"), 1, TY_String, MN_("str"),
-		//_Public, _F(IRBuilder_createGlobalStringPtr), TY_IRBuilder, MN_("createGlobalStringPtr"), 1, TY_String, MN_("str"),
-		//_Public, _F(IRBuilder_createTrunc), TY_IRBuilder, MN_("createTrunc"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createZExt), TY_IRBuilder, MN_("createZExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createSExt), TY_IRBuilder, MN_("createSExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createFPToUI), TY_IRBuilder, MN_("createFPToUI"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createFPToSI), TY_IRBuilder, MN_("createFPToSI"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createUIToFP), TY_IRBuilder, MN_("createUIToFP"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createSIToFP), TY_IRBuilder, MN_("createSIToFP"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createFPTrunc), TY_IRBuilder, MN_("createFPTrunc"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createFPExt), TY_IRBuilder, MN_("createFPExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createPtrToInt), TY_IRBuilder, MN_("createPtrToInt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createIntToPtr), TY_IRBuilder, MN_("createIntToPtr"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createBitCast), TY_IRBuilder, MN_("createBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createZExtOrBitCast), TY_IRBuilder, MN_("createZExtOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createSExtOrBitCast), TY_IRBuilder, MN_("createSExtOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createTruncOrBitCast), TY_IRBuilder, MN_("createTruncOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createPointerCast), TY_IRBuilder, MN_("createPointerCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createIntCast), TY_IRBuilder, MN_("createIntCast"), 3, TY_Value, MN_("v"),TY_Type, MN_("destTy"),TY_boolean, MN_("isSigned"),
-		//_Public, _F(IRBuilder_createFPCast), TY_IRBuilder, MN_("createFPCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
-		//_Public, _F(IRBuilder_createICmpEQ), TY_IRBuilder, MN_("createICmpEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpNE), TY_IRBuilder, MN_("createICmpNE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpUGT), TY_IRBuilder, MN_("createICmpUGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpUGE), TY_IRBuilder, MN_("createICmpUGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpULT), TY_IRBuilder, MN_("createICmpULT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpULE), TY_IRBuilder, MN_("createICmpULE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpSGT), TY_IRBuilder, MN_("createICmpSGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpSGE), TY_IRBuilder, MN_("createICmpSGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpSLT), TY_IRBuilder, MN_("createICmpSLT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createICmpSLE), TY_IRBuilder, MN_("createICmpSLE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpOEQ), TY_IRBuilder, MN_("createFCmpOEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpOGT), TY_IRBuilder, MN_("createFCmpOGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpOGE), TY_IRBuilder, MN_("createFCmpOGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpOLT), TY_IRBuilder, MN_("createFCmpOLT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpOLE), TY_IRBuilder, MN_("createFCmpOLE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpONE), TY_IRBuilder, MN_("createFCmpONE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpORD), TY_IRBuilder, MN_("createFCmpORD"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpUNO), TY_IRBuilder, MN_("createFCmpUNO"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpUEQ), TY_IRBuilder, MN_("createFCmpUEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpUGT), TY_IRBuilder, MN_("createFCmpUGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpUGE), TY_IRBuilder, MN_("createFCmpUGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpULT), TY_IRBuilder, MN_("createFCmpULT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpULE), TY_IRBuilder, MN_("createFCmpULE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createFCmpUNE), TY_IRBuilder, MN_("createFCmpUNE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_createPHI), TY_IRBuilder, MN_("createPHI"), 2, TY_Type, MN_("ty"),TY_int, MN_("numReservedValues"),
-		//_Public, _F(PHINode_addIncoming), TY_PHINode, MN_("addIncoming"), 2, TY_Value, MN_("v"),TY_BasicBlock, MN_("bb"),
-		//_Public, _F(IRBuilder_createCall1), TY_IRBuilder, MN_("createCall1"), 2, TY_Value, MN_("callee"),TY_Value, MN_("arg"),
-		//_Public, _F(IRBuilder_createCall2), TY_IRBuilder, MN_("createCall2"), 3, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),
-		//_Public, _F(IRBuilder_createCall3), TY_IRBuilder, MN_("createCall3"), 4, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),
-		//_Public, _F(IRBuilder_createCall4), TY_IRBuilder, MN_("createCall4"), 5, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),TY_Value, MN_("arg4"),
-		//_Public, _F(IRBuilder_createCall5), TY_IRBuilder, MN_("createCall5"), 6, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),TY_Value, MN_("arg4"),TY_Value, MN_("arg5"),
-		//_Public, _F(IRBuilder_createCall), TY_IRBuilder, MN_("createCall"), 2, TY_Value, MN_("callee"),TY_Array<Value>, MN_("args"),
-		//_Public, _F(IRBuilder_createSelect), TY_IRBuilder, MN_("createSelect"), 3, TY_Value, MN_("c"),TY_Value, MN_("trueV"),TY_Value, MN_("falseV"),
-		//_Public, _F(IRBuilder_createVAArg), TY_IRBuilder, MN_("createVAArg"), 2, TY_Value, MN_("list"),TY_Type, MN_("ty"),
-		//_Public, _F(IRBuilder_createExtractElement), TY_IRBuilder, MN_("createExtractElement"), 2, TY_Value, MN_("vec"),TY_Value, MN_("idx"),
-		//_Public, _F(IRBuilder_createInsertElement), TY_IRBuilder, MN_("createInsertElement"), 3, TY_Value, MN_("vec"),TY_Value, MN_("newElt"),TY_Value, MN_("idx"),
-		//_Public, _F(IRBuilder_createShuffleVector), TY_IRBuilder, MN_("createShuffleVector"), 3, TY_Value, MN_("v1"),TY_Value, MN_("v2"),TY_Value, MN_("mask"),
-		//_Public, _F(IRBuilder_createIsNull), TY_IRBuilder, MN_("createIsNull"), 1, TY_Value, MN_("arg"),
-		//_Public, _F(IRBuilder_createIsNotNull), TY_IRBuilder, MN_("createIsNotNull"), 1, TY_Value, MN_("arg"),
-		//_Public, _F(IRBuilder_createPtrDiff), TY_IRBuilder, MN_("createPtrDiff"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
-		//_Public, _F(IRBuilder_setInsertPoint), TY_IRBuilder, MN_("setInsertPoint"), 1, TY_BasicBlock, MN_("bb"),
-		//_Public, _F(IRBuilder_getInsertBlock), TY_IRBuilder, MN_("getInsertBlock"), 0, 
-		//_Public, _F(BasicBlock_getParent), TY_BasicBlock, MN_("getParent"), 0, 
-		//_Public, _F(BasicBlock_insertBefore), TY_BasicBlock, MN_("insertBefore"), 2, TY_Instruction, MN_("before"),TY_Instruction, MN_("inst"),
-		//_Public, _F(BasicBlock_getLastInst), TY_BasicBlock, MN_("getLastInst"), 0, 
-		//_Public, _F(BasicBlock_getTerminator), TY_BasicBlock, MN_("getTerminator"), 0, 
-		//_Public, _F(Instruction_setMetadata), TY_Instruction, MN_("setMetadata"), 3, TY_Module, MN_("m"),TY_String, MN_("name"),TY_int, MN_("value"),
-		//_Public, _F(Function_dump), TY_Function, MN_("dump"), 0, 
-		//_Public, _F(Value_dump), TY_Value, MN_("dump"), 0, 
-		//_Public, _F(Type_dump), TY_Type, MN_("dump"), 0, 
-		//_Public, _F(BasicBlock_dump), TY_BasicBlock, MN_("dump"), 0, 
-		//_Public|_Static, _F(Function_create), TY_Function, MN_("create"), 4, TY_String, MN_("name"),TY_FunctionType, MN_("fnTy"),TY_Module, MN_("m"),TY_int, MN_("linkage"),
-		//_Public, _F(Function_addFnAttr), TY_Function, MN_("addFnAttr"), 1, TY_Int, MN_("attributes"),
-		//_Public, _F(BasicBlock_size), TY_BasicBlock, MN_("size"), 0, 
-		//_Public, _F(BasicBlock_empty), TY_BasicBlock, MN_("empty"), 0, 
-		//_Public, _F(Module_new), TY_Module, MN_("new"), 1, TY_String, MN_("name"),
-		//_Public, _F(Module_getTypeByName), TY_Module, MN_("getTypeByName"), 1, TY_String, MN_("name"),
-		//_Public, _F(Module_dump), TY_Module, MN_("dump"), 0, 
-		//_Public, _F(Module_getOrInsertFunction), TY_Module, MN_("getOrInsertFunction"), 2, TY_String, MN_("name"),TY_FunctionType, MN_("fnTy"),
-		//_Public, _F(Module_createExecutionEngine), TY_Module, MN_("createExecutionEngine"), 1, TY_int, MN_("optLevel"),
-		//_Public|_Static, _F(BasicBlock_create), TY_BasicBlock, MN_("create"), 2, TY_Function, MN_("parent"),TY_String, MN_("name"),
-		//_Public|_Static, _F(FunctionType_get), TY_FunctionType, MN_("get"), 3, TY_Type, MN_("retTy"),TY_Array<Type>, MN_("args"),TY_boolean, MN_("b"),
-		//_Public|_Static, _F(ArrayType_get), TY_ArrayType, MN_("get"), 2, TY_Type, MN_("t"),TY_int, MN_("elemSize"),
-		//_Public|_Static, _F(StructType_get), TY_StructType, MN_("get"), 2, TY_Array<Type>, MN_("args"),TY_boolean, MN_("isPacked"),
-		//_Public|_Static, _F(StructType_create), TY_StructType, MN_("create"), 3, TY_Array<Type>, MN_("args"),TY_String, MN_("name"),TY_boolean, MN_("isPacked"),
-		//_Public, _F(StructType_setBody), TY_StructType, MN_("setBody"), 2, TY_Array<Type>, MN_("args"),TY_boolean, MN_("isPacked"),
-		//_Public, _F(StructType_isOpaque), TY_StructType, MN_("isOpaque"), 0, 
-		//_Public, _F(ExecutionEngine_getPointerToFunction), TY_ExecutionEngine, MN_("getPointerToFunction"), 1, TY_Function, MN_("func"),
-		//_Public, _F(ExecutionEngine_addGlobalMapping), TY_ExecutionEngine, MN_("addGlobalMapping"), 2, TY_GlobalVariable, MN_("g"),TY_int, MN_("addr"),
-		//_Public, _F(GlobalVariable_new), TY_GlobalVariable, MN_("new"), 5, TY_Module, MN_("m"),TY_Type, MN_("ty"),TY_Constant, MN_("c"),TY_int, MN_("linkage"),TY_String, MN_("name"),
-		//_Public, _F(PassManagerBuilder_new), TY_PassManagerBuilder, MN_("new"), 0, 
-		//_Public, _F(PassManagerBuilder_populateModulePassManager), TY_PassManagerBuilder, MN_("populateModulePassManager"), 1, TY_PassManager, MN_("manager"),
-		//_Public, _F(PassManager_new), TY_PassManager, MN_("new"), 0, 
-		//_Public, _F(FunctionPassManager_new), TY_FunctionPassManager, MN_("new"), 1, TY_Module, MN_("m"),
-		//_Public, _F(PassManager_addPass), TY_PassManager, MN_("addPass"), 1, TY_Pass, MN_("p"),
-		//_Public, _F(PassManager_addImmutablePass), TY_PassManager, MN_("addImmutablePass"), 1, TY_ImmutablePass, MN_("p"),
-		//_Public, _F(PassManager_addFunctionPass), TY_PassManager, MN_("addFunctionPass"), 1, TY_FunctionPass, MN_("p"),
-		//_Public, _F(PassManager_addModulePass), TY_PassManager, MN_("addModulePass"), 1, TY_ModulePass, MN_("p"),
-		//_Public, _F(FunctionPassManager_add), TY_FunctionPassManager, MN_("add"), 1, TY_Pass, MN_("p"),
-		//_Public, _F(FunctionPassManager_run), TY_FunctionPassManager, MN_("run"), 1, TY_Function, MN_("func"),
-		//_Public, _F(FunctionPassManager_doInitialization), TY_FunctionPassManager, MN_("doInitialization"), 0, 
-		//_Public, _F(ExecutionEngine_getTargetData), TY_ExecutionEngine, MN_("getTargetData"), 0, 
-		//_Public, _F(Argument_new), TY_Argument, MN_("new"), 1, TY_Type, MN_("type"),
-		//_Public, _F(Value_replaceAllUsesWith), TY_Value, MN_("replaceAllUsesWith"), 1, TY_Value, MN_("v"),
-		//_Public, _F(Value_setName), TY_Value, MN_("setName"), 1, TY_String, MN_("name"),
-		//_Public, _F(Value_getType), TY_Value, MN_("getType"), 0, 
-		//_Public, _F(Function_getArguments), TY_Function, MN_("getArguments"), 0, 
-		//_Public, _F(LoadInst_setAlignment), TY_LoadInst, MN_("setAlignment"), 1, TY_Int, MN_("align"),
-		//_Public, _F(StoreInst_setAlignment), TY_StoreInst, MN_("setAlignment"), 1, TY_Int, MN_("align"),
-		//_Public, _F(Method_setFunction), TY_Method, MN_("setFunction"), 1, TY_NativeFunction, MN_("nf"),
-		//_Public|_Static, _F(ConstantInt_get), TY_ConstantInt, MN_("get"), 2, TY_Type, MN_("type"),TY_int, MN_("v"),
-		//_Public|_Static, _F(ConstantFP_get), TY_ConstantFP, MN_("get"), 2, TY_Type, MN_("type"),TY_float, MN_("v"),
-		//_Public|_Static, _F(ConstantPointerNull_get), TY_ConstantPointerNull, MN_("get"), 1, TY_Type, MN_("type"),
-		//_Public|_Static, _F(ConstantStruct_get), TY_ConstantStruct, MN_("get"), 2, TY_Type, MN_("type"),TY_Array<Constant>, MN_("v"),
-		//_Public|_Static, _F(DynamicLibrary_loadLibraryPermanently), TY_DynamicLibrary, MN_("loadLibraryPermanently"), 1, TY_String, MN_("libname"),
-		//_Public|_Static, _F(DynamicLibrary_searchForAddressOfSymbol), TY_DynamicLibrary, MN_("searchForAddressOfSymbol"), 1, TY_String, MN_("fname"),
-		//_Public|_Static, _F(LLVM_createDomPrinterPass), TY_LLVM, MN_("createDomPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDomOnlyPrinterPass), TY_LLVM, MN_("createDomOnlyPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDomViewerPass), TY_LLVM, MN_("createDomViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDomOnlyViewerPass), TY_LLVM, MN_("createDomOnlyViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPostDomPrinterPass), TY_LLVM, MN_("createPostDomPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPostDomOnlyPrinterPass), TY_LLVM, MN_("createPostDomOnlyPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPostDomViewerPass), TY_LLVM, MN_("createPostDomViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPostDomOnlyViewerPass), TY_LLVM, MN_("createPostDomOnlyViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createGlobalsModRefPass), TY_LLVM, MN_("createGlobalsModRefPass"), 0, 
-		//_Public|_Static, _F(LLVM_createAliasDebugger), TY_LLVM, MN_("createAliasDebugger"), 0, 
-		//_Public|_Static, _F(LLVM_createAliasAnalysisCounterPass), TY_LLVM, MN_("createAliasAnalysisCounterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createAAEvalPass), TY_LLVM, MN_("createAAEvalPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLibCallAliasAnalysisPass), TY_LLVM, MN_("createLibCallAliasAnalysisPass"), 1, TY_LibCallInfo, MN_("lci"),
-		//_Public|_Static, _F(LLVM_createScalarEvolutionAliasAnalysisPass), TY_LLVM, MN_("createScalarEvolutionAliasAnalysisPass"), 0, 
-		//_Public|_Static, _F(LLVM_createProfileLoaderPass), TY_LLVM, MN_("createProfileLoaderPass"), 0, 
-		//_Public|_Static, _F(LLVM_createProfileEstimatorPass), TY_LLVM, MN_("createProfileEstimatorPass"), 0, 
-		//_Public|_Static, _F(LLVM_createProfileVerifierPass), TY_LLVM, MN_("createProfileVerifierPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPathProfileLoaderPass), TY_LLVM, MN_("createPathProfileLoaderPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPathProfileVerifierPass), TY_LLVM, MN_("createPathProfileVerifierPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLazyValueInfoPass), TY_LLVM, MN_("createLazyValueInfoPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopDependenceAnalysisPass), TY_LLVM, MN_("createLoopDependenceAnalysisPass"), 0, 
-		//_Public|_Static, _F(LLVM_createInstCountPass), TY_LLVM, MN_("createInstCountPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDbgInfoPrinterPass), TY_LLVM, MN_("createDbgInfoPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createRegionInfoPass), TY_LLVM, MN_("createRegionInfoPass"), 0, 
-		//_Public|_Static, _F(LLVM_createModuleDebugInfoPrinterPass), TY_LLVM, MN_("createModuleDebugInfoPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createMemDepPrinter), TY_LLVM, MN_("createMemDepPrinter"), 0, 
-		//_Public|_Static, _F(LLVM_createPostDomTree), TY_LLVM, MN_("createPostDomTree"), 0, 
-		//_Public|_Static, _F(LLVM_createRegionViewerPass), TY_LLVM, MN_("createRegionViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createRegionOnlyViewerPass), TY_LLVM, MN_("createRegionOnlyViewerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createRegionPrinterPass), TY_LLVM, MN_("createRegionPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createRegionOnlyPrinterPass), TY_LLVM, MN_("createRegionOnlyPrinterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLintPass), TY_LLVM, MN_("createLintPass"), 0, 
-		//_Public|_Static, _F(LLVM_createStripSymbolsPass), TY_LLVM, MN_("createStripSymbolsPass"), 1, TY_boolean, MN_("onlyDebugInfo"),
-		//_Public|_Static, _F(LLVM_createStripNonDebugSymbolsPass), TY_LLVM, MN_("createStripNonDebugSymbolsPass"), 0, 
-		//_Public|_Static, _F(LLVM_createStripDeadDebugInfoPass), TY_LLVM, MN_("createStripDeadDebugInfoPass"), 0, 
-		//_Public|_Static, _F(LLVM_createConstantMergePass), TY_LLVM, MN_("createConstantMergePass"), 0, 
-		//_Public|_Static, _F(LLVM_createGlobalOptimizerPass), TY_LLVM, MN_("createGlobalOptimizerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createGlobalDCEPass), TY_LLVM, MN_("createGlobalDCEPass"), 0, 
-		//_Public|_Static, _F(LLVM_createFunctionInliningPass), TY_LLVM, MN_("createFunctionInliningPass"), 1, TY_int, MN_("threshold"),
-		//_Public|_Static, _F(LLVM_createAlwaysInlinerPass), TY_LLVM, MN_("createAlwaysInlinerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPruneEHPass), TY_LLVM, MN_("createPruneEHPass"), 0, 
-		//_Public|_Static, _F(LLVM_createInternalizePass), TY_LLVM, MN_("createInternalizePass"), 1, TY_boolean, MN_("allButMain"),
-		//_Public|_Static, _F(LLVM_createDeadArgEliminationPass), TY_LLVM, MN_("createDeadArgEliminationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createArgumentPromotionPass), TY_LLVM, MN_("createArgumentPromotionPass"), 1, TY_int, MN_("maxElements"),
-		//_Public|_Static, _F(LLVM_createIPConstantPropagationPass), TY_LLVM, MN_("createIPConstantPropagationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createIPSCCPPass), TY_LLVM, MN_("createIPSCCPPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopExtractorPass), TY_LLVM, MN_("createLoopExtractorPass"), 0, 
-		//_Public|_Static, _F(LLVM_createSingleLoopExtractorPass), TY_LLVM, MN_("createSingleLoopExtractorPass"), 0, 
-		//_Public|_Static, _F(LLVM_createBlockExtractorPass), TY_LLVM, MN_("createBlockExtractorPass"), 0, 
-		//_Public|_Static, _F(LLVM_createStripDeadPrototypesPass), TY_LLVM, MN_("createStripDeadPrototypesPass"), 0, 
-		//_Public|_Static, _F(LLVM_createFunctionAttrsPass), TY_LLVM, MN_("createFunctionAttrsPass"), 0, 
-		//_Public|_Static, _F(LLVM_createMergeFunctionsPass), TY_LLVM, MN_("createMergeFunctionsPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPartialInliningPass), TY_LLVM, MN_("createPartialInliningPass"), 0, 
-		//_Public|_Static, _F(LLVM_createConstantPropagationPass), TY_LLVM, MN_("createConstantPropagationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createSCCPPass), TY_LLVM, MN_("createSCCPPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDeadInstEliminationPass), TY_LLVM, MN_("createDeadInstEliminationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDeadCodeEliminationPass), TY_LLVM, MN_("createDeadCodeEliminationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDeadStoreEliminationPass), TY_LLVM, MN_("createDeadStoreEliminationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createAggressiveDCEPass), TY_LLVM, MN_("createAggressiveDCEPass"), 0, 
-		//_Public|_Static, _F(LLVM_createScalarReplAggregatesPass), TY_LLVM, MN_("createScalarReplAggregatesPass"), 1, TY_int, MN_("threshold"),
-		//_Public|_Static, _F(LLVM_createIndVarSimplifyPass), TY_LLVM, MN_("createIndVarSimplifyPass"), 0, 
-		//_Public|_Static, _F(LLVM_createInstructionCombiningPass), TY_LLVM, MN_("createInstructionCombiningPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLICMPass), TY_LLVM, MN_("createLICMPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopUnswitchPass), TY_LLVM, MN_("createLoopUnswitchPass"), 1, TY_boolean, MN_("optimizeForSize"),
-		//_Public|_Static, _F(LLVM_createLoopInstSimplifyPass), TY_LLVM, MN_("createLoopInstSimplifyPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopUnrollPass), TY_LLVM, MN_("createLoopUnrollPass"), 3, TY_int, MN_("threshold"),TY_int, MN_("count"),TY_int, MN_("allowPartial"),
-		//_Public|_Static, _F(LLVM_createLoopRotatePass), TY_LLVM, MN_("createLoopRotatePass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopIdiomPass), TY_LLVM, MN_("createLoopIdiomPass"), 0, 
-		//_Public|_Static, _F(LLVM_createPromoteMemoryToRegisterPass), TY_LLVM, MN_("createPromoteMemoryToRegisterPass"), 0, 
-		//_Public|_Static, _F(LLVM_createDemoteRegisterToMemoryPass), TY_LLVM, MN_("createDemoteRegisterToMemoryPass"), 0, 
-		//_Public|_Static, _F(LLVM_createReassociatePass), TY_LLVM, MN_("createReassociatePass"), 0, 
-		//_Public|_Static, _F(LLVM_createJumpThreadingPass), TY_LLVM, MN_("createJumpThreadingPass"), 0, 
-		//_Public|_Static, _F(LLVM_createCFGSimplificationPass), TY_LLVM, MN_("createCFGSimplificationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createBreakCriticalEdgesPass), TY_LLVM, MN_("createBreakCriticalEdgesPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopSimplifyPass), TY_LLVM, MN_("createLoopSimplifyPass"), 0, 
-		//_Public|_Static, _F(LLVM_createTailCallEliminationPass), TY_LLVM, MN_("createTailCallEliminationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLowerSwitchPass), TY_LLVM, MN_("createLowerSwitchPass"), 0, 
-		//_Public|_Static, _F(LLVM_createBlockPlacementPass), TY_LLVM, MN_("createBlockPlacementPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLCSSAPass), TY_LLVM, MN_("createLCSSAPass"), 0, 
-		//_Public|_Static, _F(LLVM_createEarlyCSEPass), TY_LLVM, MN_("createEarlyCSEPass"), 0, 
-		//_Public|_Static, _F(LLVM_createGVNPass), TY_LLVM, MN_("createGVNPass"), 1, TY_boolean, MN_("noLoads"),
-		//_Public|_Static, _F(LLVM_createMemCpyOptPass), TY_LLVM, MN_("createMemCpyOptPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLoopDeletionPass), TY_LLVM, MN_("createLoopDeletionPass"), 0, 
-		//_Public|_Static, _F(LLVM_createSimplifyLibCallsPass), TY_LLVM, MN_("createSimplifyLibCallsPass"), 0, 
-		//_Public|_Static, _F(LLVM_createInstructionNamerPass), TY_LLVM, MN_("createInstructionNamerPass"), 0, 
-		//_Public|_Static, _F(LLVM_createSinkingPass), TY_LLVM, MN_("createSinkingPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLowerAtomicPass), TY_LLVM, MN_("createLowerAtomicPass"), 0, 
-		//_Public|_Static, _F(LLVM_createCorrelatedValuePropagationPass), TY_LLVM, MN_("createCorrelatedValuePropagationPass"), 0, 
-		//_Public|_Static, _F(LLVM_createObjCARCExpandPass), TY_LLVM, MN_("createObjCARCExpandPass"), 0, 
-		//_Public|_Static, _F(LLVM_createObjCARCContractPass), TY_LLVM, MN_("createObjCARCContractPass"), 0, 
-		//_Public|_Static, _F(LLVM_createObjCARCOptPass), TY_LLVM, MN_("createObjCARCOptPass"), 0, 
-		//_Public|_Static, _F(LLVM_createInstructionSimplifierPass), TY_LLVM, MN_("createInstructionSimplifierPass"), 0, 
-		//_Public|_Static, _F(LLVM_createLowerExpectIntrinsicPass), TY_LLVM, MN_("createLowerExpectIntrinsicPass"), 0, 
-		//_Public|_Static, _F(LLVM_createUnifyFunctionExitNodesPass), TY_LLVM, MN_("createUnifyFunctionExitNodesPass"), 0, 
-		//_Public|_Static, _F(LLVM_createTypeBasedAliasAnalysisPass), TY_LLVM, MN_("createTypeBasedAliasAnalysisPass"), 0, 
-		//_Public|_Static, _F(LLVM_createBasicAliasAnalysisPass), TY_LLVM, MN_("createBasicAliasAnalysisPass"), 0, 
-		//_Public|_Static, _F(LLVM_createVerifierPass), TY_LLVM, MN_("createVerifierPass"), 0, 
-		//_Public|_Static, _F(Intrinsic_getType), TY_Intrinsic, MN_("getType"), 2, TY_int, MN_("id"),TY_ARRAY_Type, MN_("args"),
-		//_Public|_Static, _F(Intrinsic_getDeclaration), TY_Intrinsic, MN_("getDeclaration"), 3, TY_Module, MN_("m"),TY_int, MN_("id"),TY_ARRAY_Type, MN_("args"),
-		//_Public|_Static, _F(LLVM_parseBitcodeFile), TY_LLVM, MN_("parseBitcodeFile"), 1, TY_String, MN_("bcfile"),
+		_Public|_Static, _F(Type_getVoidTy), TY_Type, MN_("getVoidTy"), 0,
+		_Public|_Static, _F(Type_getLabelTy), TY_Type, MN_("getLabelTy"), 0,
+		_Public|_Static, _F(Type_getFloatTy), TY_Type, MN_("getFloatTy"), 0,
+		_Public|_Static, _F(Type_getDoubleTy), TY_Type, MN_("getDoubleTy"), 0,
+		_Public|_Static, _F(Type_getMetadataTy), TY_Type, MN_("getMetadataTy"), 0,
+		_Public|_Static, _F(Type_getX86FP80Ty), TY_Type, MN_("getX86_FP80Ty"), 0,
+		_Public|_Static, _F(Type_getFP128Ty), TY_Type, MN_("getFP128Ty"), 0,
+		_Public|_Static, _F(Type_getPPCFP128Ty), TY_Type, MN_("getPPC_FP128Ty"), 0,
+		_Public|_Static, _F(Type_getX86MMXTy), TY_Type, MN_("getX86_MMXTy"), 0,
+		_Public|_Static, _F(Type_getInt1Ty), TY_Type, MN_("getInt1Ty"), 0,
+		_Public|_Static, _F(Type_getInt8Ty), TY_Type, MN_("getInt8Ty"), 0,
+		_Public|_Static, _F(Type_getInt16Ty), TY_Type, MN_("getInt16Ty"), 0,
+		_Public|_Static, _F(Type_getInt32Ty), TY_Type, MN_("getInt32Ty"), 0,
+		_Public|_Static, _F(Type_getInt64Ty), TY_Type, MN_("getInt64Ty"), 0,
+		_Public|_Static, _F(PointerType_get), TY_PointerType, MN_("get"), 1, TY_Type, MN_("type"),
+		_Public|_Static, _F(Type_getFloatPtrTy), TY_Type, MN_("getFloatPtrTy"), 0,
+		_Public|_Static, _F(Type_getDoublePtrTy), TY_Type, MN_("getDoublePtrTy"), 0,
+		_Public|_Static, _F(Type_getX86FP80PtrTy), TY_Type, MN_("getX86_FP80PtrTy"), 0,
+		_Public|_Static, _F(Type_getFP128PtrTy), TY_Type, MN_("getFP128PtrTy"), 0,
+		_Public|_Static, _F(Type_getPPCFP128PtrTy), TY_Type, MN_("getPPC_FP128PtrTy"), 0,
+		_Public|_Static, _F(Type_getX86MMXPtrTy), TY_Type, MN_("getX86_MMXPtrTy"), 0,
+		_Public|_Static, _F(Type_getInt1PtrTy), TY_Type, MN_("getInt1PtrTy"), 0,
+		_Public|_Static, _F(Type_getInt8PtrTy), TY_Type, MN_("getInt8PtrTy"), 0,
+		_Public|_Static, _F(Type_getInt16PtrTy), TY_Type, MN_("getInt16PtrTy"), 0,
+		_Public|_Static, _F(Type_getInt32PtrTy), TY_Type, MN_("getInt32PtrTy"), 0,
+		_Public|_Static, _F(Type_getInt64PtrTy), TY_Type, MN_("getInt64PtrTy"), 0,
+		_Public, _F(IRBuilder_new), TY_IRBuilder, MN_("new"), 1, TY_BasicBlock, MN_("bb"),
+		_Public, _F(IRBuilder_createRetVoid), TY_IRBuilder, MN_("createRetVoid"), 0,
+		_Public, _F(IRBuilder_createRet), TY_IRBuilder, MN_("createRet"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createBr), TY_IRBuilder, MN_("createBr"), 1, TY_BasicBlock, MN_("dest"),
+		_Public, _F(IRBuilder_createCondBr), TY_IRBuilder, MN_("createCondBr"), 3, TY_Value, MN_("cond"),TY_BasicBlock, MN_("trueBB"),TY_BasicBlock, MN_("falseBB"),
+		_Public, _F(IRBuilder_createSwitch), TY_IRBuilder, MN_("createSwitch"), 2, TY_Value, MN_("v"),TY_BasicBlock, MN_("dest"),
+		_Public, _F(IRBuilder_createIndirectBr), TY_IRBuilder, MN_("createIndirectBr"), 1, TY_Value, MN_("addr"),
+		_Public, _F(IRBuilder_createInvoke0), TY_IRBuilder, MN_("createInvoke0"), 3, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),
+		_Public, _F(IRBuilder_createInvoke1), TY_IRBuilder, MN_("createInvoke1"), 4, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),TY_Value, MN_("arg1"),
+		_Public, _F(IRBuilder_createInvoke3), TY_IRBuilder, MN_("createInvoke3"), 6, TY_Value, MN_("callee"),TY_BasicBlock, MN_("normalDest"),TY_BasicBlock, MN_("unwindDest"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),
+		_Public, _F(IRBuilder_createUnreachable), TY_IRBuilder, MN_("createUnreachable"), 0,
+		_Public, _F(IRBuilder_createAdd), TY_IRBuilder, MN_("createAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNSWAdd), TY_IRBuilder, MN_("createNSWAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNUWAdd), TY_IRBuilder, MN_("createNUWAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFAdd), TY_IRBuilder, MN_("createFAdd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createSub), TY_IRBuilder, MN_("createSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNSWSub), TY_IRBuilder, MN_("createNSWSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNUWSub), TY_IRBuilder, MN_("createNUWSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFSub), TY_IRBuilder, MN_("createFSub"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createMul), TY_IRBuilder, MN_("createMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNSWMul), TY_IRBuilder, MN_("createNSWMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNUWMul), TY_IRBuilder, MN_("createNUWMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFMul), TY_IRBuilder, MN_("createFMul"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createUDiv), TY_IRBuilder, MN_("createUDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createExactUDiv), TY_IRBuilder, MN_("createExactUDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createSDiv), TY_IRBuilder, MN_("createSDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createExactSDiv), TY_IRBuilder, MN_("createExactSDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFDiv), TY_IRBuilder, MN_("createFDiv"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createURem), TY_IRBuilder, MN_("createURem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createSRem), TY_IRBuilder, MN_("createSRem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFRem), TY_IRBuilder, MN_("createFRem"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createShl), TY_IRBuilder, MN_("createShl"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createLShr), TY_IRBuilder, MN_("createLShr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createAShr), TY_IRBuilder, MN_("createAShr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createAnd), TY_IRBuilder, MN_("createAnd"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createOr), TY_IRBuilder, MN_("createOr"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createXor), TY_IRBuilder, MN_("createXor"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createNeg), TY_IRBuilder, MN_("createNeg"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createNSWNeg), TY_IRBuilder, MN_("createNSWNeg"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createNUWNeg), TY_IRBuilder, MN_("createNUWNeg"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createFNeg), TY_IRBuilder, MN_("createFNeg"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createNot), TY_IRBuilder, MN_("createNot"), 1, TY_Value, MN_("v"),
+		_Public, _F(IRBuilder_createAlloca), TY_IRBuilder, MN_("createAlloca"), 2, TY_Type, MN_("ty"),TY_Value, MN_("arraySize"),
+		_Public, _F(AllocaInst_new), TY_AllocaInst, MN_("new"), 2, TY_Type, MN_("ty"),TY_Value, MN_("arraySize"),
+		_Public, _F(IRBuilder_createLoad), TY_IRBuilder, MN_("createLoad"), 2, TY_Value, MN_("ptr"),TY_Boolean, MN_("isVolatile"),
+		_Public, _F(LoadInst_new), TY_LoadInst, MN_("new"), 1, TY_Value, MN_("ptr"),
+		_Public, _F(IRBuilder_createStore), TY_IRBuilder, MN_("createStore"), 3, TY_Value, MN_("val"),TY_Value, MN_("ptr"),TY_Boolean, MN_("isVolatile"),
+		_Public, _F(StoreInst_new), TY_StoreInst, MN_("new"), 2, TY_Value, MN_("val"),TY_Value, MN_("ptr"),
+		_Public|_Static, _F(GetElementPtrInst_create), TY_GetElementPtrInst, MN_("create"), 2, TY_Value, MN_("ptr"),TY_Array_Value, MN_("idxList"),
+		_Public|_Static, _F(GetElementPtrInst_createInBounds), TY_GetElementPtrInst, MN_("createInBounds"), 2, TY_Value, MN_("ptr"),TY_Array_Value, MN_("idxList"),
+		_Public, _F(IRBuilder_createGEP), TY_IRBuilder, MN_("createGEP"), 2, TY_Value, MN_("ptr"),TY_Array_Value, MN_("idxList"),
+		_Public, _F(IRBuilder_createInBoundsGEP), TY_IRBuilder, MN_("createInBoundsGEP"), 2, TY_Value, MN_("ptr"),TY_Array_Value, MN_("idxList"),
+		_Public, _F(IRBuilder_createGEP1), TY_IRBuilder, MN_("createGEP1"), 2, TY_Value, MN_("ptr"),TY_Value, MN_("idx"),
+		_Public, _F(IRBuilder_createInBoundsGEP1), TY_IRBuilder, MN_("createInBoundsGEP1"), 2, TY_Value, MN_("ptr"),TY_Value, MN_("idx"),
+		_Public, _F(IRBuilder_createConstGEP132), TY_IRBuilder, MN_("createConstGEP1_32"), 2, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),
+		_Public, _F(IRBuilder_createConstInBoundsGEP132), TY_IRBuilder, MN_("createConstInBoundsGEP1_32"), 2, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),
+		_Public, _F(IRBuilder_createConstGEP232), TY_IRBuilder, MN_("createConstGEP2_32"), 3, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),TY_Int, MN_("idx1"),
+		_Public, _F(IRBuilder_createConstInBoundsGEP232), TY_IRBuilder, MN_("createConstInBoundsGEP2_32"), 3, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),TY_Int, MN_("idx1"),
+		_Public, _F(IRBuilder_createConstGEP164), TY_IRBuilder, MN_("createConstGEP1_64"), 2, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),
+		_Public, _F(IRBuilder_createConstInBoundsGEP164), TY_IRBuilder, MN_("createConstInBoundsGEP1_64"), 2, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),
+		_Public, _F(IRBuilder_createConstGEP264), TY_IRBuilder, MN_("createConstGEP2_64"), 3, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),TY_Int, MN_("idx1"),
+		_Public, _F(IRBuilder_createConstInBoundsGEP264), TY_IRBuilder, MN_("createConstInBoundsGEP2_64"), 3, TY_Value, MN_("ptr"),TY_Int, MN_("idx0"),TY_Int, MN_("idx1"),
+		_Public, _F(IRBuilder_createStructGEP), TY_IRBuilder, MN_("createStructGEP"), 2, TY_Value, MN_("ptr"),TY_Int, MN_("idx"),
+		_Public, _F(IRBuilder_createGlobalString), TY_IRBuilder, MN_("createGlobalString"), 1, TY_String, MN_("str"),
+		_Public, _F(IRBuilder_createGlobalStringPtr), TY_IRBuilder, MN_("createGlobalStringPtr"), 1, TY_String, MN_("str"),
+		_Public, _F(IRBuilder_createTrunc), TY_IRBuilder, MN_("createTrunc"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createZExt), TY_IRBuilder, MN_("createZExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createSExt), TY_IRBuilder, MN_("createSExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createFPToUI), TY_IRBuilder, MN_("createFPToUI"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createFPToSI), TY_IRBuilder, MN_("createFPToSI"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createUIToFP), TY_IRBuilder, MN_("createUIToFP"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createSIToFP), TY_IRBuilder, MN_("createSIToFP"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createFPTrunc), TY_IRBuilder, MN_("createFPTrunc"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createFPExt), TY_IRBuilder, MN_("createFPExt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createPtrToInt), TY_IRBuilder, MN_("createPtrToInt"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createIntToPtr), TY_IRBuilder, MN_("createIntToPtr"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createBitCast), TY_IRBuilder, MN_("createBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createZExtOrBitCast), TY_IRBuilder, MN_("createZExtOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createSExtOrBitCast), TY_IRBuilder, MN_("createSExtOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createTruncOrBitCast), TY_IRBuilder, MN_("createTruncOrBitCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createPointerCast), TY_IRBuilder, MN_("createPointerCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createIntCast), TY_IRBuilder, MN_("createIntCast"), 3, TY_Value, MN_("v"),TY_Type, MN_("destTy"),TY_Boolean, MN_("isSigned"),
+		_Public, _F(IRBuilder_createFPCast), TY_IRBuilder, MN_("createFPCast"), 2, TY_Value, MN_("v"),TY_Type, MN_("destTy"),
+		_Public, _F(IRBuilder_createICmpEQ), TY_IRBuilder, MN_("createICmpEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpNE), TY_IRBuilder, MN_("createICmpNE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpUGT), TY_IRBuilder, MN_("createICmpUGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpUGE), TY_IRBuilder, MN_("createICmpUGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpULT), TY_IRBuilder, MN_("createICmpULT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpULE), TY_IRBuilder, MN_("createICmpULE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpSGT), TY_IRBuilder, MN_("createICmpSGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpSGE), TY_IRBuilder, MN_("createICmpSGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpSLT), TY_IRBuilder, MN_("createICmpSLT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createICmpSLE), TY_IRBuilder, MN_("createICmpSLE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpOEQ), TY_IRBuilder, MN_("createFCmpOEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpOGT), TY_IRBuilder, MN_("createFCmpOGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpOGE), TY_IRBuilder, MN_("createFCmpOGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpOLT), TY_IRBuilder, MN_("createFCmpOLT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpOLE), TY_IRBuilder, MN_("createFCmpOLE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpONE), TY_IRBuilder, MN_("createFCmpONE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpORD), TY_IRBuilder, MN_("createFCmpORD"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpUNO), TY_IRBuilder, MN_("createFCmpUNO"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpUEQ), TY_IRBuilder, MN_("createFCmpUEQ"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpUGT), TY_IRBuilder, MN_("createFCmpUGT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpUGE), TY_IRBuilder, MN_("createFCmpUGE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpULT), TY_IRBuilder, MN_("createFCmpULT"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpULE), TY_IRBuilder, MN_("createFCmpULE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createFCmpUNE), TY_IRBuilder, MN_("createFCmpUNE"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_createPHI), TY_IRBuilder, MN_("createPHI"), 2, TY_Type, MN_("ty"),TY_Int, MN_("numReservedValues"),
+		_Public, _F(PHINode_addIncoming), TY_PHINode, MN_("addIncoming"), 2, TY_Value, MN_("v"),TY_BasicBlock, MN_("bb"),
+		_Public, _F(IRBuilder_createCall1), TY_IRBuilder, MN_("createCall1"), 2, TY_Value, MN_("callee"),TY_Value, MN_("arg"),
+		_Public, _F(IRBuilder_createCall2), TY_IRBuilder, MN_("createCall2"), 3, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),
+		_Public, _F(IRBuilder_createCall3), TY_IRBuilder, MN_("createCall3"), 4, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),
+		_Public, _F(IRBuilder_createCall4), TY_IRBuilder, MN_("createCall4"), 5, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),TY_Value, MN_("arg4"),
+		_Public, _F(IRBuilder_createCall5), TY_IRBuilder, MN_("createCall5"), 6, TY_Value, MN_("callee"),TY_Value, MN_("arg1"),TY_Value, MN_("arg2"),TY_Value, MN_("arg3"),TY_Value, MN_("arg4"),TY_Value, MN_("arg5"),
+		_Public, _F(IRBuilder_createCall), TY_IRBuilder, MN_("createCall"), 2, TY_Value, MN_("callee"),TY_Array_Value, MN_("args"),
+		_Public, _F(IRBuilder_createSelect), TY_IRBuilder, MN_("createSelect"), 3, TY_Value, MN_("c"),TY_Value, MN_("trueV"),TY_Value, MN_("falseV"),
+		_Public, _F(IRBuilder_createVAArg), TY_IRBuilder, MN_("createVAArg"), 2, TY_Value, MN_("list"),TY_Type, MN_("ty"),
+		_Public, _F(IRBuilder_createExtractElement), TY_IRBuilder, MN_("createExtractElement"), 2, TY_Value, MN_("vec"),TY_Value, MN_("idx"),
+		_Public, _F(IRBuilder_createInsertElement), TY_IRBuilder, MN_("createInsertElement"), 3, TY_Value, MN_("vec"),TY_Value, MN_("newElt"),TY_Value, MN_("idx"),
+		_Public, _F(IRBuilder_createShuffleVector), TY_IRBuilder, MN_("createShuffleVector"), 3, TY_Value, MN_("v1"),TY_Value, MN_("v2"),TY_Value, MN_("mask"),
+		_Public, _F(IRBuilder_createIsNull), TY_IRBuilder, MN_("createIsNull"), 1, TY_Value, MN_("arg"),
+		_Public, _F(IRBuilder_createIsNotNull), TY_IRBuilder, MN_("createIsNotNull"), 1, TY_Value, MN_("arg"),
+		_Public, _F(IRBuilder_createPtrDiff), TY_IRBuilder, MN_("createPtrDiff"), 2, TY_Value, MN_("lhs"),TY_Value, MN_("rhs"),
+		_Public, _F(IRBuilder_setInsertPoint), TY_IRBuilder, MN_("setInsertPoint"), 1, TY_BasicBlock, MN_("bb"),
+		_Public, _F(IRBuilder_getInsertBlock), TY_IRBuilder, MN_("getInsertBlock"), 0,
+		_Public, _F(BasicBlock_getParent), TY_BasicBlock, MN_("getParent"), 0,
+		_Public, _F(BasicBlock_insertBefore), TY_BasicBlock, MN_("insertBefore"), 2, TY_Instruction, MN_("before"),TY_Instruction, MN_("inst"),
+		_Public, _F(BasicBlock_getLastInst), TY_BasicBlock, MN_("getLastInst"), 0,
+		_Public, _F(BasicBlock_getTerminator), TY_BasicBlock, MN_("getTerminator"), 0,
+		_Public, _F(Instruction_setMetadata), TY_Instruction, MN_("setMetadata"), 3, TY_Module, MN_("m"),TY_String, MN_("name"),TY_Int, MN_("value"),
+		_Public, _F(Function_dump), TY_Function, MN_("dump"), 0,
+		_Public, _F(Value_dump), TY_Value, MN_("dump"), 0,
+		_Public, _F(Type_dump), TY_Type, MN_("dump"), 0,
+		_Public, _F(BasicBlock_dump), TY_BasicBlock, MN_("dump"), 0,
+		_Public|_Static, _F(Function_create), TY_Function, MN_("create"), 4, TY_String, MN_("name"),TY_FunctionType, MN_("fnTy"),TY_Module, MN_("m"),TY_Int, MN_("linkage"),
+		_Public, _F(Function_addFnAttr), TY_Function, MN_("addFnAttr"), 1, TY_Int, MN_("attributes"),
+		_Public, _F(BasicBlock_size), TY_BasicBlock, MN_("size"), 0,
+		_Public, _F(BasicBlock_empty), TY_BasicBlock, MN_("empty"), 0,
+		_Public, _F(Module_new), TY_Module, MN_("new"), 1, TY_String, MN_("name"),
+		_Public, _F(Module_getTypeByName), TY_Module, MN_("getTypeByName"), 1, TY_String, MN_("name"),
+		_Public, _F(Module_dump), TY_Module, MN_("dump"), 0,
+		_Public, _F(Module_getOrInsertFunction), TY_Module, MN_("getOrInsertFunction"), 2, TY_String, MN_("name"),TY_FunctionType, MN_("fnTy"),
+		_Public, _F(Module_createExecutionEngine), TY_Module, MN_("createExecutionEngine"), 1, TY_Int, MN_("optLevel"),
+		_Public|_Static, _F(BasicBlock_create), TY_BasicBlock, MN_("create"), 2, TY_Function, MN_("parent"),TY_String, MN_("name"),
+		_Public|_Static, _F(FunctionType_get), TY_FunctionType, MN_("get"), 3, TY_Type, MN_("retTy"),TY_Array_Type, MN_("args"),TY_Boolean, MN_("b"),
+		_Public|_Static, _F(ArrayType_get), TY_ArrayType, MN_("get"), 2, TY_Type, MN_("t"),TY_Int, MN_("elemSize"),
+		_Public|_Static, _F(StructType_get), TY_StructType, MN_("get"), 2, TY_Array_Type, MN_("args"),TY_Boolean, MN_("isPacked"),
+		_Public|_Static, _F(StructType_create), TY_StructType, MN_("create"), 3, TY_Array_Type, MN_("args"),TY_String, MN_("name"),TY_Boolean, MN_("isPacked"),
+		_Public, _F(StructType_setBody), TY_StructType, MN_("setBody"), 2, TY_Array_Type, MN_("args"),TY_Boolean, MN_("isPacked"),
+		_Public, _F(StructType_isOpaque), TY_StructType, MN_("isOpaque"), 0,
+		_Public, _F(ExecutionEngine_getPointerToFunction), TY_ExecutionEngine, MN_("getPointerToFunction"), 1, TY_Function, MN_("func"),
+		_Public, _F(ExecutionEngine_addGlobalMapping), TY_ExecutionEngine, MN_("addGlobalMapping"), 2, TY_GlobalVariable, MN_("g"),TY_Int, MN_("addr"),
+		_Public, _F(GlobalVariable_new), TY_GlobalVariable, MN_("new"), 5, TY_Module, MN_("m"),TY_Type, MN_("ty"),TY_Constant, MN_("c"),TY_Int, MN_("linkage"),TY_String, MN_("name"),
+#ifndef USE_LLVM_2_9
+		_Public, _F(PassManagerBuilder_new), TY_PassManagerBuilder, MN_("new"), 0,
+		_Public, _F(PassManagerBuilder_populateModulePassManager), TY_PassManagerBuilder, MN_("populateModulePassManager"), 1, TY_PassManager, MN_("manager"),
+#endif
+		_Public, _F(PassManager_new), TY_PassManager, MN_("new"), 0,
+		_Public, _F(FunctionPassManager_new), TY_FunctionPassManager, MN_("new"), 1, TY_Module, MN_("m"),
+		_Public, _F(PassManager_addPass), TY_PassManager, MN_("addPass"), 1, TY_Pass, MN_("p"),
+		_Public, _F(PassManager_addImmutablePass), TY_PassManager, MN_("addImmutablePass"), 1, TY_ImmutablePass, MN_("p"),
+		_Public, _F(PassManager_addFunctionPass), TY_PassManager, MN_("addFunctionPass"), 1, TY_FunctionPass, MN_("p"),
+		_Public, _F(PassManager_addModulePass), TY_PassManager, MN_("addModulePass"), 1, TY_ModulePass, MN_("p"),
+		_Public, _F(FunctionPassManager_add), TY_FunctionPassManager, MN_("add"), 1, TY_Pass, MN_("p"),
+		_Public, _F(FunctionPassManager_run), TY_FunctionPassManager, MN_("run"), 1, TY_Function, MN_("func"),
+		_Public, _F(FunctionPassManager_doInitialization), TY_FunctionPassManager, MN_("doInitialization"), 0,
+		_Public, _F(ExecutionEngine_getTargetData), TY_ExecutionEngine, MN_("getTargetData"), 0,
+		_Public, _F(Argument_new), TY_Argument, MN_("new"), 1, TY_Type, MN_("type"),
+		_Public, _F(Value_replaceAllUsesWith), TY_Value, MN_("replaceAllUsesWith"), 1, TY_Value, MN_("v"),
+		_Public, _F(Value_setName), TY_Value, MN_("setName"), 1, TY_String, MN_("name"),
+		_Public, _F(Value_getType), TY_Value, MN_("getType"), 0,
+		_Public, _F(Function_getArguments), TY_Function, MN_("getArguments"), 0,
+		_Public, _F(LoadInst_setAlignment), TY_LoadInst, MN_("setAlignment"), 1, TY_Int, MN_("align"),
+		_Public, _F(StoreInst_setAlignment), TY_StoreInst, MN_("setAlignment"), 1, TY_Int, MN_("align"),
+		_Public, _F(Method_setFunction), TY_Method, MN_("setFunction"), 1, TY_NativeFunction, MN_("nf"),
+		_Public|_Static, _F(ConstantInt_get), TY_ConstantInt, MN_("get"), 2, TY_Type, MN_("type"),TY_Int, MN_("v"),
+		_Public|_Static, _F(ConstantFP_get), TY_ConstantFP, MN_("get"), 2, TY_Type, MN_("type"),TY_Float, MN_("v"),
+		_Public|_Static, _F(ConstantPointerNull_get), TY_ConstantPointerNull, MN_("get"), 1, TY_Type, MN_("type"),
+		_Public|_Static, _F(ConstantStruct_get), TY_ConstantStruct, MN_("get"), 2, TY_Type, MN_("type"),TY_Array_Constant, MN_("v"),
+		_Public|_Static, _F(DynamicLibrary_loadLibraryPermanently), TY_DynamicLibrary, MN_("loadLibraryPermanently"), 1, TY_String, MN_("libname"),
+		_Public|_Static, _F(DynamicLibrary_searchForAddressOfSymbol), TY_DynamicLibrary, MN_("searchForAddressOfSymbol"), 1, TY_String, MN_("fname"),
+		_Public|_Static, _F(LLVM_createDomPrinterPass), TY_LLVM, MN_("createDomPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createDomOnlyPrinterPass), TY_LLVM, MN_("createDomOnlyPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createDomViewerPass), TY_LLVM, MN_("createDomViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createDomOnlyViewerPass), TY_LLVM, MN_("createDomOnlyViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createPostDomPrinterPass), TY_LLVM, MN_("createPostDomPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createPostDomOnlyPrinterPass), TY_LLVM, MN_("createPostDomOnlyPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createPostDomViewerPass), TY_LLVM, MN_("createPostDomViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createPostDomOnlyViewerPass), TY_LLVM, MN_("createPostDomOnlyViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createGlobalsModRefPass), TY_LLVM, MN_("createGlobalsModRefPass"), 0,
+		_Public|_Static, _F(LLVM_createAliasDebugger), TY_LLVM, MN_("createAliasDebugger"), 0,
+		_Public|_Static, _F(LLVM_createAliasAnalysisCounterPass), TY_LLVM, MN_("createAliasAnalysisCounterPass"), 0,
+		_Public|_Static, _F(LLVM_createAAEvalPass), TY_LLVM, MN_("createAAEvalPass"), 0,
+		_Public|_Static, _F(LLVM_createLibCallAliasAnalysisPass), TY_LLVM, MN_("createLibCallAliasAnalysisPass"), 1, TY_LibCallInfo, MN_("lci"),
+		_Public|_Static, _F(LLVM_createScalarEvolutionAliasAnalysisPass), TY_LLVM, MN_("createScalarEvolutionAliasAnalysisPass"), 0,
+		_Public|_Static, _F(LLVM_createProfileLoaderPass), TY_LLVM, MN_("createProfileLoaderPass"), 0,
+		_Public|_Static, _F(LLVM_createProfileEstimatorPass), TY_LLVM, MN_("createProfileEstimatorPass"), 0,
+		_Public|_Static, _F(LLVM_createProfileVerifierPass), TY_LLVM, MN_("createProfileVerifierPass"), 0,
+		_Public|_Static, _F(LLVM_createPathProfileLoaderPass), TY_LLVM, MN_("createPathProfileLoaderPass"), 0,
+		_Public|_Static, _F(LLVM_createPathProfileVerifierPass), TY_LLVM, MN_("createPathProfileVerifierPass"), 0,
+		_Public|_Static, _F(LLVM_createLazyValueInfoPass), TY_LLVM, MN_("createLazyValueInfoPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopDependenceAnalysisPass), TY_LLVM, MN_("createLoopDependenceAnalysisPass"), 0,
+		_Public|_Static, _F(LLVM_createInstCountPass), TY_LLVM, MN_("createInstCountPass"), 0,
+		_Public|_Static, _F(LLVM_createDbgInfoPrinterPass), TY_LLVM, MN_("createDbgInfoPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createRegionInfoPass), TY_LLVM, MN_("createRegionInfoPass"), 0,
+		_Public|_Static, _F(LLVM_createModuleDebugInfoPrinterPass), TY_LLVM, MN_("createModuleDebugInfoPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createMemDepPrinter), TY_LLVM, MN_("createMemDepPrinter"), 0,
+		_Public|_Static, _F(LLVM_createPostDomTree), TY_LLVM, MN_("createPostDomTree"), 0,
+		_Public|_Static, _F(LLVM_createRegionViewerPass), TY_LLVM, MN_("createRegionViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createRegionOnlyViewerPass), TY_LLVM, MN_("createRegionOnlyViewerPass"), 0,
+		_Public|_Static, _F(LLVM_createRegionPrinterPass), TY_LLVM, MN_("createRegionPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createRegionOnlyPrinterPass), TY_LLVM, MN_("createRegionOnlyPrinterPass"), 0,
+		_Public|_Static, _F(LLVM_createLintPass), TY_LLVM, MN_("createLintPass"), 0,
+		_Public|_Static, _F(LLVM_createStripSymbolsPass), TY_LLVM, MN_("createStripSymbolsPass"), 1, TY_Boolean, MN_("onlyDebugInfo"),
+		_Public|_Static, _F(LLVM_createStripNonDebugSymbolsPass), TY_LLVM, MN_("createStripNonDebugSymbolsPass"), 0,
+		_Public|_Static, _F(LLVM_createStripDeadDebugInfoPass), TY_LLVM, MN_("createStripDeadDebugInfoPass"), 0,
+		_Public|_Static, _F(LLVM_createConstantMergePass), TY_LLVM, MN_("createConstantMergePass"), 0,
+		_Public|_Static, _F(LLVM_createGlobalOptimizerPass), TY_LLVM, MN_("createGlobalOptimizerPass"), 0,
+		_Public|_Static, _F(LLVM_createGlobalDCEPass), TY_LLVM, MN_("createGlobalDCEPass"), 0,
+		_Public|_Static, _F(LLVM_createFunctionInliningPass), TY_LLVM, MN_("createFunctionInliningPass"), 1, TY_Int, MN_("threshold"),
+		_Public|_Static, _F(LLVM_createAlwaysInlinerPass), TY_LLVM, MN_("createAlwaysInlinerPass"), 0,
+		_Public|_Static, _F(LLVM_createPruneEHPass), TY_LLVM, MN_("createPruneEHPass"), 0,
+		_Public|_Static, _F(LLVM_createInternalizePass), TY_LLVM, MN_("createInternalizePass"), 1, TY_Boolean, MN_("allButMain"),
+		_Public|_Static, _F(LLVM_createDeadArgEliminationPass), TY_LLVM, MN_("createDeadArgEliminationPass"), 0,
+		_Public|_Static, _F(LLVM_createArgumentPromotionPass), TY_LLVM, MN_("createArgumentPromotionPass"), 1, TY_Int, MN_("maxElements"),
+		_Public|_Static, _F(LLVM_createIPConstantPropagationPass), TY_LLVM, MN_("createIPConstantPropagationPass"), 0,
+		_Public|_Static, _F(LLVM_createIPSCCPPass), TY_LLVM, MN_("createIPSCCPPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopExtractorPass), TY_LLVM, MN_("createLoopExtractorPass"), 0,
+		_Public|_Static, _F(LLVM_createSingleLoopExtractorPass), TY_LLVM, MN_("createSingleLoopExtractorPass"), 0,
+		_Public|_Static, _F(LLVM_createBlockExtractorPass), TY_LLVM, MN_("createBlockExtractorPass"), 0,
+		_Public|_Static, _F(LLVM_createStripDeadPrototypesPass), TY_LLVM, MN_("createStripDeadPrototypesPass"), 0,
+		_Public|_Static, _F(LLVM_createFunctionAttrsPass), TY_LLVM, MN_("createFunctionAttrsPass"), 0,
+		_Public|_Static, _F(LLVM_createMergeFunctionsPass), TY_LLVM, MN_("createMergeFunctionsPass"), 0,
+		_Public|_Static, _F(LLVM_createPartialInliningPass), TY_LLVM, MN_("createPartialInliningPass"), 0,
+		_Public|_Static, _F(LLVM_createConstantPropagationPass), TY_LLVM, MN_("createConstantPropagationPass"), 0,
+		_Public|_Static, _F(LLVM_createSCCPPass), TY_LLVM, MN_("createSCCPPass"), 0,
+		_Public|_Static, _F(LLVM_createDeadInstEliminationPass), TY_LLVM, MN_("createDeadInstEliminationPass"), 0,
+		_Public|_Static, _F(LLVM_createDeadCodeEliminationPass), TY_LLVM, MN_("createDeadCodeEliminationPass"), 0,
+		_Public|_Static, _F(LLVM_createDeadStoreEliminationPass), TY_LLVM, MN_("createDeadStoreEliminationPass"), 0,
+		_Public|_Static, _F(LLVM_createAggressiveDCEPass), TY_LLVM, MN_("createAggressiveDCEPass"), 0,
+		_Public|_Static, _F(LLVM_createScalarReplAggregatesPass), TY_LLVM, MN_("createScalarReplAggregatesPass"), 1, TY_Int, MN_("threshold"),
+		_Public|_Static, _F(LLVM_createIndVarSimplifyPass), TY_LLVM, MN_("createIndVarSimplifyPass"), 0,
+		_Public|_Static, _F(LLVM_createInstructionCombiningPass), TY_LLVM, MN_("createInstructionCombiningPass"), 0,
+		_Public|_Static, _F(LLVM_createLICMPass), TY_LLVM, MN_("createLICMPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopUnswitchPass), TY_LLVM, MN_("createLoopUnswitchPass"), 1, TY_Boolean, MN_("optimizeForSize"),
+		_Public|_Static, _F(LLVM_createLoopInstSimplifyPass), TY_LLVM, MN_("createLoopInstSimplifyPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopUnrollPass), TY_LLVM, MN_("createLoopUnrollPass"), 3, TY_Int, MN_("threshold"),TY_Int, MN_("count"),TY_Int, MN_("allowPartial"),
+		_Public|_Static, _F(LLVM_createLoopRotatePass), TY_LLVM, MN_("createLoopRotatePass"), 0,
+		_Public|_Static, _F(LLVM_createLoopIdiomPass), TY_LLVM, MN_("createLoopIdiomPass"), 0,
+		_Public|_Static, _F(LLVM_createPromoteMemoryToRegisterPass), TY_LLVM, MN_("createPromoteMemoryToRegisterPass"), 0,
+		_Public|_Static, _F(LLVM_createDemoteRegisterToMemoryPass), TY_LLVM, MN_("createDemoteRegisterToMemoryPass"), 0,
+		_Public|_Static, _F(LLVM_createReassociatePass), TY_LLVM, MN_("createReassociatePass"), 0,
+		_Public|_Static, _F(LLVM_createJumpThreadingPass), TY_LLVM, MN_("createJumpThreadingPass"), 0,
+		_Public|_Static, _F(LLVM_createCFGSimplificationPass), TY_LLVM, MN_("createCFGSimplificationPass"), 0,
+		_Public|_Static, _F(LLVM_createBreakCriticalEdgesPass), TY_LLVM, MN_("createBreakCriticalEdgesPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopSimplifyPass), TY_LLVM, MN_("createLoopSimplifyPass"), 0,
+		_Public|_Static, _F(LLVM_createTailCallEliminationPass), TY_LLVM, MN_("createTailCallEliminationPass"), 0,
+		_Public|_Static, _F(LLVM_createLowerSwitchPass), TY_LLVM, MN_("createLowerSwitchPass"), 0,
+		_Public|_Static, _F(LLVM_createBlockPlacementPass), TY_LLVM, MN_("createBlockPlacementPass"), 0,
+		_Public|_Static, _F(LLVM_createLCSSAPass), TY_LLVM, MN_("createLCSSAPass"), 0,
+		_Public|_Static, _F(LLVM_createEarlyCSEPass), TY_LLVM, MN_("createEarlyCSEPass"), 0,
+		_Public|_Static, _F(LLVM_createGVNPass), TY_LLVM, MN_("createGVNPass"), 1, TY_Boolean, MN_("noLoads"),
+		_Public|_Static, _F(LLVM_createMemCpyOptPass), TY_LLVM, MN_("createMemCpyOptPass"), 0,
+		_Public|_Static, _F(LLVM_createLoopDeletionPass), TY_LLVM, MN_("createLoopDeletionPass"), 0,
+		_Public|_Static, _F(LLVM_createSimplifyLibCallsPass), TY_LLVM, MN_("createSimplifyLibCallsPass"), 0,
+		_Public|_Static, _F(LLVM_createInstructionNamerPass), TY_LLVM, MN_("createInstructionNamerPass"), 0,
+		_Public|_Static, _F(LLVM_createSinkingPass), TY_LLVM, MN_("createSinkingPass"), 0,
+		_Public|_Static, _F(LLVM_createLowerAtomicPass), TY_LLVM, MN_("createLowerAtomicPass"), 0,
+		_Public|_Static, _F(LLVM_createCorrelatedValuePropagationPass), TY_LLVM, MN_("createCorrelatedValuePropagationPass"), 0,
+#ifndef USE_LLVM_2_9
+		_Public|_Static, _F(LLVM_createObjCARCExpandPass), TY_LLVM, MN_("createObjCARCExpandPass"), 0,
+		_Public|_Static, _F(LLVM_createObjCARCContractPass), TY_LLVM, MN_("createObjCARCContractPass"), 0,
+		_Public|_Static, _F(LLVM_createObjCARCOptPass), TY_LLVM, MN_("createObjCARCOptPass"), 0,
+		_Public|_Static, _F(LLVM_createLowerExpectIntrinsicPass), TY_LLVM, MN_("createLowerExpectIntrinsicPass"), 0,
+#endif
+		_Public|_Static, _F(LLVM_createInstructionSimplifierPass), TY_LLVM, MN_("createInstructionSimplifierPass"), 0,
+		_Public|_Static, _F(LLVM_createUnifyFunctionExitNodesPass), TY_LLVM, MN_("createUnifyFunctionExitNodesPass"), 0,
+		_Public|_Static, _F(LLVM_createTypeBasedAliasAnalysisPass), TY_LLVM, MN_("createTypeBasedAliasAnalysisPass"), 0,
+		_Public|_Static, _F(LLVM_createBasicAliasAnalysisPass), TY_LLVM, MN_("createBasicAliasAnalysisPass"), 0,
+		_Public|_Static, _F(LLVM_createVerifierPass), TY_LLVM, MN_("createVerifierPass"), 0,
+		_Public|_Static, _F(Intrinsic_getType), TY_Intrinsic, MN_("getType"), 2, TY_Int, MN_("id"),TY_Array_Type, MN_("args"),
+		_Public|_Static, _F(Intrinsic_getDeclaration), TY_Intrinsic, MN_("getDeclaration"), 3, TY_Module, MN_("m"),TY_Int, MN_("id"),TY_Array_Type, MN_("args"),
+		_Public|_Static, _F(LLVM_parseBitcodeFile), TY_LLVM, MN_("parseBitcodeFile"), 1, TY_String, MN_("bcfile"),
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);
