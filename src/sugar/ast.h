@@ -215,7 +215,7 @@ static void WARN_Ignored(CTX, kArray *tls, int s, int e)
 		kwb_init(&(_ctx->stack->cwb), &wb);
 		kwb_printf(&wb, "%s", kToken_s(tls->tts[i])); i++;
 		while(i < e) {
-			kwb_printf(&wb, "%s", kToken_s(tls->tts[i])); i++;
+			kwb_printf(&wb, " %s", kToken_s(tls->tts[i])); i++;
 		}
 		SUGAR_P(WARN_, tls->tts[s]->uline, tls->tts[s]->lpos, "ignored tokens: %s", kwb_top(&wb, 1));
 		kwb_free(&wb);
