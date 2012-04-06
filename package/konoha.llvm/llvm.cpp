@@ -40,9 +40,7 @@
 #include <llvm/PassManager.h>
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/IPO.h>
-#ifndef USE_LLVM_2_9
-#error
-#endif
+
 #ifndef USE_LLVM_2_9
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #endif
