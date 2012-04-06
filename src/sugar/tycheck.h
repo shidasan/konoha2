@@ -197,7 +197,7 @@ static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_
 
 static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int pol)
 {
-	kExpr *texpr = K_NULLEXPR;
+	kExpr *texpr = expr;
 	if(expr->ty == TY_var && expr != K_NULLEXPR) {
 		if(!IS_Expr(expr)) {
 			expr = new_ConstValue(O_cid(expr), expr);
@@ -206,9 +206,9 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 		texpr = Expr_typed(_ctx, expr, gma, req_ty);
 	}
 	if(texpr != K_NULLEXPR) {
-		DBG_P("type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
-		if(texpr->ty == TY_void && !FLAG_is(pol, TPOL_ALLOWVOID)) {
-			return kExpr_p(expr, ERR_, "void is not acceptable");
+		//DBG_P("type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
+		if(texpr->ty == TY_void) {
+			return FLAG_is(pol, TPOL_ALLOWVOID) ? texpr: kExpr_p(expr, ERR_, "void is not acceptable");
 		}
 		if(req_ty == TY_var || texpr->ty == req_ty || FLAG_is(pol, TPOL_NOCHECK)) {
 			return texpr;
@@ -246,9 +246,10 @@ static kExpr* Expr_tyCheckAt(CTX, kExpr *exprP, size_t pos, kGamma *gma, ktype_t
 static kbool_t Stmt_tyCheckExpr(CTX, kStmt *stmt, keyword_t nameid, kGamma *gma, ktype_t req_ty, int pol)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, nameid);
+	DBG_P("expr=%p ty=%s", expr, T_ty(expr->ty));
 	if(expr != NULL && IS_Expr(expr)) {
 		kExpr *texpr = Expr_tyCheck(_ctx, expr, gma, req_ty, pol);
-		//DBG_P("req_ty=%s, texpr->ty=%s isnull=%d", T_cid(req_ty), T_cid(texpr->ty), (texpr == K_NULLEXPR));
+		DBG_P("req_ty=%s, texpr->ty=%s isnull=%d", T_cid(req_ty), T_cid(texpr->ty), (texpr == K_NULLEXPR));
 		if(texpr != K_NULLEXPR) {
 			if(texpr != expr) {
 				kObject_setObject(stmt, nameid, texpr);
@@ -556,7 +557,7 @@ static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
 		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, texpr->ty, MN_toGETTER(mn));
 		if(mtd != NULL) {
 			KSETv(expr->consNUL->methods[0], mtd);
-			KSETv(expr->consNUL->exprs[1], texpr); // GC_UNSAFE (swaping)
+			KSETv(kExpr_at(expr, 1), texpr); // GC_UNSAFE (swaping)
 			RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
 		}
 		RETURN_(kToken_p(tkF, ERR_, "undefined field accessor: %s", kToken_s(tkF)));
@@ -573,7 +574,7 @@ static KMETHOD StmtTyCheck_expr(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, gma);
 	kbool_t r = Stmt_tyCheckExpr(_ctx, stmt, 1, gma, TY_var, TPOL_ALLOWVOID);
-	stmt->syn = SYN_EXPR;
+	//stmt->syn = SYN_EXPR;
 	stmt->build = TSTMT_EXPR;
 	RETURNb_(r);
 }
@@ -734,16 +735,20 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 		if(expr->syn == SYN_COMMA) {
 			size_t i;
 			for(i = 1; i < kArray_size(expr->consNUL); i++) {
-				if(!Expr_declType(_ctx, expr->consNUL->exprs[i], gma, ty, REFstmt)) return false;
+				if(!Expr_declType(_ctx, kExpr_at(expr, i), gma, ty, REFstmt)) return false;
 			}
 			return true;
 		}
 		if(expr->syn == SYN_LET) {
-			if(!Expr_declType(_ctx, expr->consNUL->exprs[1], gma, ty, REFstmt)) return false;
+			if(!Expr_declType(_ctx, kExpr_at(expr, 1), gma, ty, REFstmt)) return false;
+			ty = kExpr_at(expr, 1)->ty;
+			DBG_P("declare %s %p", T_ty(ty), expr);
 			if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
 				kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, NULL));
 				Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
 				newstmt->syn = SYN_EXPR;
+				expr->ty     = TY_void;
+				expr->build  = TEXPR_LET;
 				kObject_setObject(newstmt, KW_EXPR, expr);
 				REFstmt[0] = newstmt;
 				return true;
@@ -758,7 +763,6 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 static KMETHOD StmtTyCheck_declType(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, gma);
-	DBG_P("TOPLEVEL=%d", kGamma_isTOPLEVEL(gma));
 	kToken *tk  = kStmt_token(stmt, KW_TYPE, NULL);
 	kExpr  *expr = kStmt_expr(stmt, KW_EXPR, NULL);
 	if(tk == NULL || tk->tt != TK_TYPE || expr == NULL) {

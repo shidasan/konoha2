@@ -1329,7 +1329,7 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 	DBG_ASSERT(IS_Method(mtd));
 	int i, s = kMethod_isStatic(mtd) ? 2 : 1, thisidx = espidx + K_CALLDELTA;
 	for(i = s; i < kArray_size(expr->consNUL); i++) {
-		kExpr *exprN = expr->consNUL->exprs[i];
+		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
 	}
@@ -1355,7 +1355,7 @@ static void OR_asm(CTX, int a, kExpr *expr, int espidx)
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 0; i < size; i++) {
-		EXPR_asmJMPIF(_ctx, a, expr->consNUL->exprs[i], 1/*TRUE*/, lbTRUE, espidx);
+		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 1/*TRUE*/, lbTRUE, espidx);
 	}
 	ASM(NSET, NC_(a), 0/*O_data(K_FALSE)*/, CT_Boolean);
 	ASM_JMP(_ctx, lbFALSE);
@@ -1370,7 +1370,7 @@ static void AND_asm(CTX, int a, kExpr *expr, int espidx)
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 1; i < size; i++) {
-		EXPR_asmJMPIF(_ctx, a, expr->consNUL->exprs[i], 0/*FALSE*/, lbFALSE, espidx);
+		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 0/*FALSE*/, lbFALSE, espidx);
 	}
 	ASM(NSET, NC_(a), 1/*O_data(K_TRUE)*/, CT_Boolean);
 	ASM_JMP(_ctx, lbTRUE);
@@ -1381,16 +1381,16 @@ static void AND_asm(CTX, int a, kExpr *expr, int espidx)
 
 static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 {
-	kExpr *exprL = expr->consNUL->exprs[1];
-	kExpr *exprR = expr->consNUL->exprs[2];
-	if(expr->build == TEXPR_LOCAL) {
+	kExpr *exprL = kExpr_at(expr, 1);
+	kExpr *exprR = kExpr_at(expr, 2);
+	if(exprL->build == TEXPR_LOCAL) {
 		EXPR_asm(_ctx, exprL->index, exprR, espidx);
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);
 		}
 	}
 	else{
-		assert(expr->build == TEXPR_FIELD);
+		assert(exprL->build == TEXPR_FIELD);
 		EXPR_asm(_ctx, espidx, exprR, espidx);
 		if(TY_iS_UNbox(exprR->ty)) {
 			ASM(XNMOV, OC_(exprL->index), exprL->xindex, NC_(espidx));

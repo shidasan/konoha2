@@ -240,6 +240,7 @@ struct kToken {
 #define Expr_isCONST(o)     (TEXPR_CONST <= (o)->build && (o)->build <= TEXPR_NCONST)
 #define Expr_isTerm(o)      (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define Expr_setTerm(o,B)   TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,B)
+#define kExpr_at(E,N)        ((E)->consNUL->exprs[(N)])
 
 typedef struct kExpr kExpr;
 struct kExpr {

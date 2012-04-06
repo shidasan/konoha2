@@ -90,7 +90,7 @@ set(PACKAGES
 	konoha.llvm
 	konoha.pcre
 	konoha.io
-	konoha.loop
+	konoha.while
 	konoha.bytes
 	konoha.class
 	konoha.assignment
