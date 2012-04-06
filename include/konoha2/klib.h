@@ -37,7 +37,7 @@ static inline uintptr_t casehash(const char *name, size_t len)
 
 // --------------------------------------------------------------------------
 
-static inline const char* filename(const char *str)
+static inline const char* shortname(const char *str)
 {
 	/*XXX g++ 4.4.5 need char* cast to compile it. */
 	char *p = (char *) strrchr(str, '/');
@@ -49,46 +49,43 @@ static inline const char* filename(const char *str)
 static inline kString* S_fileid(CTX, kline_t fileid)
 {
 	kline_t n = (fileid >> (sizeof(kshort_t) * 8));
-	DBG_P("n=%d, size=%d", n, kArray_size(_ctx->share->fileidList));
 	DBG_ASSERT(n < kArray_size(_ctx->share->fileidList));
 	return _ctx->share->fileidList->strings[n];
 }
 
-#define S_pack(X)  S_pack_(_ctx, X)
-#define T_pack(X)  S_text(S_pack_(_ctx, X))
-#define S_pn(X)    S_pack_(_ctx, X)
-#define T_pn(X)    S_text(S_pack_(_ctx, X))
-static inline kString* S_pack_(CTX, kpack_t packid)
+#define S_PN(X)    Spack_(_ctx, X)
+#define T_PN(X)    S_text(Spack_(_ctx, X))
+static inline kString* Spack_(CTX, kpack_t packid)
 {
 	DBG_ASSERT(packid < kArray_size(_ctx->share->packList));
 	return _ctx->share->packList->strings[packid];
 }
 
-#define S_un(X)  S_un_(_ctx, X)
-#define T_un(X)  S_text(S_un_(_ctx, X))
-static inline kString* S_un_(CTX, kuname_t un)
+#define S_UN(X)  S_UN_(_ctx, X)
+#define T_UN(X)  S_text(S_UN_(_ctx, X))
+static inline kString* S_UN_(CTX, kuname_t un)
 {
 	DBG_ASSERT(un < kArray_size(_ctx->share->unameList));
 	return _ctx->share->unameList->strings[un];
 }
 
-#define S_ct(X)   S_ct_(_ctx, X)
-#define T_ct(X)   S_text(S_ct_(_ctx, X))
+#define S_CT(X)   S_CT_(_ctx, X)
+#define T_CT(X)   S_text(S_CT_(_ctx, X))
 
-static inline kString* S_ct_(CTX, const kclass_t *ct)
+static inline kString* S_CT_(CTX, const kclass_t *ct)
 {
-	return S_un(ct->nameid);
+	return S_UN(ct->nameid);
 }
 
 #define S_cid(X)  S_ty_(_ctx, X)
 #define T_cid(X)  S_text(S_ty(X))
-#define S_ty(X)  S_ty_(_ctx, X)
-#define T_ty(X)  S_text(S_ty(X))
+#define S_ty(X)   S_ty_(_ctx, X)
+#define T_ty(X)   S_text(S_ty(X))
 
 static inline kString* S_ty_(CTX, ktype_t ty)
 {
 	DBG_ASSERT(ty < _ctx->share->ca.max);
-	return S_un_(_ctx, CT_(ty)->nameid);
+	return S_UN_(_ctx, CT_(ty)->nameid);
 }
 
 #define S_fn(fn)   S_fn_(_ctx, fn)

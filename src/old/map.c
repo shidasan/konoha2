@@ -687,11 +687,11 @@ static const knh_MapDPI_t HMAP_NN = {
 
 static const knh_MapDPI_t* kmap_config(CTX, kcid_t p1, kcid_t p2)
 {
-	if(TY_isUnbox(p2)) {
+	if(TY_iS_UNbox(p2)) {
 		if(IS_Tstr(p1)) {
 			return &HMAP_SN;
 		}
-		else if(TY_isUnbox(p1)) {
+		else if(TY_iS_UNbox(p1)) {
 			return &HMAP_NN;
 		}
 		return &HMAP_ON;
@@ -700,7 +700,7 @@ static const knh_MapDPI_t* kmap_config(CTX, kcid_t p1, kcid_t p2)
 		if(IS_Tstr(p1)) {
 			return &HMAP_SO;
 		}
-		else if(TY_isUnbox(p1)) {
+		else if(TY_iS_UNbox(p1)) {
 			return &HMAP_NO;
 		}
 		return &HMAP_OO;
@@ -1237,7 +1237,7 @@ static const knh_MapDPI_t DMAP_SN = {
 static const knh_MapDPI_t* dmap_config(CTX, kcid_t p1, kcid_t p2)
 {
 	if(IS_Tstr(p1)) {
-		if(TY_isUnbox(p2)) {
+		if(TY_iS_UNbox(p2)) {
 			return &DMAP_SN;
 		}
 		return &DMAP_SO;
@@ -1515,7 +1515,7 @@ const knh_MapDPI_t *knh_getDefaultMapDSPI(CTX, kcid_t p1, kcid_t p2)
 const knh_MapDPI_t *knh_getDictMapDSPI(CTX, kcid_t p1, kcid_t p2)
 {
 	if(IS_Tstr(p1)) {
-		if(TY_isUnbox(p2)) {
+		if(TY_iS_UNbox(p2)) {
 			return &DMAP_SN;
 		}
 		return &DMAP_SO;

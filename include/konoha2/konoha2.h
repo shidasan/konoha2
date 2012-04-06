@@ -172,7 +172,7 @@ typedef kushort_t                 kfileid_t;
 #define URI_UNMASK(fileid)           (fileid)
 
 #define URI__(fileid) S_text(knh_getURN(_ctx, fileid))
-#define FILENAME__(fileid) knh_sfile(URI__(fileid))
+#define shortname__(fileid) knh_sfile(URI__(fileid))
 
 typedef uintptr_t                 kline_t;
 #define NOPLINE                   0
@@ -393,10 +393,10 @@ typedef kushort_t       kmethodn_t;
 
 /* kcid_t */
 #define CLASS_newid                ((kcid_t)-1)
-#define CLASS_unknown              ((kcid_t)-2)
+#define CLASS_UNknown              ((kcid_t)-2)
 
 #define CT_(t)              (_ctx->share->ca.ClassTBL[t])
-#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UnboxType)
+#define TY_iS_UNbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
 
 //#define TY_T0             ((ktype_t)KFLAG_H2)
 //#define TY_This           TY_T0
@@ -546,10 +546,10 @@ typedef struct kclass_t {
 #define kClass_Private          ((kflag_t)(1<<4))
 #define kClass_Final            ((kflag_t)(1<<5))
 #define kClass_Singleton        ((kflag_t)(1<<6))
-#define kClass_UnboxType        ((kflag_t)(1<<7))
+#define kClasS_UNboxType        ((kflag_t)(1<<7))
 #define kClass_Interface        ((kflag_t)(1<<8))
 #define kClass_TypeVar          ((kflag_t)(1<<9))
-#define kClass_UNDEF            ((kflag_t)(1<<10))
+#define kClasS_UNDEF            ((kflag_t)(1<<10))
 
 //#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
 //#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
@@ -561,11 +561,11 @@ typedef struct kclass_t {
 #define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
 
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
-#define TY_isUNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
-#define CT_isUNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
-#define CT_setUNDEF(ct, B)    TFLAG_set(kflag_t, (ct)->cflag, kClass_UNDEF, B)
+#define TY_iS_UNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClasS_UNDEF))
+#define CT_iS_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClasS_UNDEF))
+#define CT_setUNDEF(ct, B)    TFLAG_set(kflag_t, (ct)->cflag, kClasS_UNDEF, B)
 
-//#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UnboxType))
+//#define TY_iS_UNboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClasS_UNboxType))
 //#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
 //#define T_isTypeVar(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_TypeVar))
 
@@ -599,7 +599,7 @@ typedef struct kclass_t {
 //## @TypeVariable class Tvar  Tvoid;
 
 #define OFLAG_Tvoid              MAGICFLAG(0)
-#define CFLAG_Tvoid              kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final
+#define CFLAG_Tvoid              kClass_TypeVar|kClasS_UNboxType|kClass_Singleton|kClass_Final
 #define TY_void                  CLASS_Tvoid
 #define OFLAG_Tvar               MAGICFLAG(0)
 #define CFLAG_Tvar               CFLAG_Tvoid
@@ -673,7 +673,7 @@ extern void kpromap_each(CTX, kvsarray_t *p, void *arg, void (*f)(CTX, void *, k
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Boolean Object;
 
-#define CFLAG_Boolean              kClass_Immutable|kClass_UnboxType|kClass_Final
+#define CFLAG_Boolean              kClass_Immutable|kClasS_UNboxType|kClass_Final
 #define OFLAG_Boolean              MAGICFLAG(0)
 #define TY_Boolean                 CLASS_Boolean
 #define IS_Boolean(o)              (O_cid(o) == CLASS_Boolean)
@@ -702,7 +702,7 @@ struct kBoolean {
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Int Number;
 
-#define CFLAG_Int              kClass_Immutable|kClass_UnboxType|kClass_Final
+#define CFLAG_Int              kClass_Immutable|kClasS_UNboxType|kClass_Final
 #define OFLAG_Int              MAGICFLAG(0)
 #define TY_Int                 CLASS_Int
 #define IS_Int(o)              (O_cid(o) == CLASS_Int)
@@ -790,7 +790,7 @@ struct kString {
 #define TY_Array                 CLASS_Array
 #define IS_Array(o)              (O_cid(o) == CLASS_Array)
 
-#define kArray_isUnboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
+#define kArray_iS_UNboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
 
 typedef struct kArray kArray;

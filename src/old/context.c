@@ -368,7 +368,7 @@ kcontext_t *new_ThreadContext(CTX)
 	}
 	kArray_add(ctx->share->contextListNULL, newCtx->ctxobjNC);
 	newCtx->safepoint = ctx->share->ctx0->safepoint;
-	KNH_SYSUNLOCK(_ctx);
+	KNH_SYS_UNLOCK(_ctx);
 	return newCtx;
 }
 
@@ -683,7 +683,7 @@ static void check_allThreadExit(CTX)
 			kArray_remove(_ctx, ctx->share->contextListNULL, i);
 		}
 	}
-	KNH_SYSUNLOCK(_ctx);
+	KNH_SYS_UNLOCK(_ctx);
 }
 
 

@@ -297,7 +297,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 	}
 	else if(tk->tt == TK_KEYWORD) {
 		ksyntax_t *syn = KonohaSpace_syntax(_ctx, ks, tk->keyid, 0);
-		if(syn->ty != CLASS_unknown) {
+		if(syn->ty != CLASS_UNknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = syn->ty;
 			*next = s + 1;
@@ -305,8 +305,8 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		}
 	}
 	else if(tk->tt == TK_USYMBOL) {
-		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), CLASS_unknown);
-		if(ty != CLASS_unknown) {
+		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), CLASS_UNknown);
+		if(ty != CLASS_UNknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = ty;
 			*next = s + 1;
@@ -386,7 +386,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 
 /* ------------------------------------------------------------------------ */
 
-static kbool_t Stmt_isUninaryOp(CTX, kStmt *stmt, kToken *tk)
+static kbool_t Stmt_iS_UNinaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	if(tk->tt == TK_KEYWORD) {
 		ksyntax_t *syn = KonohaSpace_syntax(_ctx, kStmt_ks(stmt), tk->keyid, 0);
@@ -400,7 +400,7 @@ static int Stmt_skipUninaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	int i;
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
-		if(!Stmt_isUninaryOp(_ctx, stmt, tk)) {
+		if(!Stmt_iS_UNinaryOp(_ctx, stmt, tk)) {
 			break;
 		}
 	}
@@ -551,7 +551,7 @@ static kExpr* Stmt_newExpr(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 				return new_ConsExpr(_ctx, syn, 3, tkOP, lexpr, rexpr);
 			}
 		}
-//		if(Stmt_isUninaryOp(_ctx, stmt, tls->tts[s])) {
+//		if(Stmt_iS_UNinaryOp(_ctx, stmt, tls->tts[s])) {
 //			DBG_P("** Found UninaryOp: %s **", S_text(tls->tts[s]->text));
 //			return Stmt_newUninaryExpr(_ctx, stmt, tls, s, e, next);
 //		}

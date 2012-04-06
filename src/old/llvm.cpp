@@ -397,7 +397,7 @@ static void ASM_SMOVx(CTX ctx, knh_type_t atype, int a, knh_type_t btype, knh_sf
 	ValueStack_set(ctx, a, v);
 }
 
-static Value *Fset_CTX(CTX ctx, Value *arg_ctx)
+static Value *FseT_CTX(CTX ctx, Value *arg_ctx)
 {
 	LLVM_TODO("SYSVAL ctx");
 	return NULL;
@@ -409,15 +409,15 @@ static Value *GetCTX_IO(CTX ctx, Value *arg_ctx, int idx)
 	v = builder->CreateLoad(v, "l1");
 	return v;
 }
-static Value *Fset_CTXIN(CTX ctx, Value *arg_ctx)
+static Value *FseT_CTXIN(CTX ctx, Value *arg_ctx)
 {
 	return GetCTX_IO(ctx, arg_ctx, 29);
 }
-static Value *Fset_CTXOUT(CTX ctx, Value *arg_ctx)
+static Value *FseT_CTXOUT(CTX ctx, Value *arg_ctx)
 {
 	return GetCTX_IO(ctx, arg_ctx, 30);
 }
-static Value *Fset_CTXERR(CTX ctx, Value *arg_ctx)
+static Value *FseT_CTXERR(CTX ctx, Value *arg_ctx)
 {
 	return GetCTX_IO(ctx, arg_ctx, 31);
 }
@@ -451,10 +451,10 @@ static Value *Fset_SCRIPT(CTX ctx, Value *arg_ctx)
 }
 typedef Value* (*Fset)(CTX, Value*);
 static Fset SYSVAL_LOAD_INSTS[] = {
-	Fset_CTX,
-	Fset_CTXIN,
-	Fset_CTXOUT,
-	Fset_CTXERR,
+	FseT_CTX,
+	FseT_CTXIN,
+	FseT_CTXOUT,
+	FseT_CTXERR,
 	Fset_STDIN,
 	Fset_STDOUT,
 	Fset_STDERR,

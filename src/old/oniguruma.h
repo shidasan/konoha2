@@ -156,7 +156,7 @@ typedef struct OnigEncodingTypeST {
   int    (*get_case_fold_codes_by_str)(OnigCaseFoldType flag, const OnigUChar* p, const OnigUChar* end, OnigCaseFoldCodeItem acs[]);
   int    (*property_name_to_ctype)(struct OnigEncodingTypeST* enc, OnigUChar* p, OnigUChar* end);
   int    (*is_code_ctype)(OnigCodePoint code, OnigCtype ctype);
-  int    (*get_ctype_code_range)(OnigCtype ctype, OnigCodePoint* sb_out, const OnigCodePoint* ranges[]);
+  int    (*geT_CType_code_range)(OnigCtype ctype, OnigCodePoint* sb_out, const OnigCodePoint* ranges[]);
   OnigUChar* (*left_adjust_char_head)(const OnigUChar* start, const OnigUChar* p);
   int    (*is_allowed_reverse_match)(const OnigUChar* p, const OnigUChar* end);
 } OnigEncodingType;
@@ -323,7 +323,7 @@ ONIG_EXTERN OnigEncodingType OnigEncodingGB18030;
         ONIGENC_IS_CODE_CTYPE(enc,code,ONIGENC_CT_WORD)
 
 #define ONIGENC_GET_CT_CODE_RANGE(enc,ctype,sbout,ranges) \
-        (enc)->get_ctype_code_range(ctype,sbout,ranges)
+        (enc)->geT_CType_code_range(ctype,sbout,ranges)
 
 ONIG_EXTERN
 OnigUChar* onigenc_step_back P_((OnigEncoding enc, const OnigUChar* start, const OnigUChar* s, int n));

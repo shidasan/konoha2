@@ -463,7 +463,7 @@ void knh_System_initPath(CTX)
 		char buf[K_PATHMAX];
 		int bufsiz = K_PATHMAX;
 		HMODULE h = LoadLibrary(NULL);
-		GetModuleFileNameA(h, buf, bufsiz);
+		GetModuleshortnameA(h, buf, bufsiz);
 		CWB_clear(cwb, 0);
 		knh_buff_addospath(_ctx, cwb->ba, cwb->pos, 0, B(buf));
 		SETPROP("konoha.bin.path", knh_buff_newRealPathString(_ctx, cwb->ba, cwb->pos));

@@ -65,10 +65,10 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 		if(uline > 0) {
 			const char *file = T_file(uline);
 			if(lpos != -1) {
-				kwb_printf(&wb, "%s (%s:%d+%d) " , msg, filename(file), (kushort_t)uline, (int)lpos+1);
+				kwb_printf(&wb, "%s (%s:%d+%d) " , msg, shortname(file), (kushort_t)uline, (int)lpos+1);
 			}
 			else {
-				kwb_printf(&wb, "%s (%s:%d) " , msg, filename(file), (kushort_t)uline);
+				kwb_printf(&wb, "%s (%s:%d) " , msg, shortname(file), (kushort_t)uline);
 			}
 		}
 		else {
@@ -214,7 +214,7 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //
 //static kExpr* ERROR_TokenUndefined(CTX, kToken *tk, const char *whatis, kcid_t cid)
 //{
-//	if(cid != CLASS_unknown) {
+//	if(cid != CLASS_UNknown) {
 //		kerror(_ctx, ERR_, tk->uline, tk->lpos, _("undefined %s: %T.%O"), whatis, cid, tk);
 //	}
 //	else {

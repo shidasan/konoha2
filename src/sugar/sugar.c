@@ -539,6 +539,10 @@ static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
 	char *path = getenv("KONOHA_PACKAGEPATH"), *local = "";
 	const char *fname = S_text(pkgname);
 	if(path == NULL) {
+		path = getenv("KONOHA_HOME");
+		local = "/package";
+	}
+	if(path == NULL) {
 		path = getenv("HOME");
 		local = "/.konoha2/package";
 	}
@@ -561,7 +565,7 @@ static kline_t scriptfileid(CTX, char *pathbuf, size_t bufsiz, const char *pname
 static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 {
 	char fbuf[256];
-	const char *path = packagepath(_ctx, fbuf, sizeof(fbuf), S_pn(packid));
+	const char *path = packagepath(_ctx, fbuf, sizeof(fbuf), S_PN(packid));
 	FILE *fp = fopen(path, "r");
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
@@ -569,7 +573,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 		kKonohaSpace *ks = new_(KonohaSpace, kevalshare->rootks);
 		PUSH_GCSTACK(ks);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
-		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), T_pn(packid), pline);
+		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), T_PN(packid), pline);
 		if(packdef->initPackage != NULL) {
 			packdef->initPackage(_ctx, ks, 0, NULL, pline);
 		}
@@ -581,14 +585,14 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 			pack->packid = packid;
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
-			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), T_pn(packid));
+			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), T_PN(packid));
 			return pack;
 		}
 		fclose(fp);
 		RESET_GCSTACK();
 	}
 	else {
-		kreportf(CRIT_, pline, "package not found: %s path=%s", T_pn(packid), path);
+		kreportf(CRIT_, pline, "package not found: %s path=%s", T_PN(packid), path);
 	}
 	return NULL;
 }

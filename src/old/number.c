@@ -161,7 +161,7 @@ Object* new_Boxing(CTX, ksfp_t *sfp, const kclass_t *ct)
 
 KNHAPI2(void) knh_boxing(CTX, ksfp_t *sfp, int type)
 {
-	if(TY_isUnbox(type)) {
+	if(TY_iS_UNbox(type)) {
 		const kclass_t *ct = ClassTBL(type);
 		kObject *o;
 		if(ct->constPoolMapNULL != NULL) {

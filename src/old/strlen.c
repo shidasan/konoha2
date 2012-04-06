@@ -1,7 +1,7 @@
 ///*
 //    fast strlen using SSE2 for gcc 4.x / Visual Studio 2008(32bit/64bit)
 //
-//    Copyright (C) 2008 MITSUNARI Shigeo at Cybozu Labs, Inc.
+//    Copyright (C) 2008 MITS_UNARI Shigeo at Cybozu Labs, Inc.
 //    license:new BSD license
 //    2008/7/16 fix overrun in strlenSSE2
 //

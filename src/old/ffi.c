@@ -85,7 +85,7 @@ extern "C" {
 //
 //static ffi_type* type_ffitype(CTX, ktype_t ptype)
 //{
-//	if(TY_isUnbox(ptype)) {
+//	if(TY_iS_UNbox(ptype)) {
 //		if(IS_Tint(ptype)) {
 //			return &ffi_type_sint64;
 //		}
@@ -212,7 +212,7 @@ extern "C" {
 //
 //static int ffi_rbpidx(CTX, ktype_t ptype, int sfpidx)
 //{
-//	int rbpidx = (TY_isUnbox(ptype)) ? 1: 0;
+//	int rbpidx = (TY_iS_UNbox(ptype)) ? 1: 0;
 //	return rbpidx + (sfpidx) * 2;
 //}
 //
@@ -220,7 +220,7 @@ extern "C" {
 //{
 //	kint_t n;
 //	if(knh_bytes_parseint(t, &n)) {
-//		return ((int)n) * 2 + TY_isUnbox(ptype) ? 1 : 0;
+//		return ((int)n) * 2 + TY_iS_UNbox(ptype) ? 1 : 0;
 //	}
 //	return def;
 //}
@@ -672,7 +672,7 @@ typedef struct knh_xcode_t {
 static knh_xblock_t* knh_generateWrapper(CTX, void* callee, int argc, knh_ffiparam_t *argv)
 {
 	//unsigned char *FUNCTION = (unsigned char*)knh_xmalloc(_ctx, 1);
-	knh_xblock_t *blk = get_unused_xblock(_ctx);
+	knh_xblock_t *blk = geT_UNused_xblock(_ctx);
 	unsigned char *function = blk->block;
 	
 	size_t fidx = 0;

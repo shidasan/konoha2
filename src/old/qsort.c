@@ -47,7 +47,7 @@
 		} while (0)
 
 /* Discontinue quicksort aksrithm when partition gets below this size.
-   This particular magic number was chosen to work best on a Sun 4/260. */
+   This particular magic number was chosen to work best on a S_UN 4/260. */
 #define MAX_THRESH 4
 
 /* Stack node declarations used to store unfulfilled partition obligations. */

@@ -34,7 +34,7 @@ static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 	kKonohaSpace *ks = (kKonohaSpace*)o;
 	bzero(&ks->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
 	ks->parentNULL = conf;
-	ks->static_cid = CLASS_unknown;
+	ks->static_cid = CLASS_UNknown;
 	ks->function_cid = TY_System;
 }
 
@@ -137,7 +137,7 @@ static kbool_t checkConflictedConst(CTX, kKonohaSpace *ks, keyvals_t *kvs, kline
 		if(kvs->ty == ksval->ty && kvs->uvalue == ksval->uvalue) {
 			return true;  // same value
 		}
-		kreportf(WARN_, pline, "conflict name: %s", T_un(ukey));
+		kreportf(WARN_, pline, "conflict name: %s", T_UN(ukey));
 		return true;
 	}
 	return false;
@@ -225,7 +225,7 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 			kv.svalue = new_kString(d[2], strlen(d[2]), SPOL_TEXT);
 			PUSH_GCSTACK(kv.value);
 		}
-		else if(TY_isUnbox(kv.ty)) {
+		else if(TY_iS_UNbox(kv.ty)) {
 			kv.key = FN_UNBOX(kv.key);
 			kv.uvalue = (uintptr_t)d[2];
 		}
@@ -276,7 +276,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, in
 		}
 		else {
 			syn->keyid = keyid;
-			syn->ty  = CLASS_unknown;
+			syn->ty  = CLASS_UNknown;
 			syn->op1 = 0; /*MN_NONAME;*/
 			syn->op2 = 0; /*MN_NONAME;*/
 		}
@@ -377,14 +377,6 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 
 // KonohaSpace
 
-static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *ks, const char *key, size_t klen)
-{
-	if(key[0] == 'K' && (key[1] == 0 || strcmp("Konoha", key) == 0)) {
-		return (kObject*)ks;
-	}
-	return NULL;
-}
-
 static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
 {
 	uintptr_t hcode = longid(PN_konoha, kuname(name, len, 0, FN_NONAME));
@@ -435,7 +427,7 @@ static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kme
 static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *ks, kmethodn_t mn)
 {
 	while(ks != NULL) {
-		if(ks->static_cid != CLASS_unknown) {
+		if(ks->static_cid != CLASS_UNknown) {
 			kMethod *mtd = kKonohaSpace_getMethodNULL(ks, ks->static_cid, mn);
 			if(mtd != NULL && kMethod_isStatic(mtd)) {
 				return mtd;
@@ -764,14 +756,14 @@ void dumpExpr(CTX, int n, int nest, kExpr *expr)
 					dumpIndent(nest+1);
 					if(O_ct(o) == CT_Token) {
 						kToken *tk = (kToken*)o;
-						DUMP_P("[%d] O: %s ", i, T_ct(o->h.ct));
+						DUMP_P("[%d] O: %s ", i, T_CT(o->h.ct));
 						dumpToken(_ctx, tk);
 					}
 					else if(o == K_NULL) {
 						DUMP_P("[%d] O: null\n", i);
 					}
 					else {
-						DUMP_P("[%d] O: %s\n", i, T_ct(o->h.ct));
+						DUMP_P("[%d] O: %s\n", i, T_CT(o->h.ct));
 					}
 				}
 			}
@@ -787,7 +779,7 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 	//DBG_ASSERT(expr->dataNUL == NULL);
 	expr->dataNUL = NULL;   // consNUL is used in context of constant folding
 	expr->ty = ty;
-	if(TY_isUnbox(ty)) {
+	if(TY_iS_UNbox(ty)) {
 		expr->build = TEXPR_NCONST;
 		expr->ndata = N_toint(o);
 	}

@@ -2578,7 +2578,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 			STT_(stmt) = STT_FUNCTION;
 			if(ITR_is(itr, TT_FUNCNAME) || ITR_is(itr, TT_UFUNCNAME)) {
 				kTerm *tkN = ITR_nextTK(itr);
-				WARN_Ignored(_ctx, _("function name"), CLASS_unknown, S_text(tkN->text));
+				WARN_Ignored(_ctx, _("function name"), CLASS_UNknown, S_text(tkN->text));
 			}
 			if(ITR_is(itr, TT_PARENTHESIS) && ITR_isN(itr, +1, TT_CODE)) {
 				tkCUR = new_Term(_ctx, TT_DOC);
@@ -2655,7 +2655,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 				_EXPR(_ctx, stmt, itr);
 				break;
 			}
-			kStmtExproERR(_ctx, stmt, ERROR_Undefined(_ctx, "class for new", CLASS_unknown, ITR_nextTK(itr)/*tkCUR*/));
+			kStmtExproERR(_ctx, stmt, ERROR_Undefined(_ctx, "class for new", CLASS_UNknown, ITR_nextTK(itr)/*tkCUR*/));
 			return;
 		}/*TT_NEW*/
 		default: {
@@ -3287,7 +3287,7 @@ static void _CODE(CTX, kStmtExpr *stmt, tkitr_t *itr)
 	}
 	if(ITR_is(itr, TT_CODE)) {
 		if(hasCODE) {
-			WARN_Ignored(_ctx, "block", CLASS_unknown, S_text(ITR_nextTK(itr)->text));
+			WARN_Ignored(_ctx, "block", CLASS_UNknown, S_text(ITR_nextTK(itr)->text));
 		}
 		else {
 			_CODEDOC(_ctx, stmt, itr);
@@ -3297,7 +3297,7 @@ static void _CODE(CTX, kStmtExpr *stmt, tkitr_t *itr)
 	else if(ITR_is(itr, TT_DARROW) || ITR_is(itr, TT_COLON)) {
 		tkitr_t stmtbuf, *stmtitr = ITR_stmt(_ctx, itr, +1, &stmtbuf, 1);
 		if(hasCODE) {
-			WARN_Ignored(_ctx, "=>", CLASS_unknown, NULL);
+			WARN_Ignored(_ctx, "=>", CLASS_UNknown, NULL);
 		}
 		else {
 			_CODEDOC(_ctx, stmt, stmtitr);
@@ -3308,7 +3308,7 @@ static void _CODE(CTX, kStmtExpr *stmt, tkitr_t *itr)
 	else if(ITR_is(itr, TT_WITH)) {
 		tkitr_t stmtbuf, *stmtitr = ITR_stmt(_ctx, itr, +1, &stmtbuf, 1);
 		if(hasCODE) {
-			WARN_Ignored(_ctx, "with", CLASS_unknown, NULL);
+			WARN_Ignored(_ctx, "with", CLASS_UNknown, NULL);
 		}
 		else {
 			StmtMETHOD_setFFI(stmt, 1);

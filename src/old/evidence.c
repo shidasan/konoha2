@@ -165,20 +165,20 @@ void knh_logprintf(const char *group, int verbose, const char *fmt, ...)
 	}
 }
 
-static void opt_l(int m, const char *filename)
+static void opt_l(int m, const char *shortname)
 {
 	const char *mode = "w";
-	if(filename == NULL) {
-		filename = "konoha.log";
+	if(shortname == NULL) {
+		shortname = "konoha.log";
 		mode = "a";
 	}
-	if(filename[0] == '+') {
+	if(shortname[0] == '+') {
 		mode = "a";
-		filename++;
+		shortname++;
 	}
-	stdlog = fopen(filename, mode);
+	stdlog = fopen(shortname, mode);
 	if(stdlog == NULL) {
-		fprintf(stderr, "cannot open logfile: %s\n", filename);
+		fprintf(stderr, "cannot open logfile: %s\n", shortname);
 		exit(1);
 	}
 }
@@ -952,7 +952,7 @@ void knh_write_uline(CTX, kOutputStream *w, kline_t uline)
 	kfileid_t fileid = ULINE_fileid(uline);
 	uintptr_t line = ULINE_line(uline);
 	if(uline != 0 && fileid != URI_unknown && line != 0) {
-		knh_write_cline(_ctx, w, FILENAME__(fileid), line);
+		knh_write_cline(_ctx, w, shortname__(fileid), line);
 	}
 }
 
@@ -962,7 +962,7 @@ void knh_write_mline(CTX, kOutputStream *w, kmethodn_t mn, kline_t uline)
 	uintptr_t line = ULINE_line(uline);
 	if(uline != 0 && fileid != URI_unknown && line != 0) {
 		if(mn == MN_) {
-			knh_write_cline(_ctx, w, FILENAME__(fileid), line);
+			knh_write_cline(_ctx, w, shortname__(fileid), line);
 		}
 		else {
 			kwb_putc(wb, '(');
@@ -1070,7 +1070,7 @@ static kline_t knh_stack_uline(CTX, ksfp_t *sfp)
 
 void knh_write_sfp(CTX, kOutputStream *w, ktype_t type, ksfp_t *sfp, int level)
 {
-	if(TY_isUnbox(type)) {
+	if(TY_iS_UNbox(type)) {
 		if(IS_Tint(type)) {
 			knh_write_ifmt(_ctx, w, KINT_FMT, sfp[0].ivalue);
 		}
@@ -1173,7 +1173,7 @@ static kException* new_Assertion(CTX, kline_t uline)
 	if(mbuf[0] == 0) {
 		kfileid_t fileid = ULINE_fileid(uline);
 		size_t line = ULINE_line(uline);
-		knh_snprintf(buf, sizeof(buf), "Assertion!!: %s at line %lu", FILENAME__(fileid), line);
+		knh_snprintf(buf, sizeof(buf), "Assertion!!: %s at line %lu", shortname__(fileid), line);
 	}
 	KSETv(e->emsg, new_kString((const char*)buf, knh_strlen(buf), SPOL_ASCII));
 	e->uline = uline;

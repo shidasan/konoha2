@@ -516,7 +516,7 @@ kSemantics* new_Vocab(CTX, char *tag, kbytes_t urn, int base, char **terms)
 //	DBG_ASSERT_cid(scid);
 //	kcid_t tcid = knh_findcid(_ctx, B(text));
 //
-//	if(tcid != CLASS_unknown || ctx->share->ClassTBL[tcid].bcid != tcid) {
+//	if(tcid != CLASS_UNknown || ctx->share->ClassTBL[tcid].bcid != tcid) {
 ////		Semantics *u = knh_getSemantics(_ctx, scid].cspec;
 ////		if(!IS_Semantics(u) || !IS_DictIdx(DP(u)->vocabDictIdx)) {
 ////			TODO();
@@ -749,17 +749,17 @@ kSemantics* knh_findSemanticsNULL(CTX, kbytes_t lname)
 		char cname[CLASS__AME_BUFSIZ];
 		knh_snprintf(cname, sizeof(cname), "Int%s", postfix);
 		kcid_t cid = knh_getcid(_ctx, B(cname));
-		if(cid != CLASS_unknown) {
+		if(cid != CLASS_UNknown) {
 			return knh_getSemantics(_ctx, cid);
 		}
 		knh_snprintf(cname, sizeof(cname), "Float%s", postfix);
 		cid = knh_getcid(_ctx, B(cname));
-		if(cid != CLASS_unknown) {
+		if(cid != CLASS_UNknown) {
 			return knh_getSemantics(_ctx, cid);
 		}
 		knh_snprintf(cname, sizeof(cname), "String%s", postfix);
 		cid = knh_getcid(_ctx, B(cname));
-		if(cid != CLASS_unknown) {
+		if(cid != CLASS_UNknown) {
 			return knh_getSemantics(_ctx, cid);
 		}
 	}

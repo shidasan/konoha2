@@ -425,7 +425,7 @@ static void Object_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packsp
 		key = knh_getFieldName(_ctx, field->fn);
 		packspi->pack_string(_ctx, pkr, S_text(key), S_size(key));
 		packspi->pack_putc(_ctx, pkr, ':');
-		if (TY_isUnbox(type)) {
+		if (TY_iS_UNbox(type)) {
 			pack_unbox(_ctx, pkr, type, v + i, packspi);
 		} else {
 			kObject *obj = v[i];
@@ -1134,7 +1134,7 @@ static void Range_init(CTX, kRawPtr *o)
 {
 	kRange *rng = (kRange*)o;
 	kcid_t p1 = O_p1(rng);
-	if(TY_isUnbox(p1)) {
+	if(TY_iS_UNbox(p1)) {
 		Range_setNDATA(rng, 1);
 		rng->nstart = 0;
 		rng->nend = 0;
@@ -1195,8 +1195,8 @@ static void Array_initcopy(CTX, kRawPtr *o, kRawPtr *src)
 		a->size = a_src->size;
 		a->list = (kObject**)KNH_ZMALLOC(a_src->dim->capacity * a_src->dim->wsize);
 		knh_memcpy(a->list, a_src->list, a_src->dim->capacity * a_src->dim->wsize);
-		kArray_setUnboxData(a, kArray_isUnboxData(a_src));
-		if(!kArray_isUnboxData(a)) {
+		kArray_setUnboxData(a, kArray_iS_UNboxData(a_src));
+		if(!kArray_iS_UNboxData(a)) {
 			size_t i;
 			for(i = 0; i < a->size; i++) {
 				knh_Object_RCinc(a->list[i]);
@@ -1213,7 +1213,7 @@ static void Array_initcopy(CTX, kRawPtr *o, kRawPtr *src)
 static void Array_reftrace(CTX, kRawPtr *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_isUnboxData(a)) {
+	if(!kArray_iS_UNboxData(a)) {
 #ifdef K_USING_FASTREFS_
 		KNH_SETREF(_ctx, a->list, a->size);
 #else
@@ -1238,7 +1238,7 @@ static int Array_compareTo(kRawPtr *o, kRawPtr *o2)
 		kArray *a = (kArray*)o;
 		kArray *a2 = (kArray*)o2;
 		size_t i, asize = kArray_size(a), asize2 = kArray_size(a2);
-		if(kArray_isUnboxData(a)) {
+		if(kArray_iS_UNboxData(a)) {
 			for(i = 0; i < asize; i++) {
 				if(!(i < asize2)) return -1;
 				if(a->nlist[i] == a2->nlist[i]) continue;
@@ -1275,7 +1275,7 @@ static void Array_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 		kcid_t p1 = O_p1(a);
 		size_t c, size = kArray_size(a);
 		if(size > 0) {
-			if(TY_isUnbox(p1)) {
+			if(TY_iS_UNbox(p1)) {
 				if(IS_Tint(p1)) {
 					knh_write_ifmt(_ctx, w, KINT_FMT, a->ilist[0]);
 					if(IS_FMTline(level)) {
@@ -1336,7 +1336,7 @@ static void Array_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packspi
 	packspi->pack_beginarray(_ctx, pkr, a->size);
 	size_t i = 0;
 	kcid_t p1 = O_p1(a);
-	if (kArray_isUnboxData(a)) {
+	if (kArray_iS_UNboxData(a)) {
 		for (i = 0; i < a->size; i++) {
 			if (i != 0)
 				packspi->pack_putc(_ctx, pkr, ',');
@@ -1528,7 +1528,7 @@ static void Map_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 
 static void pack_sfp(CTX, void *pkr, kcid_t cid, ksfp_t *sfp, const knh_PackSPI_t *packspi)
 {
-	if (TY_isUnbox(cid)) {
+	if (TY_iS_UNbox(cid)) {
 		if (IS_Tint(cid)) {
 			packspi->pack_int(_ctx, pkr, sfp[0].ivalue);
 		} else if (IS_Tfloat(cid)) {
@@ -1801,7 +1801,7 @@ static KMETHOD Fmethod_funcRTYPE(CTX, ksfp_t *sfp _RIX)
 {
 	ktype_t rtype = knh_Param_rtype(DP(sfp[K_MTDIDX].mtdNC)->mp);
 	if(rtype != TY_void) {
-		if(TY_isUnbox(rtype)) {
+		if(TY_iS_UNbox(rtype)) {
 			RETURNi_(KINT0);  // same results in Float, Boolean
 		}
 		else {

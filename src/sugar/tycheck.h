@@ -157,7 +157,7 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 	}
 	KCALL(lsfp, 0, mtd, psize);
 	END_LOCAL();
-	if(TY_isUnbox(rtype) || rtype == TY_void) {
+	if(TY_iS_UNbox(rtype) || rtype == TY_void) {
 		return kExpr_setNConstValue(expr, rtype, lsfp[0].ndata);
 	}
 	return kExpr_setConstValue(expr, rtype, lsfp[0].o);
@@ -215,7 +215,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 		}
 		if(CT_isa(_ctx, texpr->ty, req_ty)) {
 			DBG_P("SUBTYPE type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
-			if(TY_isUnbox(texpr->ty) && !TY_isUnbox(req_ty)) {
+			if(TY_iS_UNbox(texpr->ty) && !TY_iS_UNbox(req_ty)) {
 				DBG_P("BOXING type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
 				return new_BoxingExpr(_ctx, expr, req_ty);
 			}
@@ -340,6 +340,14 @@ static KMETHOD TokenTyCheck_SYMBOL(CTX, ksfp_t *sfp _RIX)
 	RETURN_(Expr_tyCheckVariable(_ctx, expr, gma));
 }
 
+static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *ks, const char *key, size_t klen)
+{
+	if(key[0] == 'K' && (key[1] == 0 || strcmp("Konoha", key) == 0)) {
+		return (kObject*)ks;
+	}
+	return NULL;
+}
+
 static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
@@ -357,12 +365,10 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 			RETURN_(expr);
 		}
 	}
-	else {
-		kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->ks, S_text(tk->text), S_size(tk->text));
-		kExpr *texpr = (v == NULL) ?
+	kObject *v = KonohaSpace_getSymbolValueNULL(_ctx, gma->genv->ks, S_text(tk->text), S_size(tk->text));
+	kExpr *texpr = (v == NULL) ?
 			kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk)) : kExpr_setConstValue(expr, O_cid(v), v);
-		RETURN_(texpr);
-	}
+	RETURN_(texpr);
 }
 
 
@@ -388,7 +394,7 @@ static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_
 	kExpr *expr1 = cons->exprs[1];
 	ktype_t cid = expr1->ty;
 	DBG_ASSERT(IS_Method(mtd) && cid != TY_var);
-	if(!TY_isUnbox(mtd->cid) && TY_isUnbox(cid)) {
+	if(!TY_iS_UNbox(mtd->cid) && TY_iS_UNbox(cid)) {
 		expr1 = new_BoxingExpr(_ctx, cons->exprs[1], cid);
 		KSETv(cons->exprs[1], expr1);
 	}
@@ -396,7 +402,7 @@ static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_
 	ktype_t rtype = ktype_var(_ctx, pa->rtype, cid);
 	int isConst = (Expr_isCONST(expr1)) ? 1 : 0;
 	//	if(rtype == TY_var && gma->genv->mtd == mtd) {
-	//		return ERROR_Unsupported(_ctx, "type inference of recursive calls", CLASS_unknown, NULL);
+	//		return ERROR_Unsupported(_ctx, "type inference of recursive calls", CLASS_UNknown, NULL);
 	//	}
 	if(pa->psize + 2 != size) {
 		char mbuf[128];
@@ -503,7 +509,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 	kArray *cons = expr->consNUL;
 	DBG_P("invoke: size=%d", kArray_size(cons));
 	DBG_ASSERT(cons->list[1] == K_NULL);
-	kcid_t this_cid = CLASS_unknown;
+	kcid_t this_cid = CLASS_UNknown;
 	if(IS_Expr(cons->list[0])) {
 		kToken *tk = cons->exprs[0]->tkNUL;
 		if(Token_mn(_ctx, tk, "function") != MN_NONAME) {
@@ -528,7 +534,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	if(IS_Method(cons->methods[0])) {
-		if(this_cid == CLASS_unknown) {
+		if(this_cid == CLASS_UNknown) {
 			KSETv(cons->exprs[1], new_Variable(TEXPR_NULL, cons->methods[0]->cid, 0, 0, gma));
 		}
 		RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));

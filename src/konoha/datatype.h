@@ -33,7 +33,7 @@ static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "%s:&%p", T_cid(O_cid(sfp[pos].o)), sfp[pos].o);
 }
 
-static uintptr_t DEFAULT_unbox(CTX, kObject *o)
+static uintptr_t DEFAULT_UNbox(CTX, kObject *o)
 {
 	return 0;
 }
@@ -101,7 +101,7 @@ static kclass_t* new_CT(CTX, const kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
 		ct->reftrace = s->reftrace;
 		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
-		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
+		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_UNbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
 		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
 		ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
@@ -164,7 +164,7 @@ static const kclass_t *CT_T(CTX, const kclass_t *ct, kushort_t optvalue)
 static void CT_setName(CTX, kclass_t *ct, kline_t pline)
 {
 	uintptr_t lname = longid(ct->packdom, ct->nameid);
-	kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_pn(ct->packdom), T_pn(ct->packid), T_un(ct->nameid));
+	kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_PN(ct->packdom), T_PN(ct->packid), T_UN(ct->nameid));
 	const kclass_t *ct2 = (const kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
 	if(ct2 == NULL) {
 		map_addu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)ct);
@@ -232,7 +232,7 @@ static void Object_initdef(CTX, kclass_t *ct, kline_t pline)
 	if(ct->cid == TY_Object) return;
 	DBG_P("new object initialization");
 	const kclass_t *supct = kclass(ct->cid, pline);
-	if(CT_isUNDEF(supct)) {
+	if(CT_iS_UNDEF(supct)) {
 		kreportf(CRIT_, pline, "%s's fields are not all set", T_cid(ct->cid));
 	}
 	size_t fsize = supct->fsize + ct->fsize;
@@ -442,7 +442,7 @@ static void Array_init(CTX, kRawPtr *o, void *conf)
 	if(a->astruct.max > 0) {
 		KARRAY_INIT(a->astruct, a->astruct.max, void*);
 	}
-	if(TY_isUnbox(O_p1(a))) {
+	if(TY_iS_UNbox(O_p1(a))) {
 		kArray_setUnboxData(a, 1);
 	}
 }
@@ -450,7 +450,7 @@ static void Array_init(CTX, kRawPtr *o, void *conf)
 static void Array_reftrace(CTX, kRawPtr *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_isUnboxData(a)) {
+	if(!kArray_iS_UNboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(a->size);
 		for(i = 0; i < a->size; i++) {
@@ -514,7 +514,7 @@ static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
 //KNHAPI2(void) kArray_remove_(CTX, kArray *a, size_t n)
 //{
 //	DBG_ASSERT(n < a->size);
-//	if (kArray_isUnboxData(a)) {
+//	if (kArray_iS_UNboxData(a)) {
 //		knh_memmove(a->nlist+n, a->nlist+(n+1), sizeof(kunbox_t) * (a->size - n - 1));
 //	} else {
 //		KNH_FINALv(_ctx, a->list[n]);
@@ -710,9 +710,9 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	KINITv(share->emptyArray, new_(Array, 0));
 	FILEID_("(konoha.c)");
 	int n = PN_("konoha");    // PN_konoha
-	DBG_P("PN_konoha=%d, %s", n, T_pn(n));
+	DBG_P("PN_konoha=%d, %s", n, T_PN(n));
 	n = PN_("sugar");     // PKG_sugar
-	DBG_P("PN_sugar=%d, %s", n, T_pn(n));
+	DBG_P("PN_sugar=%d, %s", n, T_PN(n));
 	initStructData(_ctx);
 }
 

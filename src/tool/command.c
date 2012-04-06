@@ -57,16 +57,16 @@ extern "C" {
 //static int isInteractiveMode = 0;
 //static FILE *stdlog = NULL;
 //
-//static void opt_l(char *filename)
+//static void opt_l(char *shortname)
 //{
 //	const char *mode = "w";
-//	if(filename == NULL) {
-//		filename = "konoha.log";
+//	if(shortname == NULL) {
+//		shortname = "konoha.log";
 //		mode = "a";
 //	}
-//	stdlog = fopen(filename, mode);
+//	stdlog = fopen(shortname, mode);
 //	if(stdlog == NULL) {
-//		fprintf(stderr, "cannot open logfile: %s\n", filename);
+//		fprintf(stderr, "cannot open logfile: %s\n", shortname);
 //		exit(1);
 //	}
 //}
