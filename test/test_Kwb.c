@@ -18,7 +18,6 @@ void test_Kwb(CTX)
 
 int main(int argc, const char *argv[])
 {
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     int i;
     for (i = 0; i < 100; ++i) {

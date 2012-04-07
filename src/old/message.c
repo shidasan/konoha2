@@ -244,7 +244,7 @@ kTerm* ERROR_RegexCompilation(CTX, kTerm *tk, const char *regname, const char *r
 }
 kTerm* ERROR_Undefined(CTX, const char *whatis, kcid_t cid, kTerm *tk)
 {
-	if(cid != CLASS_UNknown) {
+	if(cid != TY_unknown) {
 		return kTermoERR(_ctx, tk, _("undefined %s: %T.%O"), whatis, cid, tk);
 	}
 	else {
@@ -257,7 +257,7 @@ kTerm* ERROR_UndefinedName(CTX, kTerm *tk)
 }
 void WARN_Undefined(CTX, const char *whatis, kcid_t cid, kTerm *tk)
 {
-	if(cid != CLASS_UNknown) {
+	if(cid != TY_unknown) {
 		GammaBuilder_perror(_ctx, KC_EWARN, _("undefined %s: %T.%O"), whatis, cid, tk);
 	}
 	else {
@@ -307,7 +307,7 @@ kTerm* ERROR_RequiredParameter(CTX)
 }
 void WARN_WrongTypeParam(CTX, kcid_t cid)
 {
-	if(cid != CLASS_UNknown) {
+	if(cid != TY_unknown) {
 		kbytes_t bname = C_bname(cid);
 		GammaBuilder_perror(_ctx, KC_DWARN, "%B<>: wrong type parameter", bname);
 	}
@@ -374,7 +374,7 @@ kTerm *ERROR_Unsupported(CTX, const char *whatis, kcid_t cid, const char *symbol
 	if(symbol == NULL) {
 		return GammaBuilder_perror(_ctx, KC_ERR, "unsupported %s", whatis);
 	}
-	else if(cid == CLASS_UNknown) {
+	else if(cid == TY_unknown) {
 		return GammaBuilder_perror(_ctx, KC_ERR, "unsupported %s: %s", whatis, symbol);
 	}
 	else {
@@ -390,7 +390,7 @@ void WARN_Ignored(CTX, const char *whatis, kcid_t cid, const char *symbol)
 	if(symbol == NULL) {
 		GammaBuilder_perror(_ctx, KC_DWARN, "ignored %s", whatis, symbol);
 	}
-	else if(cid == CLASS_UNknown) {
+	else if(cid == TY_unknown) {
 		GammaBuilder_perror(_ctx, KC_DWARN, "ignored %s: %s", whatis, symbol);
 	}
 	else {

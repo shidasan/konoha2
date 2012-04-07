@@ -374,7 +374,7 @@ kcid_t knh_getcid(CTX, kbytes_t lname)
 		return knh_findcidx(_ctx, lname);
 	}
 #endif/*K_USING_SEMANTICS*/
-	return CLASS_UNknown;
+	return TY_unknown;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2335,17 +2335,17 @@ const kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbyte
 		return ClassTBL(CLASS_Converter);
 	}
 	kbytes_t scheme = knh_bytes_head(path, ':');
-	kcid_t cid = CLASS_UNknown; /* = knh_KonohaSpace_getcid(_ctx, ns, scheme);*/
+	kcid_t cid = TY_unknown; /* = knh_KonohaSpace_getcid(_ctx, ns, scheme);*/
 	if(islower(scheme.buf[0]) && scheme.len < 81) {
 		char buf[128] = {0}; // zero clear
 		knh_memcpy(buf, scheme.text, scheme.len);
 		buf[scheme.len] = ':';
 		cid = knh_KonohaSpace_getcid(_ctx, ns, B(buf));
 	}
-	if(cid == CLASS_UNknown) {
+	if(cid == TY_unknown) {
 		cid = knh_KonohaSpace_getcid(_ctx, ns, scheme);
 	}
-	if(cid != CLASS_UNknown) {
+	if(cid != TY_unknown) {
 		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, MN_opLINK);
 		if(mtd != NULL) return ClassTBL(cid);
 	}
@@ -2359,7 +2359,7 @@ kcid_t knh_ClassTBL_linkType(CTX, const kclass_t *ct, kcid_t tcid)
 		return ct->cid;
 	}
 	kTypeMap *tmr = knh_findTypeMapNULL(_ctx, ct->cid, tcid);
-	return (tmr != NULL) ? tmr->tcid : CLASS_UNknown;
+	return (tmr != NULL) ? tmr->tcid : TY_unknown;
 }
 
 kObject *knh_KonohaSpace_newObject(CTX, kKonohaSpace *ns, kString *path, kcid_t tcid)
@@ -2526,10 +2526,10 @@ static KMETHOD Class_opLINK(CTX, ksfp_t *sfp _RIX)
 //	kKonohaSpace *ns = sfp[2].ns;
 	kbytes_t bpath = knh_bytes_next(S_tobytes(sfp[1].s), ':');
 	kcid_t cid = knh_getcid(_ctx, bpath);
-	if(cid == CLASS_UNknown) {
+	if(cid == TY_unknown) {
 		bpath = knh_bytes_head(bpath, '<');
 		cid = knh_getcid(_ctx, bpath);
-		if(cid == CLASS_UNknown) {
+		if(cid == TY_unknown) {
 			cid = CLASS_Tvoid;
 		}
 	}
@@ -2564,7 +2564,7 @@ static KMETHOD Method_opLINK(CTX, ksfp_t *sfp _RIX)
 		kbytes_t mpath = knh_bytes_last(bpath, loc+1);
 		kcid_t cid = knh_KonohaSpace_getcid(_ctx, ns, cpath);
 		kmethodn_t mn = knh_getmn(_ctx, mpath, MN_NONAME);
-		if(cid != CLASS_UNknown && mn != MN_NONAME) {
+		if(cid != TY_unknown && mn != MN_NONAME) {
 			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, mn);
 		}
 	}

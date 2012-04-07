@@ -8,7 +8,6 @@ static KMETHOD int_opadd(CTX, ksfp_t *sfp, long _rix)
 int main(int argc, const char *argv[])
 {
     kopl_t opbuf[128], *pc = opbuf;
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     {
         klr_THCODE_t *op = OPCAST(THCODE, pc);

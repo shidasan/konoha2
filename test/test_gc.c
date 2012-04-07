@@ -72,7 +72,6 @@ void test_gc(CTX)
 int main(int argc, const char *argv[])
 {
     int ret = 0;
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     test_gc(konoha);
     konoha_close(konoha);

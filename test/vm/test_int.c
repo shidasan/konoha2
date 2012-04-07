@@ -484,7 +484,6 @@ int main(int argc, const char *argv[])
     } while (0)
 
     kopl_t opbuf[128], *pc = opbuf;
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     TEST(add);
     TEST(sub);

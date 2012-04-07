@@ -234,6 +234,62 @@ typedef struct kmap_t {
 	size_t hmax;
 } kmap_t;
 
+// classdef_t
+
+typedef kushort_t       kpack_t;   /* package id*/
+typedef kushort_t       kcid_t;    /* class id */
+typedef kushort_t       ktype_t;     /* extended ktype_t */
+typedef kushort_t       ksymbol_t;
+typedef kushort_t       kuname_t;
+typedef kushort_t       kmethodn_t;
+
+/* kcid_t */
+#define CLASS_newid                ((kcid_t)-1)
+#define TY_unknown              ((kcid_t)-2)
+
+#define CT_(t)              (_ctx->share->ca.ClassTBL[t])
+#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
+
+//#define TY_T0             ((ktype_t)KFLAG_H2)
+//#define TY_This           TY_T0
+//#define TY_T(n)           (TY_T0+(n))
+//#define TY_T1             TY_T(1)
+//#define TY_T2             TY_T(2)
+
+#define FN_NONAME          ((ksymbol_t)-1)
+#define FN_NEWID           ((ksymbol_t)-2)
+#define _NEWID             FN_NEWID
+#define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
+#define FN_BOXED           KFLAG_H0
+#define FN_UNBOX(fn)       (fn & ~(FN_BOXED))
+#define FN_isBOXED(fn)     ((fn & FN_BOXED) == FN_BOXED)
+
+#define FN_COERCION        KFLAG_H0
+#define FN_Coersion        FN_COERCION
+#define FN_isCOERCION(fn)  ((fn & FN_COERCION) == FN_COERCION)
+
+#define MN_NONAME    ((kmethodn_t)-1)
+#define MN_NEWID     ((kmethodn_t)-2)
+
+#define MN_UNMASK(fnq)       (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
+#define MN_ISBOOL     KFLAG_H0
+#define MN_GETTER     KFLAG_H1
+#define MN_SETTER     KFLAG_H2
+#define MN_TOCID      (KFLAG_H0|KFLAG_H1)
+#define MN_ASCID      (KFLAG_H0|KFLAG_H1|KFLAG_H2)
+
+#define MN_isISBOOL(mn)   ((mn & MN_ISBOOL) == MN_ISBOOL)
+#define MN_toISBOOL(mn)   (mn | MN_ISBOOL)
+#define MN_isGETTER(mn)   ((mn & MN_GETTER) == MN_GETTER)
+#define MN_toGETTER(mn)   (mn | MN_GETTER)
+#define MN_isSETTER(mn)   ((mn & MN_SETTER) == MN_SETTER)
+#define MN_toSETTER(mn)   (mn | MN_SETTER)
+
+#define MN_to(cid)        (cid | MN_TOCID)
+#define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
+#define MN_as(cid)        (cid | MN_ASCID)
+#define MN_isASCID(mn)    ((mn & MN_ASCID) == MN_ASCID)
+
 /* ------------------------------------------------------------------------ */
 
 typedef const struct kcontext_t* konoha_t;
@@ -380,63 +436,12 @@ typedef struct kstack_t {
 	void*                        cstack_bottom;  // for GC
 	karray_t                     ref;   // reftrace
 	REF_t                        *tail;
+	ktype_t   evalty;
+	kushort_t evalidx;
+	kjmpbuf_t* evaljmpbuf;
+//		kflag_t flags;
 } kstack_t;
 
-// classdef_t
-
-typedef kushort_t       kpack_t;   /* package id*/
-typedef kushort_t       kcid_t;    /* class id */
-typedef kushort_t       ktype_t;     /* extended ktype_t */
-typedef kushort_t       ksymbol_t;
-typedef kushort_t       kuname_t;
-typedef kushort_t       kmethodn_t;
-
-/* kcid_t */
-#define CLASS_newid                ((kcid_t)-1)
-#define CLASS_UNknown              ((kcid_t)-2)
-
-#define CT_(t)              (_ctx->share->ca.ClassTBL[t])
-#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
-
-//#define TY_T0             ((ktype_t)KFLAG_H2)
-//#define TY_This           TY_T0
-//#define TY_T(n)           (TY_T0+(n))
-//#define TY_T1             TY_T(1)
-//#define TY_T2             TY_T(2)
-
-#define FN_NONAME          ((ksymbol_t)-1)
-#define FN_NEWID           ((ksymbol_t)-2)
-#define _NEWID             FN_NEWID
-#define FN_UNMASK(fnq)     (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
-#define FN_BOXED           KFLAG_H0
-#define FN_UNBOX(fn)       (fn & ~(FN_BOXED))
-#define FN_isBOXED(fn)     ((fn & FN_BOXED) == FN_BOXED)
-
-#define FN_COERCION        KFLAG_H0
-#define FN_Coersion        FN_COERCION
-#define FN_isCOERCION(fn)  ((fn & FN_COERCION) == FN_COERCION)
-
-#define MN_NONAME    ((kmethodn_t)-1)
-#define MN_NEWID     ((kmethodn_t)-2)
-
-#define MN_UNMASK(fnq)       (fnq & (~(KFLAG_H0|KFLAG_H1|KFLAG_H2)))
-#define MN_ISBOOL     KFLAG_H0
-#define MN_GETTER     KFLAG_H1
-#define MN_SETTER     KFLAG_H2
-#define MN_TOCID      (KFLAG_H0|KFLAG_H1)
-#define MN_ASCID      (KFLAG_H0|KFLAG_H1|KFLAG_H2)
-
-#define MN_isISBOOL(mn)   ((mn & MN_ISBOOL) == MN_ISBOOL)
-#define MN_toISBOOL(mn)   (mn | MN_ISBOOL)
-#define MN_isGETTER(mn)   ((mn & MN_GETTER) == MN_GETTER)
-#define MN_toGETTER(mn)   (mn | MN_GETTER)
-#define MN_isSETTER(mn)   ((mn & MN_SETTER) == MN_SETTER)
-#define MN_toSETTER(mn)   (mn | MN_SETTER)
-
-#define MN_to(cid)        (cid | MN_TOCID)
-#define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
-#define MN_as(cid)        (cid | MN_ASCID)
-#define MN_isASCID(mn)    ((mn & MN_ASCID) == MN_ASCID)
 
 typedef struct kfield_t {
 	kflag_t    flag    ;
@@ -993,11 +998,12 @@ typedef struct kRawPtr {
 
 #define END_LOCAL() ((kcontext_t*)_ctx)->esp = esp_;
 
-#define KCALL(LSFP, RIX, MTD, ARGC) { \
+#define KCALL(LSFP, RIX, MTD, ARGC, DEFVAL) { \
 		ksfp_t *tsfp = LSFP + RIX + K_CALLDELTA;\
 		tsfp[K_MTDIDX].mtdNC = MTD;\
 		tsfp[K_PCIDX].fname = __FILE__;\
 		tsfp[K_SHIFTIDX].shift = 0;\
+		KSETv(tsfp[K_RTNIDX].o, DEFVAL);\
 		tsfp[K_RTNIDX].uline = __LINE__;\
 		klr_setesp(_ctx, tsfp + ARGC + 1);\
 		(MTD)->fastcall_1(_ctx, tsfp K_RIXPARAM);\
@@ -1298,14 +1304,12 @@ REF_t *kstack_tail(CTX, size_t min);
 #endif /*unlikely*/
 
 ///* Konoha API */
-extern void konoha_ginit(int argc, const char **argv);
 extern konoha_t konoha_open(void);
 extern void konoha_close(konoha_t konoha);
-extern int konoha_main(konoha_t konoha, int argc, const char **argv);
-extern void knh_beginContext(CTX, void **bottom);
-extern void knh_endContext(CTX);
-#define BEGIN_CONTEXT(_ctx) knh_beginContext(_ctx, (void**)&_ctx)
-#define END_CONTEXT(_ctx) knh_endContext(_ctx)
+extern kbool_t konoha_load(konoha_t konoha, const char *scriptfile);
+extern kbool_t konoha_eval(konoha_t konoha, const char *script, kline_t uline);
+extern kbool_t konoha_run(konoha_t konoha);  // TODO
+
 extern void MODEVAL_init(CTX, kcontext_t *ctx);
 extern void kpromap_free(CTX, struct kvsarray_t *p);
 extern void kpromap_reftrace(CTX, struct kvsarray_t *p);

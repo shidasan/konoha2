@@ -51,7 +51,7 @@ static void loadData(CTX, kKonohaSpace *ns, const char *dname, Object *value)
 		kcid_t cid = CLASS_Tdynamic;
 		if(loc != -1) {
 			cid = knh_KonohaSpace_getcid(_ctx, ns, knh_bytes_first(n, loc));
-			if(cid == CLASS_UNknown) {
+			if(cid == TY_unknown) {
 				KNH_LOG("unknown class constant: %s", dname);
 				cid = CLASS_Tdynamic;
 			}

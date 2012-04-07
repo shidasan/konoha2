@@ -1778,11 +1778,11 @@ static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
 	/* if */
 	lbELSE = EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbELSE, espidx);
 	/* then */
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_THEN, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_BLOCK, K_NULLBLOCK));
 	ASM_JMP(_ctx, lbEND);
 	/* else */
 	ASM_LABEL(_ctx, lbELSE);
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_ELSE, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_else, K_NULLBLOCK));
 	/* endif */
 	ASM_LABEL(_ctx, lbEND);
 }

@@ -2,10 +2,15 @@
 extern "C" {
 #endif
 
-/* upcast(o) */
-static KMETHOD Object_opUPCAST(CTX, ksfp_t *sfp _RIX)
+/* String */
+static KMETHOD Object_toString(CTX, ksfp_t *sfp _RIX)
 {
-	RETURN_(sfp[0].o);
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	O_ct(sfp[0].o)->p(_ctx, sfp, 0, &wb, 0);
+	kString* s = new_kString(kwb_top(&wb, 1), kwb_size(&wb), 0);
+	kwb_free(&wb);
+	RETURN_(s);
 }
 
 //## @Const method Boolean Boolean.opNOT();
@@ -81,7 +86,6 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 }
 
 //## @Const method String Int.toString();
-/* Int to String */
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
 	char buf[40];
@@ -89,19 +93,20 @@ static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
 }
 
-//## @Const method String Int.toString();
+//## @Const method String String.toInt();
 static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_((kint_t)strtoll(S_text(sfp[0].s), NULL, 10));
 }
 
-//## @Const method String Boolean.toString();
-static KMETHOD Boolean_toString(CTX, ksfp_t *sfp _RIX)
-{
-	kbool_t b = sfp[0].bvalue;
-	const char *s[] = {"false", "true"};
-	RETURN_(new_kString(s[b], strlen(s[b]), SPOL_ASCII));
-}
+////## @Const method String Boolean.toString();
+// sorry ide. it isn't necessary
+//static KMETHOD Boolean_toString(CTX, ksfp_t *sfp _RIX)
+//{
+//	kbool_t b = !!(sfp[0].bvalue);
+//	const char *s[] = {"false", "true"};
+//	RETURN_(new_kString(s[b], strlen(s[b]), SPOL_ASCII));
+//}
 
 //## method void System.p(@Coercion String msg);
 static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)

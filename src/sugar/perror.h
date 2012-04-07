@@ -214,7 +214,7 @@ static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *te
 //
 //static kExpr* ERROR_TokenUndefined(CTX, kToken *tk, const char *whatis, kcid_t cid)
 //{
-//	if(cid != CLASS_UNknown) {
+//	if(cid != TY_unknown) {
 //		kerror(_ctx, ERR_, tk->uline, tk->lpos, _("undefined %s: %T.%O"), whatis, cid, tk);
 //	}
 //	else {

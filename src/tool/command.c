@@ -31,109 +31,112 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <konoha2/klib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-///* getopt.h */
-//extern char *optarg;
-//extern int   optind, opterr;
-//
-//static const char HELPMSG[] = ""
-//"usage: konoha [options]  [file | -]\n"
-//"options and arguments (and corresponding environment variables):\n"
-//"-c file : compile and verification only (never running)\n"
-//"-h      : print this help message and exit (also --help)\n"
-//"-i file : invoke interactive shell after running script\n"
-//"-l file : logging to file\n"
-//"-V      : show version and sysinfo and exit (also --version)\n"
-//"file    : program read from script file\n"
-//"-       : program read from stdin\n"
-//"\n"
-//"\n";
-//
-//static int isCompileOnly = 0;
-//static int isInteractiveMode = 0;
-//static FILE *stdlog = NULL;
-//
-//static void opt_l(char *shortname)
-//{
-//	const char *mode = "w";
-//	if(shortname == NULL) {
-//		shortname = "konoha.log";
-//		mode = "a";
-//	}
-//	stdlog = fopen(shortname, mode);
-//	if(stdlog == NULL) {
-//		fprintf(stderr, "cannot open logfile: %s\n", shortname);
-//		exit(1);
-//	}
-//}
-//
-//static void opt_v(void)
-//{
-//	fprintf(stdout, "konoha2-%dbit", ((int)sizeof(void*)*8));
-//	exit(0);
-//}
-//
-////void knh_closelog(void)
-////{
-////	if(stdlog != stderr) {
-////		fflush(stdlog);
-////		fclose(stdlog);
-////		stdlog = stderr;
-////	}
-////}
-//
-//
-//int parse_opt(int argc, char *argv[])
-//{
-//	int c, index = 0;
-//	static struct option options[] = {
-//		//{"compile", required_argument, 0, 'l'},
-//		{"logfile", optional_argument, 0, 'l'},
-//		{"version", no_argument,       0, 'V'},
-//		{"help",    no_argument,       0, 'h'},
-//		{0,         0,                 0,  0 }
-//	};
-//
-//
-//	while (1) {
-//		c = getopt_long(argc, argv, "ci:l:Vh", options, &index);
-//		if (c == -1)
-//			break;
-//
-//		switch (c) {
-//		case 'c':
-//			isCompileOnly = 1;
-//			break;
-//		case 'i':
-//			isInteractiveMode = 1;
-//			break;
-//		case 'l':
-//			opt_l(optarg);
-//			break;
-//		case 'V':
-//			opt_v();
-//			break;
-//		case 'h':
-//		default:
-//			fprintf(stdout, HELPMSG);
-//			exit(0);
-//		}
-//	}
-//	//fprintf(stderr, "%d\n", optind);
-//	return optind;
-//}
-
-// -------------------------------------------------------------------------
-// keval
-
 kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline);
 kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
 
-/* ------------------------------------------------------------------------ */
+// -------------------------------------------------------------------------
+// getopt
+
+static int verbose_flag     = 0;
+static int compileonly_flag = 0;
+static int interactive_flag = 0;
+static const char* startup_script = NULL;
+static const char* test_script = NULL;
+
+static struct option long_options[] = {
+	/* These options set a flag. */
+	{"verbose", no_argument, &verbose_flag, 1},
+	{"verbose:gc", no_argument, &verbose_flag, 1},
+	{"verbose:sugar", no_argument, &verbose_flag, 1},
+	{"verbose:vm", no_argument, &verbose_flag, 1},
+	{"interactive", no_argument,   0, 'i'},
+	{"typecheck",   no_argument,   0, 'c'},
+	{"start-with", required_argument, 0, 'S'},
+	{"test-with",   required_argument, 0, 'T'},
+	{NULL, 0, 0, 0},
+};
+
+static int konoha_ginit(int argc, char **argv)
+{
+	if(getenv("KONOHA_DEBUG") != NULL) {
+		konoha_debug = 1;
+	}
+	while (1) {
+		int option_index = 0;
+		int c = getopt_long (argc, argv, "icI:S:", long_options, &option_index);
+		if (c == -1) break; /* Detect the end of the options. */
+		switch (c) {
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (long_options[option_index].flag != 0)
+				break;
+			printf ("option %s", long_options[option_index].name);
+			if (optarg)
+				printf (" with arg %s", optarg);
+			printf ("\n");
+			break;
+
+		case 'c':
+			compileonly_flag = 1;
+			break;
+
+		case 'i':
+			interactive_flag = 1;
+			break;
+
+		case 'S':
+			DUMP_P ("option --start-with `%s'\n", optarg);
+			startup_script = optarg;
+			break;
+
+		case 'T':
+			DUMP_P ("option --test-with `%s'\n", optarg);
+			test_script = optarg;
+			break;
+
+		case '?':
+			/* getopt_long already printed an error message. */
+			break;
+
+		default:
+			abort ();
+		}
+	}
+	if(!(optind < argc)) {
+		interactive_flag = 1;
+	}
+	return optind;
+}
+
+// -------------------------------------------------------------------------
+// startup
+
+void konoha_startup(konoha_t konoha, const char *startup_script)
+{
+	char buf[256];
+	char *path = getenv("KONOHA_SCRIPTPATH"), *local = "";
+	if(path == NULL) {
+		path = getenv("KONOHA_HOME");
+		local = "/script";
+	}
+	if(path == NULL) {
+		path = getenv("HOME");
+		local = "/.konoha2/script";
+	}
+	snprintf(buf, sizeof(buf), "%s%s/%s.k", path, local, startup_script);
+	if(!konoha_load(konoha, (const char*)buf)) {
+		exit(1);
+	}
+}
+
+// -------------------------------------------------------------------------
+// minishell
 
 static char *(*kreadline)(const char *);
 static int  (*kadd_history)(const char *);
@@ -245,30 +248,35 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 	return status;
 }
 
-void MODEVAL_dumpEval(CTX, kwb_t *wb);
+static void MODEVAL_dumpEval(CTX, kwb_t *wb)
+{
+	kstack_t *base = _ctx->stack;
+	ktype_t ty = base->evalty;
+	if(ty != TY_void) {
+		ksfp_t *lsfp = base->stack + base->evalidx;
+		CT_(ty)->p(_ctx, lsfp, 0, wb, KP_DUMP);
+		fflush(stdout);
+		fprintf(stdout, "TY=%s EVAL=%s\n", T_cid(ty), kwb_top(wb,1));
+	}
+}
 
 static void shell(CTX)
 {
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	kline_t uline = FILEID_("(shell)") | 1;
-	void *handler = dlopen("libreadline" K_OSDLLEXT, RTLD_LAZY);
-	void *f = (handler != NULL) ? dlsym(handler, "readline") : NULL;
-	kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;
-	f = (handler != NULL) ? dlsym(handler, "add_history") : NULL;
-	kadd_history = (f != NULL) ? (int (*)(const char*))f : add_history;
-	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d,%s)\n", K_REVISION, __DATE__);
-	fprintf(stdout, "[gcc %s]\n", __VERSION__);
 	while(1) {
-		kstatus_t status = readstmt(_ctx, &wb, &uline);
+		kline_t inc = 0;
+		kstatus_t status = readstmt(_ctx, &wb, &inc);
 		if(status == K_CONTINUE && kwb_size(&wb) > 0) {
-			status = MODEVAL_eval(_ctx, kwb_top(&wb, 1), kwb_size(&wb), uline);
+			status = konoha_eval((konoha_t)_ctx, kwb_top(&wb, 1), uline);
+			uline += inc;
+			kwb_free(&wb);
 			if(status != K_FAILED) {
-				kwb_free(&wb);
 				MODEVAL_dumpEval(_ctx, &wb);
+				kwb_free(&wb);
 			}
 		}
-		kwb_free(&wb);
 		if(status == K_BREAK) {
 			break;
 		}
@@ -278,43 +286,161 @@ static void shell(CTX)
 	return;
 }
 
-int konoha_main(konoha_t konoha, int argc, const char **argv)
+static void show_version(CTX)
 {
-	int ret = 0;
-	//int i, ret = 0, n = knh_parseopt(_ctx, argc, argv);
-	//argc = argc - n;
-	//argv = argv + n;
-	if(argc == 1) {
-		shell((CTX_t)konoha);
-	}
-	else {
-		if(MODEVAL_loadscript((CTX_t)konoha, argv[1], strlen(argv[1]), 0) == K_CONTINUE/* && !knh_isCompileOnly(_ctx)*/) {
-			//ret = knh_runMain(_ctx, argc, argv);
-			//if(isInteractiveMode) {
-			//	konoha_shell(_ctx, NULL);
-			//}
+	int i;
+	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d, %s)\n", K_REVISION, __DATE__);
+	fprintf(stdout, "[gcc %s]\n", __VERSION__);
+	fprintf(stdout, "options:");
+	for(i = 0; i < K_PKGMATRIX; i++) {
+		if(_ctx->modshare[i] != NULL) {
+			fprintf(stdout, " %s", _ctx->modshare[i]->name);
 		}
 	}
+	fprintf(stdout, "\n");
+}
+
+int konoha_shell(konoha_t konoha)
+{
+	void *handler = dlopen("libreadline" K_OSDLLEXT, RTLD_LAZY);
+	void *f = (handler != NULL) ? dlsym(handler, "readline") : NULL;
+	kreadline = (f != NULL) ? (char* (*)(const char*))f : readline;
+	f = (handler != NULL) ? dlsym(handler, "add_history") : NULL;
+	kadd_history = (f != NULL) ? (int (*)(const char*))f : add_history;
+	show_version((CTX_t)konoha);
+	shell((CTX_t)konoha);
+	return 1;
+}
+
+// -------------------------------------------------------------------------
+// test
+
+static FILE *stdlog;
+static void Kreport(CTX, int level, const char *msg)
+{
+	fflush(stdlog);
+	fputs(" - ", stdlog);
+	fputs(msg, stdlog);
+	fputs("\n", stdlog);
+}
+
+static const char *T_ERR(int level)
+{
+	switch(level) {
+	case CRIT_:
+	case ERR_/*ERROR*/: return "(error) ";
+	case WARN_/*WARNING*/: return "(warning) ";
+	case INFO_/*INFO, NOTICE*/: return "(info) ";
+	case PRINT_: return "";
+	default/*DEBUG*/: return "(debug) ";
+	}
+}
+
+static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
+{
+	if(level == DEBUG_ && !konoha_debug) return;
+	va_list ap;
+	va_start(ap , fmt);
+	fflush(stdlog);
+	if(pline != 0) {
+		const char *file = T_file(pline);
+		fprintf(stdlog, " - (%s:%d) %s" , shortname(file), (kushort_t)pline,
+				T_ERR(level));
+	}
+	else {
+		fprintf(stdlog, " - %s" , T_ERR(level));
+	}
+	vfprintf(stdlog, fmt, ap);
+	fprintf(stdlog, "\n");
+	va_end(ap);
+	if(level == CRIT_) {
+		kraise(0);
+	}
+}
+
+static int check_result(FILE *fp0, FILE *fp1)
+{
+	char buf0[128];
+	char buf1[128];
+	while (true) {
+		size_t len0, len1;
+		len0 = fread(buf0, 1, sizeof(buf0), fp0);
+		len1 = fread(buf1, 1, sizeof(buf1), fp1);
+		if (len0 != len1) {
+			return 1;//FAILED
+		}
+		if (len0 == 0) {
+			break;
+		}
+		if (memcmp(buf0, buf1, len0) != 0) {
+			return 1;//FAILED
+		}
+	}
+	return 0; //OK
+}
+
+int konoha_test(const char *testname)
+{
+	konoha_t konoha = konoha_open();
+	if(startup_script != NULL) {
+		konoha_startup(konoha, startup_script);
+	}
+	int ret = 0;//OK
+	char script_file[256];
+	char correct_file[256];
+	char result_file[256];
+	snprintf(script_file, 256, "%s", testname);
+	snprintf(correct_file, 256, "%s.correct", script_file);
+	snprintf(result_file, 256, "%s.tested", script_file);
+	FILE *fp = fopen(correct_file, "r");
+	if (fp == NULL) {
+		stdlog = fopen(correct_file, "w");   // create correct file
+	}
+	else {
+		stdlog = fopen(result_file, "w");
+	}
+	konoha->lib2->Kreport  = Kreport;
+	konoha->lib2->Kreportf = Kreportf;
+	konoha_load(konoha, script_file);
+	fclose(stdlog);
+	if(fp != NULL) {
+		FILE *fp2 = fopen(result_file, "r");
+		ret = check_result(fp, fp2);
+		if(ret != 0) {
+			fprintf(stdout, "[FAILED]: %s\n", testname);
+		}
+		fclose(fp);
+		fclose(fp2);
+	}
+	konoha_close(konoha);
+	MODGC_check_malloced_size();
 	return ret;
 }
 
 // -------------------------------------------------------------------------
 // ** main **
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
-	int ret = 0;
-	if(getenv("KONOHA_DEBUG") != NULL) {
-		konoha_debug = 1;
+	kbool_t ret = 1;
+	int scriptidx = konoha_ginit(argc, argv);
+	if(test_script != NULL) {
+		return konoha_test(test_script);
 	}
-	konoha_ginit(argc, argv);
 	konoha_t konoha = konoha_open();
-	BEGIN_CONTEXT(konoha);
-	ret = konoha_main(konoha, argc, argv);
-	END_CONTEXT(konoha);
+	if(startup_script != NULL) {
+		konoha_startup(konoha, startup_script);
+	}
+	if(scriptidx < argc) {
+//		konoha_setargument(konoha, argc - scriptidx, argv + scriptidx);
+		ret = konoha_load(konoha, argv[scriptidx]);
+	}
+	if(ret && interactive_flag) {
+		ret = konoha_shell(konoha);
+	}
 	konoha_close(konoha);
 	MODGC_check_malloced_size();
-	return ret;
+	return ret ? 0: 1;
 }
 
 #ifdef __cplusplus

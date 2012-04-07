@@ -42,12 +42,15 @@ extern "C" {
 
 void MODCODE_init(CTX, kcontext_t *ctx);
 void MODEVAL_init(CTX, kcontext_t *ctx);
+kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
+kstatus_t MODEVAL_eval(CTX, const char *script, kline_t uline);
+void MODEVAL_defMethods(CTX);
 
 /* ------------------------------------------------------------------------ */
 
 #define IS_ROOTCTX(o)  (_ctx == (CTX_t)o)
 
-static void klogger_init(CTX, kcontext_t *ctx)
+static void MODLOG_init(CTX, kcontext_t *ctx)
 {
 #ifdef K_USING_LOGPOOL
 	logpool_syslog_param pa = {8, 1024};
@@ -69,7 +72,7 @@ static void klogger_init(CTX, kcontext_t *ctx)
 #endif
 }
 
-static void klogger_free(CTX, kcontext_t *ctx)
+static void MODLOG_free(CTX, kcontext_t *ctx)
 {
 #ifdef K_USING_LOGPOOL
 	ltrace_close((ltrace_t*)_ctx->logger);
@@ -77,16 +80,7 @@ static void klogger_free(CTX, kcontext_t *ctx)
 }
 
 // -------------------------------------------------------------------------
-// ** util **
-
-
-// -------------------------------------------------------------------------
-// ** global **
-
-void konoha_ginit(int argc, const char **argv)
-{
-
-}
+// util stack
 
 static void konoha_init(void)
 {
@@ -96,12 +90,12 @@ static void konoha_init(void)
 	}
 }
 
-void knh_beginContext(CTX, void **bottom)
+static void knh_beginContext(CTX, void **bottom)
 {
 	_ctx->stack->cstack_bottom = bottom;
 }
 
-void knh_endContext(CTX)
+static void knh_endContext(CTX)
 {
 	_ctx->stack->cstack_bottom = NULL;
 }
@@ -115,6 +109,7 @@ static void kstack_init(CTX, kcontext_t *ctx, size_t n)
 	kstack_t *base = (kstack_t*)KNH_ZMALLOC(sizeof(kstack_t));
 	base->stacksize = n;
 	base->stack = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t)*n);
+	assert(n>64);
 	base->stack_uplimit = base->stack + (n - 64);
 	for(i = 0; i < n; i++) {
 		KINITv(base->stack[i].o, K_NULL);
@@ -141,6 +136,9 @@ static void kstack_reftrace(CTX, kcontext_t *ctx)
 
 static void kstack_free(CTX, kcontext_t *ctx)
 {
+	if(_ctx->stack->evaljmpbuf != NULL) {
+		KNH_FREE(_ctx->stack->evaljmpbuf, sizeof(kjmpbuf_t));
+	}
 	KARRAY_FREE(_ctx->stack->cwb, char);
 	KARRAY_FREE(_ctx->stack->ref, REF_t);
 	KNH_FREE(_ctx->stack->stack, sizeof(ksfp_t) * ctx->stack->stacksize);
@@ -183,8 +181,6 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 // modshare[128] mod[128]
 // keval
 
-void MODEVAL_defMethods(CTX);
-
 static kcontext_t* new_context(const kcontext_t *_ctx)
 {
 	kcontext_t *newctx;
@@ -199,7 +195,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->lib2 = klib2;
 		_ctx = (CTX_t)newctx;
 
-		klogger_init(_ctx, newctx);
+		MODLOG_init(_ctx, newctx);
 		MODGCSHARE_init(_ctx, newctx);
 		kshare_init(_ctx, newctx);
 		newctx->modshare = (kmodshare_t**)KNH_ZMALLOC(sizeof(kmodshare_t*) * K_PKGMATRIX);
@@ -210,7 +206,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->memshare = _ctx->memshare;
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
-		klogger_init(_ctx, newctx);
+		MODLOG_init(_ctx, newctx);
 	}
 	//MODGC_init(_ctx, newctx);
 	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
@@ -279,14 +275,20 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 		kshare_free(_ctx, ctx);
 		MODGCSHARE_free(_ctx, ctx);
 		MODGC_free(_ctx, ctx);
-		klogger_free(_ctx, ctx);
+		MODLOG_free(_ctx, ctx);
 		free(klib2/*, sizeof(klib2_t) + sizeof(kcontext_t)*/);
 	}
 	else {
-		klogger_free(_ctx, ctx);
+		MODLOG_free(_ctx, ctx);
 		KNH_FREE(ctx, sizeof(kcontext_t));
 	}
 }
+
+/* ------------------------------------------------------------------------ */
+/* konoha api */
+
+#define BEGIN_(_ctx) knh_beginContext(_ctx, (void**)&_ctx)
+#define END_(_ctx)   knh_endContext(_ctx)
 
 konoha_t konoha_open(void)
 {
@@ -298,6 +300,24 @@ void konoha_close(konoha_t konoha)
 {
 	kcontext_free((CTX_t)konoha, (kcontext_t*)konoha);
 }
+
+kbool_t konoha_load(konoha_t konoha, const char *scriptname)
+{
+	BEGIN_(konoha);
+	kbool_t res = (MODEVAL_loadscript((CTX_t)konoha, scriptname, strlen(scriptname), 0) == K_CONTINUE);
+	END_(konoha);
+	return res;
+}
+
+kbool_t konoha_eval(konoha_t konoha, const char *script, kline_t uline)
+{
+	BEGIN_(konoha);
+	kbool_t res = (MODEVAL_eval((CTX_t)konoha, script, uline) == K_CONTINUE);
+	END_(konoha);
+	return res;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

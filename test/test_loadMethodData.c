@@ -43,7 +43,6 @@ void test_KloadMethodData(CTX)
 
 int main(int argc, const char *argv[])
 {
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     test_KloadMethodData(konoha);
     konoha_close(konoha);

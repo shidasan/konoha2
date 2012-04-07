@@ -88,7 +88,6 @@ void test_getMethod(CTX)
 
 int main(int argc, const char *argv[])
 {
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     init_test(konoha);
     test_getMethod(konoha);

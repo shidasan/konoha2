@@ -116,7 +116,7 @@ kcid_t knh_KonohaSpace_getFuncClass(CTX, kKonohaSpace *ns, kmethodn_t mn)
 //			goto L_TAIL;
 //		}
 //	}
-	return CLASS_UNknown; /* if not found */
+	return TY_unknown; /* if not found */
 }
 
 ktype_t knh_KonohaSpace_gettype(CTX, kKonohaSpace *ns, kbytes_t name)
@@ -485,7 +485,7 @@ static int StmtUSINGCLASS_eval(CTX, kStmtExpr *stmt, size_t n)
 			kwb_putc(cwb->ba, '.');
 			knh_Bytes_write(_ctx, cwb->ba, S_tobytes(cname));
 			newcid = knh_getcid(_ctx, CWB_tobytes(cwb));
-			if(newcid == CLASS_UNknown) {
+			if(newcid == TY_unknown) {
 				KSETv((tkPKG)->data, CWB_newString(_ctx, cwb, SPOL_ASCII));
 				CWB_close(_ctx, cwb);
 				goto L_ERROR;
@@ -657,10 +657,10 @@ Object *knh_KonohaSpace_getConstNULL(CTX, kKonohaSpace *ns, kbytes_t name)
 static void CONST_decl(CTX, kStmtExpr *stmt)
 {
 	kTerm *tkN = tkNN(stmt, 0), *tkRES = NULL;
-	kcid_t cid = knh_Term_cid(_ctx, tkN, CLASS_UNknown);
+	kcid_t cid = knh_Term_cid(_ctx, tkN, TY_unknown);
 	kKonohaSpace *ns = K_GMANS;
 	Object *value = knh_KonohaSpace_getConstNULL(_ctx, ns, TK_tobytes(tkN));
-	if(cid != CLASS_UNknown || value != NULL) {
+	if(cid != TY_unknown || value != NULL) {
 		WARN_AlreadyDefined(_ctx, "const", UPCAST(tkN));
 		knh_Stmt_done(_ctx, stmt);
 		return;
@@ -788,7 +788,7 @@ static kclass_t *CLASSNAME_decl(CTX, kStmtExpr *stmt, kTerm *tkC, kTerm *tkE)
 	knh_Bytes_write(_ctx, cwb->ba, TK_tobytes(tkC));
 	kcid_t cid = knh_getcid(_ctx, CWB_tobytes(cwb));
 	kclass_t *ct = NULL;
-	if(cid == CLASS_UNknown) {  // new class //
+	if(cid == TY_unknown) {  // new class //
 		cid = new_ClassId(_ctx);
 		ct = varClassTBL(cid);
 		knh_setClassName(_ctx, cid, CWB_newString(_ctx, cwb, SPOL_ASCII), (tkC)->text);
@@ -805,8 +805,8 @@ static kclass_t *CLASSNAME_decl(CTX, kStmtExpr *stmt, kTerm *tkC, kTerm *tkE)
 			knh_setClassDef(_ctx, ct, knh_getCppClassDef());
 		}
 		else {
-			ct->supcid = knh_Term_cid(_ctx, tkE, CLASS_UNknown);
-			if(ct->supcid == CLASS_UNknown) {
+			ct->supcid = knh_Term_cid(_ctx, tkE, TY_unknown);
+			if(ct->supcid == TY_unknown) {
 				kStmtExproERR(_ctx, stmt, ERROR_Undefined(_ctx, "class", ct->supcid, tkE));
 				return ct;
 			}

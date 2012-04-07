@@ -1,6 +1,4 @@
 
-
-
-KonohaSpace.defineSyntaxRule("while", "'while' ( $expr ) [$block]");
-KonohaSpace.defineStmtTyCheck("while", "tyCheckWhile");
+Konoha.defineSyntaxRule("while", "'while' ( $expr ) [$block]");
+Konoha.defineStmtTyCheck("while", "tyCheckWhile");
 

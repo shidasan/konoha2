@@ -202,7 +202,7 @@ static int Stmt_addSugarSyntax(CTX, ksyntax_t *syn, kStmt *stmt, ksymbol_t name,
 	KSETv(lsfp[K_CALLDELTA+2].a, tls);
 	lsfp[K_CALLDELTA+3].ivalue = s;
 	lsfp[K_CALLDELTA+4].ivalue = e;
-	KCALL(lsfp, 0, syn->StmtAdd, 4);
+	KCALL(lsfp, 0, syn->StmtAdd, 4, knull(CT_Int));
 	END_LOCAL();
 	return (int)lsfp[0].ivalue;
 }
@@ -297,7 +297,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 	}
 	else if(tk->tt == TK_KEYWORD) {
 		ksyntax_t *syn = KonohaSpace_syntax(_ctx, ks, tk->keyid, 0);
-		if(syn->ty != CLASS_UNknown) {
+		if(syn->ty != TY_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = syn->ty;
 			*next = s + 1;
@@ -305,8 +305,8 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 		}
 	}
 	else if(tk->tt == TK_USYMBOL) {
-		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), CLASS_UNknown);
-		if(ty != CLASS_UNknown) {
+		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), TY_unknown);
+		if(ty != TY_unknown) {
 			tk->tt = TK_TYPE;
 			tk->ty = ty;
 			*next = s + 1;
@@ -316,7 +316,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 	return 0;
 }
 
-static kToken* TokenArray_lookAhead(CTX, kArray *tls, int s, int e)
+static inline kToken* TokenArray_lookAhead(CTX, kArray *tls, int s, int e)
 {
 	return (s < e) ? tls->tts[s] : K_NULLTOKEN;
 }
@@ -330,17 +330,17 @@ static keyword_t Stmt_stmttype(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
 			tk = TokenArray_lookAhead(_ctx, tls, n+1, e);
 			if(tk->tt == AST_PARENTHESIS || (tk->tt == TK_KEYWORD && tk->keyid == KW_DOT)) {
-				DBG_P("Found method decl");
-				return KW_DECLMETHOD;
+				return KW_void; // because void is used in defintion
 			}
-			DBG_P("Found type decl");
-			return KW_DECLTYPE;
+			return KW_COLON;  // : is a typing operator
 		}
 		DBG_P("not tk->tt=%s", T_tt(tk->tt));
 	}
-	kToken *tk = tls->tts[s];
-	if (tk->tt == TK_KEYWORD) {
-		return tk->keyid;
+	else {
+		kToken *tk = tls->tts[s];
+		if (tk->tt == TK_KEYWORD) {
+			return tk->keyid;
+		}
 	}
 	return 1;  // expression
 }
@@ -436,7 +436,7 @@ static kExpr *Stmt_newTerm(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 		if(tn < e) {
 			kToken *tk = new_(Token, TK_KEYWORD);
 			tk->keyid  = KW_COLON; KSETv(tk->text, Skeyword(tk->keyid));
-			return new_ConsExpr(_ctx, SYN_TYPEDECL, 3, tk, Stmt_newExpr(_ctx, stmt, tls, tn, e, next), tkT);
+			return new_ConsExpr(_ctx, SYN_(kStmt_ks(stmt), KW_COLON), 3, tk, Stmt_newExpr(_ctx, stmt, tls, tn, e, next), tkT);
 		}
 		*next = e;
 		return new_TermExpr(_ctx, tkT);
@@ -505,7 +505,7 @@ static kExpr* Stmt_newExprLeft(CTX, kStmt *stmt, kArray *tls, int s, int e, int 
 	while(expr != NULL && i < e) {
 		kToken *tk = tls->tts[i];
 		if(tk->tt == AST_PARENTHESIS) {  // expr (expr, expr)
-			expr = new_ConsExpr(_ctx, SYN_INVOKE, 2, expr, K_NULL);
+			expr = new_ConsExpr(_ctx, SYN_(kStmt_ks(stmt), KW_NAME), 2, expr, K_NULL);
 			expr = Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub));
 			i++;
 			continue;
@@ -541,7 +541,7 @@ static kExpr* Stmt_newExpr(CTX, kStmt *stmt, kArray *tls, int s, int e, int *nex
 			}
 			kExpr *lexpr = Stmt_newExpr(_ctx, stmt, tls, s, idx, NULL);
 			kExpr *rexpr = Stmt_newExpr(_ctx, stmt, tls, idx+1, e, next);
-			if(syn->keyid == KW_DOT && lexpr != NULL && rexpr != NULL && rexpr->syn == SYN_INVOKE) {
+			if(syn->keyid == KW_DOT && lexpr != NULL && rexpr != NULL && rexpr->syn == SYN_(kStmt_ks(stmt), KW_NAME)) {
 				rexpr->syn = SYN_CALL;
 				KSETv(rexpr->consNUL->list[1], lexpr);
 				return rexpr;
@@ -626,7 +626,7 @@ static KMETHOD StmtAdd_params(CTX, ksfp_t *sfp _RIX)
 	kToken *tk = tls->tts[s];
 	if(tk->tt == AST_PARENTHESIS) {
 		INIT_GCSTACK();
-		kExpr *expr = new_ConsExpr(_ctx, SYN_PARAMS, 0);
+		kExpr *expr = new_ConsExpr(_ctx, SYN_(kStmt_ks(stmt), KW_PARAMS), 0);
 		expr = Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub));
 		if(expr != NULL) {
 			dumpExpr(_ctx, 0, 0, expr);

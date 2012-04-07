@@ -78,20 +78,18 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("&&"), .op2 = "*", .priority_op2 = 1024, .right = 1, },
 		{ TOKEN("||"), .op2 = "*", .priority_op2 = 2048, .right = 1, },
 		{ TOKEN("!"),  .op1 = "opNOT", },
-		{ TOKEN(":"), .priority_op2 = 3072, },
+		{ TOKEN(":"), .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
 		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$cname '.'] $name $params [$block]", .TopStmtTyCheck = StmtTyCheck_declMethod},
-		{ TOKEN("var"),  .type = TY_var, .rule ="$type $expr", .StmtTyCheck = StmtTyCheck_declType},
+		{ TOKEN("var"),  .type = TY_var, .rule ="$type $expr", },
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		//	{ TOKEN("dynamic"), .type = TY_dynamic, },
 		{ TOKEN("null"), .ExprTyCheck = TokenTyCheck_NULL,},
 		{ TOKEN("true"),  .ExprTyCheck = TokenTyCheck_TRUE,},
 		{ TOKEN("false"), .ExprTyCheck = TokenTyCheck_FALSE,},
-		{ TOKEN("if"), .rule ="'if' '(' $expr ')' then: $block ['else' else: $block]", .TopStmtTyCheck = StmtTyCheck_if, .StmtTyCheck = StmtTyCheck_if, },
-		{ TOKEN("else"), .rule = "'else' else: $block" },
-//		{ TOKEN("break"), .rule ="'break' [$expr]", .StmtTyCheck = StmtTyCheck_nop },
+		{ TOKEN("if"), .rule ="'if' '(' $expr ')' $block ['else' else: $block]", .TopStmtTyCheck = StmtTyCheck_if, .StmtTyCheck = StmtTyCheck_if, },
+		{ TOKEN("else"), .rule = "'else' $block" },
 		{ TOKEN("return"), .rule ="'return' [$expr]", .StmtTyCheck = StmtTyCheck_return, },
 		{ TOKEN("$SYMBOL"), .keyid = KW_TK(TK_SYMBOL), .ExprTyCheck = TokenTyCheck_SYMBOL, },
 		{ TOKEN("$USYMBOL"), .keyid = KW_TK(TK_USYMBOL), .ExprTyCheck = TokenTyCheck_USYMBOL, },
@@ -124,9 +122,8 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 	return result;
 }
 
-kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline)
+kstatus_t MODEVAL_eval(CTX, const char *script, kline_t uline)
 {
-	DBG_ASSERT(script[len] == 0);
 	if(konoha_debug) {
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
 	}
@@ -153,7 +150,6 @@ static void kevalmod_free(CTX, struct kmod_t *baseh)
 {
 	kevalmod_t *base = (kevalmod_t*)baseh;
 	KARRAY_FREE(base->cwb, char);
-	KNH_FREE(base->evaljmpbuf, sizeof(kjmpbuf_t));
 	KNH_FREE(base, sizeof(kevalmod_t));
 }
 
@@ -172,10 +168,6 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 		KINITv(base->singleBlock, new_(Block, NULL));
 		kArray_add(base->singleBlock->blockS, K_NULL);
 		KARRAY_INIT(base->cwb, K_PAGESIZE, char);
-		base->iseval = 0;
-		base->evalty = TY_void;
-		base->evalidx = 0;
-		base->evaljmpbuf = (kjmpbuf_t*)KNH_ZMALLOC(sizeof(kjmpbuf_t));
 		_ctx->mod[MOD_EVAL] = (kmod_t*)base;
 	}
 }
@@ -240,26 +232,22 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->cGamma = kaddClassDef(NULL, &GammaDef, 0);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
-	KINITv(base->nullToken, new_(Token, NULL));
-	kObject_setNullObject(base->nullToken, 1);
-	KINITv(base->nullExpr, new_(Expr, NULL));
-	kObject_setNullObject(base->nullExpr,  1);
-	KINITv(base->nullBlock, new_(Block, NULL));
-	kObject_setNullObject(base->nullBlock,  1);
-
+	knull(base->cToken);
+	knull(base->cExpr);
+	knull(base->cBlock);
 	KINITv(base->aBuffer, new_(Array, 0));
 
 	defineDefaultSyntax(_ctx, base->rootks);
+	DBG_ASSERT(KW_("$params") == KW_PARAMS);
+	DBG_ASSERT(KW_(".") == KW_DOT);
+	DBG_ASSERT(KW_(",") == KW_COMMA);
+	DBG_ASSERT(KW_("void") == KW_void);  // declmethod
+	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
+//	base->kw_then =       KW_("then");
+//	base->kw_else =       KW_("else");
 
-	base->kw_dot = KW_(".");
-	base->kw_comma = KW_(",");
-	base->kw_colon = KW_(":");
-	base->kw_declmethod = KW_("void");
-	base->kw_decltype = KW_("var");
-	base->kw_type   = KW_("$type");
-	base->kw_params = KW_("$params");
-	base->kw_then = KW_("then");
-	base->kw_else = KW_("else");
+	base->syn_err  = SYN_(base->rootks, KW_ERR);
+	base->syn_expr = SYN_(base->rootks, KW_EXPR);
 
 	// export
 	base->keyword             = keyword;
@@ -427,14 +415,14 @@ static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t
 		const char *script = kwb_top(&wb, 1);
 		size_t len = kwb_size(&wb);
 		if(isemptychunk(script, len)) {
-			status = MODEVAL_eval(_ctx, script, len, chunkheadline);
+			status = MODEVAL_eval(_ctx, script, /*len, */chunkheadline);
 		}
 		if(status != K_CONTINUE) break;
 		kwb_free(&wb);
 	}
 	kwb_free(&wb);
 	if(status != K_CONTINUE) {
-		kreportf(WARN_, pline, "script is failed, status=%d", status);
+		kreportf(ERR_, pline, "running script is failed: %s", T_file(uline));
 	}
 	return status;
 }

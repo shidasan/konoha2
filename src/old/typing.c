@@ -459,10 +459,10 @@ static kcid_t TermPT_cid(CTX, kTerm *tk, kcid_t bcid)
 
 kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 {
-	kcid_t cid = CLASS_UNknown;
+	kcid_t cid = TY_unknown;
 	switch(TT_(tk)) {
 		case TT_CID : {
-			DBG_ASSERT((tk)->cid != CLASS_UNknown);
+			DBG_ASSERT((tk)->cid != TY_unknown);
 			return (tk)->cid;
 		}
 		case TT_VAR : case TT_ASIS: {
@@ -506,8 +506,8 @@ kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 		case TT_PTYPE: {
 			DBG_ASSERT(IS_Array((tk)->list));
 			kTerm *tkC = tk->list->terms[0];
-			kcid_t bcid = knh_Term_cid(_ctx, tkC, CLASS_UNknown);
-			if(bcid != CLASS_UNknown && C_isGenerics(bcid)) {
+			kcid_t bcid = knh_Term_cid(_ctx, tkC, TY_unknown);
+			if(bcid != TY_unknown && C_isGenerics(bcid)) {
 				cid = TermPT_cid(_ctx, tk, bcid);
 			}
 			else {
@@ -519,13 +519,13 @@ kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 
 		}
 	}
-	if(cid == CLASS_UNknown && reqt != CLASS_UNknown) {
+	if(cid == TY_unknown && reqt != TY_unknown) {
 		cid = reqt;
 		if(reqt != TY_var) {
 			WarningUnknownClass(_ctx, tk, cid);
 		}
 	}
-	if(TT_(tk) != TT_CID && cid != CLASS_UNknown) {
+	if(TT_(tk) != TT_CID && cid != TY_unknown) {
 		kTermoCID(_ctx, tk, cid);
 	}
 	return cid;
@@ -534,8 +534,8 @@ kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 static kTerm *TT_typing(CTX, kTerm *tk, ktype_t reqt)
 {
 	kcid_t cid = knh_Term_cid(_ctx, tk, reqt);
-	if(cid == CLASS_UNknown) {
-		return ERROR_Undefined(_ctx, "name", CLASS_UNknown, tk);
+	if(cid == TY_unknown) {
+		return ERROR_Undefined(_ctx, "name", TY_unknown, tk);
 	}
 	return tk;
 }
@@ -893,7 +893,7 @@ static kTerm *TNAME_typing(CTX, kTerm *tkN, ktype_t reqt, kflag_t op)
 		kKonohaSpace *ns = K_GMANS;
 		kcid_t this_cid = DP(_ctx->gma)->this_cid;
 		kcid_t mtd_cid = knh_KonohaSpace_getFuncClass(_ctx, ns, fnq);
-		if(mtd_cid != CLASS_UNknown) {
+		if(mtd_cid != TY_unknown) {
 			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, mtd_cid, fnq);
 			if(!Method_isStatic(mtd)) mtd = NULL;
 		}
@@ -919,7 +919,7 @@ static kTerm *TNAME_typing(CTX, kTerm *tkN, ktype_t reqt, kflag_t op)
 		}
 	}
 	if(FLAG_is(op, _TOERROR)) {
-		return ERROR_Undefined(_ctx, "variable", CLASS_UNknown, tkN);
+		return ERROR_Undefined(_ctx, "variable", TY_unknown, tkN);
 	}
 	return NULL;
 }
@@ -978,15 +978,15 @@ static kTerm* Term_toSYSVAL(CTX, kTerm *tk)
 		Term_setCONST(_ctx, tk, TS_END);
 	}
 	else {
-		return ERROR_Undefined(_ctx, "name", CLASS_UNknown, tk);
+		return ERROR_Undefined(_ctx, "name", TY_unknown, tk);
 	}
 	return tk;
 }
 
 static kTerm* TUNAME_typing(CTX, kTerm *tk)
 {
-	kcid_t cid = knh_Term_cid(_ctx, tk, CLASS_UNknown);
-	if(cid != CLASS_UNknown) {
+	kcid_t cid = knh_Term_cid(_ctx, tk, TY_unknown);
+	if(cid != TY_unknown) {
 		return kTermoCID(_ctx, tk, cid);
 	}
 	else {
@@ -1078,7 +1078,7 @@ static kcid_t kTermagcNUM(CTX, kTerm *tk, kcid_t reqc, kKonohaSpace *ns)
 	}
 	else {
 		kcid_t tagc = kKonohaSpaceagcid(_ctx, ns, reqc, tag);
-		if(tagc == CLASS_UNknown) {
+		if(tagc == TY_unknown) {
 			knh_GammaBuilder_perror(_ctx, tk, KC_DWARN, _("unknown class tag: %L"), tk);
 			return reqc;
 		}
@@ -1223,7 +1223,7 @@ static kcid_t bytes_CFMT(kbytes_t t)
 			//case 's': return CLASS_String;
 		}
 	}
-	return CLASS_UNknown;
+	return TY_unknown;
 }
 
 static kmethodn_t bytes_parsemn(CTX, kbytes_t t)
@@ -1252,7 +1252,7 @@ static kTerm *W1_typing(CTX, kStmtExpr *stmt)
 		WARN_TooMany(_ctx, "parameters", fmt.text);
 		kStmtExprrimToSize(_ctx, stmt, 3);
 	}
-	if(cid != CLASS_UNknown) {  // "%4d"(1), not "%d"(1)
+	if(cid != TY_unknown) {  // "%4d"(1), not "%d"(1)
 		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, cid, MN_format);
 		DBG_ASSERT(mtd != NULL);
 		Term_setCONST(_ctx, tkNN(stmt, 1), (tkFMT)->data);
@@ -1440,7 +1440,7 @@ static kTerm* TURN_typing(CTX, kTerm *tk, kcid_t reqt)
 		kString *path = (tk)->text;
 		const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 		if(ct == NULL) {
-			return ERROR_Undefined(_ctx, "link", CLASS_UNknown, tk);
+			return ERROR_Undefined(_ctx, "link", TY_unknown, tk);
 		}
 		if(TT_(tk) != TT_URN) {  // this is necessary for exists URN;
 			return Term_toCONST(_ctx, tk);
@@ -1464,7 +1464,7 @@ static kTerm* TLINK_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	kString *path = (tkLNK)->text;
 	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 	if(ct == NULL) {
-		return ERROR_Undefined(_ctx, "link", CLASS_UNknown, tkLNK);
+		return ERROR_Undefined(_ctx, "link", TY_unknown, tkLNK);
 	}
 	if(TT_(tkNN(stmt, 2)) == TT_ASIS) {
 		Term_setCONST(_ctx, tkNN(stmt, 2), tkLNK->data);
@@ -1476,7 +1476,7 @@ static kTerm* TLINK_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 		reqt = ct->cid;
 	}
 	kcid_t cid = knh_ClassTBL_linkType(_ctx, ct, reqt);
-	if(cid != CLASS_UNknown) {
+	if(cid != TY_unknown) {
 		DBG_ASSERT(DP(stmt)->size == 3);
 		STT_(stmt) = STT_CALL;
 		Term_setMethod(_ctx, tkNN(stmt, 0), MN_opLINK, knh_KonohaSpace_getMethodNULL(_ctx, ns, CLASS_String, MN_opLINK));
@@ -2279,7 +2279,7 @@ static kTerm* CALLPARAMs_typing(CTX, kStmtExpr *stmt, ktype_t tcid, kcid_t new_c
 	kParam *pa = DP(mtd)->mp;
 	ktype_t rtype = ktype_tocid(_ctx, knh_Param_rtype(pa), new_cid);
 	if(rtype == TY_var && DP(_ctx->gma)->mtd == mtd) {
-		return ERROR_Unsupported(_ctx, "type inference of recursive calls", CLASS_UNknown, NULL);
+		return ERROR_Unsupported(_ctx, "type inference of recursive calls", TY_unknown, NULL);
 	}
 	Stmt_typed(_ctx, stmt, rtype);
 	for(i = 0; i < pa->psize; i++) {
@@ -2429,7 +2429,7 @@ static kTerm* CALL_typing(CTX, kStmtExpr *stmt, kcid_t tcid)
 	kcid_t mtd_cid = CLASS_Object;
 	DBG_ASSERT(TT_(tkO) != TT_ASIS);
 	if(MN_isNEW(mn)) { /* reported by Maeda */
-		return ERROR_Unsupported(_ctx, "calling new as method", CLASS_UNknown, NULL);
+		return ERROR_Unsupported(_ctx, "calling new as method", TY_unknown, NULL);
 	}
 	TYPING_UntypedExpr(_ctx, stmt, 1);
 	if(Tn_isCID(stmt, 1)) {
@@ -2698,7 +2698,7 @@ static kTerm* FUNCDYNCALL_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	}
 	knh_Param_addReturnType(_ctx, pa, (reqt == TY_var) ? T_dyn : reqt);
 	cid = knh_class_Generics(_ctx, CLASS_Func, pa);
-	DBG_ASSERT(cid != CLASS_UNknown);
+	DBG_ASSERT(cid != TY_unknown);
 	if(IS_String(tkNN(stmt,0)->text)) {
 		INFO_Typing(_ctx, "function ", S_tobytes(tkNN(stmt,0)->text), cid);
 	}
@@ -2752,7 +2752,7 @@ static kTerm* func_typingNULL(CTX, kStmtExpr *stmt, kcid_t reqt)
 	kMethod *mtd = NULL;
 
 	/* 3. static function in namespace */
-	if(mtd_cid != CLASS_UNknown) {
+	if(mtd_cid != TY_unknown) {
 		mtd = knh_KonohaSpace_getMethodNULL(_ctx, K_GMANS, mtd_cid, mn);
 		if(mtd != NULL) {
 			kTermoTYPED(_ctx, tkNN(stmt, 1), TT_NULL, mtd_cid, mtd_cid);
@@ -2934,7 +2934,7 @@ static kTerm* NEW_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 		return NEWMAP_typing(_ctx, stmt, reqt);
 	}
 
-	kcid_t new_cid = CLASS_UNknown;
+	kcid_t new_cid = TY_unknown;
 	if(TT_(tkC) == TT_ASIS) { /* new () */
 		if(reqt == T_dyn) {
 			return ERROR_Needs(_ctx, "class");
@@ -2942,9 +2942,9 @@ static kTerm* NEW_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 		new_cid = CLASS_t(reqt);
 	}
 	else {
-		new_cid = knh_Term_cid(_ctx, tkC, CLASS_UNknown);
+		new_cid = knh_Term_cid(_ctx, tkC, TY_unknown);
 	}
-	if(new_cid == CLASS_UNknown) { /* new UnknownClass(...) */
+	if(new_cid == TY_unknown) { /* new UnknownClass(...) */
 		if(reqt == T_dyn) {
 			return ERROR_UndefinedName(_ctx, tkC);
 		}
@@ -3109,7 +3109,7 @@ static kcid_t OPEQ_bcid(CTX, kStmtExpr *stmt)
 	if(bcid2 == cid1) return bcid2;
 	if(bcid1 == CLASS_Float && bcid2 == CLASS_Int) return cid1;
 	if(bcid2 == CLASS_Float && bcid1 == CLASS_Int) return cid2;
-	return CLASS_UNknown;
+	return TY_unknown;
 }
 
 kmethodn_t TT_toMN(kterm_t tt);
@@ -3234,7 +3234,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 			goto L_LOOKUPMETHOD;
 		}
 		mtd_cid = OPEQ_bcid(_ctx, stmt);
-		if(mtd_cid == CLASS_UNknown) {
+		if(mtd_cid == TY_unknown) {
 			return ErrorComparedDiffrentType(_ctx, Tn_type(stmt, 1), Tn_type(stmt, 2));
 		}
 		goto L_LOOKUPMETHOD;
@@ -3242,7 +3242,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 	case MN_opGT: case MN_opGTE: case MN_opLT: case MN_opLTE:
 	{
 		mtd_cid = OPEQ_bcid(_ctx, stmt);
-		if(mtd_cid == CLASS_UNknown) {
+		if(mtd_cid == TY_unknown) {
 			return ErrorComparedDiffrentType(_ctx, Tn_type(stmt, 1), Tn_type(stmt, 2));
 		}
 		goto L_LOOKUPMETHOD;
@@ -3359,7 +3359,7 @@ static kTerm* SEND_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 
 static kTerm* ACALL_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 {
-	return ERROR_Unsupported(_ctx, "actor", CLASS_UNknown, NULL);
+	return ERROR_Unsupported(_ctx, "actor", TY_unknown, NULL);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -3415,7 +3415,7 @@ static kTerm *new_TermTCAST(CTX, kcid_t tcid, kTypeMap *tmr, kTerm *tkO)
 static kTerm* TCAST_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 {
 	kcid_t scid, tcid;
-	kTerm *tkC = TT_typing(_ctx, tkNN(stmt, 0), CLASS_UNknown);
+	kTerm *tkC = TT_typing(_ctx, tkNN(stmt, 0), TY_unknown);
 	kTypeMap *tmr = NULL;
 	if(TT_(tkC) == TT_ERR) return tkC;
 	tcid = (tkC)->cid;
@@ -3596,7 +3596,7 @@ static kTerm* RETURN_typing(CTX, kStmtExpr *stmt)
 	else { /* size > 0 */
 		TYPING_TypedExpr(_ctx, stmt, 0, rtype);
 		if(rtype == TY_void) {
-			WARN_Ignored(_ctx, "return value", CLASS_UNknown, NULL);
+			WARN_Ignored(_ctx, "return value", TY_unknown, NULL);
 			kStmtExprrimToSize(_ctx, stmt, 0);
 		}
 //		else {
@@ -3686,7 +3686,7 @@ static kTerm* FUNCTION_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	kStmtExpr *stmtP = stmtNN(stmt, 1);
 	kStmtExpr *stmtB = stmtNN(stmt, 3);
 	if(DP(_ctx->gma)->funcbase0 > 0) {
-		return ERROR_Unsupported(_ctx, "nested function", CLASS_UNknown, NULL);
+		return ERROR_Unsupported(_ctx, "nested function", TY_unknown, NULL);
 	}
 	kMethod *mtd = new_Method(_ctx, 0, DP(_ctx->gma)->this_cid, MN_, NULL);
 	kParam *mp = new_Param(_ctx);
@@ -3805,7 +3805,7 @@ static kTerm* EXPR_typing(CTX, kStmtExpr *stmt, kcid_t tcid)
 		CASE_EXPR(TRI, stmt, tcid);
 		CASE_EXPR(FUNCTION, stmt, tcid);
 	default:
-		return ERROR_Unsupported(_ctx, "expression", CLASS_UNknown, Stmt__((stmt)));
+		return ERROR_Unsupported(_ctx, "expression", TY_unknown, Stmt__((stmt)));
 	}
 }
 
@@ -3814,7 +3814,7 @@ static kTerm* EXPR_typing(CTX, kStmtExpr *stmt, kcid_t tcid)
 
 static kTerm* YIELD_typing(CTX, kStmtExpr *stmt)
 {
-	return ERROR_Unsupported(_ctx, "statement", CLASS_UNknown, "yield");
+	return ERROR_Unsupported(_ctx, "statement", TY_unknown, "yield");
 }
 
 static kTerm* Stmt_toBLOCK(CTX, kStmtExpr *stmt, size_t n)
@@ -4011,7 +4011,7 @@ static kTerm* FOREACH1_typing(CTX, kStmtExpr *stmt)
 	kStmtExpr *stmtDECL = stmtNN(stmt, 0);
 //	if(IS_StmtExpr(stmtDECL)) {
 	BEGIN_BLOCK(stmt, esp);
-	kcid_t itrcid = CLASS_UNknown;
+	kcid_t itrcid = TY_unknown;
 	kTerm *tkT = TT_typing(_ctx, tkNN(stmtDECL, 0), TY_var);
 	kTerm *tkN = tkNN(stmtDECL, 1);
 	ksymbol_t fn = Term_fn(_ctx, tkN);
@@ -4056,7 +4056,7 @@ static kTerm* FOREACH_typing(CTX, kStmtExpr *stmt)
 		return FOREACH1_typing(_ctx, stmt);
 	}
 	else {
-		return ERROR_Unsupported(_ctx, "multi variable iteration", CLASS_UNknown, NULL);
+		return ERROR_Unsupported(_ctx, "multi variable iteration", TY_unknown, NULL);
 	}
 }
 
@@ -4264,7 +4264,7 @@ L_CheckScope:;
 			knh_Param_addReturnType(_ctx, mp, rtype);
 		}
 		if(knh_StmtMETA_is(_ctx, stmtM, "Around")) {
-			WARN_Ignored(_ctx, "annotation", CLASS_UNknown, "@Around");
+			WARN_Ignored(_ctx, "annotation", TY_unknown, "@Around");
 		}
 	}
 	else {  // overriding method
@@ -4341,7 +4341,7 @@ L_CheckScope:;
 	}
 	if(knh_StmtMETA_is(_ctx, stmtM, "Iterative")) {
 		if(DP(mtd)->mp->psize != 0) {
-			return ERROR_Unsupported(_ctx, "parameterized iterative method", CLASS_UNknown, NULL);
+			return ERROR_Unsupported(_ctx, "parameterized iterative method", TY_unknown, NULL);
 		}
 	}
 	if(isDynamic == 1) {
@@ -4409,7 +4409,7 @@ static knh_Fmethod loadTypeMapFunc(CTX, kcid_t scid, kcid_t tcid)
 
 static kTerm* TYPEMAP_typing(CTX, kStmtExpr *stmt)
 {
-	kTerm *tkT = TT_typing(_ctx, tkNN(stmt, 1), CLASS_UNknown);
+	kTerm *tkT = TT_typing(_ctx, tkNN(stmt, 1), TY_unknown);
 	kTerm *tkS = DECLFIRST_typing(_ctx, stmtNN(stmt, 2));
 	if(TT_(tkT) == TT_ERR) return tkT;
 	if(TT_(tkS) == TT_ERR) return tkS;
@@ -4671,7 +4671,7 @@ static kTerm* CLASS_typing(CTX, kStmtExpr *stmt)
 				CASE_STMT(FORMAT, stmtFIELD);
 				case STT_DONE: case STT_DECL: case STT_LET: case STT_ERR: break;
 				default: {
-					WARN_Ignored(_ctx, "statement", CLASS_UNknown, TT__(STT_(stmtFIELD)));
+					WARN_Ignored(_ctx, "statement", TY_unknown, TT__(STT_(stmtFIELD)));
 					knh_Stmt_done(_ctx, stmtFIELD);
 				}
 			}

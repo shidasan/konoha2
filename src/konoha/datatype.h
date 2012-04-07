@@ -30,7 +30,7 @@ static void DEFAULT_free(CTX, kRawPtr *o)
 
 static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	kwb_printf(wb, "%s:&%p", T_cid(O_cid(sfp[pos].o)), sfp[pos].o);
+	kwb_printf(wb, "&%p(:%s)", sfp[pos].o, T_cid(O_cid(sfp[pos].o)));
 }
 
 static uintptr_t DEFAULT_UNbox(CTX, kObject *o)
@@ -48,7 +48,6 @@ static const kclass_t* DEFAULT_realtype(CTX, const kclass_t* c, const kclass_t *
 	return c;
 }
 
-
 static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
 {
 	DBG_ASSERT(ct->nulvalNUL != NULL);
@@ -58,6 +57,7 @@ static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
 static kObject* DEFAULT_fnullinit(CTX, const kclass_t *ct)
 {
 	assert(ct->nulvalNUL == NULL);
+	DBG_P("creating new nulval for %s", T_CT(ct));
 	KINITv(((kclass_t*)ct)->nulvalNUL, new_kObject(ct, 0));
 	kObject_setNullObject(ct->nulvalNUL, 1);
 	((kclass_t*)ct)->fnull = DEFAULT_fnull;
@@ -133,20 +133,19 @@ static const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body
 
 static void CT_setName(CTX, kclass_t *ct, kline_t pline);
 
-static const kclass_t *CT_T(CTX, const kclass_t *ct, kushort_t optvalue)
-{
-	const kclass_t *bct = ct;
-	while(ct->optvalue != optvalue) {
-		if(ct->simbody == NULL) {
-			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
-			newct->optvalue = optvalue;
-//			CT_setName(_ctx, newct, new_kStringf(SPOL_ASCII|SPOL_POOL, "%d", (int)optvalue), NOPLINE);
-			((kclass_t*)ct)->simbody = (const kclass_t*)newct;
-		}
-		ct = ct->simbody;
-	}
-	return ct;
-}
+//static const kclass_t *CT_T(CTX, const kclass_t *ct, kushort_t optvalue)
+//{
+//	const kclass_t *bct = ct;
+//	while(ct->optvalue != optvalue) {
+//		if(ct->simbody == NULL) {
+//			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
+//			newct->optvalue = optvalue;
+//			((kclass_t*)ct)->simbody = (const kclass_t*)newct;
+//		}
+//		ct = ct->simbody;
+//	}
+//	return ct;
+//}
 
 //static const kclass_t *CT_P(CTX, const kclass_t *ct, ktype_t p1, ktype_t p2)
 //{
@@ -280,11 +279,17 @@ static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
 }
 
+static kObject* Boolean_fnull(CTX, const kclass_t *ct)
+{
+	return (kObject*)K_FALSE;
+}
+
 static KDEFINE_CLASS BooleanDef = {
 	CLASSNAME(Boolean),
 	.init = Boolean_init,
 	.unbox = Number_unbox,
 	.p    = Boolean_p,
+	.fnull = Boolean_fnull,
 };
 
 // Int
@@ -709,10 +714,8 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	KINITv(share->emptyString, new_(String, NULL));
 	KINITv(share->emptyArray, new_(Array, 0));
 	FILEID_("(konoha.c)");
-	int n = PN_("konoha");    // PN_konoha
-	DBG_P("PN_konoha=%d, %s", n, T_PN(n));
-	n = PN_("sugar");     // PKG_sugar
-	DBG_P("PN_sugar=%d, %s", n, T_PN(n));
+	PN_("konoha");    // PN_konoha
+	PN_("sugar");     // PKG_sugar
 	initStructData(_ctx);
 }
 
@@ -805,6 +808,7 @@ static void kshare_init_methods(CTX)
 {
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
+		_Public|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
 		_Public, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
 		_Public, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
@@ -819,7 +823,7 @@ static void kshare_init_methods(CTX)
 		_Public, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
 		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
 		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
-		_Public|_Const, _F(Boolean_toString), TY_String, TY_Boolean, MN_to(TY_String), 0,
+//		_Public|_Const, _F(Boolean_toString), TY_String, TY_Boolean, MN_to(TY_String), 0,
 		_Public, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};

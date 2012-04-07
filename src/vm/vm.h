@@ -207,9 +207,16 @@ struct kKonohaCode {
 
 #define PC_NEXT(pc)   pc+1
 
+#define OPEXEC_CHKSTACK(UL) \
+	if(unlikely(_ctx->esp > _ctx->stack->stack_uplimit)) {\
+		kreportf(CRIT_, UL, "stack overflow");\
+	}\
+
+
 #define OPEXEC_CALL(UL, THIS, espshift, CTO) { \
 		kMethod *mtd_ = rbp[THIS+K_MTDIDX2].mtdNC;\
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
+		OPEXEC_CHKSTACK(UL);\
 		rbp = rshift(rbp, THIS);\
 		rbp[K_ULINEIDX2-1].o = CTO;\
 		rbp[K_ULINEIDX2].uline = UL;\
@@ -222,6 +229,7 @@ struct kKonohaCode {
 #define OPEXEC_VCALL(UL, THIS, espshift, mtdO, CTO) { \
 		kMethod *mtd_ = mtdO;\
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
+		OPEXEC_CHKSTACK(UL);\
 		rbp = rshift(rbp, THIS);\
 		rbp[K_ULINEIDX2-1].o = CTO;\
 		rbp[K_ULINEIDX2].uline = UL;\

@@ -348,36 +348,62 @@ struct kGamma {
 #define IS_Block(O)  ((O)->h.ct == CT_Block)
 #define IS_Gamma(O)  ((O)->h.ct == CT_Gamma)
 
-#define K_NULLTOKEN  kevalshare->nullToken
-#define K_NULLEXPR   kevalshare->nullExpr
-#define K_NULLBLOCK  kevalshare->nullBlock
-
-#define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
-#define KW_EXPR     1
-#define KW_BLOCK    2
-#define KW_TYPE     kevalshare->kw_type
-#define KW_DOT      kevalshare->kw_dot
-#define KW_COMMA    kevalshare->kw_comma
-#define KW_COLON    kevalshare->kw_colon
-#define KW_DECLMETHOD  kevalshare->kw_declmethod
-#define KW_DECLTYPE    kevalshare->kw_decltype
-#define KW_PARAMS      kevalshare->kw_params
-#define KW_THEN        kevalshare->kw_then
-#define KW_ELSE        kevalshare->kw_else
+#define K_NULLTOKEN  (kToken*)((CT_Token)->nulvalNUL)
+#define K_NULLEXPR   (kExpr*)((CT_Expr)->nulvalNUL)
+#define K_NULLBLOCK  (kBlock*)((CT_Block)->nulvalNUL)
 
 #define TK_SHIFT    10000
 #define KW_TK(N)    (((keyword_t)N)+TK_SHIFT)
 
+#define KW_ERR     0
+#define KW_EXPR    1
+#define KW_BLOCK   2
+#define KW_TYPE    3
+#define KW_CNAME   4
+#define KW_NAME    5
+#define KW_PARAMS  6
+
+#define KW_DOT     7
+#define KW_DIV     (1+KW_DOT)
+#define KW_MOD     (2+KW_DOT)
+#define KW_MUL     (3+KW_DOT)
+#define KW_ADD     (4+KW_DOT)
+#define KW_SUB     (5+KW_DOT)
+#define KW_LT      (6+KW_DOT)
+#define KW_LTE     (7+KW_DOT)
+#define KW_GT      (8+KW_DOT)
+#define KW_GTE     (9+KW_DOT)
+#define KW_EQ      (10+KW_DOT)
+#define KW_NEQ     (11+KW_DOT)
+#define KW_AND     (12+KW_DOT)
+#define KW_OR      (13+KW_DOT)
+#define KW_NOT     (14+KW_DOT)
+#define KW_COLON   (15+KW_DOT)
+#define KW_LET     (16+KW_DOT)
+#define KW_COMMA   (17+KW_DOT)
+
+#define KW_void      (18+KW_DOT)
+#define KW_var       (1+KW_void)
+#define KW_boolean   (2+KW_void)
+#define KW_int       (3+KW_void)
+#define KW_null      (4+KW_void)
+#define KW_true      (5+KW_void)
+#define KW_false     (6+KW_void)
+#define KW_if        (7+KW_void)
+#define KW_else      (8+KW_void)
+#define KW_return    (9+KW_void)
+
+
 #define SYN_ERR      kevalshare->syn_err
 #define SYN_EXPR     kevalshare->syn_expr
-#define SYN_CALL     kevalshare->syn_call
-#define SYN_INVOKE   kevalshare->syn_invoke
-#define SYN_PARAMS   kevalshare->syn_params
-#define SYN_RETURN   kevalshare->syn_return
-#define SYN_BREAK    kevalshare->syn_break
-#define SYN_TYPEDECL kevalshare->syn_typedecl
-#define SYN_COMMA    kevalshare->syn_comma
-#define SYN_LET      kevalshare->syn_let
+#define SYN_CALL     kevalshare->syn_expr
+//#define SYN_INVOKE   kevalshare->syn_invoke
+//#define SYN_PARAMS   kevalshare->syn_params
+//#define SYN_RETURN   kevalshare->syn_return
+//#define SYN_BREAK    kevalshare->syn_break
+//#define SYN_TYPEDECL kevalshare->syn_typedecl
+//#define SYN_COMMA    kevalshare->syn_comma
+//#define SYN_LET      kevalshare->syn_let
 
 #define FN_this      FN_("this")
 
@@ -401,19 +427,19 @@ typedef struct {
 	struct kKonohaSpace         *rootks;
 	struct kArray         *aBuffer;
 
-	struct kToken *nullToken;
-	struct kExpr  *nullExpr;
-	struct kBlock *nullBlock;
+//	struct kToken *nullToken;
+//	struct kExpr  *nullExpr;
+//	struct kBlock *nullBlock;
 
-	keyword_t kw_dot;
-	keyword_t kw_comma;
-	keyword_t kw_colon;
-	keyword_t kw_declmethod;
-	keyword_t kw_decltype;
-	keyword_t kw_params;
-	keyword_t kw_type;
-	keyword_t kw_then;
-	keyword_t kw_else;
+//	keyword_t kw_dot;
+//	keyword_t kw_comma;
+//	keyword_t kw_colon;
+//	keyword_t kw_declmethod;
+//	keyword_t kw_decltype;
+//	keyword_t kw_params;
+//	keyword_t kw_type;
+//	keyword_t kw_then;
+//	keyword_t kw_else;
 
 	struct ksyntax_t *syn_err;
 	struct ksyntax_t *syn_expr;
@@ -457,11 +483,11 @@ typedef struct {
 	struct kGamma *gma;
 	struct kArray *lvarlst;
 	struct kArray *definedMethods;
-	kshort_t iseval;
-	ktype_t evalty;
-	int     evalidx;
-	kjmpbuf_t* evaljmpbuf;
-	kflag_t flags;
+//	kshort_t iseval;
+//	ktype_t evalty;
+//	int     evalidx;
+//	kjmpbuf_t* evaljmpbuf;
+//	kflag_t flags;
 } kevalmod_t;
 
 #define TPOL_NOCHECK              1
@@ -469,6 +495,9 @@ typedef struct {
 #define TPOL_COERCION       (1 << 2)
 
 #ifdef USING_SUGAR_AS_BUILTIN
+
+#define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
+#define SYN_(KS, KW)                KonohaSpace_syntax(_ctx, KS, KW, 0)
 
 #define kStmt_token(STMT, KW, DEF)  Stmt_token(_ctx, STMT, KW, DEF)
 #define kStmt_expr(STMT, KW, DEF)   Stmt_expr(_ctx, STMT, KW, DEF)
@@ -493,6 +522,10 @@ typedef struct {
 #define TY_Block                             _e->cBlock->cid
 #define TY_Expr                              _e->cExpr->cid
 #define TY_Gamma                             _e->cGamma->cid
+
+#define KW_(T)                               _e->keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
+#define SYN_(KS, KW)                         _e->KonohaSpace_syntax(_ctx, KS, KW, 0)
+
 #define kStmt_token(STMT, KW, DEF)           _e->Stmt_token(_ctx, STMT, KW, DEF)
 #define kStmt_expr(STMT, KW, DEF)            _e->Stmt_expr(_ctx, STMT, KW, DEF)
 #define kStmt_text(STMT, KW, DEF)            _e->Stmt_text(_ctx, STMT, KW, DEF)

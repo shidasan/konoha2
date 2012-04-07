@@ -58,7 +58,6 @@ void test_mtd_load(CTX)
 
 int main(int argc, const char *argv[])
 {
-    konoha_ginit(argc, argv);
     konoha_t konoha = konoha_open();
     test_module_load(konoha);
     test_classdef_load(konoha);

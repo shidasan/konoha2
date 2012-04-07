@@ -34,7 +34,7 @@ static void KonohaSpace_init(CTX, kRawPtr *o, void *conf)
 	kKonohaSpace *ks = (kKonohaSpace*)o;
 	bzero(&ks->parentNULL, sizeof(kKonohaSpace) - sizeof(kObjectHeader));
 	ks->parentNULL = conf;
-	ks->static_cid = CLASS_UNknown;
+	ks->static_cid = TY_unknown;
 	ks->function_cid = TY_System;
 }
 
@@ -276,7 +276,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, in
 		}
 		else {
 			syn->keyid = keyid;
-			syn->ty  = CLASS_UNknown;
+			syn->ty  = TY_unknown;
 			syn->op1 = 0; /*MN_NONAME;*/
 			syn->op2 = 0; /*MN_NONAME;*/
 		}
@@ -362,17 +362,15 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 		syndef++;
 	}
 	// update
-	kevalshare_t *base = kevalshare;
-	base->syn_err  = KonohaSpace_syntax(_ctx, base->rootks, 0, 0);
-	base->syn_expr = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
-	base->syn_call = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
-	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
-	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
-	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
-//	base->syn_break  = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
-	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
-	base->syn_comma    = KonohaSpace_syntax(_ctx, base->rootks, KW_(","), 0);
-	base->syn_let      = KonohaSpace_syntax(_ctx, base->rootks, KW_("="), 0);
+//	kevalshare_t *base = kevalshare;
+//	base->syn_call = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
+//	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
+//	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
+//	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
+////	base->syn_break  = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
+//	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
+//	base->syn_comma    = KonohaSpace_syntax(_ctx, base->rootks, KW_(","), 0);
+//	base->syn_let      = KonohaSpace_syntax(_ctx, base->rootks, KW_("="), 0);
 }
 
 // KonohaSpace
@@ -427,7 +425,7 @@ static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kme
 static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *ks, kmethodn_t mn)
 {
 	while(ks != NULL) {
-		if(ks->static_cid != CLASS_UNknown) {
+		if(ks->static_cid != TY_unknown) {
 			kMethod *mtd = kKonohaSpace_getMethodNULL(ks, ks->static_cid, mn);
 			if(mtd != NULL && kMethod_isStatic(mtd)) {
 				return mtd;
@@ -795,7 +793,8 @@ static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 	if(expr == NULL) {
 		expr = new_(Expr, 0);
 	}
-	DBG_ASSERT(expr->dataNUL == NULL);
+	//DBG_ASSERT(expr->dataNUL == NULL);
+	expr->dataNUL = NULL; // cons NUL is used in context of constant folding
 	expr->build = TEXPR_NCONST;
 	expr->ndata = ndata;
 	expr->ty = ty;
