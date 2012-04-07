@@ -396,7 +396,7 @@ typedef kushort_t       kmethodn_t;
 #define CLASS_UNknown              ((kcid_t)-2)
 
 #define CT_(t)              (_ctx->share->ca.ClassTBL[t])
-#define TY_iS_UNbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
+#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
 
 //#define TY_T0             ((ktype_t)KFLAG_H2)
 //#define TY_This           TY_T0
@@ -565,7 +565,7 @@ typedef struct kclass_t {
 #define CT_iS_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClasS_UNDEF))
 #define CT_setUNDEF(ct, B)    TFLAG_set(kflag_t, (ct)->cflag, kClasS_UNDEF, B)
 
-//#define TY_iS_UNboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClasS_UNboxType))
+//#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClasS_UNboxType))
 //#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
 //#define T_isTypeVar(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_TypeVar))
 

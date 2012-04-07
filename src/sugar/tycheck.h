@@ -157,7 +157,7 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 	}
 	KCALL(lsfp, 0, mtd, psize);
 	END_LOCAL();
-	if(TY_iS_UNbox(rtype) || rtype == TY_void) {
+	if(TY_isUnbox(rtype) || rtype == TY_void) {
 		return kExpr_setNConstValue(expr, rtype, lsfp[0].ndata);
 	}
 	return kExpr_setConstValue(expr, rtype, lsfp[0].o);
@@ -215,7 +215,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 		}
 		if(CT_isa(_ctx, texpr->ty, req_ty)) {
 			DBG_P("SUBTYPE type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
-			if(TY_iS_UNbox(texpr->ty) && !TY_iS_UNbox(req_ty)) {
+			if(TY_isUnbox(texpr->ty) && !TY_isUnbox(req_ty)) {
 				DBG_P("BOXING type=%s, req_ty=%s", T_ty(expr->ty), T_ty(req_ty));
 				return new_BoxingExpr(_ctx, expr, req_ty);
 			}
@@ -227,7 +227,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t req_ty, int po
 			kExpr *exprCAST = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
 			return ExprCall_tycheckParams(_ctx, exprCAST, gma, req_ty);
 		}
-		return K_NULLEXPR;
+		return Expr_p(_ctx, texpr, ERR_, "not requested type %s", T_ty(texpr->ty));
 	}
 	return texpr;
 }
@@ -272,6 +272,7 @@ static KMETHOD TokenTyCheck_TEXT(CTX, ksfp_t *sfp _RIX)
 static KMETHOD TokenTyCheck_NULL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, gma, req_ty);
+	DBG_P("typing null as %s", T_ty(req_ty));
 	if(req_ty == TY_var) req_ty = CLASS_Object;
 	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, 0, gma));
 }
@@ -372,7 +373,6 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 	RETURN_(texpr);
 }
 
-
 static ktype_t ktype_var(CTX, ktype_t ty, kcid_t cid)
 {
 	return ty;
@@ -395,7 +395,7 @@ static kExpr *ExprCall_tycheckParams(CTX, kExpr *expr, kGamma *gma, ktype_t req_
 	kExpr *expr1 = cons->exprs[1];
 	ktype_t cid = expr1->ty;
 	DBG_ASSERT(IS_Method(mtd) && cid != TY_var);
-	if(!TY_iS_UNbox(mtd->cid) && TY_iS_UNbox(cid)) {
+	if(!TY_isUnbox(mtd->cid) && TY_isUnbox(cid)) {
 		expr1 = new_BoxingExpr(_ctx, cons->exprs[1], cid);
 		KSETv(cons->exprs[1], expr1);
 	}
@@ -586,6 +586,7 @@ static kbool_t Stmt_TyCheck(CTX, kMethod *mtd, kStmt *stmt, kGamma *gma)
 	KSETv(lsfp[K_CALLDELTA+1].o, (kObject*)gma);
 	KCALL(lsfp, 0, mtd, 1);
 	END_LOCAL();
+	DBG_P("result=%d", lsfp[0].bvalue);
 	return lsfp[0].bvalue;
 }
 
@@ -595,7 +596,6 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 	for(i = 0; i < kArray_size(bk->blockS); i++) {
 		kStmt *stmt = (kStmt*)bk->blockS->list[i];
 		ksyntax_t *syn = stmt->syn;
-		//DBG_P("i=%d, syn=%p", i, syn);
 		dumpStmt(_ctx, stmt);
 		if(syn == NULL) continue;
 		int estart = kerrno;
@@ -607,6 +607,7 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 		}
 		else if(!Stmt_TyCheck(_ctx, mtd, stmt, gma)) {
 			kStmt_toERR(stmt, estart);
+			kGamma_setERROR(gma, 1);
 		}
 		if(stmt->syn == SYN_ERR) {
 			result = 0;
@@ -614,7 +615,6 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 		}
 	}
 	if(bk != K_NULLBLOCK) {
-		//DBG_P("bk=%p esp=%p ty=%s", bk, bk->esp, T_cid(bk->esp->ty));
 		kExpr_setVariable(bk->esp, TEXPR_BLOCKLOCAL_, TY_void, gma->genv->l.varsize, 0, gma);
 	}
 	if(lvarsize < gma->genv->l.varsize) {
@@ -639,17 +639,17 @@ static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 		kBlock *bkElse = kStmt_block(stmt, KW_ELSE, K_NULLBLOCK);
 		if(exprCond->build == TEXPR_NCONST) {
 			if(exprCond->ndata) {
-				Block_tyCheckAll(_ctx, bkThen, gma);
+				r = Block_tyCheckAll(_ctx, bkThen, gma);
 				Stmt_toBlockStmt(_ctx, stmt, bkThen);
 			}
 			else {
-				Block_tyCheckAll(_ctx, bkElse, gma);
+				r = Block_tyCheckAll(_ctx, bkElse, gma);
 				Stmt_toBlockStmt(_ctx, stmt, bkElse);
 			}
 		}
 		else {
-			Block_tyCheckAll(_ctx, bkThen, gma);
-			Block_tyCheckAll(_ctx, bkElse, gma);
+			r = Block_tyCheckAll(_ctx, bkThen, gma);
+			r = r & Block_tyCheckAll(_ctx, bkElse, gma);
 			stmt->build = TSTMT_IF;
 		}
 	}
@@ -728,35 +728,39 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 {
 	DBG_ASSERT(IS_Expr(expr));
 	if(Expr_isTerm(expr)) {
-		ksymbol_t fn = FN_NONAME;
-		return (Token_checkVariableSymbol(_ctx, expr->tkNUL, &fn) && Expr_declLocalVariable(_ctx, expr, gma, ty, fn));
-	}
-	else {
-		if(expr->syn == SYN_COMMA) {
-			size_t i;
-			for(i = 1; i < kArray_size(expr->consNUL); i++) {
-				if(!Expr_declType(_ctx, kExpr_at(expr, i), gma, ty, REFstmt)) return false;
-			}
-			return true;
-		}
-		if(expr->syn == SYN_LET) {
-			if(!Expr_declType(_ctx, kExpr_at(expr, 1), gma, ty, REFstmt)) return false;
-			ty = kExpr_at(expr, 1)->ty;
-			DBG_P("declare %s %p", T_ty(ty), expr);
-			if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
-				kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, NULL));
-				Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
-				newstmt->syn = SYN_EXPR;
-				expr->ty     = TY_void;
-				expr->build  = TEXPR_LET;
-				kObject_setObject(newstmt, KW_EXPR, expr);
-				REFstmt[0] = newstmt;
-				return true;
-			}
+		if(REFstmt != NULL) {
+			kExpr_p(expr, ERR_, "initial value is required");
 			return false;
 		}
+		else {
+			ksymbol_t fn = FN_NONAME;
+			return (Token_checkVariableSymbol(_ctx, expr->tkNUL, &fn)
+					&& Expr_declLocalVariable(_ctx, expr, gma, ty, fn));
+		}
 	}
-	kExpr_p(expr, ERR_, "not variable");
+	else if(expr->syn == SYN_LET) {
+		if(!Expr_declType(_ctx, kExpr_at(expr, 1), gma, ty, NULL)) return false;
+		ty = kExpr_at(expr, 1)->ty;
+		DBG_P("declare %s", T_ty(ty));
+		if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
+			kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, NULL));
+			Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
+			newstmt->syn = SYN_EXPR;
+			expr->ty     = TY_void;
+			expr->build  = TEXPR_LET;
+			kObject_setObject(newstmt, KW_EXPR, expr);
+			REFstmt[0] = newstmt;
+			return true;
+		}
+		return false;
+	} else if(expr->syn == SYN_COMMA) {
+		size_t i;
+		for(i = 1; i < kArray_size(expr->consNUL); i++) {
+			if(!Expr_declType(_ctx, kExpr_at(expr, i), gma, ty, REFstmt)) return false;
+		}
+		return true;
+	}
+	kExpr_p(expr, ERR_, "syntax error: not variable");
 	return false;
 }
 
@@ -1091,8 +1095,6 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *k
 		.flag = kGamma_TOPLEVEL,
 		.mtd = mtd,
 		.ks = ks,
-		// FIXME
-		//.this_cid     = (mtd)->cid,
 		.this_cid     = TY_System,
 		.f.vars = fvars, .f.capacity = 32, .f.varsize = 0, .f.allocsize = 0,
 		.l.vars = lvars, .l.capacity = 32, .l.varsize = 0, .l.allocsize = 0,
@@ -1101,7 +1103,8 @@ static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *k
 	Gamma_initIt(_ctx, &newgma, mtd->pa);
 	Block_tyCheckAll(_ctx, bk, gma);
 	Gamma_shiftBlockIndex(_ctx, &newgma);
-	kstatus_t result = Gamma_evalMethod(_ctx, gma, bk, mtd);
+	DBG_P("isERROR=%d", kGamma_isERROR(gma));
+	kstatus_t result = kGamma_isERROR(gma) ? K_BREAK : Gamma_evalMethod(_ctx, gma, bk, mtd);
 	GAMMA_POP(gma, &newgma);
 	return result;
 }

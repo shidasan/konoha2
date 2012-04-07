@@ -37,7 +37,7 @@ static KMETHOD Fmethod_getterP(CTX, ksfp_t *sfp _RIX)
 
 static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
 {
-	knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_ngetter : Fmethod_getter;
+	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_ngetter : Fmethod_getter;
 	kParam *pa = new_kParam(type, 0, NULL);
 	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
 	mtd->delta = idx;
@@ -46,7 +46,7 @@ static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 
 static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
 {
-	knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_nsetter : Fmethod_setter;
+	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_nsetter : Fmethod_setter;
 	kparam_t p = {type, FN_("x")};
 	kParam *pa = new_kParam(type, 1, &p);
 	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
@@ -142,7 +142,7 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	ct->fields[pos].flag = flag;
 	ct->fields[pos].ty = ty;
 	ct->fields[pos].fn = ksymbol(S_text(name), S_size(name), FN_NEWID, SYMPOL_NAME);
-	if(TY_iS_UNbox(ty)) {
+	if(TY_isUnbox(ty)) {
 		ct->nulvalNUL->ndata[pos] = O_unbox(value);
 	}
 	else {

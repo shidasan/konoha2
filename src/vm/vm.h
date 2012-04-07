@@ -283,7 +283,10 @@ struct kKonohaCode {
 #define OPEXEC_SAFEPOINT(RS)   klr_setesp(_ctx, SFP(rshift(rbp, RS)));
 #endif
 
-#define OPEXEC_ERROR(start, msg)
+#define OPEXEC_ERROR(start, msg) {\
+		kreport(ERR_, S_text(msg));\
+		kraise(0);\
+	}\
 
 #define OPEXEC_ERROR2(start, msg) { \
 		kException *e_ = new_Error(_ctx, 0, msg);\

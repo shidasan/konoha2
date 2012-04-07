@@ -85,7 +85,7 @@ extern "C" {
 //
 //static ffi_type* type_ffitype(CTX, ktype_t ptype)
 //{
-//	if(TY_iS_UNbox(ptype)) {
+//	if(TY_isUnbox(ptype)) {
 //		if(IS_Tint(ptype)) {
 //			return &ffi_type_sint64;
 //		}
@@ -212,7 +212,7 @@ extern "C" {
 //
 //static int ffi_rbpidx(CTX, ktype_t ptype, int sfpidx)
 //{
-//	int rbpidx = (TY_iS_UNbox(ptype)) ? 1: 0;
+//	int rbpidx = (TY_isUnbox(ptype)) ? 1: 0;
 //	return rbpidx + (sfpidx) * 2;
 //}
 //
@@ -220,7 +220,7 @@ extern "C" {
 //{
 //	kint_t n;
 //	if(knh_bytes_parseint(t, &n)) {
-//		return ((int)n) * 2 + TY_iS_UNbox(ptype) ? 1 : 0;
+//		return ((int)n) * 2 + TY_isUnbox(ptype) ? 1 : 0;
 //	}
 //	return def;
 //}

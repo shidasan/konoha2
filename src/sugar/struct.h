@@ -225,7 +225,7 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 			kv.svalue = new_kString(d[2], strlen(d[2]), SPOL_TEXT);
 			PUSH_GCSTACK(kv.value);
 		}
-		else if(TY_iS_UNbox(kv.ty)) {
+		else if(TY_isUnbox(kv.ty)) {
 			kv.key = FN_UNBOX(kv.key);
 			kv.uvalue = (uintptr_t)d[2];
 		}
@@ -706,9 +706,9 @@ static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
 	va_list ap;
 	va_start(ap, n);
 	kExpr *expr = new_(Expr, NULL);
+	PUSH_GCSTACK(expr);
 	DBG_ASSERT(syn != NULL);
 	expr->syn = syn;
-	PUSH_GCSTACK(expr);
 	KINITv(expr->consNUL, new_(Array, 8));
 	for(i = 0; i < n; i++) {
 		kObject *v =  (kObject*)va_arg(ap, kObject*);
@@ -779,7 +779,7 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 	//DBG_ASSERT(expr->dataNUL == NULL);
 	expr->dataNUL = NULL;   // consNUL is used in context of constant folding
 	expr->ty = ty;
-	if(TY_iS_UNbox(ty)) {
+	if(TY_isUnbox(ty)) {
 		expr->build = TEXPR_NCONST;
 		expr->ndata = N_toint(o);
 	}

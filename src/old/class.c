@@ -626,7 +626,7 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, const kclass_t *bct, kParam *pa
 	ct->fcapacity = pa->psize;
 	DBLNDATA_(for(i = 0; i < pa->psize; i++) {
 		kparam_t *p = knh_Param_get(pa, i);
-		if(TY_iS_UNbox(p->type)) ct->fcapacity += 1;
+		if(TY_isUnbox(p->type)) ct->fcapacity += 1;
 	})
 	ct->fsize = ct->fcapacity;
 	ct->fields = (kfieldinfo_t*)KNH_ZMALLOC(sizeof(kfieldinfo_t) * ct->fcapacity);
@@ -643,7 +643,7 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, const kclass_t *bct, kParam *pa
 		ct->fields[fi].type = p->type;
 		ct->fields[fi].fn = FN_key;
 		ct->fields[fi].israw = 0;
-		if(TY_iS_UNbox(p->type)) {
+		if(TY_isUnbox(p->type)) {
 			ct->fields[fi].israw = 1;
 			DBLNDATA_(fi++;
 				ct->fields[fi].flag = 0;
@@ -1004,7 +1004,7 @@ static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 	ktype_t rtype = ktype_tocid(_ctx, knh_Param_rtype(DP(mtd)->mp), O_cid(sfp[0].o));
 	//KNH_SYSLOG(_ctx, LOG_NOTICE, "AbstractMethod", "%C.%M", mtd->cid, mtd->mn);
 	if(rtype != TY_void) {
-		if(TY_iS_UNbox(rtype)) {
+		if(TY_isUnbox(rtype)) {
 			RETURNi_(KINT0);
 		}
 		else {
@@ -1109,8 +1109,8 @@ static knh_Fmethod accessors[8] = {
 
 static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
 {
-	//knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_ngetter : Fmethod_getter;
-	knh_Fmethod f = accessors[(TY_iS_UNbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
+	//knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_ngetter : Fmethod_getter;
+	knh_Fmethod f = accessors[(TY_isUnbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
 	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
 	DP(mtd)->delta = idx;
 	KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
@@ -1119,8 +1119,8 @@ static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 
 static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, int idx)
 {
-	//knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_nsetter : Fmethod_setter;
-	knh_Fmethod f = accessors[_SETTER|(TY_iS_UNbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
+	//knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_nsetter : Fmethod_setter;
+	knh_Fmethod f = accessors[_SETTER|(TY_isUnbox(type)?_NDATA:0)|((ClassTBL(cid)->bcid==CLASS_CppObject)?_CPPOBJ:0)];
 	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
 	DP(mtd)->delta = idx;
 	KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, FN_UNMASK(mn)));
@@ -1227,13 +1227,13 @@ static KMETHOD Fmethod_xnsetter(CTX, ksfp_t *sfp _RIX)
 
 void knh_ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, ksymbol_t fn)
 {
-	knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
+	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
 	kMethod *mtd = new_Method(_ctx, 0, ct->cid, (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_toGETTER(fn), f);
 	DP(mtd)->delta = fn;
 	KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
 	knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 
-	f = (TY_iS_UNbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
+	f = (TY_isUnbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
 	mtd = new_Method(_ctx, 0, ct->cid, MN_toSETTER(fn), f);
 	DP(mtd)->delta = fn;
 	KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, fn));
@@ -1247,13 +1247,13 @@ kMethod *knh_KonohaSpace_addXSetter(CTX, kKonohaSpace *ns, const kclass_t *ct, k
 		kmethodn_t mn = (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_toGETTER(fn);
 		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, ct->cid, mn);
 		if(mtd == NULL) {
-			knh_Fmethod f = (TY_iS_UNbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
+			knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
 			mtd = new_Method(_ctx, 0, ct->cid, mn, f);
 			DP(mtd)->delta = fn;
 			KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
 			knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 
-			f = (TY_iS_UNbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
+			f = (TY_isUnbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
 			mtd = new_Method(_ctx, 0, ct->cid, mn_setter, f);
 			DP(mtd)->delta = fn;
 			KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, fn));
@@ -1586,7 +1586,7 @@ KNHAPI2(kTypeMap*) new_TypeMap(CTX, kflag_t flag, kcid_t scid, kcid_t tcid, knh_
 	tmr->scid = scid;
 	tmr->tcid = tcid;
 	tmr->ftypemap_1 = (func == NULL) ? Ftypemap_null : func;
-	if(TY_iS_UNbox(scid)) {
+	if(TY_isUnbox(scid)) {
 		TypeMap_setNDATA(tmr, 1);
 	}
 	return tmr;
@@ -1600,7 +1600,7 @@ KNHAPI2(kTypeMap*) new_TypeMapData(CTX, kflag_t flag, kcid_t scid, kcid_t tcid, 
 	tmr->tcid = tcid;
 	tmr->ftypemap_1 = (func == NULL) ? Ftypemap_null : func;
 	KSETv(tmr->mapdata, mapdata);
-	if(TY_iS_UNbox(scid)) {
+	if(TY_isUnbox(scid)) {
 		TypeMap_setNDATA(tmr, 1);
 	}
 	return tmr;
@@ -1637,7 +1637,7 @@ static TYPEMAP Ftypemap_methodN(CTX, ksfp_t *sfp _RIX)
 kTypeMap *new_TypeMapMethod(CTX, kflag_t flag, kMethod *mtd)
 {
 	kcid_t scid = knh_Param_get(DP(mtd)->mp, 0)->type, tcid = knh_Param_rtype(DP(mtd)->mp);
-	knh_Ftypemap f = TY_iS_UNbox(scid) ? Ftypemap_methodN : Ftypemap_method;
+	knh_Ftypemap f = TY_isUnbox(scid) ? Ftypemap_methodN : Ftypemap_method;
 	kTypeMap *tmr = new_TypeMap(_ctx, flag, scid, tcid, f);
 	KSETv(tmr->mtd, mtd);
 	return tmr;
@@ -1678,11 +1678,11 @@ static kTypeMap *knh_getSubtypeMap(CTX, const kclass_t *sct, const kclass_t *tct
 {
 	knh_Ftypemap f = NULL;
 	if(sct->cid == tct->cid || ClassTBL_isa_(_ctx, sct, tct) || tct->cid == CLASS_Tdynamic) {
-		if(TY_iS_UNbox(sct->cid)) {
-			f = (TY_iS_UNbox(tct->cid)) ? FtypemapN_asis : FtypemapN_box;
+		if(TY_isUnbox(sct->cid)) {
+			f = (TY_isUnbox(tct->cid)) ? FtypemapN_asis : FtypemapN_box;
 		}
 		else {
-			f = (TY_iS_UNbox(tct->cid)) ? Ftypemap_unbox : Ftypemap_asis;
+			f = (TY_isUnbox(tct->cid)) ? Ftypemap_unbox : Ftypemap_asis;
 		}
 	}
 	else if(sct->cid == CLASS_Tdynamic) {
@@ -2132,7 +2132,7 @@ static TYPEMAP Map_Iterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
 	kcid_t p1 = O_p1(sfp[0].m);
-	knh_Fitrnext fnext = TY_iS_UNbox(p1) ? Map_nextN : Map_nextO;
+	knh_Fitrnext fnext = TY_isUnbox(p1) ? Map_nextN : Map_nextO;
 	RETURN_(new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext));
 }
 
@@ -2185,7 +2185,7 @@ void knh_Object_fastset(CTX, kObject *o, kMethod *mtd, kObject *v)
 	kindex_t idx = knh_Method_indexOfSetterField(mtd);
 	if(idx != -1) {
 		kObject *of = (kObject*)o;
-		if(TY_iS_UNbox(O_cid(v))) {
+		if(TY_isUnbox(O_cid(v))) {
 			kunbox_t *df = (kunbox_t*)(of->fields + idx);
 			df[0] = O_ndata(v);
 		}
@@ -2436,7 +2436,7 @@ static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 		Object *v = sfp + (2+i) < esp ? sfp[2+i].o: KNH_NULVAL(ptype);
 		ktype_t vtype = O_cid(v);
 		if(vtype == ptype || ClassTBL_isa_(_ctx, O_ct(v), ClassTBL(ptype))) {
-			if(TY_iS_UNbox(ptype)) {
+			if(TY_isUnbox(ptype)) {
 				sfp[1+i].ndata = O_ndata(v);
 			}
 			else {
@@ -2446,7 +2446,7 @@ static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 		}
 		kTypeMap *tmr = knh_findTypeMapNULL(_ctx, vtype, ptype);
 		if(tmr != NULL) {
-			if(TY_iS_UNbox(vtype)) {
+			if(TY_isUnbox(vtype)) {
 				esp[0].ndata = O_ndata(v);
 			}
 			else {

@@ -1070,7 +1070,7 @@ static kline_t knh_stack_uline(CTX, ksfp_t *sfp)
 
 void knh_write_sfp(CTX, kOutputStream *w, ktype_t type, ksfp_t *sfp, int level)
 {
-	if(TY_iS_UNbox(type)) {
+	if(TY_isUnbox(type)) {
 		if(IS_Tint(type)) {
 			knh_write_ifmt(_ctx, w, KINT_FMT, sfp[0].ivalue);
 		}

@@ -442,7 +442,7 @@ static void Array_init(CTX, kRawPtr *o, void *conf)
 	if(a->astruct.max > 0) {
 		KARRAY_INIT(a->astruct, a->astruct.max, void*);
 	}
-	if(TY_iS_UNbox(O_p1(a))) {
+	if(TY_isUnbox(O_p1(a))) {
 		kArray_setUnboxData(a, 1);
 	}
 }

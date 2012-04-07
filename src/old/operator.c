@@ -1617,7 +1617,7 @@ static KMETHOD Array_pop(CTX, ksfp_t *sfp _RIX)
 	} else {
 		kcid_t p1 = O_p1(a);
 		kObject *o = KNH_NULVAL(p1);
-		if (TY_iS_UNbox(p1)) {
+		if (TY_isUnbox(p1)) {
 			RETURNd_(O_data(o));
 		} else {
 			RETURN_(o);
@@ -3461,7 +3461,7 @@ static KMETHOD System_eval(CTX, ksfp_t *sfp _RIX)
 		WCTX(_ctx)->isEvaled = 0;
 		if(tcid == CLASS_Tvoid) return;
 		if(v != K_NULL && ClassTBL_isa(O_ct(v), tcid)) {
-			if(TY_iS_UNbox(tcid)) {
+			if(TY_isUnbox(tcid)) {
 				RETURNi_(N_toint(v));
 			}
 			else {

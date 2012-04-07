@@ -425,7 +425,7 @@ static void Object_wdata(CTX, kRawPtr *o, void *pkr, const knh_PackSPI_t *packsp
 		key = knh_getFieldName(_ctx, field->fn);
 		packspi->pack_string(_ctx, pkr, S_text(key), S_size(key));
 		packspi->pack_putc(_ctx, pkr, ':');
-		if (TY_iS_UNbox(type)) {
+		if (TY_isUnbox(type)) {
 			pack_unbox(_ctx, pkr, type, v + i, packspi);
 		} else {
 			kObject *obj = v[i];
@@ -1134,7 +1134,7 @@ static void Range_init(CTX, kRawPtr *o)
 {
 	kRange *rng = (kRange*)o;
 	kcid_t p1 = O_p1(rng);
-	if(TY_iS_UNbox(p1)) {
+	if(TY_isUnbox(p1)) {
 		Range_setNDATA(rng, 1);
 		rng->nstart = 0;
 		rng->nend = 0;
@@ -1275,7 +1275,7 @@ static void Array_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 		kcid_t p1 = O_p1(a);
 		size_t c, size = kArray_size(a);
 		if(size > 0) {
-			if(TY_iS_UNbox(p1)) {
+			if(TY_isUnbox(p1)) {
 				if(IS_Tint(p1)) {
 					knh_write_ifmt(_ctx, w, KINT_FMT, a->ilist[0]);
 					if(IS_FMTline(level)) {
@@ -1528,7 +1528,7 @@ static void Map_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 
 static void pack_sfp(CTX, void *pkr, kcid_t cid, ksfp_t *sfp, const knh_PackSPI_t *packspi)
 {
-	if (TY_iS_UNbox(cid)) {
+	if (TY_isUnbox(cid)) {
 		if (IS_Tint(cid)) {
 			packspi->pack_int(_ctx, pkr, sfp[0].ivalue);
 		} else if (IS_Tfloat(cid)) {
@@ -1801,7 +1801,7 @@ static KMETHOD Fmethod_funcRTYPE(CTX, ksfp_t *sfp _RIX)
 {
 	ktype_t rtype = knh_Param_rtype(DP(sfp[K_MTDIDX].mtdNC)->mp);
 	if(rtype != TY_void) {
-		if(TY_iS_UNbox(rtype)) {
+		if(TY_isUnbox(rtype)) {
 			RETURNi_(KINT0);  // same results in Float, Boolean
 		}
 		else {

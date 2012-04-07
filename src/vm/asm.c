@@ -869,7 +869,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 	for(i = 0; i < psize; i++) {
 		kparam_t *p = knh_Param_get(pa, i);
 		if(i == n) return ti;
-		if(TY_iS_UNbox(p->type)) ti+=2; else ti++;
+		if(TY_isUnbox(p->type)) ti+=2; else ti++;
 	}
 	return ti;
 #else
@@ -897,7 +897,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 		}
 		else { /* mtd_mn == MN_set */
 			int v = Tn_put(_ctx, expr, 3, espidx + 3);
-			if(TY_iS_UNbox(p->type)) {
+			if(TY_isUnbox(p->type)) {
 				ASM(XNMOV, tx, NC_(v));
 			}
 			else {
@@ -929,7 +929,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 					goto L_USECALL;
 				}
 				ASM_CHKIDXC(_ctx, OC_(a), n);
-				if(TY_iS_UNbox(p1)) {
+				if(TY_isUnbox(p1)) {
 					ASM(NGETIDXC, NC_(espidx), OC_(a), n);
 				}
 				else {
@@ -939,7 +939,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 			else {
 				int an = Tn_put(_ctx, expr, 2, espidx + 2);
 				ASM_CHKIDX(_ctx, OC_(a), NC_(an));
-				if(TY_iS_UNbox(p1)) {
+				if(TY_isUnbox(p1)) {
 					ASM(NGETIDX, NC_(espidx), OC_(a), NC_(an));
 				}
 				else {
@@ -958,7 +958,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 				}
 				kcid_t p1 = C_p1(cid);
 				ASM_CHKIDXC(_ctx, OC_(a), n);
-				if(TY_iS_UNbox(p1)) {
+				if(TY_isUnbox(p1)) {
 					ASM(NSETIDXC, NC_(espidx), OC_(a), n, NC_(v));
 				}
 				else {
@@ -968,7 +968,7 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 			else {
 				int an = Tn_put(_ctx, expr, 2, espidx + 2);
 				ASM_CHKIDX(_ctx, OC_(a), NC_(an));
-				if(TY_iS_UNbox(p1)) {
+				if(TY_isUnbox(p1)) {
 					ASM(NSETIDX, NC_(espidx), OC_(a), NC_(an), NC_(v));
 				}
 				else {
@@ -1240,7 +1240,7 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx);
 
 static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 {
-	if(TY_iS_UNbox(ty)) {
+	if(TY_isUnbox(ty)) {
 		ASM(NMOV, NC_(a), NC_(b), CT_(ty));
 	}
 	else {
@@ -1253,7 +1253,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	switch(expr->build) {
 	case TEXPR_CONST : {
 		kObject *v = expr->dataNUL;
-		if(TY_iS_UNbox(expr->ty)) {
+		if(TY_isUnbox(expr->ty)) {
 			ASM(NSET, NC_(a), (uintptr_t)N_toint(v), CT_(expr->ty));
 		}
 		else {
@@ -1271,7 +1271,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	}
 	case TEXPR_FIELD : {
-		if(TY_iS_UNbox(expr->ty)) {
+		if(TY_isUnbox(expr->ty)) {
 			ASM(NMOVx, NC_(a), OC_(expr->index), expr->xindex, CT_(expr->ty));
 		}
 		else {
@@ -1280,7 +1280,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	}
 	case TEXPR_NULL  : {
-		if(TY_iS_UNbox(expr->ty)) {
+		if(TY_isUnbox(expr->ty)) {
 			ASM(NSET, NC_(a), 0, CT_(expr->ty));
 		}
 		else {
@@ -1392,7 +1392,7 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	else{
 		assert(exprL->build == TEXPR_FIELD);
 		EXPR_asm(_ctx, espidx, exprR, espidx);
-		if(TY_iS_UNbox(exprR->ty)) {
+		if(TY_isUnbox(exprR->ty)) {
 			ASM(XNMOV, OC_(exprL->index), exprL->xindex, NC_(espidx));
 		}
 		else {
@@ -1457,14 +1457,14 @@ static void LET_asm(CTX, kStmtExpr *stmt)
 	else {
 		Tn_asm(_ctx, stmt, 2, DP(stmt)->espidx);
 		if(TT_(tkL) == TT_FVAR) {
-			ASM_PMOV(_ctx, TY_iS_UNbox(atype), Term_index(tkL), DP(stmt)->espidx);
+			ASM_PMOV(_ctx, TY_isUnbox(atype), Term_index(tkL), DP(stmt)->espidx);
 		}
 		else {
 			DBG_ASSERT(TT_(tkL) == TT_FIELD);
 			ktype_t atype = tkL->type;
 			ksfx_t ax;
 			Term_setsfx(_ctx, tkL, &ax);
-			if(TY_iS_UNbox(atype)) {
+			if(TY_isUnbox(atype)) {
 				ASM(XNMOV, ax, NC_(DP(stmt)->espidx));
 			}
 			else {

@@ -216,7 +216,7 @@ kTerm* Tn_typing(CTX, kStmtExpr *stmt, size_t n, ktype_t reqt, kflag_t opflag)
 	else { 	/*TYPECHECK*/
 		if(reqt == TY_void) goto L_RETURN;
 		if(reqt == vart || reqt == TY_var || reqt == T_dyn || reqt == T_Object || class_isa(vart, reqt)) {
-			if(TY_iS_UNbox(vart)) {
+			if(TY_isUnbox(vart)) {
 				if(FLAG_is(opflag, _BOX) || reqt == T_Object || reqt == T_Number || reqt == T_dyn) {
 					Stmt_boxAll(_ctx, stmt, n, n+1, reqt);
 				}
@@ -688,7 +688,7 @@ static kTerm *GammaBuilder_add(CTX, kflag_t flag, kTerm *tkT, kTerm *tkN, kTerm 
 	}
 	KSETv(gf[idx].tkIDX, GammaBuilder_tokenIDX(_ctx, tkN));
 	DP(_ctx->gma)->gsize += 1;
-	DBLNDATA_(if(FLAG_is(op, GF_FIELD) && TY_iS_UNbox(type)) {
+	DBLNDATA_(if(FLAG_is(op, GF_FIELD) && TY_isUnbox(type)) {
 		idx = DP(_ctx->gma)->gsize;
 		if(!(idx < DP(_ctx->gma)->gcapacity)) {
 			gf = GammaBuilder_expand(_ctx, ctx->gma, /*minimum*/4);
@@ -820,7 +820,7 @@ static kTerm *TNAME_typing(CTX, kTerm *tkN, ktype_t reqt, kflag_t op)
 			if(DP(_ctx->gma)->funcbase0 > 0) {
 				if(tkIDX->index < DP(_ctx->gma)->funcbase0) {
 					int fi = tkIDX->index * (sizeof(ksfp_t)/sizeof(Object*));
-					if(TY_iS_UNbox(tkIDX->type)) fi += 1;
+					if(TY_isUnbox(tkIDX->type)) fi += 1;
 					kTermoTYPED(_ctx, tkN, TT_FIELD, tkIDX->type, fi);
 					DBG_P("@@LEXICAL SCOPE IDX=%d", fi);
 					GammaBuilder_foundLexicalScope(_ctx->gma, 1);
@@ -1663,9 +1663,9 @@ static void class_addField(CTX, kcid_t cid, kflag_t flag, ktype_t type, ksymbol_
 	cf[n].flag = flag;
 	cf[n].fn   = fn;
 	cf[n].type = type;
-	cf[n].israw = (type == TY_void || TY_iS_UNbox(type)) ? 1 : 0;
+	cf[n].israw = (type == TY_void || TY_isUnbox(type)) ? 1 : 0;
 	t->fsize += 1;
-	DBLNDATA_(if(TY_iS_UNbox(type)) {
+	DBLNDATA_(if(TY_isUnbox(type)) {
 		n = t->fsize;
 		if(t->fcapacity == n) {
 			cf = ClassTBL_expandFields(_ctx, t);
@@ -1948,7 +1948,7 @@ static kTerm *LETM_typing(CTX, kStmtExpr *stmt)
 				Stmt_setESPIDX(_ctx, stmtTAIL);
 				stmtTAIL->type = TY_void;
 				ti++;
-				DBLNDATA_(if(TY_iS_UNbox(tkN->type)) ti++;)
+				DBLNDATA_(if(TY_isUnbox(tkN->type)) ti++;)
 			}
 		}
 		Stmt_toSTT(stmt, STT_BLOCK);
@@ -2206,7 +2206,7 @@ static kTerm* CALL_toCONST(CTX, kStmtExpr *stmt, kMethod *mtd)
 	}
 	else {
 		kcid_t mtd_cid = mtd->cid, this_cid = Tn_cid(stmt, 1);
-		if(TY_iS_UNbox(this_cid) && (mtd_cid == CLASS_Object || mtd_cid == CLASS_Number)) {
+		if(TY_isUnbox(this_cid) && (mtd_cid == CLASS_Object || mtd_cid == CLASS_Number)) {
 			Stmt_boxAll(_ctx, stmt, 1, 2, mtd_cid);
 		}
 	}
@@ -2448,7 +2448,7 @@ static kTerm* CALL_typing(CTX, kStmtExpr *stmt, kcid_t tcid)
 		if(Method_isRestricted(mtd)) {
 			return ERROR_MethodIsNot(_ctx, mtd, "allowed");
 		}
-		if(TY_iS_UNbox(mtd_cid) && !TY_iS_UNbox(mtd->cid)) {
+		if(TY_isUnbox(mtd_cid) && !TY_isUnbox(mtd->cid)) {
 			Stmt_boxAll(_ctx, stmt, 1, 2, mtd->cid);
 		}
 		Term_setMethod(_ctx, tkM, mn, mtd);
@@ -2909,7 +2909,7 @@ static kTerm* NEWMAP_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 		for(i = 2; i < DP(stmt)->size; i+=2) {
 			TYPING_TypedExpr(_ctx, stmt, i+1, p2);       // value
 		}
-		if(!TY_iS_UNbox(p2)) {
+		if(!TY_isUnbox(p2)) {
 			Stmt_boxAll(_ctx, stmt, 2, DP(stmt)->size, p2);
 		}
 		return NEWPARAMs_typing(_ctx, stmt, reqt, MN_newMAP, 0/*needsTypingPARAMs*/);
@@ -2974,7 +2974,7 @@ static kTerm* NEW_typing(CTX, kStmtExpr *stmt, kcid_t reqt)
 			if(p1 != T_dyn) {
 				new_cid = knh_class_P1(_ctx, new_cid, p1);
 			}
-			if(!TY_iS_UNbox(p1)) {
+			if(!TY_isUnbox(p1)) {
 				Stmt_boxAll(_ctx, stmt, 2, DP(stmt)->size, p1);
 			}
 		}
@@ -3179,7 +3179,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 		}
 		if(Tn_isNULL(stmt, 2)) { /* o == null, o != null */
 			kcid_t cid = Tn_cid(stmt, 1);
-			if(TY_iS_UNbox(cid)) {
+			if(TY_isUnbox(cid)) {
 				return ERROR_UndefinedBehavior(_ctx, _unbox(cid));
 			}
 			mn = (mn == MN_opEQ) ? MN_isNull : MN_isNotNull;
@@ -3294,7 +3294,7 @@ static kTerm* OPR_typing(CTX, kStmtExpr *stmt, ktype_t tcid)
 		if(mtd_cid == CLASS_String) {
 			knh_Stmt_add(_ctx, stmt, new_TermCONST(_ctx, K_GMANS));
 		}
-		else if(TY_iS_UNbox(mtd_cid)) {
+		else if(TY_isUnbox(mtd_cid)) {
 			return ERROR_UndefinedBehavior(_ctx, _unbox(mtd_cid));
 		}
 		else {
@@ -3460,7 +3460,7 @@ static kTerm* TCAST_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 		Term_setMethod(_ctx, tkC, MN_to, mtd);
 		knh_Stmt_add(_ctx, stmt, new_TermTYPED(_ctx, TT_CID, T_Class, CLASS_t(tcid)));
 		Stmt_toSTT(stmt, STT_CALL);
-		if(TY_iS_UNbox(scid)) {
+		if(TY_isUnbox(scid)) {
 			Stmt_boxAll(_ctx, stmt, 1, 2, CLASS_Object);
 		}
 		return Stmt_typed(_ctx, stmt, tcid);
@@ -4517,7 +4517,7 @@ static void ClassTBL_newField(CTX, kclass_t *ct)
 	DBLNDATA_(
 		for(i = 0; i < gsize; i++) {
 			ktype_t type = gf[i].type;
-			if(TY_iS_UNbox(type)) fsize++;
+			if(TY_isUnbox(type)) fsize++;
 		}
 	);
 	if(fsize > 0) {
@@ -4530,9 +4530,9 @@ static void ClassTBL_newField(CTX, kclass_t *ct)
 			ct->fields[fi].flag = gf[i].flag;
 			ct->fields[fi].type = type;
 			ct->fields[fi].fn = gf[i].fn;
-			ct->fields[fi].israw = (type == TY_void || TY_iS_UNbox(type)) ? 1 : 0;
+			ct->fields[fi].israw = (type == TY_void || TY_isUnbox(type)) ? 1 : 0;
 			fi++;
-			DBLNDATA_(if(TY_iS_UNbox(type)) {
+			DBLNDATA_(if(TY_isUnbox(type)) {
 				ct->fields[fi].fn   = FN_;
 				ct->fields[fi].type = TY_void;
 				ct->fields[fi].israw = 1;
