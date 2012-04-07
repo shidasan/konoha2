@@ -27,7 +27,7 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 		kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
 		if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_BLOCKLOCAL_ || lexpr->build == TEXPR_FIELD) {
 			if(rexpr != K_NULLEXPR) {
-				rexpr->build = TEXPR_LET;
+				expr->build = TEXPR_LET;
 				rexpr->ty = lexpr->ty;
 			}
 			RETURN_(expr);
