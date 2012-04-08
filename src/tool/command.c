@@ -381,6 +381,7 @@ static int check_result(FILE *fp0, FILE *fp1)
 
 int konoha_test(const char *testname)
 {
+	konoha_debug = 0; // reduced error
 	konoha_t konoha = konoha_open();
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);

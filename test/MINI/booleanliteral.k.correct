@@ -1,0 +1,4 @@
+ - (debug) (booleanliteral.k:2) constant folding of String
+ - (booleanliteral.k:2) true
+ - (debug) (booleanliteral.k:3) constant folding of String
+ - (booleanliteral.k:3) false

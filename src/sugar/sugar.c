@@ -384,7 +384,7 @@ static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t
 	}
 	kwb_free(&wb);
 	if(status != K_CONTINUE) {
-		kreportf(ERR_, pline, "running script is failed: %s", T_file(uline));
+		kreportf(DEBUG_, pline, "running script is failed: %s", T_file(uline));
 	}
 	return status;
 }
