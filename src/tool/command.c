@@ -91,12 +91,12 @@ static int konoha_ginit(int argc, char **argv)
 			break;
 
 		case 'S':
-			DUMP_P ("option --start-with `%s'\n", optarg);
+//			DUMP_P ("option --start-with `%s'\n", optarg);
 			startup_script = optarg;
 			break;
 
 		case 'T':
-			DUMP_P ("option --test-with `%s'\n", optarg);
+//			DUMP_P ("option --test-with `%s'\n", optarg);
 			test_script = optarg;
 			break;
 
@@ -410,8 +410,14 @@ int konoha_test(const char *testname)
 		if(ret != 0) {
 			fprintf(stdout, "[FAILED]: %s\n", testname);
 		}
+		else {
+			fprintf(stdout, "[PASS]: %s\n", testname);
+		}
 		fclose(fp);
 		fclose(fp2);
+	}
+	else {
+		fprintf(stdout, "created correct file: %s\n", correct_file);
 	}
 	konoha_close(konoha);
 	MODGC_check_malloced_size();
