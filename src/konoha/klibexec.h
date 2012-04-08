@@ -293,7 +293,7 @@ static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *
 	kmap_add(kmp, e);
 }
 
-static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, size_t len, uintptr_t hcode, int spol, ksymbol_t def)
+static ksymbol_t Kmap_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, size_t len, uintptr_t hcode, int spol, ksymbol_t def)
 {
 	kmape_t *e = kmap_get(kmp, hcode);
 	while(e != NULL) {
@@ -315,7 +315,7 @@ static ksymbol_t KMAP_getcode(CTX, kmap_t *kmp, kArray *list, const char *name, 
 static kline_t Kfileid(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	kline_t uline = KMAP_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, spol, def);
+	kline_t uline = Kmap_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, spol, def);
 	DBG_P("name='%s', fileid=%d", name, uline);
 	return uline << (sizeof(kshort_t) * 8);
 }
@@ -323,13 +323,13 @@ static kline_t Kfileid(CTX, const char *name, size_t len, int spol, ksymbol_t de
 static kpack_t Kpack(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	return KMAP_getcode(_ctx, _ctx->share->packMapNN, _ctx->share->packList, name, len, hcode, spol | SPOL_ASCII, def);
+	return Kmap_getcode(_ctx, _ctx->share->packMapNN, _ctx->share->packList, name, len, hcode, spol | SPOL_ASCII, def);
 }
 
 static kpack_t Kuname(CTX, const char *name, size_t len, int spol, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, spol | SPOL_ASCII, def);
+	return Kmap_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, spol | SPOL_ASCII, def);
 }
 
 //static const char* uname_norm(char *buf, size_t bufsiz, const char *t, size_t len, uintptr_t *hcodeR)
@@ -354,7 +354,7 @@ static kpack_t Kuname(CTX, const char *name, size_t len, int spol, ksymbol_t def
 //	char buf[len+1];
 //	name = uname_norm(buf, len+1, name, len, &hcode);
 //	len = strlen(name);
-//	return KMAP_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, FN_NEWID);
+//	return Kmap_getcode(_ctx, _ctx->share->unameMapNN, _ctx->share->unameList, name, len, hcode, FN_NEWID);
 //}
 
 static const char* ksymbol_norm(char *buf, const char *t, size_t *lenR, uintptr_t *hcodeR, ksymbol_t *mask, int pol)
@@ -414,13 +414,13 @@ static ksymbol_t Ksymbol(CTX, const char *name, size_t len, ksymbol_t def, int p
 			}
 			hcode = ch + (31 * hcode);
 		}
-		return KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
+		return Kmap_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
 	}
 	else {
 		char buf[256];
 		ksymbol_t sym, mask = 0;
 		name = ksymbol_norm(buf, name, &len, &hcode, &mask, pol);
-		sym = KMAP_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
+		sym = Kmap_getcode(_ctx, _ctx->share->symbolMapNN, _ctx->share->symbolList, name, len, hcode, SPOL_ASCII, def);
 		if(def == sym) return def;
 		return sym | mask;
 	}
@@ -714,6 +714,7 @@ void klib2_init(klib2_t *l)
 	l->Kmap_get      = Kmap_getentry;
 	l->Kmap_add      = Kmap_add;
 	l->Kmap_remove   = Kmap_remove;
+	l->Kmap_getcode  = Kmap_getcode;
 	l->Kfileid     = Kfileid;
 	l->Kpack         = Kpack;
 	l->Kuname = Kuname;

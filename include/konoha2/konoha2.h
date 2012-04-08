@@ -920,24 +920,22 @@ struct kMethod {
 	kObjectHeader     h;
 	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
-	struct kParam     *pa;
 	kshort_t delta;          kpack_t packid;
+	struct kParam            *pa;
+	struct kToken            *tcode;
 	union {
-		struct kToken *tcode;
+		kObject              *objdata;
+		struct kKonohaCode   *kcode;
+		struct kKonohaSpace  *lazyns;       // lazy compilation
 	};
+	struct kMethod           *proceedNUL;   // proceed
 	union {
-		kObject            *objdata;
-		struct kKonohaCode *kcode;
-		struct kKonohaSpace      *lazyns;       // lazy compilation
-		struct kMethod     *proceed;      // dfileidng typing, asm
-	};
-	union {
-		knh_Fmethod       fcall_1;
-		FmethodFastCall   fastcall_1;
+		knh_Fmethod          fcall_1;
+		FmethodFastCall      fastcall_1;
 	};
 	union {/* body*/
-		struct kopl_t    *pc_start;
-		FmethodCallCC     callcc_1;
+		struct kopl_t        *pc_start;
+		FmethodCallCC         callcc_1;
 	};
 };
 
@@ -1042,6 +1040,8 @@ typedef struct klib2_t {
 	void (*Kmap_remove)(kmap_t *, kmape_t *);
 	void (*Kmap_reftrace)(CTX, kmap_t *, void (*)(CTX, kmape_t*));
 	void (*Kmap_free)(CTX, kmap_t *, void (*)(CTX, void *));
+	ksymbol_t (*Kmap_getcode)(CTX, kmap_t *, kArray *, const char *, size_t, uintptr_t, int, ksymbol_t);
+
 
 	kline_t     (*Kfileid)(CTX, const char *, size_t, int spol, ksymbol_t def);
 	kpack_t     (*Kpack)(CTX, const char *, size_t, int spol, ksymbol_t def);
@@ -1126,6 +1126,7 @@ typedef struct klib2_t {
 #define kmap_remove(M, E)         (KPI)->Kmap_remove(_ctx, M, E)
 #define kmap_reftrace(M, F)       (KPI)->Kmap_reftrace(_ctx, M, F)
 #define kmap_free(M, F)           (KPI)->Kmap_free(_ctx, M, F)
+#define kmap_getcode(M,L,N,NL,H,POL,DEF)  (KPI)->Kmap_getcode(_ctx, M, L, N, NL, H, POL, DEF)
 
 #define kclass(CID, UL)           (KPI)->Kclass(_ctx, CID, UL)
 #define SYMPOL_RAW                0

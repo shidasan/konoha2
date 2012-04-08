@@ -582,6 +582,8 @@ static void ktokenize(CTX, const char *source, kline_t uline, int policy, kArray
 	//dumpTokenArray(_ctx, 0, a, pos, kArray_size(a));
 }
 
+// --------------------------------------------------------------------------
+
 static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 {
 	int i;
@@ -593,6 +595,25 @@ static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 	return e;
 }
 
+static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst);
+
+static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, int opench, int closech)
+{
+	int i = *s;
+	kToken *tk = tls->tts[i];
+	const char *t = S_text(tk->text);
+	if(t[0] == opench && t[1] == 0) {
+		int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, closech);
+		tk->tt = tt; tk->kw = tt;
+		KSETv(tk->sub, new_(Array, 0));
+		tk->topch = opench; tk->closech = closech;
+		makeSyntaxTree(_ctx, tls, i+1, ne, tk->sub);
+		*s = ne;
+		return 1;
+	}
+	return 0;
+}
+
 static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 {
 	int i;
@@ -601,34 +622,15 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 	//dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->tts[i];
+		if(tk->tt == TK_INDENT) continue;
 		if(tk->tt == TK_TEXT || tk->tt == TK_STEXT) {
-			const char *t = S_text(tk->text);
-			if(t[0] == '(') {
-				int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, ')');
-				tk->tt = AST_PARENTHESIS;
-				KSETv(tk->sub, new_(Array, 0)); tk->topch = '('; tk->closech = ')';
-				makeSyntaxTree(_ctx, tls, i+i, ne, tk->sub);
-				i = ne;
-			}
-			else if(t[0] == '[') {
-				int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, ']');
-				tk->tt = AST_BRANCET;
-				KSETv(tk->sub, new_(Array, 0)); tk->topch = '['; tk->closech = ']';
-				makeSyntaxTree(_ctx, tls, i+i, ne, tk->sub);
-				i = ne;
-			}
-			else if(t[0] == '{') {
-				int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, '}');
-				tk->tt = AST_BRACE;
-				KSETv(tk->sub, new_(Array, 0)); tk->topch = '{'; tk->closech = '}';
-				makeSyntaxTree(_ctx, tls, i+i, ne, tk->sub);
-				i = ne;
+			if(checkNestedSyntax(_ctx, tls, &i, e, AST_PARENTHESIS, '(', ')') ||
+				checkNestedSyntax(_ctx, tls, &i, e, AST_BRANCET, '[', ']') ||
+				checkNestedSyntax(_ctx, tls, &i, e, AST_BRACE, '{', '}')) {
 			}
 			else {
-				keyword_t keyid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
-				tk->keyid = keyid;
-				tk->tt = TK_KEYWORD;
-				nameid = keyid;
+				tk->tt = TK_CODE;
+				tk->kw = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
 			}
 			kArray_add(adst, tk);
 			continue;
@@ -636,34 +638,29 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
 			if(i > 0 && tls->tts[i-1]->topch == '$') {
 				snprintf(nbuf, sizeof(nbuf), "$%s", S_text(tk->text));
-				keyword_t keyid = keyword(_ctx, (const char*)nbuf, strlen(nbuf), FN_NEWID);
-				tk->tt = TK_OPERATOR;
-				tk->keyid = keyid;
-				if(nameid == 0) {
-					nameid = keyid;
-				}
+				tk->kw = keyword(_ctx, (const char*)nbuf, strlen(nbuf), FN_NEWID);
+				tk->tt = TK_METANAME;
+				if(nameid == 0) nameid = tk->kw;
 				tk->nameid = nameid;
 				nameid = 0;
 				kArray_add(adst, tk); continue;
 			}
 			if(i + 1 < e && tls->tts[i+1]->topch == ':') {
 				kToken *tk = tls->tts[i];
-				i++;
 				nameid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
+				i++;
 				continue;
 			}
 		}
 		if(tk->tt == TK_OPERATOR) {
-			if(tk->topch == '[') {
-				int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, ']');
-				tk->tt = AST_OPTIONAL;
-				KSETv(tk->sub, new_(Array, 0)); tk->topch = '['; tk->closech = ']';
-				makeSyntaxTree(_ctx, tls, i+1, ne, tk->sub);
-				i = ne;
+			if(checkNestedSyntax(_ctx, tls, &i, e, AST_OPTIONAL, '[', ']')) {
 				kArray_add(adst, tk);
 				continue;
 			}
+			if(tls->tts[i]->topch == '$') continue;
 		}
+		SUGAR_P(ERR_, tk->uline, tk->lpos, "illegal sugar syntax: %s", kToken_s(tk));
+		break;
 	}
 }
 

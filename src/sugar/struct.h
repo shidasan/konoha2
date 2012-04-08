@@ -243,10 +243,10 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 	RESET_GCSTACK();
 }
 
-static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, int isnew)
+static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int isnew)
 {
 	kKonohaSpace *ks = ks0;
-	uintptr_t hcode = keyid;
+	uintptr_t hcode = kw;
 	ksyntax_t *parent = NULL;
 	while(ks != NULL) {
 		if(ks->syntaxMapNN != NULL) {
@@ -271,11 +271,11 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t keyid, in
 		kmap_add(ks0->syntaxMapNN, e);
 		ksyntax_t *syn = (ksyntax_t*)KNH_ZMALLOC(sizeof(ksyntax_t));
 		e->uvalue = (uintptr_t)syn;
-		if(parent != NULL) {
+		if(parent != NULL) {  // TODO: RCGC
 			memcpy(syn, parent, sizeof(ksyntax_t));
 		}
 		else {
-			syn->keyid = keyid;
+			syn->kw = kw;
 			syn->ty  = TY_unknown;
 			syn->op1 = 0; /*MN_NONAME;*/
 			syn->op2 = 0; /*MN_NONAME;*/
@@ -293,14 +293,15 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 {
 	knh_Fmethod pStmtAdd = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
 	kMethod *mStmtAdd = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
-	ksyntax_t *syn_expr = KonohaSpace_syntax(_ctx, ks, 1, 0);
+//	ksyntax_t *syn_expr = KonohaSpace_syntax(_ctx, ks, 1, 0);
 	while(syndef->name != NULL) {
-		keyword_t keyid = (syndef->keyid != 0) ? syndef->keyid : keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
-		ksyntax_t* syn = KonohaSpace_syntax(_ctx, ks, keyid, 1);
-		if(keyid == 1 && syn_expr == NULL) {
-			syn_expr = syn;
-		}
+		keyword_t kw = keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
+		ksyntax_t* syn = KonohaSpace_syntax(_ctx, ks, kw, 1);
+//		if(kw == 1 && syn_expr == NULL) {
+//			syn_expr = syn;
+//		}
 		syn->token = syndef->name;
+		syn->flag  |= syndef->flag;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
 		}
@@ -351,26 +352,17 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 				mExprTyCheck = new_kMethod(0, 0, 0, NULL, pExprTyCheck);
 			}
 			KINITv(syn->ExprTyCheck, mExprTyCheck);
-			if(syn->syntaxRule == NULL) {
-				KINITv(syn->syntaxRule, syn_expr->syntaxRule);
-			}
-			if(syn->StmtTyCheck == NULL) {
-				KINITv(syn->StmtTyCheck, syn_expr->StmtTyCheck);
-			}
+//			if(syn->syntaxRule == NULL) {
+//				KINITv(syn->syntaxRule, syn_expr->syntaxRule);
+//			}
+//			if(syn->StmtTyCheck == NULL) {
+//				KINITv(syn->StmtTyCheck, syn_expr->StmtTyCheck);
+//			}
 		}
-		DBG_ASSERT(syn == KonohaSpace_syntax(_ctx, ks, keyid, 0));
+		DBG_ASSERT(syn == SYN_(ks, kw));
 		syndef++;
 	}
-	// update
-//	kevalshare_t *base = kevalshare;
-//	base->syn_call = KonohaSpace_syntax(_ctx, base->rootks, 1, 0);
-//	base->syn_invoke = KonohaSpace_syntax(_ctx, base->rootks, KW_("$name"), 0);
-//	base->syn_params = KonohaSpace_syntax(_ctx, base->rootks, KW_("$params"), 0);
-//	base->syn_return = KonohaSpace_syntax(_ctx, base->rootks, KW_("return"), 0);
-////	base->syn_break  = KonohaSpace_syntax(_ctx, base->rootks, KW_("break"), 0);
-//	base->syn_typedecl = KonohaSpace_syntax(_ctx, base->rootks, KW_(":"), 0);
-//	base->syn_comma    = KonohaSpace_syntax(_ctx, base->rootks, KW_(","), 0);
-//	base->syn_let      = KonohaSpace_syntax(_ctx, base->rootks, KW_("="), 0);
+	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
 }
 
 // KonohaSpace
@@ -517,24 +509,24 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 	}
 }
 
-#define kKonohaSpace_loadGlueFunc(NS, F, OPT, UL)  KonohaSpace_loadGlueFunc(_ctx, NS, F, OPT, UL)
-
-static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *funcname, int DOPTION, kline_t pline)
-{
-	void *f = NULL;
-	if(ks->gluehdr != NULL) {
-		char namebuf[128];
-		snprintf(namebuf, sizeof(namebuf), "D%s", funcname);
-		if(DOPTION) {
-			f = dlsym(ks->gluehdr, (const char*)namebuf);
-		}
-		if(f == NULL) {
-			f = dlsym(ks->gluehdr, (const char*)namebuf+1);
-		}
-		kreportf(WARN_, pline, "glue method function is not found: %s", namebuf + 1);
-	}
-	return f;
-}
+//#define kKonohaSpace_loadGlueFunc(NS, F, OPT, UL)  KonohaSpace_loadGlueFunc(_ctx, NS, F, OPT, UL)
+//
+//static knh_Fmethod KonohaSpace_loadGlueFunc(CTX, kKonohaSpace *ks, const char *funcname, int DOPTION, kline_t pline)
+//{
+//	void *f = NULL;
+//	if(ks->gluehdr != NULL) {
+//		char namebuf[128];
+//		snprintf(namebuf, sizeof(namebuf), "D%s", funcname);
+//		if(DOPTION) {
+//			f = dlsym(ks->gluehdr, (const char*)namebuf);
+//		}
+//		if(f == NULL) {
+//			f = dlsym(ks->gluehdr, (const char*)namebuf+1);
+//		}
+//		kreportf(WARN_, pline, "glue method function is not found: %s", namebuf + 1);
+//	}
+//	return f;
+//}
 
 /* --------------- */
 /* Token */
@@ -544,6 +536,7 @@ static void Token_init(CTX, kRawPtr *o, void *conf)
 	kToken *tk = (kToken*)o;
 	tk->uline     =   0;
 	tk->tt        =   (ktoken_t)conf;
+	tk->kw        =   0;
 	tk->topch     =   0;
 	tk->lpos      =   -1;
 	KINITv(tk->text, TS_EMPTY);
@@ -578,13 +571,9 @@ static const char *T_tt(ktoken_t t)
 {
 	static const char* symTKDATA[] = {
 		"TK_NONE",
-		"TK_CODE",
 		"TK_INDENT",
-		"TK_WHITESPACE",
-		"TK_OPERATOR",
 		"TK_SYMBOL",
 		"TK_USYMBOL",
-		"TK_KEYWORD",
 		"TK_TEXT",
 		"TK_STEXT",
 		"TK_BTEXT",
@@ -592,20 +581,19 @@ static const char *T_tt(ktoken_t t)
 		"TK_FLOAT",
 		"TK_URN",
 		"TK_REGEX",
+		"TK_TYPE",
+		"AST_()",
+		"AST_[]",
+		"AST_{}",
+
+		"TK_OPERATOR",
+		"TK_CODE",
+		"TK_WHITESPACE",
 		"TK_METANAME",
 		"TK_MN",
-		"TK_TYPE",
-
-		"AST_()",
-		"AST_{}",
-		"AST_[]",
 		"AST_OPTIONAL[]",
-		"AST_TYPE<>",
-		"AST_EXPR",
-		"AST_STMT",
-		"AST_BLOCK",
 	};
-	if(t <= AST_BLOCK) {
+	if(t <= AST_OPTIONAL) {
 		return symTKDATA[t];
 	}
 	return "TK_UNKNOWN";
@@ -644,7 +632,7 @@ static void dumpTokenArray(CTX, int nest, kArray *a, int s, int e)
 		while(s < e) {
 			kToken *tk = a->tts[s];
 			dumpIndent(nest);
-			if(AST_PARENTHESIS <= (int)tk->tt && (int)tk->tt <= AST_TYPE) {
+			if(IS_Array(tk->sub)) {
 				DUMP_P("%c\n", tk->topch);
 				dumpTokenArray(_ctx, nest+1, tk->sub, 0, kArray_size(tk->sub));
 				dumpIndent(nest);
@@ -878,9 +866,10 @@ static void dumpStmt(CTX, kStmt *stmt)
 }
 
 #define kStmt_ks(STMT)   Stmt_ks(_ctx, STMT)
-static kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
+static inline kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
 {
-	return stmt->parentNULL != NULL ? stmt->parentNULL->ks : kevalshare->rootks;
+	return stmt->parentNULL->ks;
+//	return stmt->parentNULL != NULL ? stmt->parentNULL->ks : kevalshare->rootks;
 }
 
 #define kStmt_done(STMT)  Stmt_done(_ctx, STMT)
@@ -924,7 +913,7 @@ static uintptr_t Stmt_flag(CTX, kStmt *stmt, flagop_t *fop, uintptr_t flag)
 
 #define kStmt_is(STMT, KW) Stmt_is(_ctx, STMT, KW)
 
-static kbool_t Stmt_is(CTX, kStmt *stmt, keyword_t kw)
+static inline kbool_t Stmt_is(CTX, kStmt *stmt, keyword_t kw)
 {
 	return (kObject_getObjectNULL(stmt, kw) != NULL);
 }

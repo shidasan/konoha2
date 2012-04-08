@@ -40,8 +40,8 @@ extern "C" {
 void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk);
 
 //
-static const char *Pkeyword_(CTX, keyword_t keyid);
-static kString *Skeyword_(CTX, keyword_t keyid);
+static const char *Pkeyword_(CTX, keyword_t kw);
+static kString *Skw_(CTX, keyword_t kw);
 static void Kraise(CTX, int isContinue);
 
 #include "perror.h"
@@ -51,18 +51,28 @@ static void Kraise(CTX, int isContinue);
 #include "tycheck.h"
 
 #define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
-#define _EXPR     .rule ="$expr"
+#define _EXPR     .flag = SYN_ExprFlag
 
 static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
 		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .TopStmtTyCheck = StmtTyCheck_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
+		{ TOKEN("$SYMBOL"),  _EXPR, .StmtAdd = StmtAdd_name,  .ExprTyCheck = TokenTyCheck_SYMBOL,},
+		{ TOKEN("$USYMBOL"), _EXPR, .StmtAdd = StmtAdd_cname, .ExprTyCheck = TokenTyCheck_USYMBOL,},
+		{ TOKEN("$TEXT"), _EXPR, .ExprTyCheck = TokenTyCheck_TEXT,},
+		{ TOKEN("$STEXT"), _EXPR, },
+		{ TOKEN("$BTEXT"), _EXPR, },
+		{ TOKEN("$INT"), _EXPR, .ExprTyCheck = TokenTyCheck_INT,},
+		{ TOKEN("$FLOAT"), _EXPR, .ExprTyCheck = TokenTyCheck_FLOAT,},
+		{ TOKEN("$URN"), _EXPR, },
+		{ TOKEN("$REGEX"), _EXPR, },
+		{ TOKEN("$type"), _EXPR, .StmtAdd = StmtAdd_type, .ExprTyCheck = TokenTyCheck_TYPE,},
+		{ TOKEN("()"), _EXPR, }, //AST_PARENTHESIS
+		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
+		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
 		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
-		{ TOKEN("$type"),  .StmtAdd = StmtAdd_type, },
-		{ TOKEN("$cname"), .StmtAdd = StmtAdd_cname, },
-		{ TOKEN("$name"),  .StmtAdd = StmtAdd_name, .ExprTyCheck = ExprTyCheck_invoke, },
-		{ TOKEN("$params"),  .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, },
+		{ TOKEN("$params"), .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, .ExprTyCheck = ExprTyCheck_invoke,},
 		{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
 		{ TOKEN("/"), .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
 		{ TOKEN("%"), .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
@@ -81,22 +91,16 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN(":"), .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
 		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
-		{ TOKEN("void"), .type = TY_void, .rule ="$type [$cname '.'] $name $params [$block]", .TopStmtTyCheck = StmtTyCheck_declMethod},
+		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL '.'] $SYMBOL $params [$block]", .TopStmtTyCheck = StmtTyCheck_declMethod},
 		{ TOKEN("var"),  .type = TY_var, .rule ="$type $expr", },
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		{ TOKEN("null"), .ExprTyCheck = TokenTyCheck_NULL,},
-		{ TOKEN("true"),  .ExprTyCheck = TokenTyCheck_TRUE,},
-		{ TOKEN("false"), .ExprTyCheck = TokenTyCheck_FALSE,},
+		{ TOKEN("null"), _EXPR, .ExprTyCheck = TokenTyCheck_NULL,},
+		{ TOKEN("true"),  _EXPR, .ExprTyCheck = TokenTyCheck_TRUE,},
+		{ TOKEN("false"), _EXPR, .ExprTyCheck = TokenTyCheck_FALSE,},
 		{ TOKEN("if"), .rule ="'if' '(' $expr ')' $block ['else' else: $block]", .TopStmtTyCheck = StmtTyCheck_if, .StmtTyCheck = StmtTyCheck_if, },
 		{ TOKEN("else"), .rule = "'else' $block" },
 		{ TOKEN("return"), .rule ="'return' [$expr]", .StmtTyCheck = StmtTyCheck_return, },
-		{ TOKEN("$SYMBOL"), .keyid = KW_TK(TK_SYMBOL), .ExprTyCheck = TokenTyCheck_SYMBOL, },
-		{ TOKEN("$USYMBOL"), .keyid = KW_TK(TK_USYMBOL), .ExprTyCheck = TokenTyCheck_USYMBOL, },
-		{ TOKEN("$TEXT"), .keyid = KW_TK(TK_TEXT), .ExprTyCheck = TokenTyCheck_TEXT, },
-		{ TOKEN("$INT"), .keyid = KW_TK(TK_INT), .ExprTyCheck = TokenTyCheck_INT, },
-		{ TOKEN("$TYPE"), .keyid = KW_TK(TK_TYPE), .ExprTyCheck = TokenTyCheck_TYPE, },
-		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
 	KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
@@ -238,13 +242,11 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	KINITv(base->aBuffer, new_(Array, 0));
 
 	defineDefaultSyntax(_ctx, base->rootks);
-	DBG_ASSERT(KW_("$params") == KW_PARAMS);
+	DBG_ASSERT(KW_("$params") == KW_params);
 	DBG_ASSERT(KW_(".") == KW_DOT);
 	DBG_ASSERT(KW_(",") == KW_COMMA);
 	DBG_ASSERT(KW_("void") == KW_void);  // declmethod
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
-//	base->kw_then =       KW_("then");
-//	base->kw_else =       KW_("else");
 
 	base->syn_err  = SYN_(base->rootks, KW_ERR);
 	base->syn_expr = SYN_(base->rootks, KW_EXPR);
@@ -269,68 +271,28 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	base->KonohaSpace_getMethodNULL = KonohaSpace_getMethodNULL;
 }
 
-static const char *Pkeyword_(CTX, keyword_t keyid)
+static const char *Pkeyword_(CTX, keyword_t kw)
 {
 	kArray *a = kevalshare->keywordList;
-	if(keyid < kArray_size(a)) {
-		return S_text(a->strings[keyid]);
+	if(kw < kArray_size(a)) {
+		return S_text(a->strings[kw]);
 	}
 	return "unknown keyword";
 }
 
-static kString *Skeyword_(CTX, keyword_t keyid)
+static kString *Skw_(CTX, keyword_t kw)
 {
 	kArray *a = kevalshare->keywordList;
-	if(keyid < kArray_size(a)) {
-		return a->strings[keyid];
+	if(kw < kArray_size(a)) {
+		return a->strings[kw];
 	}
 	return TS_EMPTY;
 }
 
-static ksymbol_t keyword_get(CTX, const char *name, size_t len, uintptr_t hcode, ksymbol_t def)
-{
-	kmap_t  *symmap = kevalshare->keywordMapNN;
-	kmape_t *e = kmap_get(symmap, hcode);
-	while(e != NULL) {
-		if(e->hcode == hcode && len == S_size(e->skey) && strncmp(S_text(e->skey), name, len) == 0) {
-//			DBG_P("GET keyword='%s', hcode=%ld, symbol=%d", name, hcode, (ksymbol_t)e->uvalue);
-			return (ksymbol_t)e->uvalue;
-		}
-		e = e->next;
-	}
-	if(def == FN_NEWID) {
-		kString *skey = new_kString(name, len, SPOL_ASCII|SPOL_POOL);
-		uintptr_t sym = kArray_size(kevalshare->keywordList);
-		kArray_add(kevalshare->keywordList, skey);
-		e = kmap_newentry(symmap, hcode);
-		KINITv(e->skey, skey);
-		e->uvalue = sym;
-		kmap_add(symmap, e);
-//		DBG_P("NEW keyword='%s', hcode=%ld, symbol=%d, len=%ld", name, hcode, (ksymbol_t)e->uvalue, len);
-		return (ksymbol_t)e->uvalue;
-	}
-	return def;
-}
-
-static uintptr_t keyword_hash(const char *name, size_t len)
-{
-	return strhash(name, len);
-	//uintptr_t hcode = 0;
-	//size_t i;
-	//for(i = 0; i < len; i++) {
-	//	int ch = name[i];
-	//	if(ch == 0) {
-	//		len = i; break;
-	//	}
-	//	hcode = ch + (31 * hcode);
-	//}
-	//return hcode;
-}
-
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def)
 {
-	uintptr_t hcode = keyword_hash(name, len);
-	return keyword_get(_ctx, name, len, hcode, def);
+	uintptr_t hcode = strhash(name, len);
+	return kmap_getcode(kevalshare->keywordMapNN, kevalshare->keywordList, name, len, hcode, SPOL_ASCII|SPOL_POOL, def);
 }
 
 // -------------------------------------------------------------------------

@@ -29,27 +29,10 @@ extern "C" {
 
 typedef ksymbol_t keyword_t;
 #define T_kw(X)   Pkeyword_(_ctx, X)
-#define Skeyword(X)   Skeyword_(_ctx, X)
+#define Skeyword(X)   Skw_(_ctx, X)
 
 
 #define FLAG_METHOD_LAZYCOMPILE (0)
-
-//static inline kflag_t kflag_set(kflag_t flag, int idx)
-//{
-//	kflag_t mask = 1ULL << idx;
-//	return flag | mask;
-//}
-//static inline kflag_t kflag_unset(kflag_t flag, int idx)
-//{
-//	kflag_t mask = 1ULL << idx;
-//	return flag ^ mask;
-//}
-//
-//static inline int kflag_test(kflag_t flag, int idx)
-//{
-//	kflag_t mask = 1ULL << idx;
-//	return (flag & mask) == mask;
-//}
 
 #define kflag_clear(flag)  (flag) = 0
 #define K_CHECKSUM 1
@@ -107,9 +90,12 @@ typedef struct {
 		ktype_t TY = (ktype_t)sfp[2].ivalue;\
 		(void)EXPR; (void)GMA; (void)TY;\
 
+#define SYN_ExprFlag      1
+#define SYN_isExpr(syn)   TFLAG_is(kflag_t, syn->flag, SYN_ExprFlag)
+
 typedef struct ksyntax_t {
 	const char *token;
-	keyword_t keyid;  kflag_t flag;
+	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
 	kMethod  *StmtAdd;
 	kMethod  *TopStmtTyCheck;
@@ -123,9 +109,9 @@ typedef struct ksyntax_t {
 } ksyntax_t ;
 
 typedef struct ksyntaxdef_t {
-	int keyid;
 	const char *name;
 	size_t      namelen;
+	keyword_t kw;  kflag_t flag;
 	const char *rule;
 	const char *op2;
 	const char *op1;
@@ -154,7 +140,6 @@ struct kKonohaSpace {
 	kpack_t packid;  kpack_t packdom;
 	struct kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
-//	struct kmap_t   *symtblMapSO;
 	//
 	void                *gluehdr;
 	struct kObject      *script;
@@ -167,14 +152,10 @@ typedef kshort_t    ksugar_t;
 typedef kshort_t    kexpr_t;
 
 typedef enum {
-	TK_NONE,
-	TK_CODE,
-	TK_INDENT,
-	TK_WHITESPACE,
-	TK_OPERATOR,
-	TK_SYMBOL,
-	TK_USYMBOL,
-	TK_KEYWORD,
+	TK_NONE,          // KW_ERR
+	TK_INDENT,        // KW_EXPR
+	TK_SYMBOL,        // KW_SYMBOL
+	TK_USYMBOL,       // KW_USYMBOL
 	TK_TEXT,
 	TK_STEXT,
 	TK_BTEXT,
@@ -182,42 +163,45 @@ typedef enum {
 	TK_FLOAT,
 	TK_URN,
 	TK_REGEX,
+	TK_TYPE,
+	AST_PARENTHESIS,
+	AST_BRANCET,
+	AST_BRACE,
+
+	TK_OPERATOR,
+	TK_CODE,          //
+	TK_WHITESPACE,    //
 	TK_METANAME,
 	TK_MN,
-	TK_TYPE,
-	// ast
-	AST_PARENTHESIS,
-	AST_BRACE,
-	AST_BRANCET,
 	AST_OPTIONAL,  // for syntax sugar
-	AST_TYPE,
-	AST_EXPR,
-	AST_STMT,
-	AST_BLOCK
+//	// ast
+//	AST_TYPE,
+//	AST_EXPR,
+//	AST_STMT,
+//	AST_BLOCK
 } ktoken_t ;
 
 typedef struct kToken kToken;
 struct kToken {
 	kObjectHeader h;
-	ktoken_t tt;
+	kushort_t tt;   ksymbol_t kw;
 	union {
 		struct kString *text;
 		struct kArray  *sub;
-		struct kExpr   *expr;
-		struct kStmt   *stmt;
-		struct kBlock  *bk;
+//		struct kExpr   *expr;
+//		struct kStmt   *stmt;
+//		struct kBlock  *bk;
 	};
 	kline_t     uline;
 	union {
 		kushort_t lpos;
-		kshort_t  closech;
-		ksymbol_t nameid;
+		kshort_t  closech;  // ast
+		ksymbol_t nameid;   // sugar
 	};
 	union {
-		kshort_t  topch;
-		keyword_t keyid;
-		ksymbol_t symbol;
-		ktype_t   ty;
+		kshort_t   topch;
+		ksymbol_t  symbol;
+		ktype_t    ty;
 		kmethodn_t mn;
 	};
 };
@@ -357,13 +341,29 @@ struct kGamma {
 
 #define KW_ERR     0
 #define KW_EXPR    1
-#define KW_BLOCK   2
-#define KW_TYPE    3
-#define KW_CNAME   4
-#define KW_NAME    5
-#define KW_PARAMS  6
+#define KW_SYMBOL  2
+#define KW_name    2
+#define KW_USYMBOL 3
+#define KW_cname   3
+#define KW_TEXT    4
+#define KW_STEXT   5
+#define KW_BTEXT   6
+#define KW_INT     7
+#define KW_FLOAT   8
+#define KW_URN     9
+#define KW_REGEX   10
+#define KW_TYPE    11
+#define KW_type    11
+#define KW_PARENTHESIS  12
+#define KW_BRANCET      13
+#define KW_BRACE        14
 
-#define KW_DOT     7
+//#define KW_BLOCK   15
+#define KW_block   15
+//#define KW_PARAMS  16
+#define KW_params  16
+
+#define KW_DOT     17
 #define KW_DIV     (1+KW_DOT)
 #define KW_MOD     (2+KW_DOT)
 #define KW_MUL     (3+KW_DOT)

@@ -579,12 +579,12 @@ static void Method_init(CTX, kRawPtr *o, void *conf)
 
 static void Method_reftrace(CTX, kRawPtr *o)
 {
-	BEGIN_REFTRACE(3);
+	BEGIN_REFTRACE(4);
 	kMethod *mtd = (kMethod*)o;
 	KREFTRACEv(mtd->pa);
 	KREFTRACEv(mtd->tcode);
 	KREFTRACEv(mtd->kcode);
-//	KREFTRACEn(mtd->paramsNULL);
+	KREFTRACEn(mtd->proceedNUL);
 	END_REFTRACE();
 }
 

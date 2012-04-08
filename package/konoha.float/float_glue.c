@@ -209,7 +209,7 @@ static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t plin
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("float"), .type = TY_Float, },
 		{ TOKEN("double"), .type = TY_Float, },
-		{ TOKEN("$FLOAT"), .keyid = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

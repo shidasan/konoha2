@@ -772,7 +772,7 @@ static void knh_loadNativeClass(CTX, const char *cname, kclass_t *ct)
 
 static void ClassTBL_inherit(CTX, kclass_t *ct, const kclass_t *supct) {
 	ct->supTBL = ClassTBL(ct->supcid);
-	ct->keyidx = supct->keyidx;
+	ct->kwx = supct->kwx;
 	ct->xdataidx = supct->xdataidx;
 	((kclass_t*)supct)->subclass += 1;
 	ct->bcid = supct->bcid;

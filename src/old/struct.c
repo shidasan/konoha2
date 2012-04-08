@@ -371,11 +371,11 @@ static void ObjectField_p(CTX, kOutputStream *w, kRawPtr *o, int level)
 
 static kString* ObjectField_getkey(CTX, ksfp_t *sfp)
 {
-	int keyidx = O_ct(sfp[0].o)->keyidx;
-	if(keyidx != -1) {
+	int kwx = O_ct(sfp[0].o)->kwx;
+	if(kwx != -1) {
 		kObject *of = (kObject*)sfp[0].o;
-		DBG_ASSERT(IS_bString(of->fields[keyidx]));
-		return (kString*)of->fields[keyidx];
+		DBG_ASSERT(IS_bString(of->fields[kwx]));
+		return (kString*)of->fields[kwx];
 	}
 	return DEFAULT_getkey(_ctx, sfp);
 }
