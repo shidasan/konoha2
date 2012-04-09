@@ -8,7 +8,7 @@
 static KMETHOD KonohaSpace_assert(CTX, ksfp_t *sfp _RIX)
 {
 	kbool_t cond = sfp[1].bvalue;
-	kline_t fileid  = sfp[0].uline;
+	kline_t fileid  = sfp[K_RTNIDX].uline;
 	if (cond == false) {
 		const char *fname = T_file(fileid);
 		uintptr_t line = ULINE_line(fileid);
