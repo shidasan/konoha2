@@ -22,7 +22,7 @@ static KMETHOD StmtTyCheck_assert(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	kbool_t r = 1;
-	VAR_StmtTyCheck(stmt, gma);
+	VAR_StmtTyCheck(stmt, syn, gma);
 	if((r = SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
 		kExpr *expr = kStmt_expr(stmt, KW_EXPR, NULL);
 		kMethod *mtd = SUGAR KonohaSpace_getMethodNULL(_ctx, gma->genv->ks, TY_KonohaSpace, MN_("assert"));
@@ -59,7 +59,7 @@ static kbool_t assert_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+#define TOKEN(T)  .name = T/*, .namelen = (sizeof(T)-1)*/
 
 static kbool_t assert_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {

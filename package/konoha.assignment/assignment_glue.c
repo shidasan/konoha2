@@ -20,7 +20,7 @@ static kExpr *Expr_toSetter(CTX, kExpr *expr, kExpr *vexpr)
 static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, gma, req_ty);
+	VAR_ExprTyCheck(expr, syn, gma, req_ty);
 	DBG_P("typing: assignment .. ");
 	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
 	if(lexpr != K_NULLEXPR) {
@@ -66,7 +66,7 @@ static kbool_t assignment_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pli
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+#define TOKEN(T)  .name = T/*, .namelen = (sizeof(T)-1)*/
 
 static kbool_t assignment_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {

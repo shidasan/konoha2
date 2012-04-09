@@ -49,7 +49,7 @@ static void kfloatshare_free(CTX, struct kmodshare_t *baseh)
 static KMETHOD TokenTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, gma, req_ty);
+	VAR_ExprTyCheck(expr, syn, gma, req_ty);
 	kToken *tk = expr->tkNUL;
 	sfp[4].fvalue = strtod(S_text(tk->text), NULL);
 	RETURN_(kExpr_setNConstValue(expr, TY_Float, sfp[4].ndata));
@@ -201,7 +201,7 @@ static kbool_t float_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+#define TOKEN(T)  .name = T/*, .namelen = (sizeof(T)-1)*/
 
 static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 {
@@ -213,8 +213,6 @@ static kbool_t float_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t plin
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
-
-
 	return true;
 }
 

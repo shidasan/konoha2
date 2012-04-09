@@ -289,17 +289,24 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
 static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
 
+static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, kMethod **mp)
+{
+	if(f != NULL) {
+		if(f != p[0]) {
+			p[0] = f;
+			mp[0] = new_kMethod(0, 0, 0, NULL, f);
+		}
+		KINITv(synp[0], mp[0]);
+	}
+}
+
 static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef)
 {
-	knh_Fmethod pStmtAdd = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
-	kMethod *mStmtAdd = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
-//	ksyntax_t *syn_expr = KonohaSpace_syntax(_ctx, ks, 1, 0);
+	knh_Fmethod pStmtAdd = NULL, pStmtParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
+	kMethod *mStmtAdd = NULL, *mStmtParseExpr = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
 	while(syndef->name != NULL) {
-		keyword_t kw = keyword(_ctx, syndef->name, syndef->namelen, FN_NEWID);
+		keyword_t kw = keyword(_ctx, syndef->name, strlen(syndef->name), FN_NEWID);
 		ksyntax_t* syn = KonohaSpace_syntax(_ctx, ks, kw, 1);
-//		if(kw == 1 && syn_expr == NULL) {
-//			syn_expr = syn;
-//		}
 		syn->token = syndef->name;
 		syn->flag  |= syndef->flag;
 		if(syndef->type != 0) {
@@ -310,55 +317,18 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, ksyntaxdef_t *syndef
 			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRule);
 		}
 		if(syndef->op1 != NULL) {
-			if (syndef->op1[0] == '*') {
-				syn->op1 = MN_NONAME;  // TODO
-			} else {
-				syn->op1 = ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
-			}
+			syn->op1 = (syndef->op1[0] == '*') ? MN_NONAME : ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
 		}
 		if(syndef->op2 != NULL) {
-			if (syndef->op2[0] == '*') {
-				syn->op2 = MN_NONAME;  // TODO
-			} else {
-				syn->op2 = ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
-			}
+			syn->op2 = (syndef->op2[0] == '*') ? MN_NONAME : ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
 			syn->priority = syndef->priority_op2;
 			syn->right = syndef->right;
 		}
-		if(syndef->StmtAdd != NULL) {
-			if(syndef->StmtAdd != pStmtAdd) {
-				pStmtAdd = syndef->StmtAdd;
-				mStmtAdd = new_kMethod(0, 0, 0, NULL, pStmtAdd);
-			}
-			KINITv(syn->StmtAdd, mStmtAdd);
-		}
-		if(syndef->TopStmtTyCheck != NULL) {
-			if(syndef->TopStmtTyCheck != pStmtTyCheck) {
-				pStmtTyCheck = syndef->TopStmtTyCheck;
-				mStmtTyCheck = new_kMethod(0, 0, 0, NULL, pStmtTyCheck);
-			}
-			KINITv(syn->TopStmtTyCheck, mStmtTyCheck);
-		}
-		if(syndef->StmtTyCheck != NULL) {
-			if(syndef->StmtTyCheck != pStmtTyCheck) {
-				pStmtTyCheck = syndef->StmtTyCheck;
-				mStmtTyCheck = new_kMethod(0, 0, 0, NULL, pStmtTyCheck);
-			}
-			KINITv(syn->StmtTyCheck, mStmtTyCheck);
-		}
-		if(syndef->ExprTyCheck != NULL) {
-			if(syndef->ExprTyCheck != pExprTyCheck) {
-				pExprTyCheck = syndef->ExprTyCheck;
-				mExprTyCheck = new_kMethod(0, 0, 0, NULL, pExprTyCheck);
-			}
-			KINITv(syn->ExprTyCheck, mExprTyCheck);
-//			if(syn->syntaxRule == NULL) {
-//				KINITv(syn->syntaxRule, syn_expr->syntaxRule);
-//			}
-//			if(syn->StmtTyCheck == NULL) {
-//				KINITv(syn->StmtTyCheck, syn_expr->StmtTyCheck);
-//			}
-		}
+		setSyntaxMethod(_ctx, syndef->StmtAdd, &(syn->StmtAdd), &pStmtAdd, &mStmtAdd);
+		setSyntaxMethod(_ctx, syndef->StmtParseExpr, &(syn->StmtParseExpr), &pStmtParseExpr, &mStmtParseExpr);
+		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck);
 		DBG_ASSERT(syn == SYN_(ks, kw));
 		syndef++;
 	}
@@ -677,14 +647,15 @@ static KDEFINE_CLASS ExprDef = {
 	.reftrace = Expr_reftrace,
 };
 
-static kExpr* new_TermExpr(CTX, kToken *tk)
-{
-	kExpr *expr = new_(Expr, NULL);
-	PUSH_GCSTACK(expr);
-	Expr_setTerm(expr, 1);
-	KINITv(expr->tkNUL, tk);
-	return expr;
-}
+//static kExpr* new_TermExpr(CTX, kToken *tk)
+//{
+//	kExpr *expr = new_(Expr, NULL);
+//	PUSH_GCSTACK(expr);
+//	Expr_setTerm(expr, 1);
+//	KINITv(expr->tkNUL, tk);
+////	expr->syn = SYN_(kStmt_ks(stmt), tk->kw);
+//	return expr;
+//}
 
 static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
 {
@@ -698,7 +669,7 @@ static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
 	KINITv(expr->consNUL, new_(Array, 8));
 	for(i = 0; i < n; i++) {
 		kObject *v =  (kObject*)va_arg(ap, kObject*);
-		if(v == NULL) return NULL;
+		if(v == NULL || v == (kObject*)K_NULLEXPR) return K_NULLEXPR;
 		kArray_add(expr->consNUL, v);
 	}
 	va_end(ap);
@@ -707,14 +678,14 @@ static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
 
 static kExpr* Expr_add(CTX, kExpr *expr, void *e)
 {
-	if(expr != NULL && e != NULL) {
+	if(expr != K_NULLEXPR && e != NULL && e != K_NULLEXPR) {
 		kArray_add(expr->consNUL, e);
 		return expr;
 	}
-	return NULL;
+	return K_NULLEXPR;
 }
 
-void dumpExpr(CTX, int n, int nest, kExpr *expr)
+static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 {
 	if(konoha_debug) {
 		if(nest == 0) DUMP_P("\n");

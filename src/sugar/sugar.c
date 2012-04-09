@@ -50,47 +50,49 @@ static void Kraise(CTX, int isContinue);
 #include "ast.h"
 #include "tycheck.h"
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
+#define TOKEN(T)  .name = T /*, .namelen = (sizeof(T)-1)*/
 #define _EXPR     .flag = SYN_ExprFlag
+#define _TERM     .StmtParseExpr = StmtParseExpr_Term
+#define _OP       .StmtParseExpr = StmtParseExpr_Op
 
 static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	ksyntaxdef_t SYNTAX[] = {
-		{ TOKEN("$ERR"), .StmtTyCheck = StmtTyCheck_err },
-		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .TopStmtTyCheck = StmtTyCheck_expr, .StmtTyCheck = StmtTyCheck_expr, .ExprTyCheck = ExprTyCheck_call, },
-		{ TOKEN("$SYMBOL"),  _EXPR, .StmtAdd = StmtAdd_name,  .ExprTyCheck = TokenTyCheck_SYMBOL,},
-		{ TOKEN("$USYMBOL"), _EXPR, .StmtAdd = StmtAdd_cname, .ExprTyCheck = TokenTyCheck_USYMBOL,},
-		{ TOKEN("$TEXT"), _EXPR, .ExprTyCheck = TokenTyCheck_TEXT,},
-		{ TOKEN("$STEXT"), _EXPR, },
-		{ TOKEN("$BTEXT"), _EXPR, },
-		{ TOKEN("$INT"), _EXPR, .ExprTyCheck = TokenTyCheck_INT,},
-		{ TOKEN("$FLOAT"), _EXPR, .ExprTyCheck = TokenTyCheck_FLOAT,},
-		{ TOKEN("$URN"), _EXPR, },
-		{ TOKEN("$REGEX"), _EXPR, },
-		{ TOKEN("$type"), _EXPR, .StmtAdd = StmtAdd_type, .ExprTyCheck = TokenTyCheck_TYPE,},
+		{ TOKEN("$ERR"), },
+		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .TopStmtTyCheck = StmtTyCheck_EXPR, .StmtTyCheck = StmtTyCheck_EXPR, .ExprTyCheck = ExprTyCheck_call, },
+		{ TOKEN("$SYMBOL"),  _EXPR, .StmtAdd = StmtAdd_name,  _TERM, .ExprTyCheck = TokenTyCheck_SYMBOL,},
+		{ TOKEN("$USYMBOL"), _EXPR, .StmtAdd = StmtAdd_cname, _TERM, .ExprTyCheck = TokenTyCheck_USYMBOL,},
+		{ TOKEN("$TEXT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_TEXT,},
+		{ TOKEN("$STEXT"), _EXPR, _TERM, },
+		{ TOKEN("$BTEXT"), _EXPR, _TERM, },
+		{ TOKEN("$INT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_INT,},
+		{ TOKEN("$FLOAT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_FLOAT,},
+		{ TOKEN("$URN"), _EXPR, _TERM, },
+		{ TOKEN("$REGEX"), _EXPR, _TERM, },
+		{ TOKEN("$type"), _EXPR, _TERM, .StmtAdd = StmtAdd_type, .ExprTyCheck = TokenTyCheck_TYPE,},
 		{ TOKEN("()"), _EXPR, }, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
 		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
 		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
 		{ TOKEN("$params"), .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, .ExprTyCheck = ExprTyCheck_invoke,},
-		{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
-		{ TOKEN("/"), .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
-		{ TOKEN("%"), .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("*"), .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("+"), .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call},
-		{ TOKEN("-"), .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("<"), .op2 = "opLT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("<="), .op2 = "opLTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN(">"), .op2 = "opGT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN(">="), .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("=="), .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("!="), .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("&&"), .op2 = "*", .priority_op2 = 1024, .right = 1, },
-		{ TOKEN("||"), .op2 = "*", .priority_op2 = 2048, .right = 1, },
-		{ TOKEN("!"),  .op1 = "opNOT", },
-		{ TOKEN(":"), .rule = "$type $expr", .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
-		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, },
-		{ TOKEN(","), .op2 = "*", .priority_op2 = 8192, },
+		{ TOKEN("."), .StmtParseExpr = StmtParseExpr_DOT, .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
+		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
+		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("+"), _OP, .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call},
+		{ TOKEN("-"), _OP, .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("<"), _OP, .op2 = "opLT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("<="), _OP, .op2 = "opLTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN(">"), _OP, .op2 = "opGT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
+		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, },
+		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, },
+		{ TOKEN("!"),  _OP, .op1 = "opNOT", },
+		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
+		{ TOKEN(","), .StmtParseExpr = StmtParseExpr_COMMA, .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL '.'] $SYMBOL $params [$block]", .TopStmtTyCheck = StmtTyCheck_declMethod},
 		{ TOKEN("var"),  /*.type = TY_var, .rule ="$type $expr",*/ },
 		{ TOKEN("boolean"), .type = TY_Boolean, },
@@ -193,10 +195,14 @@ static void kevalshare_reftrace(CTX, struct kmodshare_t *baseh)
 {
 	kevalshare_t *base = (kevalshare_t*)baseh;
 	kmap_reftrace(base->packageMapNO, pack_reftrace);
-	BEGIN_REFTRACE(3);
+	BEGIN_REFTRACE(7);
+	KREFTRACEv(base->rootks);
 	KREFTRACEv(base->keywordList);
 	KREFTRACEv(base->packageList);
 	KREFTRACEv(base->aBuffer);
+	KREFTRACEv(base->UndefinedStmtParseExpr);
+	KREFTRACEv(base->UndefinedStmtTyCheck);
+	KREFTRACEv(base->UndefinedExprTyCheck);
 	END_REFTRACE();
 }
 
@@ -240,6 +246,10 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	knull(base->cExpr);
 	knull(base->cBlock);
 	KINITv(base->aBuffer, new_(Array, 0));
+
+	KINITv(base->UndefinedStmtParseExpr, new_kMethod(0, 0, 0, NULL, UndefinedStmtParseExpr));
+	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));
+	KINITv(base->UndefinedExprTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedExprTyCheck));
 
 	defineDefaultSyntax(_ctx, base->rootks);
 	DBG_ASSERT(KW_("$params") == KW_params);

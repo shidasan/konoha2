@@ -67,28 +67,42 @@ typedef struct {
 	kline_t                    export_script;
 } kpackage_t;
 
-#define VAR_StmtAdd(STMT, NAME, TLS, S, E) \
+// StmtAdd
+#define VAR_StmtAdd(STMT, SYN, NAME, TLS, S, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
+		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
 		ksymbol_t NAME = (ksymbol_t)sfp[1].ivalue;\
 		kArray *TLS = (kArray*)sfp[2].o;\
 		int S = (int)sfp[3].ivalue;\
 		int E = (int)sfp[4].ivalue;\
-		(void)STMT; (void)NAME; (void)TLS; (void)S; (void)E;\
+		(void)STMT; (void)SYN; (void)NAME; (void)TLS; (void)S; (void)E;\
+
+// Expr Stmt.parseExpr(Token[] tls, int s, int c, int e)
+#define VAR_StmtParseExpr(STMT, SYN, TLS, S, C, E) \
+		kStmt *STMT = (kStmt*)sfp[0].o;\
+		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
+		kArray *TLS = (kArray*)sfp[1].o;\
+		int S = (int)sfp[2].ivalue;\
+		int C = (int)sfp[3].ivalue;\
+		int E = (int)sfp[4].ivalue;\
+		(void)STMT; (void)SYN; (void)TLS; (void)S; (void)C; (void)E;\
 
 // Expr Stmt.tycheck(Gamma gma)
 
-#define VAR_StmtTyCheck(STMT, GMA) \
+#define VAR_StmtTyCheck(STMT, SYN, GMA) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
+		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
 		kGamma *GMA = (kGamma*)sfp[1].o;\
-		(void)STMT; (void)GMA;\
+		(void)STMT; (void)SYN; (void)GMA;\
 
 // Expr Expr.tycheck(Gamma gma, int t)
 
-#define VAR_ExprTyCheck(EXPR, GMA, TY) \
+#define VAR_ExprTyCheck(EXPR, SYN, GMA, TY) \
 		kExpr *EXPR = (kExpr*)sfp[0].o;\
+		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
 		kGamma *GMA = (kGamma*)sfp[1].o;\
 		ktype_t TY = (ktype_t)sfp[2].ivalue;\
-		(void)EXPR; (void)GMA; (void)TY;\
+		(void)EXPR; (void)SYN; (void)GMA; (void)TY;\
 
 #define SYN_ExprFlag      1
 #define SYN_isExpr(syn)   TFLAG_is(kflag_t, syn->flag, SYN_ExprFlag)
@@ -98,6 +112,7 @@ typedef struct ksyntax_t {
 	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
 	kMethod  *StmtAdd;
+	kMethod  *StmtParseExpr;
 	kMethod  *TopStmtTyCheck;
 	kMethod  *StmtTyCheck;
 	kMethod  *ExprTyCheck;
@@ -110,7 +125,7 @@ typedef struct ksyntax_t {
 
 typedef struct ksyntaxdef_t {
 	const char *name;
-	size_t      namelen;
+//	size_t      namelen;
 	keyword_t kw;  kflag_t flag;
 	const char *rule;
 	const char *op2;
@@ -118,6 +133,7 @@ typedef struct ksyntaxdef_t {
 	int priority_op2; int right;
 	int type;
 	knh_Fmethod StmtAdd;
+	knh_Fmethod StmtParseExpr;
 	knh_Fmethod TopStmtTyCheck;
 	knh_Fmethod StmtTyCheck;
 	knh_Fmethod ExprTyCheck;
@@ -427,30 +443,21 @@ typedef struct {
 	struct kKonohaSpace         *rootks;
 	struct kArray         *aBuffer;
 
-//	struct kToken *nullToken;
-//	struct kExpr  *nullExpr;
-//	struct kBlock *nullBlock;
-
-//	keyword_t kw_dot;
-//	keyword_t kw_comma;
-//	keyword_t kw_colon;
-//	keyword_t kw_declmethod;
-//	keyword_t kw_decltype;
-//	keyword_t kw_params;
-//	keyword_t kw_type;
-//	keyword_t kw_then;
-//	keyword_t kw_else;
+//	struct kMethod *UndefinedStmtAdd;
+	struct kMethod *UndefinedStmtParseExpr;
+	struct kMethod *UndefinedStmtTyCheck;
+	struct kMethod *UndefinedExprTyCheck;
 
 	struct ksyntax_t *syn_err;
 	struct ksyntax_t *syn_expr;
-	struct ksyntax_t *syn_call;
-	struct ksyntax_t *syn_invoke;
-	struct ksyntax_t *syn_params;
-	struct ksyntax_t *syn_return;
-//	struct ksyntax_t *syn_break;
-	struct ksyntax_t *syn_typedecl;
-	struct ksyntax_t *syn_comma;
-	struct ksyntax_t *syn_let;
+//	struct ksyntax_t *syn_call;
+//	struct ksyntax_t *syn_invoke;
+//	struct ksyntax_t *syn_params;
+//	struct ksyntax_t *syn_return;
+////	struct ksyntax_t *syn_break;
+//	struct ksyntax_t *syn_typedecl;
+//	struct ksyntax_t *syn_comma;
+//	struct ksyntax_t *syn_let;
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
