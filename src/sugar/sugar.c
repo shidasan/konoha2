@@ -59,23 +59,24 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	ksyntaxdef_t SYNTAX[] = {
 		{ TOKEN("$ERR"), },
-		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr, .TopStmtTyCheck = StmtTyCheck_EXPR, .StmtTyCheck = StmtTyCheck_EXPR, .ExprTyCheck = ExprTyCheck_call, },
+		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr,
+			.TopStmtTyCheck = StmtTyCheck_EXPR, .StmtTyCheck = StmtTyCheck_EXPR,  },
 		{ TOKEN("$SYMBOL"),  _EXPR, .StmtAdd = StmtAdd_name,  _TERM, .ExprTyCheck = TokenTyCheck_SYMBOL,},
 		{ TOKEN("$USYMBOL"), _EXPR, .StmtAdd = StmtAdd_cname, _TERM, .ExprTyCheck = TokenTyCheck_USYMBOL,},
 		{ TOKEN("$TEXT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_TEXT,},
-		{ TOKEN("$STEXT"), _EXPR, _TERM, },
-		{ TOKEN("$BTEXT"), _EXPR, _TERM, },
+		{ TOKEN("$STEXT"), _EXPR, /*_TERM,*/ },
+		{ TOKEN("$BTEXT"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$INT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_INT,},
 		{ TOKEN("$FLOAT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_FLOAT,},
-		{ TOKEN("$URN"), _EXPR, _TERM, },
-		{ TOKEN("$REGEX"), _EXPR, _TERM, },
+		{ TOKEN("$URN"), _EXPR, /*_TERM,*/ },
+		{ TOKEN("$REGEX"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$type"), _EXPR, _TERM, .StmtAdd = StmtAdd_type, .ExprTyCheck = TokenTyCheck_TYPE,},
-		{ TOKEN("()"), _EXPR, }, //AST_PARENTHESIS
+		{ TOKEN("()"), _EXPR, .StmtParseExpr = StmtParseExpr_PARENTHESIS, .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_invoke,}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
 		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
 		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
-		{ TOKEN("$params"), .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, .ExprTyCheck = ExprTyCheck_invoke,},
-		{ TOKEN("."), .StmtParseExpr = StmtParseExpr_DOT, .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_getter },
+		{ TOKEN("$params"), .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, .ExprTyCheck = ExprTyCheck_call,},
+		{ TOKEN("."), _OP, .op2 = "*", .priority_op2 = 16, .right = 1, /*.ExprTyCheck = ExprTyCheck_getter*/ },
 		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
 		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
 		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
@@ -257,6 +258,7 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	DBG_ASSERT(KW_(",") == KW_COMMA);
 	DBG_ASSERT(KW_("void") == KW_void);  // declmethod
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
+	SYN_(base->rootks, KW_void)->ty = TY_void; // it's not cool, but necessary
 
 	base->syn_err  = SYN_(base->rootks, KW_ERR);
 	base->syn_expr = SYN_(base->rootks, KW_EXPR);

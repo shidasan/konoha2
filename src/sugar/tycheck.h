@@ -515,13 +515,14 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 	VAR_ExprTyCheck(expr, syn, gma, req_ty);
 	kArray *cons = expr->consNUL;
 	DBG_P("invoke: size=%d", kArray_size(cons));
+	DBG_ASSERT(IS_Expr(cons->list[0]));
 	DBG_ASSERT(cons->list[1] == K_NULL);
 	kcid_t this_cid = TY_unknown;
-	if(IS_Expr(cons->list[0])) {
+	if(Expr_isTerm(cons->list[0])) {
 		kToken *tk = cons->exprs[0]->tkNUL;
 		if(Token_mn(_ctx, tk, "function") != MN_NONAME) {
 			kMethod *mtd = NULL;
-			if(true/*FIXME gma->genv->this_cid != 0*/) {
+			if(gma->genv->this_cid !=0) {   /* this.f() */
 				mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, gma->genv->this_cid, tk->mn);
 				if(mtd != NULL) {
 					if(!kMethod_isStatic(mtd)) {
@@ -553,23 +554,23 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 
 static kExpr *ExprTyCheck(CTX, kExpr *expr, kGamma *gma, int req_ty);
 
-static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ExprTyCheck(expr, syn, gma, req_ty);
-	kExpr *texpr = kExpr_tyCheckAt(expr, 0, gma, TY_var, 0);
-	if(texpr != K_NULLEXPR) {
-		kToken *tkF = expr->consNUL->tts[1];
-		kmethodn_t mn = Token_mn(_ctx, tkF, "field");
-		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, texpr->ty, MN_toGETTER(mn));
-		if(mtd != NULL) {
-			KSETv(expr->consNUL->methods[0], mtd);
-			KSETv(kExpr_at(expr, 1), texpr); // GC_UNSAFE (swaping)
-			RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
-		}
-		RETURN_(kToken_p(tkF, ERR_, "undefined field accessor: %s", kToken_s(tkF)));
-	}
-	RETURN_(K_NULLEXPR);
-}
+//static KMETHOD ExprTyCheck_getter(CTX, ksfp_t *sfp _RIX)
+//{
+//	VAR_ExprTyCheck(expr, syn, gma, req_ty);
+//	kExpr *texpr = kExpr_tyCheckAt(expr, 0, gma, TY_var, 0);
+//	if(texpr != K_NULLEXPR) {
+//		kToken *tkF = expr->consNUL->tts[1];
+//		kmethodn_t mn = Token_mn(_ctx, tkF, "field");
+//		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, texpr->ty, MN_toGETTER(mn));
+//		if(mtd != NULL) {
+//			KSETv(expr->consNUL->methods[0], mtd);
+//			KSETv(kExpr_at(expr, 1), texpr); // GC_UNSAFE (swaping)
+//			RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
+//		}
+//		RETURN_(kToken_p(tkF, ERR_, "undefined field accessor: %s", kToken_s(tkF)));
+//	}
+//	RETURN_(K_NULLEXPR);
+//}
 
 static KMETHOD StmtTyCheck_EXPR(CTX, ksfp_t *sfp _RIX)  // $expr
 {
