@@ -448,7 +448,9 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 				idx = i;
 				*synR = syn;
 			}
-			i = Stmt_skipUninaryOp(_ctx, stmt, tls, i+1, e) - 1;
+			if(syn->op2 != MN_NONAME) {  /* check if real binary operator to parse f() + 1 */
+				i = Stmt_skipUninaryOp(_ctx, stmt, tls, i+1, e) - 1;
+			}
 		}
 	}
 	return idx;
@@ -483,7 +485,7 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		ksyntax_t *syn = NULL;
 		int idx = Stmt_findBinaryOp(_ctx, stmt, tls, s, e, &syn);
 		if(idx != -1) {
-			//DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, %s**", s, idx, e, S_text(tls->toks[idx]->text));
+			DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, '%s'**", s, idx, e, kToken_s(tls->toks[idx]));
 			return ParseExpr(_ctx, syn, stmt, tls, s, idx, e);
 		}
 		int c = s;
@@ -544,11 +546,13 @@ static KMETHOD StmtParseExpr_PARENTHESIS(CTX, ksfp_t *sfp _RIX)
 	else {
 		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
 		if(Expr_isBinaryOp(lexpr, KW_DOT)) {   // ((. a f) null ()) =>  (f a ())
+			DBG_P("folding .. ");
 			KSETv(lexpr->consNUL->exprs[0], lexpr->consNUL->exprs[2]);
 			kArray_clear(lexpr->consNUL, 2);
-			((struct _kStmt*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_params); // CALL
+			((struct _kExpr*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_params); // CALL
 		}
 		else {
+			DBG_P("function calls  .. ");
 			syn = SYN_(kStmt_ks(stmt), KW_PARENTHESIS);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}
@@ -574,6 +578,7 @@ static KMETHOD StmtParseExpr_Op(CTX, ksfp_t *sfp _RIX)
 		expr = new_ConsExpr(_ctx, syn, 2, tk, rexpr);
 	}
 	else {   // binary operator
+		DBG_P("binary");
 		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
 		expr = new_ConsExpr(_ctx, syn, 3, tk, lexpr, rexpr);
 	}

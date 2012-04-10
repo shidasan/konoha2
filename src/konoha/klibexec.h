@@ -613,7 +613,8 @@ static void Object_setUnboxedValue(CTX, kObject *o, ksymbol_t key, ktype_t ty, u
 // -------------------------------------------------------------------------
 
 /* debug mode */
-int konoha_debug;
+int konoha_debug = 0;
+
 #define CTX_isTERM()     CTX_isInteractive()
 
 static const char* T_BEGIN(CTX, int pe)
