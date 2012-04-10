@@ -23,7 +23,7 @@ static void test_add0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.add(10,20); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opADD;
         op->uline = 1;
         op->thisidx = 0;
@@ -66,7 +66,7 @@ static void test_sub0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.sub(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opSUB;
         op->uline = 1;
         op->thisidx = 0;
@@ -109,7 +109,7 @@ static void test_mul0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.mul(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opMUL;
         op->uline = 1;
         op->thisidx = 0;
@@ -152,7 +152,7 @@ static void test_div0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.div(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opDIV;
         op->uline = 1;
         op->thisidx = 0;
@@ -195,7 +195,7 @@ static void test_mod0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.mod(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opMOD;
         op->uline = 1;
         op->thisidx = 0;
@@ -238,7 +238,7 @@ static void test_eq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.eq(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opEQ;
         op->uline = 1;
         op->thisidx = 0;
@@ -281,7 +281,7 @@ static void test_neq0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.neq(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opNEQ;
         op->uline = 1;
         op->thisidx = 0;
@@ -324,7 +324,7 @@ static void test_lt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.lt(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opLT;
         op->uline = 1;
         op->thisidx = 0;
@@ -367,7 +367,7 @@ static void test_gt0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.gt(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opGT;
         op->uline = 1;
         op->thisidx = 0;
@@ -410,7 +410,7 @@ static void test_lte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.lte(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opLTE;
         op->uline = 1;
         op->thisidx = 0;
@@ -453,7 +453,7 @@ static void test_gte0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
     {
         /* reg1 = Int.gte(20,10); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = Int_opGTE;
         op->uline = 1;
         op->thisidx = 0;

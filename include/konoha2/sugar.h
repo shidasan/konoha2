@@ -25,14 +25,13 @@
 extern "C" {
 #endif
 
-#define TEXT(T)  T, (sizeof(T)-1)
+//#define TEXT(T)  T, (sizeof(T)-1)
 
 typedef ksymbol_t keyword_t;
 #define T_kw(X)   Pkeyword_(_ctx, X)
 #define Skeyword(X)   Skw_(_ctx, X)
 
-
-#define FLAG_METHOD_LAZYCOMPILE (0)
+//#define FLAG_METHOD_LAZYCOMPILE (0)
 
 #define kflag_clear(flag)  (flag) = 0
 #define K_CHECKSUM 1
@@ -50,10 +49,10 @@ typedef struct {
 	const char *libname;
 	const char *libversion;
 	const char *note;
-	kbool_t (*initPackage)(CTX, struct kKonohaSpace *, int, const char**, kline_t);
-	kbool_t (*setupPackage)(CTX, struct kKonohaSpace *, kline_t);
-	kbool_t (*initKonohaSpace)(CTX,  struct kKonohaSpace *, kline_t);
-	kbool_t (*setupKonohaSpace)(CTX, struct kKonohaSpace *, kline_t);
+	kbool_t (*initPackage)(CTX, const struct _kKonohaSpace *, int, const char**, kline_t);
+	kbool_t (*setupPackage)(CTX, const struct _kKonohaSpace *, kline_t);
+	kbool_t (*initKonohaSpace)(CTX, const struct _kKonohaSpace *, kline_t);
+	kbool_t (*setupKonohaSpace)(CTX, const struct _kKonohaSpace *, kline_t);
 	int konoha_revision;
 } KPACKDEF_;
 
@@ -61,10 +60,10 @@ typedef const KPACKDEF_ KPACKDEF;
 typedef KPACKDEF* (*Fpackageinit)(void);
 
 typedef struct {
-	kpack_t                    packid;
-	struct kKonohaSpace       *ks;
-	KPACKDEF                  *packdef;
-	kline_t                    export_script;
+	kpack_t                      packid;
+	const struct _kKonohaSpace  *ks;
+	KPACKDEF                    *packdef;
+	kline_t                      export_script;
 } kpackage_t;
 
 // StmtAdd
@@ -107,7 +106,8 @@ typedef struct {
 #define SYN_ExprFlag      1
 #define SYN_isExpr(syn)   TFLAG_is(kflag_t, syn->flag, SYN_ExprFlag)
 
-typedef struct ksyntax_t {
+typedef const struct _ksyntax ksyntax_t;
+struct _ksyntax {
 	const char *token;
 	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
@@ -121,9 +121,11 @@ typedef struct ksyntax_t {
 	kmethodn_t op2;      // a if b
 	kmethodn_t op1;      // & a
 	ktype_t    ty;       kshort_t dummy;
-} ksyntax_t ;
+};
 
-typedef struct ksyntaxdef_t {
+#define TOKEN(T)  .name = T
+
+typedef struct DEFINE_SYNTAX_SUGAR {
 	const char *name;
 //	size_t      namelen;
 	keyword_t kw;  kflag_t flag;
@@ -137,7 +139,7 @@ typedef struct ksyntaxdef_t {
 	knh_Fmethod TopStmtTyCheck;
 	knh_Fmethod StmtTyCheck;
 	knh_Fmethod ExprTyCheck;
-} ksyntaxdef_t;
+} DEFINE_SYNTAX_SUGAR;
 
 typedef struct keyvals_t {
 	ksymbol_t key;
@@ -149,18 +151,18 @@ typedef struct keyvals_t {
 	};
 } keyvals_t;
 
-typedef struct kKonohaSpace kKonohaSpace;
+typedef const struct _kKonohaSpace kKonohaSpace;
 
-struct kKonohaSpace {
+struct _kKonohaSpace {
 	kObjectHeader h;
 	kpack_t packid;  kpack_t packdom;
-	struct kKonohaSpace   *parentNULL;
+	const struct _kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
 	//
 	void                *gluehdr;
-	struct kObject      *script;
+	kObject      *script;
 	kcid_t static_cid;   kcid_t function_cid;
-	struct kArray*       methodsNULL;
+	kArray*       methodsNULL;
 	karray_t cl;
 };
 
@@ -197,13 +199,13 @@ typedef enum {
 //	AST_BLOCK
 } ktoken_t ;
 
-typedef struct kToken kToken;
-struct kToken {
+typedef const struct _kToken kToken;
+struct _kToken {
 	kObjectHeader h;
 	kushort_t tt;   ksymbol_t kw;
 	union {
-		struct kString *text;
-		struct kArray  *sub;
+		kString *text;
+		kArray  *sub;
 //		struct kExpr   *expr;
 //		struct kStmt   *stmt;
 //		struct kBlock  *bk;
@@ -242,15 +244,15 @@ struct kToken {
 #define Expr_setTerm(o,B)   TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,B)
 #define kExpr_at(E,N)        ((E)->consNUL->exprs[(N)])
 
-typedef struct kExpr kExpr;
-struct kExpr {
+typedef const struct _kExpr kExpr;
+struct _kExpr {
 	kObjectHeader h;
 	ktype_t ty; kexpr_t build;
 	kToken *tkNUL;     // Term
 	union {
-		struct kObject* dataNUL;
-		struct kArray*  consNUL;  // Cons
-		struct kExpr*   singleNUL;
+		kObject* dataNUL;
+		kArray*  consNUL;  // Cons
+		kExpr*   singleNUL;
 	};
 	union {
 		ksyntax_t *syn;
@@ -274,25 +276,25 @@ struct kExpr {
 #define TSTMT_IF             5
 #define TSTMT_LOOP           6
 
-typedef struct kStmt kStmt;
-struct kStmt {
+typedef const struct _kStmt kStmt;
+struct _kStmt {
 	kObjectHeader h;
 	kline_t uline;
 	ksyntax_t *syn;
-	struct kBlock     *parentNULL;
+	const struct _kBlock *parentNULL;
 	kushort_t build;
 };
 
-typedef struct kBlock kBlock;
-struct kBlock {
+typedef const struct _kBlock kBlock;
+struct _kBlock {
 	kObjectHeader h;
-	struct kKonohaSpace        *ks;
-	struct kStmt         *parentNULL;
-	struct kArray        *blockS;
-	struct kExpr         *esp;
+	kKonohaSpace        *ks;
+	kStmt         *parentNULL;
+	kArray        *blockS;
+	kExpr         *esp;
 };
 
-typedef struct kGamma kGamma;
+typedef struct _kGamma kGamma;
 
 typedef struct {
 	ktype_t    ty;    ksymbol_t  fn;
@@ -314,19 +316,19 @@ typedef struct {
 typedef struct gmabuf_t {
 	kflag_t  flag;    kflag_t  cflag;
 
-	struct kKonohaSpace     *ks;
-	struct kScript          *scrNUL;
+	kKonohaSpace     *ks;
+	kObject          *scrNUL;
 
 	kcid_t                   this_cid;
 	kcid_t                   static_cid;
-	struct kMethod*          mtd;
+	kMethod*          mtd;
 	gstack_t f;
 	gstack_t l;
-	struct kArray           *lvarlst;
+	kArray           *lvarlst;
 	size_t lvarlst_top;
 } gmabuf_t;
 
-struct kGamma {
+struct _kGamma {
 	kObjectHeader h;
 	struct gmabuf_t *genv;
 };
@@ -413,18 +415,11 @@ struct kGamma {
 #define SYN_ERR      kevalshare->syn_err
 #define SYN_EXPR     kevalshare->syn_expr
 #define SYN_CALL     kevalshare->syn_expr
-//#define SYN_INVOKE   kevalshare->syn_invoke
-//#define SYN_PARAMS   kevalshare->syn_params
-//#define SYN_RETURN   kevalshare->syn_return
-//#define SYN_BREAK    kevalshare->syn_break
-//#define SYN_TYPEDECL kevalshare->syn_typedecl
-//#define SYN_COMMA    kevalshare->syn_comma
-//#define SYN_LET      kevalshare->syn_let
 
 #define FN_this      FN_("this")
 
-struct kKonohaSpace;
-struct ksyntaxdef_t;
+struct _kKonohaSpace;
+
 #define kKonohaSpace_defineSyntax(L, S)  kevalshare->KKonohaSpace_defineSyntax(_ctx, L, S)
 
 typedef struct {
@@ -436,28 +431,20 @@ typedef struct {
 	const kclass_t *cKonohaSpace;
 	const kclass_t *cGamma;
 	//
-	struct kArray         *keywordList;
+	kArray         *keywordList;
 	struct kmap_t         *keywordMapNN;
-	struct kArray         *packageList;
+	kArray         *packageList;
 	struct kmap_t         *packageMapNO;
-	struct kKonohaSpace         *rootks;
-	struct kArray         *aBuffer;
+	kKonohaSpace         *rootks;
+	kArray         *aBuffer;
 
-//	struct kMethod *UndefinedStmtAdd;
-	struct kMethod *UndefinedStmtParseExpr;
-	struct kMethod *UndefinedStmtTyCheck;
-	struct kMethod *UndefinedExprTyCheck;
+//	struct _kMethod *UndefinedStmtAdd;
+	kMethod *UndefinedStmtParseExpr;
+	kMethod *UndefinedStmtTyCheck;
+	kMethod *UndefinedExprTyCheck;
 
-	struct ksyntax_t *syn_err;
-	struct ksyntax_t *syn_expr;
-//	struct ksyntax_t *syn_call;
-//	struct ksyntax_t *syn_invoke;
-//	struct ksyntax_t *syn_params;
-//	struct ksyntax_t *syn_return;
-////	struct ksyntax_t *syn_break;
-//	struct ksyntax_t *syn_typedecl;
-//	struct ksyntax_t *syn_comma;
-//	struct ksyntax_t *syn_let;
+	ksyntax_t *syn_err;
+	ksyntax_t *syn_expr;
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
@@ -477,24 +464,19 @@ typedef struct {
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
-	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, ksyntaxdef_t *);
+	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, DEFINE_SYNTAX_SUGAR *);
 	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
 } kevalshare_t;
 
 typedef struct {
 	kmod_t h;
-	struct kArray *tokens;
-	karray_t       cwb;
-	struct kArray *errors;
-	struct kBlock *singleBlock;
-	struct kGamma *gma;
-	struct kArray *lvarlst;
-	struct kArray *definedMethods;
-//	kshort_t iseval;
-//	ktype_t evalty;
-//	int     evalidx;
-//	kjmpbuf_t* evaljmpbuf;
-//	kflag_t flags;
+	kArray *tokens;
+	karray_t cwb;
+	kArray *errors;
+	kBlock *singleBlock;
+	kGamma *gma;
+	kArray *lvarlst;
+	kArray *definedMethods;
 } kevalmod_t;
 
 #define TPOL_NOCHECK              1
@@ -532,6 +514,7 @@ typedef struct {
 
 #define KW_(T)                               _e->keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
 #define SYN_(KS, KW)                         _e->KonohaSpace_syntax(_ctx, KS, KW, 0)
+#define NEWSYN_(KS, KW)                      (struct _ksyntax*)_e->KonohaSpace_syntax(_ctx, KS, KW, 1)
 
 #define kStmt_token(STMT, KW, DEF)           _e->Stmt_token(_ctx, STMT, KW, DEF)
 #define kStmt_expr(STMT, KW, DEF)            _e->Stmt_expr(_ctx, STMT, KW, DEF)

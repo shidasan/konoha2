@@ -4,13 +4,13 @@
 static int __init__  = 0;
 static int __free__  = 0;
 
-static void Sample_init(CTX, kRawPtr *o, void *conf)
+static void Sample_init(CTX, kObject *o, void *conf)
 {
 	assert((uintptr_t)conf == 0xdeadbeaf);
 	((kSample*)o)->x = __init__++;
 }
 
-static void Sample_free(CTX, kRawPtr *o)
+static void Sample_free(CTX, kObject *o)
 {
 	__free__++;
 }

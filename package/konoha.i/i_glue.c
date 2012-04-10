@@ -123,7 +123,7 @@ KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t i_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static	kbool_t i_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	kclass_t *ct = (kclass_t*)kclass(TY_Method, pline);
@@ -136,17 +136,15 @@ static	kbool_t i_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char*
 	return true;
 }
 
-static kbool_t i_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t i_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
-
-static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t i_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
-//	ksyntaxdef_t SYNTAX[] = {
+//	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 //		{ TOKEN("float"), .type = TY_Float, },
 //		{ TOKEN("double"), .type = TY_Float, },
 //		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
@@ -156,7 +154,7 @@ static kbool_t i_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-static kbool_t i_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t i_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

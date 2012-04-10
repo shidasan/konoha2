@@ -6,7 +6,7 @@
 //## void Stmt.setBuild(int buildid);
 static KMETHOD Stmt_setBuild(CTX, ksfp_t *sfp _RIX)
 {
-	sfp[0].stmt->build = sfp[1].ivalue;
+	//sfp[0].stmt->build = sfp[1].ivalue;
 }
 
 //## Block Stmt.getBlock(String key, Block def);
@@ -39,13 +39,13 @@ static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
 static KMETHOD KonohaSpace_defineSyntaxRule(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
-	ksyntax_t *syn = SUGAR KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
+	struct _ksyntax *syn = NEWSYN_(sfp[0].ks, KW_s(sfp[1].s));
 	if(syn->syntaxRule != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding SyntaxRule: %s", S_text(sfp[1].s));
-		KSETv(syn->syntaxRule, new_(Array, 0));
+		kArray_clear(syn->syntaxRule, 0);
 	}
 	else {
-		KINITv(syn->syntaxRule, new_(Array, 0));
+		KINITv(syn->syntaxRule, new_(Array, 8));
 	}
 	SUGAR parseSyntaxRule(_ctx, S_text(sfp[2].s), sfp[K_RTNIDX].uline, syn->syntaxRule);
 }
@@ -62,7 +62,7 @@ static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 	if(!isStmtTyCheck(_ctx, mtd->pa)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "mismatched method: Stmt.%s", S_text(sfp[2].s));
 	}
-	ksyntax_t *syn = SUGAR KonohaSpace_syntax(_ctx, sfp[0].ks, KW_s(sfp[1].s), 1/*isnew*/);
+	struct _ksyntax *syn = NEWSYN_(sfp[0].ks, KW_s(sfp[1].s));
 	if(syn->StmtTyCheck != NULL) {
 		kreportf(INFO_, sfp[K_RTNIDX].uline, "overriding StmtTyCheck: %s", S_text(sfp[1].s));
 	}
@@ -76,7 +76,7 @@ static KMETHOD KonohaSpace_defineStmtTyCheck(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static	kbool_t sugar_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_buildid = FN_("buildid"), FN_key = FN_("key"), FN_defval = FN_("defval");
@@ -95,18 +95,18 @@ static	kbool_t sugar_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 	return true;
 }
 
-static kbool_t sugar_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t sugar_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t sugar_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t sugar_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 
 	return true;
 }
 
-static kbool_t sugar_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t sugar_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

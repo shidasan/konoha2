@@ -10,7 +10,7 @@
 
 static inline size_t size64(size_t s)
 {
-	size_t base = sizeof(kObject);
+	size_t base = sizeof(struct _kObject);
 	while(base < s) {
 		base *= 2;
 	}

@@ -1,6 +1,0 @@
- - (debug) (socket.k:3) constant folding of String
- - (socket.k:3) 1
- - (debug) (socket.k:4) constant folding of String
- - (socket.k:4) 1
- - (debug) (socket.k:5) constant folding of String
- - (socket.k:5) 2

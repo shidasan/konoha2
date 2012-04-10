@@ -38,16 +38,15 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* kcode */
 
-extern int konoha_debug;
+int verbose_code = 0;  // global variable
 
-#define DP(O)           (O)
 static void EXPR_asm(CTX, int a, kExpr *expr, int espidx);
 
 #define GammaBuilderLabel(n)   (kBasicBlock*)(kcodemod->lstacks->list[n])
 
-kBasicBlock* new_BasicBlockLABEL(CTX)
+static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
 {
-	kBasicBlock *bb = new_(BasicBlock, 0);
+	struct _kBasicBlock *bb = new_W(BasicBlock, 0);
 	bb->id = kArray_size(kcodemod->insts);
 	kArray_add(kcodemod->insts, bb);
 	return bb;
@@ -97,7 +96,9 @@ static void BasicBlock_add(CTX, kBasicBlock *bb, kushort_t line, kopl_t *op, siz
 	kopl_t *pc = bb->opbuf + bb->size;
 	memcpy(pc, op, size == 0 ? sizeof(kopl_t) : size);
 	pc->line = line;
-	bb->size += 1;
+	W(kBasicBlock, bb);
+	Wbb->size += 1;
+	WASSERT(bb);
 //	if(op->opcode == OPCODE_NMOV) {
 //		assert(((klr_NMOV_t*)op)->ty != CT_(0));
 //	}
@@ -105,14 +106,14 @@ static void BasicBlock_add(CTX, kBasicBlock *bb, kushort_t line, kopl_t *op, siz
 
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize)
 {
-	kBasicBlock *bb = kcodemod->bbNC;
+	kBasicBlock *bb = kcodemod->curbbNC;
 	DBG_ASSERT(op->opcode != OPCODE_JMPF);
 	BasicBlock_add(_ctx, bb, kcodemod->uline, op, opsize);
 }
 
 static int BUILD_asmJMPF(CTX, klr_JMPF_t *op)
 {
-	kBasicBlock *bb = kcodemod->bbNC;
+	kBasicBlock *bb = kcodemod->curbbNC;
 	DBG_ASSERT(op->opcode == OPCODE_JMPF);
 	int swap = 0;
 	while(bb->size > 0) {
@@ -185,7 +186,7 @@ static inline kopcode_t BasicBlock_opcode(kBasicBlock *bb)
 //	size_t i;
 ////	DBG_P("%sid=%i, size=%d", indent, bb->id, bb->size);
 //	if(bb->nextNC != NULL) {
-////		DBG_P("%s\tnext=%d", indent, DP(bb->nextNC)->id);
+////		DBG_P("%s\tnext=%d", indent, bb->nextNC->id);
 //		if(indent[0] == 0) dumpBB(bb->nextNC, "\t");
 //	}
 //	if(bb->jumpNC != NULL) {
@@ -199,31 +200,31 @@ static inline kopcode_t BasicBlock_opcode(kBasicBlock *bb)
 //	}
 //}
 
-static void BasicBlock_strip0(CTX, kBasicBlock *bb)
+static void BasicBlock_strip0(CTX, struct _kBasicBlock *bb)
 {
 	L_TAIL:;
 	if(BasicBlock_isVisited(bb)) return;
 	BasicBlock_setVisited(bb, 1);
 	if(bb->jumpNC != NULL) {
 		L_JUMP:;
-		kBasicBlock *bbJ = bb->jumpNC;
-		if(DP(bbJ)->size == 0 && bbJ->jumpNC != NULL && bbJ->nextNC == NULL) {
-			//DBG_P("DIRECT JMP id=%d JMP to id=%d", DP(bbJ)->id, DP(bbJ->jumpNC)->id);
-			DP(bbJ)->incoming -= 1;
+		struct _kBasicBlock *bbJ = (struct _kBasicBlock*)bb->jumpNC;
+		if(bbJ->size == 0 && bbJ->jumpNC != NULL && bbJ->nextNC == NULL) {
+			//DBG_P("DIRECT JMP id=%d JMP to id=%d", bbJ->id, DP(bbJ->jumpNC)->id);
+			bbJ->incoming -= 1;
 			bb->jumpNC = bbJ->jumpNC;
-			DP(bb->jumpNC)->incoming += 1;
+			bb->WjumpNC->incoming += 1;
 			goto L_JUMP;
 		}
-		if(DP(bbJ)->size == 0 && bbJ->jumpNC == NULL && bbJ->nextNC != NULL) {
-			//DBG_P("DIRECT JMP id=%d NEXT to id=%d", DP(bbJ)->id, DP(bbJ->nextNC)->id);
-			DP(bbJ)->incoming -= 1;
+		if(bbJ->size == 0 && bbJ->jumpNC == NULL && bbJ->nextNC != NULL) {
+			//DBG_P("DIRECT JMP id=%d NEXT to id=%d", bbJ->id, DP(bbJ->nextNC)->id);
+			bbJ->incoming -= 1;
 			bb->jumpNC = bbJ->nextNC;
-			DP(bb->jumpNC)->incoming += 1;
+			bb->WjumpNC->incoming += 1;
 			goto L_JUMP;
 		}
 		if(bb->nextNC == NULL) {
-			if(DP(bbJ)->incoming == 1 ) {
-				//DBG_P("REMOVED %d JMP TO %d", bb->id, DP(bbJ)->id);
+			if(bbJ->incoming == 1 ) {
+				//DBG_P("REMOVED %d JMP TO %d", bb->id, bbJ->id);
 				bb->nextNC = bbJ;
 				bb->jumpNC = NULL;
 				goto L_NEXT;
@@ -232,17 +233,17 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 		BasicBlock_strip0(_ctx, bbJ);
 	}
 	if(bb->jumpNC != NULL && bb->nextNC != NULL) {
-		bb = bb->nextNC;
+		bb = bb->WnextNC;
 		goto L_TAIL;
 	}
 	L_NEXT:;
 	if(bb->nextNC != NULL) {
-		kBasicBlock *bbN = bb->nextNC;
+		struct _kBasicBlock *bbN = bb->WnextNC;
 		if(bbN->size == 0 && bbN->nextNC != NULL && bbN->jumpNC == NULL) {
 			//DBG_P("DIRECT NEXT id=%d to NEXT id=%d", bbN->id, DP(bbN->nextNC)->id);
 			bbN->incoming -= 1;
 			bb->nextNC = bbN->nextNC;
-			DP(bb->nextNC)->incoming += 1;
+			bb->WnextNC->incoming += 1;
 			goto L_NEXT;
 		}
 		if(bbN->size == 0 && bbN->nextNC == NULL && bbN->jumpNC != NULL) {
@@ -250,10 +251,10 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 			bbN->incoming -= 1;
 			bb->nextNC = NULL;
 			bb->jumpNC = bbN->jumpNC;
-			DP(bb->jumpNC)->incoming += 1;
+			bb->WjumpNC->incoming += 1;
 			goto L_JUMP;
 		}
-		bb = bb->nextNC;
+		bb = bb->WnextNC;
 		goto L_TAIL;
 	}
 }
@@ -266,7 +267,7 @@ static void BasicBlock_strip0(CTX, kBasicBlock *bb)
 //	bb->opbuf = NULL;
 //}
 
-static void BasicBlock_join(CTX, kBasicBlock *bb, kBasicBlock *bbN)
+static void BasicBlock_join(CTX, struct _kBasicBlock *bb, struct _kBasicBlock *bbN)
 {
 	//DBG_P("join %d(%s) size=%d and %d(%s) size=%d", bb->id, BB(bb), bb->size, bbN->id, BB(bbN), bbN->size);
 	bb->nextNC = bbN->nextNC;
@@ -294,31 +295,31 @@ static void BasicBlock_join(CTX, kBasicBlock *bb, kBasicBlock *bbN)
 //	BasicBlock_freebuf(_ctx, bbN);
 }
 
-static void BasicBlock_strip1(CTX, kBasicBlock *bb)
+static void BasicBlock_strip1(CTX, struct _kBasicBlock *bb)
 {
 	L_TAIL:;
 	if(!BasicBlock_isVisited(bb)) return;
 	BasicBlock_setVisited(bb, 0);  // MUST call after strip0
 	if(bb->jumpNC != NULL) {
 		if(bb->nextNC == NULL) {
-			bb = bb->jumpNC;
+			bb = bb->WjumpNC;
 			goto L_TAIL;
 		}
 		else {
-			//DBG_P("** branch next=%d, jump%d", DP(bb->nextNC)->id, DP(bb->jumpNC)->id);
-			BasicBlock_strip1(_ctx, bb->jumpNC);
-			bb = bb->nextNC;
+			//DBG_P("** branch next=%d, jump%d", bb->nextNC->id, DP(bb->jumpNC)->id);
+			BasicBlock_strip1(_ctx, bb->WjumpNC);
+			bb = bb->WnextNC;
 			goto L_TAIL;
 		}
 	}
 	if(bb->nextNC != NULL) {
-		kBasicBlock *bbN = bb->nextNC;
+		struct _kBasicBlock *bbN = bb->WnextNC;
 		if(bbN->incoming == 1 && BasicBlock_opcode(bbN) != OPCODE_RET) {
 			BasicBlock_join(_ctx, bb, bbN);
 			BasicBlock_setVisited(bb, 1);
 			goto L_TAIL;
 		}
-		bb = bb->nextNC;
+		bb = bb->WnextNC;
 		goto L_TAIL;
 	}
 }
@@ -464,7 +465,7 @@ static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 			}
 			opD++;
 		}
-		bb->size = bbsize;
+		((struct _kBasicBlock*)bb)->size = bbsize;
 	}
 	return bb->size; /*bbsize*/;
 }
@@ -478,9 +479,9 @@ static size_t BasicBlock_size(CTX, kBasicBlock *bb, size_t c)
 	BasicBlock_setVisited(bb, 1);
 	if(bb->nextNC != NULL) {
 		if(BasicBlock_isVisited(bb) || BasicBlock_opcode(bb->nextNC) == OPCODE_RET) {
-			kBasicBlock *bb2 = new_BasicBlockLABEL(_ctx);
+			struct _kBasicBlock *bb2 = (struct _kBasicBlock*)new_BasicBlockLABEL(_ctx);
 			bb2->jumpNC = bb->nextNC;
-			bb->nextNC = bb2;
+			((struct _kBasicBlock*)bb)->WnextNC = bb2;
 		}
 	}
 	if(bb->jumpNC != NULL && bb->nextNC != NULL) {
@@ -504,7 +505,7 @@ static size_t BasicBlock_size(CTX, kBasicBlock *bb, size_t c)
 	goto L_TAIL;
 }
 
-static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **prev)
+static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, struct _kBasicBlock *bb, struct _kBasicBlock **prev)
 {
 	BasicBlock_setVisited(bb, 0);
 	DBG_ASSERT(!BasicBlock_isVisited(bb));
@@ -561,56 +562,59 @@ static kopl_t* BasicBlock_copy(CTX, kopl_t *dst, kBasicBlock *bb, kBasicBlock **
 	}
 	if(bb->nextNC != NULL) {
 		//DBG_P("BB%d: NEXT=BB%d", BB_(bb), BB_(bb->nextNC));
-		DBG_ASSERT(DP(bb->nextNC)->code == NULL);
-//		if(BasicBlock_isStackChecked(bb) && DP(bb->nextNC)->incoming == 1) {
+		DBG_ASSERT(bb->nextNC->code == NULL);
+//		if(BasicBlock_isStackChecked(bb) && bb->nextNC->incoming == 1) {
 //			BasicBlock_setStackChecked(bb->nextNC, 1);
 //		}
-		dst = BasicBlock_copy(_ctx, dst, bb->nextNC, prev);
+		dst = BasicBlock_copy(_ctx, dst, bb->WnextNC, prev);
 	}
 	if(bb->jumpNC != NULL) {
 		//DBG_P("BB%d: JUMP=%d", bb->id, BB_(bb->jumpNC));
 //		if(BasicBlock_isStackChecked(bb) && DP(bb->jumpNC)->incoming == 1) {
 //			BasicBlock_setStackChecked(bb->jumpNC, 1);
 //		}
-		dst = BasicBlock_copy(_ctx, dst, bb->jumpNC, prev);
+		dst = BasicBlock_copy(_ctx, dst, bb->WjumpNC, prev);
 	}
 	return dst;
 }
 
-static void BasicBlock_setjump(kBasicBlock *bb)
+static void BasicBlock_setjump(struct _kBasicBlock *bb)
 {
 	while(bb != NULL) {
 		BasicBlock_setVisited(bb, 1);
 		if(bb->jumpNC != NULL) {
-			kBasicBlock *bbJ = bb->jumpNC;
+			struct _kBasicBlock *bbJ = bb->WjumpNC;
 			klr_JMP_t *j = (klr_JMP_t*)bb->opjmp;
-			j->jumppc = DP(bbJ)->code;
-			//DBG_P("jump from id=%d to id=%d %s jumppc=%p", bb->id, DP(bbJ)->id, T_opcode(j->opcode), DP(bbJ)->code);
+			j->jumppc = bbJ->code;
+			//DBG_P("jump from id=%d to id=%d %s jumppc=%p", bb->id, bbJ->id, T_opcode(j->opcode), bbJ->code);
 			bb->jumpNC = NULL;
 			if(!BasicBlock_isVisited(bbJ)) {
 				BasicBlock_setVisited(bbJ, 1);
 				BasicBlock_setjump(bbJ);
 			}
 		}
-		bb = bb->nextNC;
+		bb = bb->WnextNC;
 	}
 }
 
 static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 {
-	kKonohaCode *kcode = new_(KonohaCode, NULL);
-	kBasicBlock *prev[1] = {};
+	struct _kKonohaCode *kcode = new_W(KonohaCode, NULL);
+	struct _kBasicBlock *prev[1] = {};
+	W(kBasicBlock, bb);
+	W(kBasicBlock, bbRET);
 	kcode->fileid = kcodemod->uline; //TODO
 	kcode->codesize = BasicBlock_size(_ctx, bb, 0) * sizeof(kopl_t);
 	kcode->code = (kopl_t*)KNH_ZMALLOC(kcode->codesize);
-	DP(bbRET)->code = kcode->code; // dummy
+	WbbRET->code = kcode->code; // dummy
 	{
-		kopl_t *op = BasicBlock_copy(_ctx, kcode->code, bb, prev);
+		kopl_t *op = BasicBlock_copy(_ctx, kcode->code, Wbb, prev);
 		DBG_ASSERT(op - kcode->code > 0);
-		DP(bbRET)->code = NULL;
-		BasicBlock_copy(_ctx, op, bbRET, prev);
-		BasicBlock_setjump(bb);
+		WbbRET->code = NULL;
+		BasicBlock_copy(_ctx, op, WbbRET, prev);
+		BasicBlock_setjump(Wbb);
 	}
+	WASSERT(bb); WASSERT(bbRET);
 	return kcode;
 }
 
@@ -684,10 +688,11 @@ static KMETHOD Fmethod_runVM(CTX, ksfp_t *sfp _RIX)
 
 static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 {
+	W(kMethod, mtd);
 	kMethod_setFunc(mtd, Fmethod_runVM);
-	KSETv(mtd->kcode, kcode);
-	(mtd)->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
-	if(konoha_debug) {
+	KSETv(Wmtd->kcode, kcode);
+	Wmtd->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
+	if(verbose_code) {
 		DBG_P("DUMP CODE");
 		kopl_t *pc = mtd->pc_start;
 		while(1) {
@@ -698,45 +703,53 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 			pc++;
 		}
 	}
+	WASSERT(mtd);
 }
 
 static void BUILD_compile(CTX, kMethod *mtd, kBasicBlock *bb, kBasicBlock *bbRET)
 {
-	BasicBlock_strip0(_ctx, bb);
-	BasicBlock_strip1(_ctx, bb);
+	W(kBasicBlock, bb);
+	BasicBlock_strip0(_ctx, Wbb);
+	BasicBlock_strip1(_ctx, Wbb);
 	kKonohaCode *kcode = new_KonohaCode(_ctx, bb, bbRET);
 	Method_threadCode(_ctx, mtd, kcode);
 	kArray_clear(kcodemod->lstacks, 0);
 	kArray_clear(kcodemod->insts, 0);
+	WASSERT(bb);
 }
 
 static void ASM_LABEL(CTX, kBasicBlock *label)
 {
+	W(kBasicBlock, label);
 	if(label != NULL) {
-		kBasicBlock *bb = kcodemod->bbNC;
+		struct _kBasicBlock *bb = kcodemod->WcurbbNC;
 		if(bb != NULL) {
-			bb->nextNC = label;
-			DP(label)->incoming += 1;
+			bb->nextNC = Wlabel;
 			bb->jumpNC = NULL;
+			Wlabel->incoming += 1;
 		}
-		kcodemod->bbNC = label;
+		kcodemod->WcurbbNC = Wlabel;
 	}
+	WASSERT(label);
 }
 
 static void ASM_JMP(CTX, kBasicBlock *label)
 {
-	kBasicBlock *bb = kcodemod->bbNC;
+	struct _kBasicBlock *bb = kcodemod->WcurbbNC;
 	if(bb != NULL) {
+		W(kBasicBlock, label);
 		bb->nextNC = NULL;
-		bb->jumpNC = label;  DP(label)->incoming += 1;
+		bb->jumpNC = label;
+		Wlabel->incoming += 1;
+		WASSERT(label);
 	}
-	kcodemod->bbNC = NULL; /*KNH_TNULL(BasicBlock);*/
+	kcodemod->curbbNC = NULL;
 }
 
 static kBasicBlock* ASM_JMPF(CTX, int flocal, kBasicBlock *lbJUMP)
 {
-	kBasicBlock *bb = kcodemod->bbNC;
-	kBasicBlock *lbNEXT = new_BasicBlockLABEL(_ctx);
+	struct _kBasicBlock *bb = kcodemod->WcurbbNC;
+	struct _kBasicBlock *lbNEXT = new_BasicBlockLABEL(_ctx);
 	klr_JMPF_t op = {TADDR, OPCODE_JMPF, ASMLINE, NULL, NC_(flocal)};
 	if(BUILD_asmJMPF(_ctx, &op)) {
 		bb->jumpNC = lbNEXT;
@@ -746,9 +759,11 @@ static kBasicBlock* ASM_JMPF(CTX, int flocal, kBasicBlock *lbJUMP)
 		bb->jumpNC = lbJUMP;
 		bb->nextNC = lbNEXT;
 	}
-	DP(lbJUMP)->incoming += 1;
-	DP(lbNEXT)->incoming += 1;
-	kcodemod->bbNC = lbNEXT;
+	lbNEXT->incoming += 1;
+	kcodemod->WcurbbNC = lbNEXT;
+	W(kBasicBlock, lbJUMP);
+	WlbJUMP->incoming += 1;
+	WASSERT(lbJUMP);
 	return lbJUMP;
 }
 
@@ -761,71 +776,11 @@ static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlo
 	return ASM_JMPF(_ctx, a, label);
 }
 
-//static void ASM_BRANCH_(CTX, kBasicBlock *jump, kopl_t *op, size_t size)
-//{
-//	kBasicBlock *bb = kcodemod->bbNC;
-//	kBasicBlock *newbb = new_BasicBlockLABEL(_ctx);
-//	BUILD_asm(_ctx, op, size);
-//	bb->jumpNC = jump;  DP(jump)->incoming += 1;
-//	bb->nextNC = newbb;  DP(newbb)->incoming += 1;
-//	kcodemod->bbNC = newbb;
-//}
-
-/* ------------------------------------------------------------------------ */
-/* [GammaBuilder] */
-
 /* ------------------------------------------------------------------------ */
 /* CALL */
 
-//static inline kint_t Tn_int(kStmtExpr *stmt, size_t n)
-//{
-//	kTerm *tk = tkNN(stmt, n);
-//	DBG_ASSERT(TT_(tk) == TT_CONST);
-//	return ((tk)->num)->n.ivalue;
-//}
-//
-//static inline kfloat_t Tn_float(kStmtExpr *stmt, size_t n)
-//{
-//	kTerm *tk = tkNN(stmt, n);
-//	DBG_ASSERT(TT_(tk) == TT_CONST);
-//	return ((tk)->num)->n.fvalue;
-//}
-
 #define ESP_(sfpidx, args)   SFP_(sfpidx + args + K_CALLDELTA + 1)
 
-//static void ASM_CALL(CTX, int espidx, ktype_t rtype, kMethod *mtd, int isStatic, size_t argc)
-//{
-//	int thisidx = espidx + K_CALLDELTA;
-//	DBG_ASSERT(IS_Method(mtd));
-//	if(Method_isFinal(mtd) || isStatic) {
-//		if(Method_isKonohaCode(mtd) || DP(_ctx->gma)->mtd == mtd) {
-//			if(BUILD_isInlineFunction(_ctx->gma) && DP(_ctx->gma)->mtd != mtd) {
-//				kKonohaCode *kcode = DP(mtd)->kcode;
-//				size_t isize = kcode->codesize / sizeof(kopl_t);
-//				if(isize < K_INLINECODE) {
-//					NoticeInliningMethod(_ctx, mtd);
-//					if(isize-1 > 0) {
-//						ASM_INLINE(_ctx, espidx + K_CALLDELTA, kcode->code + 1, isize - 1);
-//					}
-//					return;
-//				}
-//			}
-//			if(argc == 0) {
-//				ASM(VCALL_, RTNIDX_(_ctx, espidx, rtype), SFP_(thisidx), ESP_(espidx, argc), mtd);
-//			}
-//			else {
-//				ASM(VCALL, RTNIDX_(_ctx, espidx, rtype), SFP_(thisidx), ESP_(espidx, argc), mtd);
-//			}
-//		}
-//		else {
-//			ASM(SCALL, RTNIDX_(_ctx, espidx, rtype), SFP_(thisidx), ESP_(espidx, argc), mtd);
-//		}
-//	}
-//	else {
-//		ASM(LDMTD, SFP_(thisidx), _LOOKUPMTD, {mtd->cid, mtd->mn}, mtd);
-//		ASM(CALL, RTNIDX_(_ctx, espidx, rtype), SFP_(thisidx), ESP_(espidx, argc));
-//	}
-//}
 
 //static void ASM_CHKIDX(CTX, int aidx, int nidx)
 //{
@@ -1738,7 +1693,7 @@ static void ASSERT_asm(CTX, kStmtExpr *stmt)
 
 static void ASM_SAFEPOINT(CTX, int espidx)
 {
-	kBasicBlock *bb = kcodemod->bbNC;
+	kBasicBlock *bb = kcodemod->curbbNC;
 	size_t i;
 	for(i = 0; i < bb->size; i++) {
 		kopl_t *op = bb->opbuf + i;
@@ -1861,7 +1816,7 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 	kBasicBlock* lbINIT  = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbBEGIN = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbEND   = new_BasicBlockLABEL(_ctx);
-	kcodemod->bbNC = lbINIT;
+	kcodemod->curbbNC = lbINIT;
 	BUILD_pushLABEL(_ctx, NULL, lbBEGIN, lbEND);
 	ASM(THCODE, _THCODE);
 	ASM_LABEL(_ctx, lbBEGIN);
@@ -1878,9 +1833,9 @@ void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 
 #define PACKSUGAR    .packid = 1, .packdom = 1
 
-static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
+static void BasicBlock_init(CTX, kObject *o, void *conf)
 {
-	kBasicBlock *bb = (kBasicBlock*)o;
+	struct _kBasicBlock *bb = (struct _kBasicBlock*)o;
 	bb->capacity = 0;
 	bb->code = NULL;
 	bb->id = 0;
@@ -1891,7 +1846,7 @@ static void BasicBlock_init(CTX, kRawPtr *o, void *conf)
 	bb->opjmp = NULL;
 }
 
-static void BasicBlock_free(CTX, kRawPtr *o)
+static void BasicBlock_free(CTX, kObject *o)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
 	if(bb->capacity > 0) {
@@ -1905,16 +1860,16 @@ static KDEFINE_CLASS BasicBlockDef = {
 	.free = BasicBlock_free,
 };
 
-static void KonohaCode_init(CTX, kRawPtr *o, void *conf)
+static void KonohaCode_init(CTX, kObject *o, void *conf)
 {
-	kKonohaCode *b = (kKonohaCode*)o;
+	struct _kKonohaCode *b = (struct _kKonohaCode*)o;
 	b->codesize = 0;
 	b->code = NULL;
 	b->fileid = 0;
 	KINITv(b->source, TS_EMPTY);
 }
 
-static void KonohaCode_reftrace(CTX, kRawPtr *o)
+static void KonohaCode_reftrace(CTX, kObject *o)
 {
 	kKonohaCode *b = (kKonohaCode*)o;
 	BEGIN_REFTRACE(1);
@@ -1922,7 +1877,7 @@ static void KonohaCode_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static void KonohaCode_free(CTX, kRawPtr *o)
+static void KonohaCode_free(CTX, kObject *o)
 {
 	kKonohaCode *b = (kKonohaCode*)o;
 	KNH_FREE(b->code, b->codesize);
@@ -1951,8 +1906,9 @@ static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 static void Method_setFunc(CTX, kMethod *mtd, knh_Fmethod func)
 {
 	func = (func == NULL) ? Fmethod_abstract : func;
-	mtd->fcall_1 = func;
-	(mtd)->pc_start = CODE_NCALL;
+	((struct _kMethod*)mtd)->fcall_1 = func;
+	((struct _kMethod*)mtd)->pc_start = CODE_NCALL;
+
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2023,7 +1979,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kBasicBlock_add(ia, ENTER);
 		kBasicBlock_add(ia, EXIT);
 		kBasicBlock_add(ib, RET);   // NEED TERMINATION
-		ia->nextNC = ib;
+		((struct _kBasicBlock*)ia)->nextNC = ib;
 		kKonohaCode *kcode = new_KonohaCode(_ctx, ia, ib);
 		KINITv(kcodeshare->codeNull, kcode);
 		kopl_t *pc = VirtualMachine_run(_ctx, _ctx->esp, kcode->code);

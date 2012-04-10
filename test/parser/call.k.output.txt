@@ -1,2 +1,0 @@
- - (error) (call.k:1+1) undefined name: OUT
- - (warning) script is failed, status=0

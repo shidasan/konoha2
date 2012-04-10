@@ -64,14 +64,15 @@ static inline int lpos(tenv_t *tenv, const char *s)
 
 static kToken *new_Token(CTX, ktoken_t tt, kline_t uline, int lpos, kString *text)
 {
-	kToken *tk = new_(Token, 0);
+	struct _kToken *tk = new_W(Token, 0);
 	tk->tt = tt;
+	tk->kw = 0;
 	tk->uline = uline;
 	tk->lpos = (kushort_t)lpos;
 	tk->topch = 0;
 	DBG_ASSERT(text != NULL);
 	KSETv(tk->text, text);
-	return tk;
+	return (kToken*)tk;
 }
 
 static void addToken(CTX, tenv_t *tenv, kToken *tk)
@@ -206,74 +207,14 @@ static void addSymbol(CTX, tenv_t *tenv, size_t s, size_t e)
 		kString *text = new_kString(tenv->source + s, (e-s), SPOL_ASCII|SPOL_POOL);
 		int topch = S_text(text)[0];
 		ktoken_t ttype = (isupper(topch)) ? TK_USYMBOL : TK_SYMBOL;
-		if(!isalpha(topch)) ttype = TK_OPERATOR;
+		if(!isalpha(topch) && topch != '_') ttype = TK_OPERATOR;
 		kToken *tk = new_Token(_ctx, ttype, tenv->uline, lpos(tenv, tenv->source + s), text);
 		if(S_size(text) == 1) {
-			tk->topch = topch;
+			((struct _kToken*)tk)->topch = topch;
 		}
 		addToken(_ctx, tenv, tk);
 	}
 }
-
-//static size_t addQuoteEsc(CTX, tenv_t *tenv, size_t pos)
-//{
-//	int ch = tenv->source[pos++];
-//	if(ch == 'n') ch = '\n';
-//	else if(ch == 't') ch = '\t';
-//	else if(ch == 'r') ch = '\r';
-//	else if(ch == 0) return pos-1;
-//	kwb_putc(&tenv->wb, ch);
-//	return pos;
-//}
-//
-//static size_t addQuote(CTX, tenv_t *tenv, size_t pos, int quote)
-//{
-//	int ch, isTriple = 0;
-//	kline_t uline = tenv->uline;
-//	const char *qs = tenv->source - 1;
-//	if(tenv->source[pos] == quote && tenv->source[pos+1] == quote) {
-//		if(tenv->source[pos+2] == '\n') pos += 3; else pos += 2;
-//		isTriple = 1;
-//	}
-//	else if(quote == '#' && tenv->source[pos] == '#') {
-//		if(tenv->source[pos+1] == ' ') pos += 2; else pos += 1;
-//		quote = '\n';
-//	}
-//	size_t tok_start = pos;
-//	while((ch = tenv->source[pos++]) != 0) {
-//		if(ch == '\n') {
-//			if(!isTriple && quote != '\n') {
-//				if(tenv->lang != NULL) {
-//					WARN_LiteralMustCloseWith(_ctx, uline, lpos(tenv, qs), quote);
-//				}
-//			}
-//			tenv->uline += 1;
-//		}
-//		if(ch == '\\') {
-//			pos = addQuoteEsc(_ctx, tenv, pos);
-//			continue;
-//		}
-//		// %s{a}
-//		if(ch == '%') {
-//		}
-//		if(ch == quote) {
-//			if(!isTriple || (pos-3 >= tok_start && tenv->source[pos-2] == quote && tenv->source[pos-3] == quote)) {
-//				const char *s1 = kwb_top(&tenv->wb, 0);
-//				size_t len = kwb_size(&tenv->wb);
-//				kString *text = new_kString(s1, len, 0);
-//				ktoken_t ttype = (quote == '"') ? TK_TEXT : TK_STEXT;
-//				addToken(_ctx, tenv, new_Token(_ctx, ttype, uline, lpos(tenv, qs), text));
-//				kwb_free((&tenv->wb));
-//				return pos;
-//			}
-//		}
-//		kwb_putc(&tenv->wb, ch);  // SLOW
-//	}
-//	if(tenv->lang != NULL) {
-//		WARN_LiteralMustCloseWith(_ctx, uline, lpos(tenv, qs), quote);
-//	}
-//	return pos-1;
-//}
 
 static size_t addRawQuote(CTX, tenv_t *tenv, size_t pos, int quote)
 {
@@ -381,7 +322,7 @@ static int addOperator(CTX, tenv_t *tenv, int tok_start)
 		kString *text = new_kString(s, (pos-1)-tok_start, SPOL_ASCII|SPOL_POOL);
 		kToken *tk = new_Token(_ctx, TK_OPERATOR, tenv->uline, lpos(tenv, s), text);
 		if(S_size(text) == 1) {
-			tk->topch = S_text(text)[0];
+			((struct _kToken*)tk)->topch = S_text(text)[0];
 		}
 		addToken(_ctx, tenv, tk);
 	}
@@ -576,10 +517,9 @@ static void ktokenize(CTX, const char *source, kline_t uline, int policy, kArray
 	tokenize(_ctx, &tenv);
 	if(uline == 0) {
 		for(i = pos; i < kArray_size(a); i++) {
-			a->tts[i]->uline = 0;
+			a->Wtoks[i]->uline = 0;
 		}
 	}
-	//dumpTokenArray(_ctx, 0, a, pos, kArray_size(a));
 }
 
 // --------------------------------------------------------------------------
@@ -588,7 +528,7 @@ static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 {
 	int i;
 	for(i = s; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if(tk->tt == tt && S_text(tk->text)[0] == closech) return i;
 	}
 	DBG_ASSERT(i != e);  // Must not happen
@@ -600,7 +540,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst);
 static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, int opench, int closech)
 {
 	int i = *s;
-	kToken *tk = tls->tts[i];
+	struct _kToken *tk = tls->Wtoks[i];
 	const char *t = S_text(tk->text);
 	if(t[0] == opench && t[1] == 0) {
 		int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, closech);
@@ -621,7 +561,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 	ksymbol_t nameid = 0;
 	//dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		struct _kToken *tk = tls->Wtoks[i];
 		if(tk->tt == TK_INDENT) continue;
 		if(tk->tt == TK_TEXT || tk->tt == TK_STEXT) {
 			if(checkNestedSyntax(_ctx, tls, &i, e, AST_PARENTHESIS, '(', ')') ||
@@ -636,7 +576,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 			continue;
 		}
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
-			if(i > 0 && tls->tts[i-1]->topch == '$') {
+			if(i > 0 && tls->toks[i-1]->topch == '$') {
 				snprintf(nbuf, sizeof(nbuf), "$%s", S_text(tk->text));
 				tk->kw = keyword(_ctx, (const char*)nbuf, strlen(nbuf), FN_NEWID);
 				tk->tt = TK_METANAME;
@@ -645,8 +585,8 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 				nameid = 0;
 				kArray_add(adst, tk); continue;
 			}
-			if(i + 1 < e && tls->tts[i+1]->topch == ':') {
-				kToken *tk = tls->tts[i];
+			if(i + 1 < e && tls->toks[i+1]->topch == ':') {
+				kToken *tk = tls->toks[i];
 				nameid = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NEWID);
 				i++;
 				continue;
@@ -657,7 +597,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 				kArray_add(adst, tk);
 				continue;
 			}
-			if(tls->tts[i]->topch == '$') continue;
+			if(tls->toks[i]->topch == '$') continue;
 		}
 		SUGAR_P(ERR_, tk->uline, tk->lpos, "illegal sugar syntax: %s", kToken_s(tk));
 		break;
@@ -671,7 +611,6 @@ static void parseSyntaxRule(CTX, const char *rule, kline_t uline, kArray *a)
 	ktokenize(_ctx, rule, uline, _TOPLEVEL, tls);
 	makeSyntaxTree(_ctx, tls, pos, kArray_size(tls), a);
 	kArray_clear(tls, pos);
-	//dumpTokenArray(_ctx, 0, a, 0, kArray_size(a));
 }
 
 /* ------------------------------------------------------------------------ */

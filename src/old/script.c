@@ -540,7 +540,7 @@ static kMethod *Script_getEvalMethod(CTX, kScript *scr, ktype_t it_type)
 		knh_Param_addReturnType(_ctx, pa, TY_void);
 		mtd = new_Method(_ctx, FLAG_Method_Hidden, O_cid(scr), MN_LAMBDA, NULL);
 		KSETv(DP(mtd)->mp, pa);
-		knh_KonohaSpace_addMethod(_ctx, O_cid(scr), mtd);
+		knh_KonohaSpace_defineMethod(_ctx, O_cid(scr), mtd);
 	}
 	else {
 		kparam_t *p = knh_Param_get(DP(mtd)->mp, 0);

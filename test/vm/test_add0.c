@@ -30,7 +30,7 @@ int main(int argc, const char *argv[])
     {
         /* reg1 = Int.add(10,20); */
         klr_SCALL_t *op = OPCAST(SCALL, pc);
-        struct kMethod mtd;
+        struct _kMethod mtd;
         mtd.fcall_1 = int_opadd;
         op->uline = 1;
         op->thisidx = 0;

@@ -1,1 +1,0 @@
- - (error) (System_getPid.k:4+8) undefined method: System.getpid

@@ -20,7 +20,7 @@ static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
 
 #define _KVi(T) #T, TY_Int, T
 
-static	kbool_t process_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	intptr_t MethodData[] = {
 		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
@@ -38,17 +38,17 @@ static	kbool_t process_initPackage(CTX, struct kKonohaSpace *ks, int argc, const
 	return true;
 }
 
-static kbool_t process_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t process_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t process_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t process_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t process_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t process_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

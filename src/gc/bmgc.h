@@ -548,12 +548,12 @@ static void BMGC_exit(CTX, HeapManager *mng);
 typedef struct kmemlocal_t {
 	HeapManager                 *gcHeapMng;
 
-	struct kObject             **refs;
+	kObject             **refs;
 	size_t                       ref_size;
-	struct kObject             **ref_buf;        // allocated body
+	kObject             **ref_buf;        // allocated body
 	size_t                       ref_capacity;
 
-	struct kObject             **queue;
+	kObject             **queue;
 	size_t                       queue_capacity;
 	size_t                       queue_log2;
 } kmemlocal_t;
@@ -828,7 +828,8 @@ static void cstack_mark(CTX)
 /* bmgc */
 /* ------------------------------------------------------------------------ */
 
-#define K_OZERO(o) o->h.ct = NULL
+#define K_OZERO(o) ((struct _kObject*)o)->h.ct = NULL
+
 #define OBJECT_INIT(o) do {\
 	o->h.magicflag = 0;\
 	o->h.ct = NULL;\
@@ -838,9 +839,9 @@ static void cstack_mark(CTX)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
-	kObject *o = bm_malloc_internal(_ctx, GCDATA(_ctx), size);
+	struct _kObject *o = (struct _kObject*)bm_malloc_internal(_ctx, GCDATA(_ctx), size);
 	OBJECT_INIT(o);
-	return o;
+	return (kObject*)o;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1696,7 +1697,7 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 		const kclass_t *ct = O_ct(ref);
 		context_reset_refs(memlocal);
 		kpromap_reftrace(_ctx, ref->h.proto);
-		ct->reftrace(_ctx, ((kRawPtr*)ref));
+		ct->reftrace(_ctx, ((kObject*)ref));
 		if(memlocal->ref_size > 0) {
 			L_INLOOP:;
 			prefetch_(memlocal->refs[0], 0, 1);
@@ -1890,7 +1891,7 @@ static inline void bmgc_Object_free(CTX, kObject *o)
 		MEMLOG(ctx, "~Object", K_NOTICE, KNH_LDATA(LOG_p("ptr", o), LOG_i("cid", ct->cid)));
 		//gc_info("~Object ptr=%p, cid=%d, o->h.meta=%p", o, ct->cid, o->h.meta);
 		kpromap_free(_ctx, o->h.proto);
-		ct->free(_ctx, ((kRawPtr*)o));
+		ct->free(_ctx, ((kObject*)o));
 		//ctx->stat->gcObjectCount += 1;
 		K_OZERO(o);
 		STAT_dObject(ctx, ct);

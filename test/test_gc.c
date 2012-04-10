@@ -14,18 +14,18 @@ static int __init__  = 0;
 static int __trace__ = -1;
 static int __free__  = 0;
 
-static void Dummy_init(CTX, kRawPtr *o, void *conf)
+static void Dummy_init(CTX, kObject *o, void *conf)
 {
     assert((uintptr_t)conf == 0xdeadbeaf);
     ((kDummy*)o)->x = __init__++;
 }
 
-static void Dummy_reftrace(CTX, kRawPtr *o)
+static void Dummy_reftrace(CTX, kObject *o)
 {
     __trace__++;
 }
 
-static void Dummy_free(CTX, kRawPtr *o)
+static void Dummy_free(CTX, kObject *o)
 {
     __free__++;
 }

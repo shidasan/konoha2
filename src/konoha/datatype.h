@@ -19,11 +19,11 @@ static const kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
 	return share->ca.ClassTBL[0];
 }
 
-static void DEFAULT_init(CTX, kRawPtr *o, void *conf)
+static void DEFAULT_init(CTX, kObject *o, void *conf)
 {
 }
 
-static void DEFAULT_free(CTX, kRawPtr *o)
+static void DEFAULT_free(CTX, kObject *o)
 {
 	(void)_ctx;(void)o;
 }
@@ -197,14 +197,14 @@ static KDEFINE_CLASS TvarDef = {
 	TYPENAME(var),
 };
 
-static void Object_init(CTX, kRawPtr *o, void *conf)
+static void Object_init(CTX, kObject *o, void *conf)
 {
-	kObject *of = (kObject*)o;
+	struct _kObject *of = (struct _kObject*)o;
 	of->ndata[0] = 0;
 	of->ndata[1] = 0;
 }
 
-static void Object_reftrace(CTX, kRawPtr *o)
+static void Object_reftrace(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
 	const kclass_t *ct = O_ct(of);
@@ -218,9 +218,9 @@ static void Object_reftrace(CTX, kRawPtr *o)
 	END_REFTRACE();
 }
 
-static void ObjectX_init(CTX, kRawPtr *o, void *conf)
+static void ObjectX_init(CTX, kObject *o, void *conf)
 {
-	kObject *of = (kObject*)o;
+	struct _kObject *of = (struct _kObject*)o;
 	const kclass_t *ct = O_ct(of);
 	assert(ct->nulvalNUL != NULL);
 	memcpy(of->fields, ct->nulvalNUL->fields, ct->cstruct_size - sizeof(kObjectHeader));
@@ -253,12 +253,12 @@ static KDEFINE_CLASS ObjectDef = {
 static kObject *new_Object(CTX, const kclass_t *ct, void *conf)
 {
 	DBG_ASSERT(ct->cstruct_size > 0);
-	kObject *o = (kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
+	struct _kObject *o = (struct _kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
 	o->h.magicflag = ct->magicflag;
 	o->h.ct = ct;
 	o->h.proto = kpromap_null();
-	ct->init(_ctx, (kRawPtr*)o, conf);
-	return o;
+	ct->init(_ctx, (kObject*)o, conf);
+	return (kObject*)o;
 }
 
 static uintptr_t Number_unbox(CTX, kObject *o)
@@ -268,9 +268,9 @@ static uintptr_t Number_unbox(CTX, kObject *o)
 }
 
 // Boolean
-static void Boolean_init(CTX, kRawPtr *o, void *conf)
+static void Boolean_init(CTX, kObject *o, void *conf)
 {
-	kBoolean *n = (kBoolean*)o;
+	struct _kBoolean *n = (struct _kBoolean*)o;
 	n->n.bvalue = (kbool_t)conf;
 }
 
@@ -293,9 +293,9 @@ static KDEFINE_CLASS BooleanDef = {
 };
 
 // Int
-static void Int_init(CTX, kRawPtr *o, void *conf)
+static void Int_init(CTX, kObject *o, void *conf)
 {
-	kInt *n = (kInt*)o;
+	struct _kInt *n = (struct _kInt*)o;
 	n->n.ivalue = (kint_t)conf;
 }
 
@@ -312,15 +312,15 @@ static KDEFINE_CLASS IntDef = {
 };
 
 // String
-static void String_init(CTX, kRawPtr *o, void *conf)
+static void String_init(CTX, kObject *o, void *conf)
 {
-	kString *s = (kString*)o;
+	struct _kString *s = (struct _kString*)o;
 	s->str.text = "";
 	s->str.len = 0;
 	s->hashCode = 0;
 }
 
-static void String_free(CTX, kRawPtr *o)
+static void String_free(CTX, kObject *o)
 {
 	kString *s = (kString*)o;
 	if(S_isMallocText(s)) {
@@ -344,7 +344,7 @@ static uintptr_t String_unbox(CTX, kObject *o)
 	return (uintptr_t) s->str.text;
 }
 
-//static int String_compareTo(kRawPtr *o, kRawPtr *o2)
+//static int String_compareTo(kObject *o, kObject *o2)
 //{
 //	return knh_bytes_strcmp(S_tobytes((kString*)o) ,S_tobytes((kString*)o2));
 //}
@@ -375,17 +375,17 @@ static void String_checkASCII(CTX, kString *s)
 static kString* new_String(CTX, const char *text, size_t len, int spol)
 {
 	const kclass_t *ct = CT_(CLASS_String);
-	kString *s = NULL; //knh_PtrMap_getS(_ctx, ct->constPoolMapNULL, text, len);
+	struct _kString *s = NULL; //knh_PtrMap_getS(_ctx, ct->constPoolMapNULL, text, len);
 	if(s != NULL) return s;
 	if(TFLAG_is(int, spol, SPOL_TEXT)) {
-		s = (kString*)new_Object(_ctx, ct, NULL);
+		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->str.text = text;
 		s->str.len = len;
 		s->hashCode = 0;
 		S_setTextSgm(s, 1);
 	}
 	else if(len + 1 < sizeof(void*) * 2) {
-		s = (kString*)new_Object(_ctx, ct, NULL);
+		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->str.buf = (char*)(&(s->hashCode));
 		s->str.len = len;
 		memcpy(s->str.ubuf, text, len);
@@ -393,7 +393,7 @@ static kString* new_String(CTX, const char *text, size_t len, int spol)
 		S_setTextSgm(s, 1);
 	}
 	else {
-		s = (kString*)new_Object(_ctx, ct, NULL);
+		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->str.len = len;
 		s->str.buf = (char*)KNH_MALLOC(len+1);
 		memcpy(s->str.ubuf, text, len);
@@ -438,7 +438,7 @@ typedef struct {
 	karray_t astruct;
 } kArray_;
 
-static void Array_init(CTX, kRawPtr *o, void *conf)
+static void Array_init(CTX, kObject *o, void *conf)
 {
 	kArray_ *a = (kArray_*)o;
 	a->astruct.body     = NULL;
@@ -452,7 +452,7 @@ static void Array_init(CTX, kRawPtr *o, void *conf)
 	}
 }
 
-static void Array_reftrace(CTX, kRawPtr *o)
+static void Array_reftrace(CTX, kObject *o)
 {
 	kArray *a = (kArray*)o;
 	if(!kArray_iS_UNboxData(a)) {
@@ -465,7 +465,7 @@ static void Array_reftrace(CTX, kRawPtr *o)
 	}
 }
 
-static void Array_free(CTX, kRawPtr *o)
+static void Array_free(CTX, kObject *o)
 {
 	kArray_ *a = (kArray_*)o;
 	if(a->astruct.max > 0) {
@@ -490,6 +490,8 @@ static void Array_expand(CTX, kArray_ *a, size_t min)
 	}
 }
 
+#define Array_setsize(A, N)  ((struct _kArray*)A)->size = N
+
 static void Array_add(CTX, kArray *a, kObject *value)
 {
 	if(a->size == a->capacity) {
@@ -498,7 +500,7 @@ static void Array_add(CTX, kArray *a, kObject *value)
 	}
 	DBG_ASSERT(a->list[a->size] == NULL);
 	KINITv(a->list[a->size], value);
-	a->size++;
+	Array_setsize(a, a->size+1);
 }
 
 static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
@@ -512,7 +514,7 @@ static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
 		}
 		memmove(a->list+(n+1), a->list+n, sizeof(kObject*) * (a->size - n));
 		KINITv(a->list[n], v);
-		a->size++;
+		Array_setsize(a, a->size+1);
 	}
 }
 
@@ -533,15 +535,15 @@ static void Array_clear(CTX, kArray *a, size_t n)
 	if(a->size > n) {
 		bzero(a->list + n, sizeof(void*) * (a->size - n));
 	}
-	a->size = n;
+	Array_setsize(a, n);
 }
 
 // ---------------
 // Param
 
-static void Param_init(CTX, kRawPtr *o, void *conf)
+static void Param_init(CTX, kObject *o, void *conf)
 {
-	kParam *pa = (kParam*)o;
+	struct _kParam *pa = (struct _kParam*)o;
 	pa->psize = 0;
 	pa->rtype = TY_void;
 }
@@ -555,7 +557,7 @@ static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 {
 	const kclass_t *ct = CT_(CLASS_Param);
 	ct = CT_body(_ctx, ct, sizeof(void*), psize * sizeof(kparam_t));
-	kParam *pa = (kParam*)new_Object(_ctx, ct, (void*)0);
+	struct _kParam *pa = (struct _kParam*)new_Object(_ctx, ct, (void*)0);
 	pa->rtype = rtype;
 	pa->psize = psize;
 	if(psize > 0) {
@@ -567,17 +569,18 @@ static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 /* --------------- */
 /* Method */
 
-static void Method_init(CTX, kRawPtr *o, void *conf)
+static void Method_init(CTX, kObject *o, void *conf)
 {
-	kMethod *mtd = (kMethod*)o;
+	struct _kMethod *mtd = (struct _kMethod*)o;
 	kParam *pa = (conf == NULL) ? K_NULLPARAM : (kParam*)conf;
 	KINITv(mtd->pa, pa);
 	KINITv(mtd->tcode, (struct kToken*)K_NULL);
 	KINITv(mtd->kcode, K_NULL);
+	mtd->proceedNUL = NULL;
 //	mtd->paramsNULL = NULL;
 }
 
-static void Method_reftrace(CTX, kRawPtr *o)
+static void Method_reftrace(CTX, kObject *o)
 {
 	BEGIN_REFTRACE(4);
 	kMethod *mtd = (kMethod*)o;
@@ -596,7 +599,7 @@ static KDEFINE_CLASS MethodDef = {
 
 static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, kParam *paN, knh_Fmethod func)
 {
-	kMethod* mtd = new_(Method, paN);
+	struct _kMethod* mtd = new_W(Method, paN);
 	mtd->flag  = flag;
 	mtd->cid     = cid;
 	mtd->mn      = mn;
@@ -810,6 +813,7 @@ static void kshare_init_methods(CTX)
 	intptr_t methoddata[] = {
 		_Public|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
 		_Public, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
+		_Public, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
 		_Public, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
 		_Public, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
@@ -823,7 +827,6 @@ static void kshare_init_methods(CTX)
 		_Public, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
 		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
 		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
-//		_Public|_Const, _F(Boolean_toString), TY_String, TY_Boolean, MN_to(TY_String), 0,
 		_Public, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};

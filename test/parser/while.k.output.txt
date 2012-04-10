@@ -1,5 +1,0 @@
- - (warning) (while.k:1+14) ignored tokens: 
-    int x = 1+1;
-
- - (error) (while.k:1+1) undefined function (method): while
- - (warning) script is failed, status=0

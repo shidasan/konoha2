@@ -162,13 +162,13 @@ struct kOutputStream {
 
 // io
 static void io2_free(CTX, kio_t *io2);
-static void Stream_init(CTX, kRawPtr *o, void *conf)
+static void Stream_init(CTX, kObject *o, void *conf)
 {
 	kInputStream *in = (kInputStream *) o;
 	in->io2 = (kio_t*) conf;;
 }
 
-static void Stream_free(CTX, kRawPtr *o)
+static void Stream_free(CTX, kObject *o)
 {
 	kInputStream *in = (kInputStream*)o;
 	if (in->io2) {
@@ -178,7 +178,7 @@ static void Stream_free(CTX, kRawPtr *o)
 }
 
 
-static void OutputStream_free(CTX, kRawPtr *o)
+static void OutputStream_free(CTX, kObject *o)
 {
 	kInputStream *in = (kInputStream*)o;
 	if (in->io2) {
@@ -855,7 +855,7 @@ static KMETHOD OutputStream_close(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t io_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kioshare_t *base = (kioshare_t*)KNH_ZMALLOC(sizeof(kioshare_t));
 	base->h.name     = "io";
@@ -889,17 +889,17 @@ static kbool_t io_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char
 	return true;
 }
 
-static kbool_t io_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t io_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t io_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t io_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t io_setupLingo(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t io_setupLingo(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

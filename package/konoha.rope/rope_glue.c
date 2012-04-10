@@ -140,7 +140,7 @@ static kString *new_String2(CTX, const char *text, size_t len, int policy)
 	return (kString*) LinerString_new(_ctx, s, text, len);
 }
 
-static void String2_free(CTX, kRawPtr *o)
+static void String2_free(CTX, kObject *o)
 {
 	StringBase *base = (StringBase*) o;
 	if (S_isMallocText(base)) {
@@ -211,7 +211,7 @@ static void StringBase_reftrace(CTX, StringBase *s)
 	}
 }
 
-static void String2_reftrace(CTX, kRawPtr *o)
+static void String2_reftrace(CTX, kObject *o)
 {
 	StringBase_reftrace(_ctx, (StringBase *) o);
 }
@@ -267,7 +267,7 @@ static KMETHOD Rope_opADD(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t Rope_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
@@ -288,17 +288,17 @@ static kbool_t Rope_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 	return true;
 }
 
-static kbool_t Rope_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t Rope_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t Rope_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t Rope_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t Rope_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t Rope_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

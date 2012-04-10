@@ -592,7 +592,9 @@ static kObject* Object_getObjectNULL(CTX, kObject *o, ksymbol_t key, kObject *de
 
 static void Object_setObject(CTX, kObject *o, ksymbol_t key, ktype_t ty, kObject *val)
 {
-	kpromap_set(_ctx, &o->h.proto, key | FN_BOXED, ty, (uintptr_t)val);
+	W(kObject, o);
+	kpromap_set(_ctx, &Wo->h.proto, key | FN_BOXED, ty, (uintptr_t)val);
+	WASSERT(o);
 }
 
 static uintptr_t Object_getUnboxedValue(CTX, kObject *o, ksymbol_t key, uintptr_t defval)
@@ -603,9 +605,10 @@ static uintptr_t Object_getUnboxedValue(CTX, kObject *o, ksymbol_t key, uintptr_
 
 static void Object_setUnboxedValue(CTX, kObject *o, ksymbol_t key, ktype_t ty, uintptr_t uval)
 {
-	kpromap_set(_ctx, &o->h.proto, key, ty, uval);
+	W(kObject, o);
+	kpromap_set(_ctx, &Wo->h.proto, key, ty, uval);
+	WASSERT(o);
 }
-
 
 // -------------------------------------------------------------------------
 

@@ -414,7 +414,7 @@ static KMETHOD String_opTO(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t String_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
@@ -438,17 +438,17 @@ static kbool_t String_initPackage(CTX, struct kKonohaSpace *ks, int argc, const 
 	return true;
 }
 
-static kbool_t String_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t String_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t String_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t String_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

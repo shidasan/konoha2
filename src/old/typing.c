@@ -4238,7 +4238,7 @@ L_CheckScope:;
 		if(knh_StmtMETA_is(_ctx, stmtM, "Overload")) {
 			Method_setOverload(mtd, 1);
 		}
-		knh_KonohaSpace_addMethod(_ctx, mtd_cid, mtd);
+		knh_KonohaSpace_defineMethod(_ctx, mtd_cid, mtd);
 //		DP(mtd)->fileid = ULINE_fileid(stmtM->uline);
 //		Term_setCONST(_ctx, tkNN(stmtM, 2/*method*/), mtd);
 		mp = new_Param(_ctx);
@@ -4311,7 +4311,7 @@ L_CheckScope:;
 		}
 		if((mtd)->cid != mtd_cid) { /* @Override */
 			mtd = new_Method(_ctx, flag, mtd_cid, mn, NULL);
-			knh_KonohaSpace_addMethod(_ctx, mtd_cid, mtd);
+			knh_KonohaSpace_defineMethod(_ctx, mtd_cid, mtd);
 			KSETv(DP(mtd)->mp, mp);
 		}
 		else if(knh_StmtMETA_is(_ctx, stmtM, "Around")) {
@@ -4546,7 +4546,7 @@ static kObject** ObjectField_new(CTX, kObject *o)
 {
 	const kclass_t *ct = O_ct(o);
 	if(ct->bcid == CLASS_CppObject) {
-		kRawPtr *p = (kRawPtr*)o;
+		kObject *p = (kObject*)o;
 		p->kfields = (kObject**)KNH_ZMALLOC(sizeof(kObject*) * ct->fsize);
 		return p->kfields;
 	}
@@ -4566,7 +4566,7 @@ static void ObjectField_init(CTX, kObject *o)
 	const kclass_t *ct = O_ct(o), *supct = ct->supTBL;
 	kObject **v = ObjectField_new(_ctx, o);
 	if(supct->fsize > 0) {
-		kObject **supv = (supct->bcid == CLASS_Object) ? supct->protoNULL->fields : ((kRawPtr*)supct->protoNULL)->kfields;
+		kObject **supv = (supct->bcid == CLASS_Object) ? supct->protoNULL->fields : ((kObject*)supct->protoNULL)->kfields;
 		knh_memcpy(v, supv, sizeof(kObject*) * supct->fsize);
 #ifdef K_USING_RCGC
 		for(i = 0; i < supct->fsize; i++) {

@@ -57,7 +57,7 @@ static void Kraise(CTX, int isContinue);
 
 static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
-	ksyntaxdef_t SYNTAX[] = {
+	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 		{ TOKEN("$ERR"), },
 		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr,
 			.TopStmtTyCheck = StmtTyCheck_EXPR, .StmtTyCheck = StmtTyCheck_EXPR,  },
@@ -258,7 +258,8 @@ void MODEVAL_init(CTX, kcontext_t *ctx)
 	DBG_ASSERT(KW_(",") == KW_COMMA);
 	DBG_ASSERT(KW_("void") == KW_void);  // declmethod
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
-	SYN_(base->rootks, KW_void)->ty = TY_void; // it's not cool, but necessary
+	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
+	syn->ty = TY_void; // it's not cool, but necessary
 
 	base->syn_err  = SYN_(base->rootks, KW_ERR);
 	base->syn_expr = SYN_(base->rootks, KW_EXPR);
@@ -477,7 +478,7 @@ static KPACKDEF *KonohaSpace_openGlueHandler(CTX, kKonohaSpace *ks, char *pathbu
 {
 	char *p = strrchr(pathbuf, '.');
 	snprintf(p, bufsiz - (p  - pathbuf), "%s", K_OSDLLEXT);
-	ks->gluehdr = dlopen(pathbuf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);
+	((struct _kKonohaSpace*)ks)->gluehdr = dlopen(pathbuf, CTX_isCompileOnly() ? RTLD_NOW : RTLD_LAZY);  // FIXME
 	if(ks->gluehdr != NULL) {
 		char funcbuf[80];
 		snprintf(funcbuf, sizeof(funcbuf), "%s_init", packname(pname));
@@ -580,9 +581,6 @@ static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline
 	}
 	if(target->methodsNULL != NULL) {
 		size_t i;
-		if(ks->methodsNULL == NULL) {
-			KINITv(ks->methodsNULL, new_(Array, 8));
-		}
 		for(i = 0; i < kArray_size(target->methodsNULL); i++) {
 			kMethod *mtd = target->methodsNULL->methods[i];
 			if(kMethod_isPublic(mtd) && mtd->packid == target->packid) {

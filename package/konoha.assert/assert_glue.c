@@ -18,21 +18,23 @@ static KMETHOD KonohaSpace_assert(CTX, ksfp_t *sfp _RIX)
 }
 
 // --------------------------------------------------------------------------
+
 static KMETHOD StmtTyCheck_assert(CTX, ksfp_t *sfp _RIX)
 {
-	USING_SUGAR;
-	kbool_t r = 1;
-	VAR_StmtTyCheck(stmt, syn, gma);
-	if((r = SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
-		kExpr *expr = kStmt_expr(stmt, KW_EXPR, NULL);
-		kMethod *mtd = SUGAR KonohaSpace_getMethodNULL(_ctx, gma->genv->ks, TY_KonohaSpace, MN_("assert"));
-		assert(expr != NULL);
-		assert(mtd != NULL);
-		SUGAR Stmt_toExprCall(_ctx, stmt, mtd, 2, K_NULL/*TODO KNH_TNULL(KonohaSpace)*/, expr);
-		expr = kStmt_expr(stmt, KW_EXPR, NULL);
-		expr->build = TEXPR_CALL;
-	}
-	RETURNb_(r);
+	//FIXME
+//	USING_SUGAR;
+//	kbool_t r = 1;
+//	VAR_StmtTyCheck(stmt, syn, gma);
+//	if((r = SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
+//		kExpr *expr = kStmt_expr(stmt, KW_EXPR, NULL);
+//		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, TY_KonohaSpace, MN_("assert"));
+//		assert(expr != NULL);
+//		assert(mtd != NULL);
+//		kStmt_toExprCall(stmt, mtd, 2, gma->genv->ks, expr);
+//		expr = kStmt_expr(stmt, KW_EXPR, NULL);
+//		expr->build = TEXPR_CALL;
+//	}
+//	RETURNb_(r);
 }
 
 // --------------------------------------------------------------------------
@@ -42,7 +44,7 @@ static KMETHOD StmtTyCheck_assert(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t assert_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t assert_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_cond = FN_("cond");
@@ -54,17 +56,17 @@ static kbool_t assert_initPackage(CTX, struct kKonohaSpace *ks, int argc, const 
 	return true;
 }
 
-static kbool_t assert_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t assert_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
 #define TOKEN(T)  .name = T/*, .namelen = (sizeof(T)-1)*/
 
-static kbool_t assert_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t assert_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
-	ksyntaxdef_t SYNTAX[] = {
+	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 		{ TOKEN("assert"), .rule = "'assert' '(' $expr ')'", .TopStmtTyCheck = StmtTyCheck_assert, .StmtTyCheck = StmtTyCheck_assert},
 		{ .name = NULL, },
 	};
@@ -74,7 +76,7 @@ static kbool_t assert_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pli
 }
 
 
-static kbool_t assert_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t assert_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

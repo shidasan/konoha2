@@ -24,4 +24,10 @@ typedef struct {
 	kmod_t h;
 } kfloatmod_t;
 
+typedef const struct _kFloat kFloat;
+struct _kFloat {
+	kObjectHeader h;
+	kfloat_t fvalue;
+};
+
 #endif /* MODFLOAT_H_ */

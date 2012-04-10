@@ -19,6 +19,12 @@ static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(!sfp[0].bvalue);
 }
 
+//## @Const method Int Int.opMINUS();
+static KMETHOD Int_opMINUS(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(-(sfp[0].ivalue));
+}
+
 //## @Const method Int Int.opADD(Int x);
 static KMETHOD Int_opADD(CTX, ksfp_t *sfp _RIX)
 {

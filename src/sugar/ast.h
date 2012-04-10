@@ -58,14 +58,14 @@ static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
 static void checkKeyword(CTX, kKonohaSpace *ns, kToken *tk)
 {
 	if(tk->tt < TK_OPERATOR) {
-		tk->kw = tk->tt;
+		((struct _kToken*)tk)->kw = tk->tt;
 	}
 	if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL || tk->tt == TK_OPERATOR) {
 		keyword_t kw = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NONAME);
 		if(kw != FN_NONAME) {
 			ksyntax_t *syn = SYN_(ns, kw);
 			if(syn != NULL) {
-				tk->kw = kw;
+				((struct _kToken*)tk)->kw = kw;
 			}
 		}
 		else if(tk->tt == TK_OPERATOR) {
@@ -74,7 +74,7 @@ static void checkKeyword(CTX, kKonohaSpace *ns, kToken *tk)
 	}
 }
 
-static kbool_t Token_toBRACE(CTX, kToken *tk)
+static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
 {
 	if(tk->tt == TK_CODE) {
 		INIT_GCSTACK();
@@ -92,13 +92,13 @@ static kbool_t Token_toBRACE(CTX, kToken *tk)
 static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst)
 {
 	int i;
-	kToken *tk = tls->tts[s];
-	kToken *tkp = new_(Token, 0);
+	kToken *tk = tls->toks[s];
+	struct _kToken *tkp = new_W(Token, 0);
 	kArray_add(tlsdst, tkp);
 	tkp->tt = tt; tkp->kw = tt; tkp->uline = tk->uline; tkp->topch = tk->topch; tkp->lpos = closech;
 	KSETv(tkp->sub, new_(Array, 0));
 	for(i = s + 1; i < e; i++) {
-		tk = tls->tts[i];
+		tk = tls->toks[i];
 		//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
 		if(tk->topch == '(') {
 			i = makeTree(_ctx, ns, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
@@ -123,13 +123,13 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 {
 	int i = s;
 	for(; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if (i < e - 1) {
-			kToken *tk1 = tls->tts[i+1];
+			struct _kToken *tk1 = tls->Wtoks[i+1];
 			if(tk->topch == '@' && (tk1->tt == TK_SYMBOL || tk1->tt == TK_USYMBOL)) {
 				tk1->tt = TK_METANAME;
 				kArray_add(tlsdst, tk1);
-				if(i + 2 < e && tls->tts[i+2]->topch == '(') {
+				if(i + 2 < e && tls->toks[i+2]->topch == '(') {
 					i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i+2, e, ')', tlsdst);
 				}
 				else {
@@ -143,7 +143,7 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 		if(*indent == 0) *indent = tk->lpos;
 	}
 	for(; i < e ; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if(tk->topch == '{') {
 			i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tlsdst); continue;
 		}
@@ -172,13 +172,13 @@ static int Stmt_addAnnotation(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	int i;
 	for(i = s; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if(tk->tt != TK_METANAME) break;
 		if(i+1 < e) {
 			char buf[64];
 			snprintf(buf, sizeof(buf), "@%s", S_text(tk->text));
 			keyword_t kw = keyword(_ctx, (const char*)buf, S_size(tk->text)+1, FN_NEWID);
-			kToken *tk1 = tls->tts[i+1];
+			kToken *tk1 = tls->toks[i+1];
 			kObject *value = UPCAST(K_TRUE);
 			if(tk1->tt == AST_PARENTHESIS) {
 				value = (kObject*)Stmt_newExpr2(_ctx, stmt, tk1->sub, 0, kArray_size(tk1->sub));
@@ -198,11 +198,11 @@ static void WARN_Ignored(CTX, kArray *tls, int s, int e)
 		int i = s;
 		kwb_t wb;
 		kwb_init(&(_ctx->stack->cwb), &wb);
-		kwb_printf(&wb, "%s", kToken_s(tls->tts[i])); i++;
+		kwb_printf(&wb, "%s", kToken_s(tls->toks[i])); i++;
 		while(i < e) {
-			kwb_printf(&wb, " %s", kToken_s(tls->tts[i])); i++;
+			kwb_printf(&wb, " %s", kToken_s(tls->toks[i])); i++;
 		}
-		SUGAR_P(WARN_, tls->tts[s]->uline, tls->tts[s]->lpos, "ignored tokens: %s", kwb_top(&wb, 1));
+		SUGAR_P(WARN_, tls->toks[s]->uline, tls->toks[s]->lpos, "ignored tokens: %s", kwb_top(&wb, 1));
 		kwb_free(&wb);
 	}
 }
@@ -227,8 +227,8 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 {
 	int ri, ti = s;
 	for(ri = 0; ri < kArray_size(rules) && ti < e; ri++) {
-		kToken *rule = rules->tts[ri];
-		kToken *tk = tls->tts[ti];
+		kToken *rule = rules->toks[ri];
+		kToken *tk = tls->toks[ti];
 		uline = tk->uline;
 		DBG_P("matching rule=%d,%s,%s token=%d,%s,%s", ri, T_tt(rule->tt), T_kw(rule->kw), ti-s, T_tt(tk->tt), kToken_s(tk));
 		if(rule->tt == TK_CODE) {
@@ -250,7 +250,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 //			DBG_P("matched '%s' nameid='%s', next=%d=>%d", Pkeyword(rule->kw), Pkeyword(rule->nameid), ti, next);
 			if(next == -1) {
 				if(optional) return s;
-				kToken_p(tk, ERR_, "%s must be syntax %s", kToken_s(tk), T_kw(rule->kw));
+				kToken_p(tk, ERR_, "'%s' must be syntax %s", kToken_s(tk), T_kw(rule->kw));
 				return -1;
 			}
 			optional = 0;
@@ -273,7 +273,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 	}
 	if(!optional) {
 		for(; ri < kArray_size(rules); ri++) {
-			kToken *rule = rules->tts[ri];
+			kToken *rule = rules->toks[ri];
 			if(rule->tt != AST_OPTIONAL) {
 				SUGAR_P(ERR_, uline, -1, "%s needs %s syntax", stmt->syn->token, T_kw(rule->kw));
 				return -1;
@@ -291,10 +291,10 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 {
 	kKonohaSpace *ks = kStmt_ks(stmt);
-	kToken *tk = tls->tts[s];
+	struct _kToken *tk = tls->Wtoks[s];
 	while(tk->tt == TK_NONE) {
 		s++;
-		tk = tls->tts[s];
+		tk = tls->Wtoks[s];
 	}
 	if(tk->kw == KW_TYPE) {
 		*next = s + 1;
@@ -323,7 +323,7 @@ static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
 
 static inline kToken* TokenArray_lookAhead(CTX, kArray *tls, int s, int e)
 {
-	return (s < e) ? tls->tts[s] : K_NULLTOKEN;
+	return (s < e) ? tls->toks[s] : K_NULLTOKEN;
 }
 
 static keyword_t Stmt_stmttype(CTX, kStmt *stmt, kArray *tls, int s, int e)
@@ -341,7 +341,7 @@ static keyword_t Stmt_stmttype(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		}
 		return KW_EXPR;
 	}
-	return (tls->tts[s])->kw;
+	return (tls->toks[s])->kw;
 }
 
 static kbool_t Stmt_parseSyntaxRule(CTX, kStmt *stmt, kArray *tls, int s, int e)
@@ -355,7 +355,7 @@ static kbool_t Stmt_parseSyntaxRule(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	int ret = 0;
 	if(syn != NULL && syn->syntaxRule != NULL) {
 //		DBG_P("trying matching %s", syn->token);
-		stmt->syn = syn;
+		((struct _kStmt*)stmt)->syn = syn;
 		e = matchSyntaxRule(_ctx, stmt, syn->syntaxRule, stmt->uline, tls, s, e, 0);
 //		DBG_P("%s matched e=%d", syn->token, e);
 		if(e != -1) {
@@ -377,9 +377,9 @@ static kbool_t Stmt_parseSyntaxRule(CTX, kStmt *stmt, kArray *tls, int s, int e)
 
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 {
-	kStmt *stmt = new_(Stmt, tls->tts[s]->uline);
+	kStmt *stmt = new_(Stmt, tls->toks[s]->uline);
 	kArray_add(bk->blockS, stmt);
-	KINITv(stmt->parentNULL, bk);
+	KINITv(((struct _kStmt*)stmt)->parentNULL, bk);
 	int estart = kerrno;
 	s = Stmt_addAnnotation(_ctx, stmt, tls, s, e);
 	if(!Stmt_parseSyntaxRule(_ctx, stmt, tls, s, e)) {
@@ -393,7 +393,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e)
 static KMETHOD UndefinedStmtParseExpr(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
-	kToken *tk = tls->tts[c];
+	kToken *tk = tls->toks[c];
 	SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined expression parser for '%s'", kToken_s(tk));
 	RETURN_(K_NULLEXPR); // unnecessary
 }
@@ -427,7 +427,7 @@ static int Stmt_skipUninaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	int i;
 	for(i = s; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if(!Stmt_isUniaryOp(_ctx, stmt, tk)) {
 			break;
 		}
@@ -439,7 +439,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 {
 	int idx = -1, i, prif = 0;
 	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
 		if(syn != NULL && syn->op2 != 0) {
 			//DBG_P("operator: %s priotiry=%d", Pkeyword(syn->kw), syn->priority);
@@ -457,9 +457,8 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 static kExpr *Stmt_addExprParams(CTX, kStmt *stmt, kExpr *expr, kArray *tls, int s, int e)
 {
 	int i, start = s;
-	DBG_ASSERT(kArray_size(expr->consNUL)  == 2);
 	for(i = s; i < e; i++) {
-		kToken *tk = tls->tts[i];
+		kToken *tk = tls->toks[i];
 		if(tk->kw == KW_COMMA) {
 			if(start < i) {
 				expr = Expr_add(_ctx, expr, Stmt_newExpr2(_ctx, stmt, tls, start, i));
@@ -484,14 +483,14 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		ksyntax_t *syn = NULL;
 		int idx = Stmt_findBinaryOp(_ctx, stmt, tls, s, e, &syn);
 		if(idx != -1) {
-			//DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, %s**", s, idx, e, S_text(tls->tts[idx]->text));
+			//DBG_P("** Found BinaryOp: s=%d, idx=%d, e=%d, %s**", s, idx, e, S_text(tls->toks[idx]->text));
 			return ParseExpr(_ctx, syn, stmt, tls, s, idx, e);
 		}
 		int c = s;
 		if(Stmt_isType(_ctx, stmt, tls, s, e, &c)) {
-			kToken *tkT = tls->tts[c-1];
+			kToken *tkT = tls->toks[c-1];
 			if(c < e) {   // typing T v
-				kToken *tk = new_(Token, TK_OPERATOR);
+				struct _kToken *tk = new_W(Token, TK_OPERATOR);
 				tk->kw  = KW_COLON;
 				KSETv(tk->text, Skeyword(tk->kw));  // tls
 				syn = SYN_(kStmt_ks(stmt), KW_COLON);
@@ -499,7 +498,7 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 			}
 			c = c - 1;
 		}
-		syn = SYN_(kStmt_ks(stmt), (tls->tts[c])->kw);
+		syn = SYN_(kStmt_ks(stmt), (tls->toks[c])->kw);
 		return ParseExpr(_ctx, syn, stmt, tls, c, c, e);
 	}
 	else {
@@ -523,8 +522,8 @@ static KMETHOD StmtParseExpr_Term(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
 	assert(s == c);
-	kToken *tk = tls->tts[c];
-	kExpr *expr = new_(Expr, NULL);
+	kToken *tk = tls->toks[c];
+	struct _kExpr *expr = new_W(Expr, NULL);
 	PUSH_GCSTACK(expr);
 	Expr_setTerm(expr, 1);
 	KINITv(expr->tkNUL, tk);
@@ -532,25 +531,25 @@ static KMETHOD StmtParseExpr_Term(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_join(expr, stmt, tls, s+1, c+1, e));
 }
 
-#define Expr_isBinaryOp(E,KW)  (!Expr_isTerm(E)&&IS_Token(E->consNUL->tts[0])&&E->consNUL->tts[0]->kw == KW)
+#define Expr_isBinaryOp(E,KW)  (!Expr_isTerm(E)&&IS_Token(E->consNUL->toks[0])&&E->consNUL->toks[0]->kw == KW)
 
 static KMETHOD StmtParseExpr_PARENTHESIS(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
-	kToken *tk = tls->tts[c];
+	kToken *tk = tls->toks[c];
 	if(s == c) {
 		kExpr *expr = Stmt_newExpr2(_ctx, stmt, tk->sub, 0, kArray_size(tk->sub));
 		RETURN_(kExpr_join(expr, stmt, tls, s+1, c+1, e));
 	}
 	else {
 		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
-		if(Expr_isBinaryOp(lexpr, KW_DOT)) {
+		if(Expr_isBinaryOp(lexpr, KW_DOT)) {   // ((. a f) null ()) =>  (f a ())
 			KSETv(lexpr->consNUL->exprs[0], lexpr->consNUL->exprs[2]);
 			kArray_clear(lexpr->consNUL, 2);
-			lexpr->syn = SYN_(kStmt_ks(stmt), KW_params); // CALL
+			((struct _kStmt*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_params); // CALL
 		}
 		else {
-			syn = SYN_(kStmt_ks(stmt), KW_PARENTHESIS);
+			syn = SYN_(kStmt_ks(stmt), KW_PARENTHESIS);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}
 		lexpr = Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub));
@@ -561,7 +560,7 @@ static KMETHOD StmtParseExpr_PARENTHESIS(CTX, ksfp_t *sfp _RIX)
 static KMETHOD StmtParseExpr_COMMA(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
-	kExpr *expr = new_ConsExpr(_ctx, syn, 1, tls->tts[c]);
+	kExpr *expr = new_ConsExpr(_ctx, syn, 1, tls->toks[c]);
 	expr = Stmt_addExprParams(_ctx, stmt, expr, tls, s, e);
 	RETURN_(expr);
 }
@@ -569,7 +568,7 @@ static KMETHOD StmtParseExpr_COMMA(CTX, ksfp_t *sfp _RIX)
 static KMETHOD StmtParseExpr_Op(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
-	kToken *tk = tls->tts[c];
+	kToken *tk = tls->toks[c];
 	kExpr *expr, *rexpr = Stmt_newExpr2(_ctx, stmt, tls, c+1, e);
 	if(s == c) { // uniary operator
 		expr = new_ConsExpr(_ctx, syn, 2, tk, rexpr);
@@ -580,17 +579,6 @@ static KMETHOD StmtParseExpr_Op(CTX, ksfp_t *sfp _RIX)
 	}
 	RETURN_(expr);
 }
-
-//static KMETHOD StmtParseExpr_DOT(CTX, ksfp_t *sfp _RIX)
-//{
-//	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
-//	DBG_ASSERT(s < c); // binary
-//	kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
-//	kExpr *rexpr = Stmt_newExpr2(_ctx, stmt, tls, c+1, e);
-//	kToken *tk = tls->tts[c];
-//	rexpr = new_ConsExpr(_ctx, syn, 3, tk, lexpr, rexpr);
-//	RETURN_(rexpr);
-//}
 
 /* ------------------------------------------------------------------------ */
 
@@ -615,7 +603,7 @@ static KMETHOD StmtAdd_type(CTX, ksfp_t *sfp _RIX)
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
 	int r = -1;
 	if(Stmt_isType(_ctx, stmt, tls, s, e, &r)) {
-		kToken *tkT = tls->tts[r-1];
+		kToken *tkT = tls->toks[r-1];
 		kObject_setObject(stmt, name, tkT);
 	}
 	else {
@@ -628,7 +616,7 @@ static KMETHOD StmtAdd_cname(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
 	int r = -1;
-	kToken *tk = tls->tts[s];
+	kToken *tk = tls->toks[s];
 	if(tk->tt == TK_USYMBOL) {
 		kObject_setObject(stmt, name, tk);
 		r = s + 1;
@@ -640,7 +628,7 @@ static KMETHOD StmtAdd_name(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
 	int r = -1;
-	kToken *tk = tls->tts[s];
+	kToken *tk = tls->toks[s];
 	if(tk->tt == TK_SYMBOL) {
 		kObject_setObject(stmt, name, tk);
 		r = s + 1;
@@ -652,7 +640,7 @@ static KMETHOD StmtAdd_params(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
 	int r = -1;
-	kToken *tk = tls->tts[s];
+	kToken *tk = tls->toks[s];
 	if(tk->tt == AST_PARENTHESIS) {
 		INIT_GCSTACK();
 		kExpr *expr = new_ConsExpr(_ctx, SYN_(kStmt_ks(stmt), KW_params), 0);
@@ -671,7 +659,7 @@ static KMETHOD StmtAdd_block(CTX, ksfp_t *sfp _RIX)
 {
 	INIT_GCSTACK();
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
-	kToken *tk = tls->tts[s];
+	kToken *tk = tls->toks[s];
 	DBG_P("adding block %s as %s", T_tt(tk->tt), T_kw(name));
 	if(tk->tt == TK_CODE) {
 		kObject_setObject(stmt, name, tk);

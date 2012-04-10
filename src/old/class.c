@@ -137,9 +137,9 @@ static void nofree(void *p)
 {
 }
 
-KNHAPI2(kRawPtr*) new_RawPtr(CTX, const kclass_t *ct, void *rawptr)
+KNHAPI2(kObject*) new_RawPtr(CTX, const kclass_t *ct, void *rawptr)
 {
-	kRawPtr *npo = (kRawPtr*)new_hObject_(_ctx, ct);
+	kObject *npo = (kObject*)new_hObject_(_ctx, ct);
 	npo->rawptr = rawptr;
 	if(rawptr == NULL) {
 		kObjectoNULL(_ctx, npo);
@@ -155,11 +155,11 @@ KNHAPI2(kObject*) new_ReturnObject(CTX, ksfp_t *sfp)
 	return new_Object_init2(_ctx, ClassTBL(rtype));
 }
 
-KNHAPI2(kRawPtr*) new_ReturnCppObject(CTX, ksfp_t *sfp, void *rawptr, knh_Frawfree pfree)
+KNHAPI2(kObject*) new_ReturnCppObject(CTX, ksfp_t *sfp, void *rawptr, knh_Frawfree pfree)
 {
 	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
 	ktype_t rtype = knh_Param_rtype(DP(mtd)->mp);
-	kRawPtr *npo = (kRawPtr*)new_hObject_(_ctx, ClassTBL(rtype));
+	kObject *npo = (kObject*)new_hObject_(_ctx, ClassTBL(rtype));
 	npo->rawptr = rawptr;
 	if(rawptr == NULL) {
 		kObjectoNULL(_ctx, npo);
@@ -170,9 +170,9 @@ KNHAPI2(kRawPtr*) new_ReturnCppObject(CTX, ksfp_t *sfp, void *rawptr, knh_Frawfr
 	return npo;
 }
 
-kRawPtr *new_Pointer(CTX, const char *name, void *rawptr, knh_Frawfree pfree)
+kObject *new_Pointer(CTX, const char *name, void *rawptr, knh_Frawfree pfree)
 {
-	kRawPtr *npo = (kRawPtr*)new_hObject_(_ctx, ClassTBL(CLASS_Tdynamic));
+	kObject *npo = (kObject*)new_hObject_(_ctx, ClassTBL(CLASS_Tdynamic));
 	npo->rawptr = rawptr;
 	npo->DBG_NAME = name;
 	npo->rawfree = (pfree != NULL) ? pfree : nofree;
@@ -1152,7 +1152,7 @@ kDictMap* knh_Object_getXData(CTX, kObject *o)
 	kDictMap *m;
 	const kclass_t *ct = O_ct(o);
 	if(ct->xdataidx != -1) {
-		kObject **v = (ct->bcid == CLASS_Object) ? ((kObject*)o)->fields : ((kRawPtr*)o)->kfields;
+		kObject **v = (ct->bcid == CLASS_Object) ? ((kObject*)o)->fields : ((kObject*)o)->kfields;
 		m = (kDictMap*)v[ct->xdataidx];
 		if(IS_NULL(m)) {
 			m = new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "xdata");

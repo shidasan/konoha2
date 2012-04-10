@@ -16,7 +16,7 @@
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static	kbool_t stub_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 //	intptr_t methoddata[] = {
 //		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
@@ -31,17 +31,15 @@ static	kbool_t stub_initPackage(CTX, struct kKonohaSpace *ks, int argc, const ch
 	return true;
 }
 
-static kbool_t stub_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t stub_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-#define TOKEN(T)  .name = T, .namelen = (sizeof(T)-1)
-
-static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t stub_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
-//	ksyntaxdef_t SYNTAX[] = {
+//	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 //		{ TOKEN("float"), .type = TY_Float, },
 //		{ TOKEN("double"), .type = TY_Float, },
 //		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
@@ -51,7 +49,7 @@ static kbool_t stub_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline
 	return true;
 }
 
-static kbool_t stub_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t stub_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

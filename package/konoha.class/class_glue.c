@@ -16,13 +16,13 @@ static KMETHOD Fmethod_ngetter(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Fmethod_setter(CTX, ksfp_t *sfp _RIX)
 {
 	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
-	KSETv((sfp[0].o)->fields[delta], sfp[1].o);
+	KSETv((sfp[0].Wo)->fields[delta], sfp[1].o);
 	RETURN_(sfp[1].o);
 }
 static KMETHOD Fmethod_nsetter(CTX, ksfp_t *sfp _RIX)
 {
 	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
-	(sfp[0].o)->ndata[delta] = sfp[1].ndata;
+	(sfp[0].Wo)->ndata[delta] = sfp[1].ndata;
 	RETURNd_(sfp[1].ndata);
 }
 
@@ -40,7 +40,7 @@ static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_ngetter : Fmethod_getter;
 	kParam *pa = new_kParam(type, 0, NULL);
 	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
-	mtd->delta = idx;
+	((struct _kMethod*)mtd)->delta = idx;  // FIXME
 	return mtd;
 }
 
@@ -50,7 +50,7 @@ static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 	kparam_t p = {type, FN_("x")};
 	kParam *pa = new_kParam(type, 1, &p);
 	kMethod *mtd = new_kMethod(0, cid, mn, pa, f);
-	mtd->delta = idx;
+	((struct _kMethod*)mtd)->delta = idx;   // FIXME
 	return mtd;
 }
 
@@ -143,11 +143,11 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	ct->fields[pos].ty = ty;
 	ct->fields[pos].fn = ksymbol(S_text(name), S_size(name), FN_NEWID, SYMPOL_NAME);
 	if(TY_isUnbox(ty)) {
-		ct->nulvalNUL->ndata[pos] = O_unbox(value);
+		ct->WnulvalNUL->ndata[pos] = O_unbox(value);
 	}
 	else {
 		kObject *v = (IS_NULL(value)) ? knull(O_ct(value)) : value;
-		KSETv(ct->nulvalNUL->ndata[pos], v);
+		KSETv(ct->WnulvalNUL->ndata[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
 	if(!ct->fsize < ct->fallocsize) {
@@ -163,7 +163,7 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static	kbool_t class_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static	kbool_t class_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
 	int FN_flag = FN_("flag"), FN_cid = FN_("cid"), FN_name = FN_("name"), FN_defval = FN_("defval");
@@ -177,17 +177,17 @@ static	kbool_t class_initPackage(CTX, struct kKonohaSpace *ks, int argc, const c
 	return true;
 }
 
-static kbool_t class_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t class_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_initKonohaSpace(CTX,  struct kKonohaSpace *ks, kline_t pline)
+static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t class_setupKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t class_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }

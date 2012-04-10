@@ -52,17 +52,20 @@ typedef struct {
 	kmodshare_t h;
 	const kclass_t *cBasicBlock;
 	const kclass_t *cKonohaCode;
-	struct kKonohaCode *codeNull;
+	const struct _kKonohaCode *codeNull;
 	struct kopl_t  *PRECOMPILED_ENTER;
 	struct kopl_t  *PRECOMPILED_NCALL;
 } kcodeshare_t;
 
 typedef struct {
 	kmod_t h;
-	struct kArray *insts;
-	struct kArray *lstacks;
-	struct kArray *constPools;
-	struct kBasicBlock *bbNC;
+	kArray *insts;
+	kArray *lstacks;
+	kArray *constPools;
+	union {
+		const struct _kBasicBlock *curbbNC;
+		struct _kBasicBlock *WcurbbNC;
+	};
 	kline_t uline;
 } kcodemod_t;
 
@@ -133,18 +136,24 @@ typedef struct kopl_t {
 //## flag BasicBlock StackChecked 2 - is set * *;
 
 #define BasicBlock_isVisited(o)      (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
-#define BasicBlock_setVisited(o,B)   TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,B)
+#define BasicBlock_setVisited(o,B)   TFLAG_set(uintptr_t,((struct _kObject*)o)->h.magicflag,kObject_Local1,B)
 
-typedef struct kBasicBlock kBasicBlock;
+typedef const struct _kBasicBlock kBasicBlock;
 
-struct kBasicBlock {
+struct _kBasicBlock {
 	kObjectHeader h;
 	kushort_t id;     kushort_t incoming;
 	kopl_t   *opbuf;
 	size_t    size;
 	size_t    capacity;
-	struct kBasicBlock *nextNC;
-	struct kBasicBlock *jumpNC;
+	union {
+		const struct _kBasicBlock *nextNC;
+		struct _kBasicBlock *WnextNC;
+	};
+	union {
+		const struct _kBasicBlock *jumpNC;
+		struct _kBasicBlock *WjumpNC;
+	};
 	kopl_t *code;
 	kopl_t *opjmp;
 };
@@ -153,12 +162,12 @@ struct kBasicBlock {
 //## class KonohaCode Object;
 //## flag KonohaCode NativeCompiled  1 - is set  *   *;
 
-typedef struct kKonohaCode kKonohaCode;
-struct kKonohaCode {
+typedef const struct _kKonohaCode kKonohaCode;
+struct _kKonohaCode {
 	kObjectHeader h;
-	kopl_t*  code;
-	size_t   codesize;
-	kString *source;
+	kopl_t*   code;
+	size_t    codesize;
+	kString  *source;
 	kline_t   fileid;
 };
 
@@ -197,8 +206,8 @@ struct kKonohaCode {
 
 #define OPEXEC_NSET(A, N, CT) rbp[(A)].ndata = N
 #define OPEXEC_NMOV(A, B, CT) rbp[(A)].ndata = rbp[(B)].ndata
-#define OPEXEC_NMOVx(A, B, BX, CT) rbp[(A)].o = (rbp[(B)].o)->fields[(BX)]
-#define OPEXEC_XNMOV(A, AX, B, CT) (rbp[(A)].o)->fields[AX] = rbp[(B)].o
+#define OPEXEC_NMOVx(A, B, BX, CT) rbp[(A)].o = (rbp[(B)].Wo)->fields[(BX)]
+#define OPEXEC_XNMOV(A, AX, B, CT) (rbp[(A)].Wo)->fields[AX] = rbp[(B)].o
 
 #define OPEXEC_NEW(A, P, CT)   KSETv(rbp[(A)].o, new_kObject(CT, P))
 #define OPEXEC_NULL(A, CT)     KSETv(rbp[(A)].o, knull(CT))
