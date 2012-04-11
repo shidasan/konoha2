@@ -144,12 +144,25 @@ if(HAVE_LIBDL)
 set(ExtraLibs ${ExtraLibs} ${HAVE_LIBDL})
 endif(HAVE_LIBDL)
 
+macro(POP _STR _DELIM _RESULT)
+	string(REPLACE ${_DELIM} ";" _tmp ${_STR})
+	list(REVERSE _tmp)
+	list(GET _tmp 0 ${_RESULT})
+endmacro()
+
 # for jenkins coverage test
 if(USE_CTEST)
 	include(CTest)
 	message(STATUS "*** Enable CTest Option ***")
 	add_definitions(-fprofile-arcs -ftest-coverage)
 	set(ExtraLibs ${ExtraLibs} -fprofile-arcs)
+	set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
+	file(GLOB test_files ${CMAKE_CURRENT_SOURCE_DIR}/test/*/*.k)
+	foreach(f ${test_files})
+		set(test_name)
+		POP(${f} "/" test_name)
+		add_test(NAME ${test_name} COMMAND ${TEST_BIN} --test-with ${f})
+	endforeach(f ${test_files})
 endif(USE_CTEST)
 
 add_library(konoha2 SHARED ${RUNTIME} ${GC} ${PARSER} ${VM})
@@ -161,12 +174,6 @@ target_link_libraries(konoha2_bin ${ExtraLibs})
 set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
 
 # package
-
-macro(POP _STR _DELIM _RESULT)
-	string(REPLACE ${_DELIM} ";" _tmp ${_STR})
-	list(REVERSE _tmp)
-	list(GET _tmp 0 ${_RESULT})
-endmacro()
 
 macro(PKGNAME _STR _RESULT)
 	set(_tmp)
@@ -227,12 +234,12 @@ add_test(NAME ${scr} COMMAND ${TEST_BIN} ${TEST_DIR}
 		${CMAKE_CURRENT_BINARY_DIR} ${scr})
 endmacro(add_konoha_test scr)
 
-file(GLOB test_files "${CMAKE_CURRENT_SOURCE_DIR}/test/parser/*.k")
-foreach(f ${test_files})
-	set(_tmp)
-	POP(${f} "/" _tmp)
-	add_konoha_test(${_tmp})
-endforeach()
+#file(GLOB test_files "${CMAKE_CURRENT_SOURCE_DIR}/test/parser/*.k")
+#foreach(f ${test_files})
+#	set(_tmp)
+#	POP(${f} "/" _tmp)
+#	add_konoha_test(${_tmp})
+#endforeach()
 
 macro(add_clib_test test_name)
 	add_executable(${test_name} ${ARGN})
