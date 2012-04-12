@@ -369,13 +369,13 @@ static KMETHOD TokenTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 	kToken *tk = expr->tkNUL;
 	kuname_t ukey = kuname(S_text(tk->text), S_size(tk->text), 0, FN_NONAME);
 	if(ukey != FN_NONAME) {
-		keyvals_t *kv = KonohaSpace_getConstNULL(_ctx, gma->genv->ks, ukey);
+		kvs_t *kv = KonohaSpace_getConstNULL(_ctx, gma->genv->ks, ukey);
 		if(kv != NULL) {
 			if(FN_isBOXED(kv->key)) {
-				kExpr_setConstValue(expr, kv->ty, kv->value);
+				kExpr_setConstValue(expr, kv->ty, kv->oval);
 			}
 			else {
-				kExpr_setNConstValue(expr, kv->ty, kv->uvalue);
+				kExpr_setNConstValue(expr, kv->ty, kv->uval);
 			}
 			RETURN_(expr);
 		}

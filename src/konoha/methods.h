@@ -8,7 +8,7 @@ static KMETHOD Object_toString(CTX, ksfp_t *sfp _RIX)
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	O_ct(sfp[0].o)->p(_ctx, sfp, 0, &wb, 0);
-	kString* s = new_kString(kwb_top(&wb, 1), kwb_size(&wb), 0);
+	kString* s = new_kString(kwb_top(&wb, 1), kwb_bytesize(&wb), 0);
 	kwb_free(&wb);
 	RETURN_(s);
 }

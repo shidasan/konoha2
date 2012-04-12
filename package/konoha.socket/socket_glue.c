@@ -71,13 +71,13 @@ void fromSockaddr(CTX, struct kMap* info, struct sockaddr_in addr)
 // for select :: kArray* => fd_set*
 static fd_set* toFd(fd_set* s, kArray *a )
 {
-	if(s == NULL || a->size <= 0) {
+	if(s == NULL || kArray_size(a) <= 0) {
 		return NULL;
 	}
 	FD_ZERO(s);
 	int indx;
 	int fd;
-	for(indx = 0; indx < a->size; indx++ ) {
+	for(indx = 0; indx < kArray_size(a); indx++ ) {
 		fd = WORD2INT(a->ilist[indx]);
 		if ((fd >= 0) && (fd < FD_SETSIZE)) {
 			FD_SET(fd, s);
@@ -103,11 +103,10 @@ static fd_set* toFd(fd_set* s, kArray *a )
 static int getArrayMax(kArray *a)
 {
 	int ret = -1;
-
-	if(a->size > 0)	{
+	if(kArray_size(a) > 0)	{
 		int cnt;
 		int fd;
-		for(cnt = 0; cnt < a->size; cnt++) {
+		for(cnt = 0; cnt < kArray_size(a); cnt++) {
 			if((fd = WORD2INT(a->ilist[cnt])) > ret) {
 				ret = fd;
 			}

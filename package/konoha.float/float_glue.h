@@ -11,8 +11,8 @@
 // Int
 static void Float_init(CTX, kObject *o, void *conf)
 {
-	struct _kInt *n = (struct _kInt*)o;  // kFloat has the same structure
-	n->n.data = (uintptr_t)conf;  // conf is unboxed data
+	struct _kNumber *n = (struct _kNumber*)o;  // kFloat has the same structure
+	n->ndata = (uintptr_t)conf;  // conf is unboxed data
 }
 
 static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)

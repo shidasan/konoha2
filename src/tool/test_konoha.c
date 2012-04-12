@@ -99,7 +99,7 @@ int main(int argc, const char *argv[])
 //    konoha->lib2->Kreport  = Kreport;
 //    konoha->lib2->Kreportf = Kreportf;
 //    BEGIN_CONTEXT(konoha);
-//    MODEVAL_loadscript((CTX_t)konoha, script_file, strlen(script_file), 0);
+//    MODSUGAR_loadscript((CTX_t)konoha, script_file, strlen(script_file), 0);
 //    END_CONTEXT(konoha);
 //    konoha_close(konoha);
 //    MODGC_check_malloced_size();

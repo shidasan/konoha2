@@ -143,9 +143,7 @@ typedef const struct _kBasicBlock kBasicBlock;
 struct _kBasicBlock {
 	kObjectHeader h;
 	kushort_t id;     kushort_t incoming;
-	kopl_t   *opbuf;
-	size_t    size;
-	size_t    capacity;
+	karray_t op;
 	union {
 		const struct _kBasicBlock *nextNC;
 		struct _kBasicBlock *WnextNC;

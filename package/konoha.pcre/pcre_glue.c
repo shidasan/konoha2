@@ -438,7 +438,7 @@
 //
 //static kString *kwb_newString(CTX, kwb_t *wb, int flg)
 //{
-//	return new_kString(kwb_top(wb, flg), kwb_size(wb), SPOL_POOL);
+//	return new_kString(kwb_top(wb, flg), kwb_bytesize(wb), SPOL_POOL);
 //}
 //
 //#define _ALWAYS SPOL_POOL

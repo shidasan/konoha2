@@ -141,15 +141,6 @@ typedef struct DEFINE_SYNTAX_SUGAR {
 	knh_Fmethod ExprTyCheck;
 } DEFINE_SYNTAX_SUGAR;
 
-typedef struct keyvals_t {
-	ksymbol_t key;
-	ktype_t   ty;
-	union {
-		kObject *value;
-		kString *svalue;
-		uintptr_t uvalue;
-	};
-} keyvals_t;
 
 typedef const struct _kKonohaSpace kKonohaSpace;
 
@@ -533,7 +524,7 @@ typedef struct {
 #endif/*SUGAR_EXPORTS*/
 ///* ------------------------------------------------------------------------ */
 ///* Sugar API */
-kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
+kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);
 
 #ifdef __cplusplus
 }

@@ -84,7 +84,7 @@ static inline kString* S_CT_(CTX, const kclass_t *ct)
 
 static inline kString* S_ty_(CTX, ktype_t ty)
 {
-	DBG_ASSERT(ty < _ctx->share->ca.max);
+	DBG_ASSERT(ty < KARRAYSIZE(_ctx->share->ca.bytemax, intptr));
 	return S_UN_(_ctx, CT_(ty)->nameid);
 }
 

@@ -36,8 +36,7 @@
 extern "C" {
 #endif
 
-// MOD_CODE
-void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk);
+#include<konoha2/konoha2_local.h>
 
 //
 static const char *Pkeyword_(CTX, keyword_t kw);
@@ -88,8 +87,8 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
 		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
 		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, },
-		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, },
+		{ TOKEN("&&"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 1024, .right = 1, },
+		{ TOKEN("||"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, },
 		{ TOKEN("!"),  _OP, .op1 = "opNOT", },
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
 		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
@@ -129,7 +128,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 	return result;
 }
 
-kstatus_t MODEVAL_eval(CTX, const char *script, kline_t uline)
+kstatus_t MODSUGAR_eval(CTX, const char *script, kline_t uline)
 {
 	if(konoha_debug) {
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
@@ -156,9 +155,11 @@ static void kevalmod_reftrace(CTX, struct kmod_t *baseh)
 static void kevalmod_free(CTX, struct kmod_t *baseh)
 {
 	kevalmod_t *base = (kevalmod_t*)baseh;
-	KARRAY_FREE(base->cwb, char);
+	KARRAY_FREE(&base->cwb);
 	KNH_FREE(base, sizeof(kevalmod_t));
 }
+
+#define char_t char
 
 static void kevalshare_setup(CTX, struct kmodshare_t *def)
 {
@@ -174,7 +175,7 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 		KINITv(base->gma, new_(Gamma, NULL));
 		KINITv(base->singleBlock, new_(Block, NULL));
 		kArray_add(base->singleBlock->blockS, K_NULL);
-		KARRAY_INIT(base->cwb, K_PAGESIZE, char);
+		KARRAY_INIT(&base->cwb, K_PAGESIZE);
 		_ctx->mod[MOD_EVAL] = (kmod_t*)base;
 	}
 }
@@ -215,7 +216,7 @@ static void kevalshare_free(CTX, struct kmodshare_t *baseh)
 	KNH_FREE(baseh, sizeof(kevalshare_t));
 }
 
-void MODEVAL_init(CTX, kcontext_t *ctx)
+void MODSUGAR_init(CTX, kcontext_t *ctx)
 {
 	kevalshare_t *base = (kevalshare_t*)KNH_ZMALLOC(sizeof(kevalshare_t));
 	base->h.name     = "sugar";
@@ -388,9 +389,9 @@ static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t
 		kline_t chunkheadline = uline;
 		uline = readchunk(_ctx, fp, uline, &wb);
 		const char *script = kwb_top(&wb, 1);
-		size_t len = kwb_size(&wb);
+		size_t len = kwb_bytesize(&wb);
 		if(isemptychunk(script, len)) {
-			status = MODEVAL_eval(_ctx, script, /*len, */chunkheadline);
+			status = MODSUGAR_eval(_ctx, script, /*len, */chunkheadline);
 		}
 		if(status != K_CONTINUE) break;
 		kwb_free(&wb);
@@ -440,7 +441,7 @@ static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path,
 	return status;
 }
 
-kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline)
+kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline)
 {
 	if (kevalmod == NULL) {
 		kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
@@ -576,8 +577,8 @@ static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline
 	if(target->packid != PN_konoha) {
 		KonohaSpace_importClassName(_ctx, ks, target->packid, pline);
 	}
-	if(target->cl.size > 0) {
-		KonohaSpace_mergeConstData(_ctx, ks, target->cl.keyvals, target->cl.size, pline);
+	if(target->cl.bytesize > 0) {
+		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, target->cl.kvs, target->cl.bytesize/sizeof(kvs_t), pline);
 	}
 	if(target->methodsNULL != NULL) {
 		size_t i;
@@ -651,7 +652,7 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 
 KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX);
 
-void MODEVAL_defMethods(CTX)
+void MODSUGAR_defMethods(CTX)
 {
 	int FN_pkgname = FN_("pkgname");
 	intptr_t methoddata[] = {

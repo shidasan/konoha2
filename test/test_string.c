@@ -15,7 +15,7 @@ void test_kString(CTX)
         s = _ctx->lib2->Knew_String(_ctx, "abcd", 4, 0);
         assert(strcmp(S_text(s), "abcd") == 0);
         assert(S_size(s) == 4);
-        assert(S_text(s) == (char*)&s->hashCode);
+        assert(S_text(s) == (char*)s->inline_text);
     }
     for (i = 0; i < 100; ++i) {
         static const char *text = "12345678901234567890";

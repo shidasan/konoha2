@@ -36,7 +36,7 @@ typedef struct RopeString {
 typedef struct InlineString {
 	struct StringBase base;
 	char *text;
-	char inline_text[SIZE_INLINE_TEXT];
+	char inline_text[SIZEOF_INLINETEXT];
 } InlineString;
 
 static inline uint32_t S_flag(StringBase *s)
@@ -133,7 +133,7 @@ static LinerString *RopeString_toLinerString(RopeString *o, char *text, size_t l
 static kString *new_String2(CTX, const char *text, size_t len, int policy)
 {
 	StringBase *s = (StringBase *) new_StringBase(_ctx, 0);
-	if (len < SIZE_INLINE_TEXT)
+	if (len < SIZEOF_INLINETEXT)
 		return (kString*) InlineString_new(_ctx, s, text, len);
 	if(TFLAG_is(int, policy, SPOL_TEXT))
 		return (kString*) ExternalString_new(_ctx, s, text, len);
@@ -236,7 +236,7 @@ static StringBase *StringBase_concat(CTX, kString *s0, kString *s1)
 		return left;
 
 	length = llen + rlen;
-	if (length < SIZE_INLINE_TEXT) {
+	if (length < SIZEOF_INLINETEXT) {
 		InlineString *ret = (InlineString *) new_StringBase(_ctx, MASK_INLINE);
 		char *s0 = String_getReference(_ctx, left);
 		char *s1 = String_getReference(_ctx, right);

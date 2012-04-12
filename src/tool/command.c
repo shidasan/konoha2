@@ -37,8 +37,8 @@
 extern "C" {
 #endif
 
-kstatus_t MODEVAL_eval(CTX, const char *script, size_t len, kline_t uline);
-kstatus_t MODEVAL_loadscript(CTX, const char *path, size_t len, kline_t pline);
+kstatus_t MODSUGAR_eval(CTX, const char *script, size_t len, kline_t uline);
+kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);
 
 // -------------------------------------------------------------------------
 // getopt
@@ -228,7 +228,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 		if(line > 1) kwb_putc(wb, '\n');
 		kwb_write(wb, ln, strlen(ln));
 		free(ln);
-		if((check = checkstmt(kwb_top(wb, 0), kwb_size(wb))) > 0) {
+		if((check = checkstmt(kwb_top(wb, 0), kwb_bytesize(wb))) > 0) {
 			uline[0]++;
 			line++;
 			continue;
@@ -239,7 +239,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 		}
 		break;
 	}
-	if(kwb_size(wb) > 0) {
+	if(kwb_bytesize(wb) > 0) {
 		kadd_history(kwb_top(wb, 1));
 	}
 //	fputs(TERM_EBOLD(_ctx), stdout);
@@ -248,7 +248,7 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 	return status;
 }
 
-static void MODEVAL_dumpEval(CTX, kwb_t *wb)
+static void MODSUGAR_dumpEval(CTX, kwb_t *wb)
 {
 	kstack_t *base = _ctx->stack;
 	ktype_t ty = base->evalty;
@@ -268,12 +268,12 @@ static void shell(CTX)
 	while(1) {
 		kline_t inc = 0;
 		kstatus_t status = readstmt(_ctx, &wb, &inc);
-		if(status == K_CONTINUE && kwb_size(&wb) > 0) {
+		if(status == K_CONTINUE && kwb_bytesize(&wb) > 0) {
 			status = konoha_eval((konoha_t)_ctx, kwb_top(&wb, 1), uline);
 			uline += inc;
 			kwb_free(&wb);
 			if(status != K_FAILED) {
-				MODEVAL_dumpEval(_ctx, &wb);
+				MODSUGAR_dumpEval(_ctx, &wb);
 				kwb_free(&wb);
 			}
 		}
@@ -435,6 +435,8 @@ int main(int argc, char *argv[])
 		return konoha_test(test_script);
 	}
 	konoha_t konoha = konoha_open();
+	test_kvproto((CTX_t)konoha);
+	test_kwb((CTX_t)konoha);
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);
 	}

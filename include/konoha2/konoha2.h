@@ -43,6 +43,8 @@
 #define K_REVISION  1
 #endif
 
+#define K_USING_UNITTEST  1
+
 //#include"konoha2/konoha_config.h"
 
 #include <stdio.h>
@@ -187,24 +189,33 @@ typedef uintptr_t                 kline_t;
 
 /* ------------------------------------------------------------------------ */
 
-#define REF_t           struct _kObject*
+#define COMMON_BYTEARRAY \
+		size_t bytesize;\
+		union {\
+			const char *byteptr;\
+			const char *text;\
+			const unsigned char *utext;\
+			char *buf;\
+			unsigned char *ubuf;\
+		}\
+
+#define KARRAYSIZE(BS, T)   ((BS)/sizeof(T##_t))
 
 typedef struct {
+	size_t bytesize;
 	union {
-		void  *body;
-		char  *buf;
-		const struct kclass_t **ClassTBL;
-		const struct kObject_   *list;
-		uintptr_t        *ndata;
-		struct keyvals_t *keyvals;
-		REF_t *refhead;
+		char  *bytebuf;
+		const struct kclass_t **cts;
+		struct kvs_t           *kvs;
+		struct kopl_t          *opl;
+		const struct _kObject **objects;
+		struct _kObject       **refhead;  // stack->ref
 	};
-	size_t size;
-	size_t max;
+	size_t bytemax;
 } karray_t ;
 
 typedef struct kwb_t {
-	karray_t *w;
+	karray_t *m;
 	size_t pos;
 } kwb_t;
 
@@ -244,10 +255,10 @@ typedef kushort_t       kuname_t;
 typedef kushort_t       kmethodn_t;
 
 /* kcid_t */
-#define CLASS_newid                ((kcid_t)-1)
-#define TY_unknown              ((kcid_t)-2)
+#define CLASS_newid        ((kcid_t)-1)
+#define TY_unknown         ((kcid_t)-2)
 
-#define CT_(t)              (_ctx->share->ca.ClassTBL[t])
+#define CT_(t)              (_ctx->share->ca.cts[t])
 #define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClasS_UNboxType)
 
 #define FN_NONAME          ((ksymbol_t)-1)
@@ -317,7 +328,7 @@ typedef struct kmodshare_t {
 
 #define CTX_isInteractive()  1
 #define CTX_isCompileOnly()  0
-#define CTX_isDebug()        1
+#define CTX_isDebug()        0
 
 typedef struct kcontext_t {
 	int						          safepoint; // set to 1
@@ -371,8 +382,8 @@ typedef struct kshare_t {
 		struct _kObject       *Wo; \
 		const struct _kInt    *i; \
 		const struct _kFloat *f; \
-		struct kClass  *c; \
 		const struct _kString *s; \
+		struct kClass  *c; \
 		struct kDate *dt;\
 		const struct _kBytes  *ba; \
 		struct kRegex  *re; \
@@ -421,16 +432,15 @@ typedef struct kstack_t {
 	struct ksfp_t*               stack;
 	size_t                       stacksize;
 	struct ksfp_t*               stack_uplimit;
-	const struct _kArray                *gcstack;
+	const struct _kArray        *gcstack;
 	karray_t                     cwb;
 	CTX_t                        *rootctx;
 	void*                        cstack_bottom;  // for GC
 	karray_t                     ref;   // reftrace
-	REF_t                        *tail;
+	struct _kObject**            reftail;
 	ktype_t   evalty;
 	kushort_t evalidx;
 	kjmpbuf_t* evaljmpbuf;
-//		kflag_t flags;
 } kstack_t;
 
 
@@ -471,8 +481,6 @@ typedef struct KDEFINE_CLASS {
 	kpack_t     packid;     kpack_t packdom;
 	KCLASSSPI;
 } KDEFINE_CLASS;
-
-//typedef const KDEFINE_CLASS KDEFINE_CLASS;
 
 #define STRUCTNAME(C) \
 	.structname = #C,\
@@ -558,7 +566,7 @@ typedef struct kclass_t {
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
 #define TY_iS_UNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClasS_UNDEF))
 #define CT_iS_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClasS_UNDEF))
-#define CT_setUNDEF(ct, B)    TFLAG_set(kflag_t, (ct)->cflag, kClasS_UNDEF, B)
+#define CT_setUNDEF(ct, B)     TFLAG_set(kflag_t, (ct)->cflag, kClasS_UNDEF, B)
 
 //#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClasS_UNboxType))
 //#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
@@ -625,8 +633,9 @@ typedef struct kObjectHeader {
 	union {
 		uintptr_t refc;  // RCGC
 		void *gcinfo;
+		uintptr_t hashcode; // reserved
 	};
-	struct kvsarray_t *proto;
+	karray_t *kvproto;
 } kObjectHeader ;
 
 typedef const struct _kObject kObject;
@@ -643,19 +652,12 @@ typedef struct kvs_t {
 	ksymbol_t key;
 	ktype_t   ty;
 	union {
-		uintptr_t         uval;
-		kObject          *oval;
+		uintptr_t                uval;
+		kObject                 *oval;
 		const struct _kString   *sval;
 	};
 } kvs_t;
 
-typedef struct kvsarray_t {
-	kvs_t *kvs;
-	size_t size;
-	size_t capacity;
-} kvsarray_t;
-
-extern void kpromap_each(CTX, kvsarray_t *p, void *arg, void (*f)(CTX, void *, kvs_t *d));
 #define O_cid(o)            (((o)->h.ct)->cid)
 #define O_bcid(o)           (((o)->h.ct)->bcid)
 #define O_ct(o)             ((o)->h.ct)
@@ -671,26 +673,33 @@ extern void kpromap_each(CTX, kvsarray_t *p, void *arg, void (*f)(CTX, void *, k
 #define TY_Boolean                 CLASS_Boolean
 #define IS_Boolean(o)              (O_cid(o) == CLASS_Boolean)
 
-typedef union kunbox_union {
-	uintptr_t   data;
-	kbool_t    bvalue;
-	kint_t     ivalue;
-	kfloat_t   fvalue;
-} kunbox_union;
+#define ABSTRACT_NUMBER \
+		union {\
+			uintptr_t  ndata;\
+			kbool_t    bvalue;\
+			kint_t     ivalue;\
+			kuint_t    uvalue;\
+			kfloat_t   fvalue;\
+		}\
+
+typedef const struct _kNumber kNumber;
+struct _kNumber {
+	kObjectHeader h;
+	ABSTRACT_NUMBER;
+};
 
 typedef const struct _kBoolean kBoolean;
-struct _kBoolean {
+struct _kBoolean /* extends kNumber */ {
 	kObjectHeader h;
-	kunbox_union  n;
+	ABSTRACT_NUMBER;
 };
 
 #define IS_TRUE(o)             (O_bcid(o) == CLASS_Boolean && N_tobool(o))
 #define IS_FALSE(o)            (O_bcid(o) == CLASS_Boolean && N_tobool(o) == 0)
 #define new_Boolean(_ctx, c)    ((c) ? K_TRUE : K_FALSE)
-//#define O_ndata(o)             (((kBoolean*)o)->n.data)
-#define N_toint(o)             (((kBoolean*)o)->n.ivalue)
-#define N_tofloat(o)           (((kBoolean*)o)->n.fvalue)
-#define N_tobool(o)            (((kBoolean*)o)->n.bvalue)
+#define N_toint(o)             (((kBoolean*)o)->ivalue)
+#define N_tofloat(o)           (((kBoolean*)o)->fvalue)
+#define N_tobool(o)            (((kBoolean*)o)->bvalue)
 
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Int Number;
@@ -701,9 +710,10 @@ struct _kBoolean {
 #define IS_Int(o)              (O_cid(o) == CLASS_Int)
 
 typedef const struct _kInt kInt;
-struct _kInt {
+struct _kInt /* extends kNumber */ {
 	kObjectHeader h;
-	kunbox_union  n;
+	ABSTRACT_NUMBER;
+	void *bignum;  /* reserved */
 };
 
 /* ------------------------------------------------------------------------ */
@@ -741,24 +751,30 @@ struct _kInt {
 #define S_setASCII(o,b)      TFLAG_set(uintptr_t,((struct _kObject*)o)->h.magicflag,kObject_Local4,b)
 #define S_isPooled(o)        (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local5))
 #define S_setPooled(o,b)     TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local5,b)
-#define SIZE_INLINE_TEXT (64 - sizeof(kObjectHeader)-sizeof(kbytes_t)-sizeof(kuint_t))
+#define SIZEOF_INLINETEXT    (64 - sizeof(kBytes))   /* FIXME IDE 64?*/
 
-typedef struct {
-	size_t       len;
-	union {
-		const char *text;
-		const unsigned char *utext;
-		char *buf;
-		unsigned char *ubuf;
-	};
-} kbytes_t;
+typedef const struct _kBytes kBytes;
+struct _kBytes {
+	kObjectHeader h;
+	COMMON_BYTEARRAY;
+};
+
+//typedef struct {
+//	size_t       len;
+//	union {
+//		const char *text;
+//		const unsigned char *utext;
+//		char *buf;
+//		unsigned char *ubuf;
+//	};
+//} kbytes_t;
 
 typedef const struct _kString kString;
-struct _kString {
+struct _kString /* extends _Bytes */ {
 	kObjectHeader h;
-	kbytes_t str;
-	kuint_t hashCode;
-	const char _reserved[SIZE_INLINE_TEXT];
+	COMMON_BYTEARRAY;
+//	kuint_t hashCode;
+	const char inline_text[SIZEOF_INLINETEXT];
 };
 
 #define SPOL_TEXT          (1<<0)
@@ -769,7 +785,7 @@ struct _kString {
 #define new_T(t)            new_kString(t, knh_strlen(t), SPOL_TEXT|SPOL_ASCII|SPOL_POOL)
 #define new_S(T, L)         new_kString(T, L, SPOL_ASCII|SPOL_POOL)
 #define S_text(s)           ((const char*) (O_ct(s)->unbox(_ctx, (kObject*)s)))
-#define S_size(s)           ((s)->str.len)
+#define S_size(s)           ((s)->bytesize)
 
 //#define S_equals(s, b)        knh_bytes_equals(S_tobytes(s), b)
 //#define S_startsWith(s, b)    knh_bytes_startsWith_(S_tobytes(s), b)
@@ -787,9 +803,9 @@ struct _kString {
 #define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
 
 typedef const struct _kArray kArray;
-
 struct _kArray {
 	kObjectHeader h;
+	size_t bytesize;
 	union {
 		uintptr_t              *ndata;
 		kint_t                 *ilist;
@@ -806,8 +822,7 @@ struct _kArray {
 		const struct _kStmt          **stmts;
 		struct _kStmt         **Wstmts;
 	};
-	size_t size;
-	size_t capacity;
+	size_t bytemax;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -1008,10 +1023,10 @@ typedef struct klib2_t {
 	void* (*Kzmalloc)(CTX, size_t);
 	void  (*Kfree)(CTX, void *, size_t);
 
-	void  (*Karray_init)(CTX, karray_t *, size_t, size_t);
-	void  (*Karray_resize)(CTX, karray_t *, size_t, size_t);
-	void  (*Karray_expand)(CTX, karray_t *, size_t, size_t);
-	void  (*Karray_free)(CTX, karray_t *, size_t);
+	void  (*Karray_init)(CTX, karray_t *, size_t);
+	void  (*Karray_resize)(CTX, karray_t *, size_t);
+	void  (*Karray_expand)(CTX, karray_t *, size_t);
+	void  (*Karray_free)(CTX, karray_t *);
 
 	void (*Kwb_init)(karray_t *, kwb_t *);
 	void (*Kwb_write)(CTX, kwb_t *, const char *, size_t);
@@ -1044,6 +1059,8 @@ typedef struct klib2_t {
 	void (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
 	uintptr_t (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
 	void (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
+	void (*KObject_protoEach)(CTX, kObject *, void *thunk, void (*f)(CTX, void *, kvs_t *d));
+	void (*KObject_removeKey)(CTX, kObject *, ksymbol_t);
 
 	kString* (*Knew_String)(CTX, const char *, size_t, int);
 	kString* (*Knew_Stringf)(CTX, int, const char *, ...);
@@ -1091,21 +1108,19 @@ typedef struct klib2_t {
 #define KNH_ZMALLOC(size)      (KPI)->Kzmalloc(_ctx, size)
 #define KNH_FREE(p, size)      (KPI)->Kfree(_ctx, p, size)
 
-#define KARRAY_INIT(VAR, init, STRUCT)      (KPI)->Karray_init(_ctx, (karray_t*)&(VAR), init, sizeof(STRUCT))
-#define KARRAY_RESIZE(VAR, newsize, STRUCT)      (KPI)->Karray_resize(_ctx, (karray_t*)&(VAR), newsize, sizeof(STRUCT))
-
-#define KARRAY_EXPAND(VAR, min, STRUCT)     (KPI)->Karray_expand(_ctx, (karray_t*)&(VAR), min, sizeof(STRUCT))
-#define KARRAY_FREE(VAR, STRUCT)            (KPI)->Karray_free(_ctx, (karray_t*)&(VAR), sizeof(STRUCT))
-
+#define KARRAY_INIT(VAR, init)      (KPI)->Karray_init(_ctx, VAR, (init))
+#define KARRAY_RESIZE(VAR, newsize)      (KPI)->Karray_resize(_ctx, VAR, (newsize))
+#define KARRAY_EXPAND(VAR, min)     (KPI)->Karray_expand(_ctx, VAR, (min))
+#define KARRAY_FREE(VAR)            (KPI)->Karray_free(_ctx, VAR)
 
 #define kwb_init(M,W)            (KPI)->Kwb_init(M,W)
 #define kwb_write(W,B,S)         (KPI)->Kwb_write(_ctx,W,B,S)
 #define kwb_putc(W,...)          (KPI)->Kwb_putc(_ctx,W, ## __VA_ARGS__, EOF)
 #define kwb_vprintf(W,FMT,ARG)   (KPI)->Kwb_vprintf(_ctx,W, FMT, ARG)
-#define kwb_printf(W,FMT,...)    (KPI)->Kwb_printf(_ctx,W, FMT, ## __VA_ARGS__)
+#define kwb_printf(W,FMT,...)    (KPI)->Kwb_printf(_ctx, W, FMT, ## __VA_ARGS__)
 
-#define kwb_top(W,IS)            (KPI)->Kwb_top(_ctx,W, IS)
-#define kwb_size(W)              ((W)->w->size - (W)->pos)
+#define kwb_top(W,IS)            (KPI)->Kwb_top(_ctx, W, IS)
+#define kwb_bytesize(W)          (((W)->m)->bytesize - (W)->pos)
 #define kwb_free(W)              (KPI)->Kwb_free(W)
 
 #define kmap_init(INIT)           (KPI)->Kmap_init(_ctx, INIT)
@@ -1143,16 +1158,19 @@ typedef struct klib2_t {
 #define knull(C)                  (KPI)->Knull(_ctx, C)
 #define KNULL(C)                  (k##C*)(KPI)->Knull(_ctx, CT_##C)
 
-#define kObject_getObjectNULL(O, K)      (KPI)->KObject_getObject(_ctx, UPCAST(O), K, NULL)
-#define kObject_getObject(O, K, DEF)      (KPI)->KObject_getObject(_ctx, UPCAST(O), K, DEF)
-#define kObject_setObject(O, K, V)       (KPI)->KObject_setObject(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
-#define kObject_getUnboxedValue(O, K, DEF)      (KPI)->KObject_getUnboxedValue(_ctx, UPCAST(O), K, DEF)
-#define kObject_setUnboxedValue(O, K, V)       (KPI)->KObject_setUnboxedValue(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
+#define kObject_getObjectNULL(O, K)            (KPI)->KObject_getObject(_ctx, UPCAST(O), K, NULL)
+#define kObject_getObject(O, K, DEF)           (KPI)->KObject_getObject(_ctx, UPCAST(O), K, DEF)
+#define kObject_setObject(O, K, V)             (KPI)->KObject_setObject(_ctx, UPCAST(O), K, O_cid(V), UPCAST(V))
+#define kObject_getUnboxedValue(O, K, DEF)     (KPI)->KObject_getUnboxedValue(_ctx, UPCAST(O), K, DEF)
+#define kObject_setUnboxedValue(O, K, T, V)    (KPI)->KObject_setUnboxedValue(_ctx, UPCAST(O), K, T, V)
+#define kObject_removeKey(O, K)                (KPI)->KObject_removeKey(_ctx, UPCAST(O), K)
+#define kObject_protoEach(O, THUNK, F)         (KPI)->KObject_protoEach(_ctx, UPCAST(O), THUNK, F)
+
 
 #define new_kString(T,S,P)        (KPI)->Knew_String(_ctx, T, S, P)
 #define new_kStringf(P, FMT, ...) (KPI)->Knew_Stringf(_ctx, P, FMT, ## __VA_ARGS__)
 
-#define kArray_size(A)            (A)->size
+#define kArray_size(A)            (((A)->bytesize)/sizeof(void*))
 #define kArray_add(A, V)          (KPI)->KArray_add(_ctx, A, UPCAST(V))
 #define kArray_insert(A, N, V)    (KPI)->KArray_insert(_ctx, A, N, UPCAST(V))
 #define kArray_clear(A, S)        (KPI)->KArray_clear(_ctx, A, S)
@@ -1222,19 +1240,18 @@ typedef struct {
 #define KSETp(parent,  v, o) KSETv(v, o)
 #define KUNUSEv(V)  (V)->h.ct->free(_ctx, (V))
 
-REF_t *kstack_tail(CTX, size_t min);
-#define BEGIN_REFTRACE(SIZE)  int _ref_ = SIZE; REF_t* _tail = kstack_tail(_ctx, SIZE);
-#define END_REFTRACE()        (void)_ref_; _ctx->stack->tail = _tail;
+#define BEGIN_REFTRACE(SIZE)  int _ref_ = (SIZE); struct _kObject** _tail = KONOHA_reftail(_ctx, (SIZE));
+#define END_REFTRACE()        (void)_ref_; _ctx->stack->reftail = _tail;
 
 #define KREFTRACEv(p)  do {\
 	DBG_ASSERT(p != NULL);\
-	_tail[0] = (REF_t)p;\
+	_tail[0] = (struct _kObject*)p;\
 	_tail++;\
 } while (0)
 
 #define KREFTRACEn(p) do {\
 	if(p != NULL) {\
-		_tail[0] = (REF_t)p;\
+		_tail[0] = (struct _kObject*)p;\
 		_tail++;\
 	}\
 } while (0)
@@ -1301,9 +1318,9 @@ extern kbool_t konoha_load(konoha_t konoha, const char *scriptfile);
 extern kbool_t konoha_eval(konoha_t konoha, const char *script, kline_t uline);
 extern kbool_t konoha_run(konoha_t konoha);  // TODO
 
-extern void MODEVAL_init(CTX, kcontext_t *ctx);
-extern void kpromap_free(CTX, struct kvsarray_t *p);
-extern void kpromap_reftrace(CTX, struct kvsarray_t *p);
+extern void MODSUGAR_init(CTX, kcontext_t *ctx);
+//extern void kvproto_free(CTX, struct karray_t *p);
+//extern void kvproto_reftrace(CTX, struct karray_t *p);
 
 /* for debug mode */
 extern int konoha_debug;

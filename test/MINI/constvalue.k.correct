@@ -1,4 +1,2 @@
- - (debug) (constvalue.k:2) constant folding of String
  - (constvalue.k:2) 9223372036854775807
- - (debug) (constvalue.k:3) constant folding of String
  - (constvalue.k:3) -9223372036854775808

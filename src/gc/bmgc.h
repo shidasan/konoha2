@@ -53,6 +53,8 @@
 extern "C" {
 #endif
 
+#include <konoha2/konoha2_local.h>
+
 #if defined(GCDEBUG) && !defined(GCSTAT)
 #define GCSTAT 1
 #endif
@@ -1694,10 +1696,8 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 	}
 	goto L_INLOOP;
 	while((ref = ostack_next(ostack)) != NULL) {
-		const kclass_t *ct = O_ct(ref);
 		context_reset_refs(memlocal);
-		kpromap_reftrace(_ctx, ref->h.proto);
-		ct->reftrace(_ctx, ((kObject*)ref));
+		KONOHA_reftraceObject(_ctx, ref);
 		if(memlocal->ref_size > 0) {
 			L_INLOOP:;
 			prefetch_(memlocal->refs[0], 0, 1);
@@ -1890,8 +1890,7 @@ static inline void bmgc_Object_free(CTX, kObject *o)
 	if (ct) {
 		MEMLOG(ctx, "~Object", K_NOTICE, KNH_LDATA(LOG_p("ptr", o), LOG_i("cid", ct->cid)));
 		//gc_info("~Object ptr=%p, cid=%d, o->h.meta=%p", o, ct->cid, o->h.meta);
-		kpromap_free(_ctx, o->h.proto);
-		ct->free(_ctx, ((kObject*)o));
+		KONOHA_freeObjectField(_ctx, (struct _kObject*)o);
 		//ctx->stat->gcObjectCount += 1;
 		K_OZERO(o);
 		STAT_dObject(ctx, ct);

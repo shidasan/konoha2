@@ -12,11 +12,11 @@
 static const kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
-	if(cid < share->ca.size) {
-		return share->ca.ClassTBL[cid];
+	if(cid < (share->ca.bytesize/sizeof(kclass_t*))) {
+		return share->ca.cts[cid];
 	}
 	kreportf(CRIT_, pline, "invalid cid=%d", (int)cid);
-	return share->ca.ClassTBL[0];
+	return share->ca.cts[0];
 }
 
 static void DEFAULT_init(CTX, kObject *o, void *conf)
@@ -72,13 +72,13 @@ static kObject *CT_null(CTX, const kclass_t *ct)
 static kclass_t* new_CT(CTX, const kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
-	kcid_t newid = share->ca.size;
-	if(share->ca.size == share->ca.max) {
-		KARRAY_EXPAND(share->ca, newid + 1, kclass_t);
+	kcid_t newid = share->ca.bytesize / sizeof(kclass_t*);
+	if(share->ca.bytesize == share->ca.bytemax) {
+		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
 	}
-	share->ca.size = newid + 1;
+	share->ca.bytesize += sizeof(kclass_t*);
 	kclass_t *ct = (kclass_t*)KNH_ZMALLOC(sizeof(kclass_t));
-	_ctx->share->ca.ClassTBL[newid] = (const kclass_t*)ct;
+	share->ca.cts[newid] = (const kclass_t*)ct;
 	if(bct != NULL) {
 		memcpy(ct, bct, offsetof(kclass_t, cparam));
 		ct->cid = newid;
@@ -256,22 +256,22 @@ static kObject *new_Object(CTX, const kclass_t *ct, void *conf)
 	struct _kObject *o = (struct _kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
 	o->h.magicflag = ct->magicflag;
 	o->h.ct = ct;
-	o->h.proto = kpromap_null();
+	o->h.kvproto = kvproto_null();
 	ct->init(_ctx, (kObject*)o, conf);
 	return (kObject*)o;
 }
 
 static uintptr_t Number_unbox(CTX, kObject *o)
 {
-	kInt *n = (kInt*)o;
-	return (uintptr_t) n->n.data;
+	kNumber *n = (kNumber*)o;
+	return (uintptr_t) n->ndata;
 }
 
 // Boolean
-static void Boolean_init(CTX, kObject *o, void *conf)
+static void Number_init(CTX, kObject *o, void *conf)
 {
-	struct _kBoolean *n = (struct _kBoolean*)o;
-	n->n.bvalue = (kbool_t)conf;
+	struct _kNumber *n = (struct _kNumber*)o;
+	n->ndata = (uintptr_t)conf;
 }
 
 static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
@@ -286,18 +286,12 @@ static kObject* Boolean_fnull(CTX, const kclass_t *ct)
 
 static KDEFINE_CLASS BooleanDef = {
 	CLASSNAME(Boolean),
-	.init = Boolean_init,
+	.init = Number_init,
 	.unbox = Number_unbox,
 	.p    = Boolean_p,
 	.fnull = Boolean_fnull,
 };
 
-// Int
-static void Int_init(CTX, kObject *o, void *conf)
-{
-	struct _kInt *n = (struct _kInt*)o;
-	n->n.ivalue = (kint_t)conf;
-}
 
 static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
@@ -306,25 +300,25 @@ static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 
 static KDEFINE_CLASS IntDef = {
 	CLASSNAME(Int),
-	.init = Int_init,
+	.init  = Number_init,
 	.unbox = Number_unbox,
-	.p    = Int_p,
+	.p     = Int_p,
 };
 
 // String
 static void String_init(CTX, kObject *o, void *conf)
 {
 	struct _kString *s = (struct _kString*)o;
-	s->str.text = "";
-	s->str.len = 0;
-	s->hashCode = 0;
+	s->text = "";
+	s->bytesize = 0;
+	S_setTextSgm(s, 1);
 }
 
 static void String_free(CTX, kObject *o)
 {
 	kString *s = (kString*)o;
 	if(S_isMallocText(s)) {
-		KNH_FREE(s->str.buf, S_size(s) + 1);
+		KNH_FREE(s->buf, S_size(s) + 1);
 	}
 }
 
@@ -341,7 +335,7 @@ static void String_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 static uintptr_t String_unbox(CTX, kObject *o)
 {
 	kString *s = (kString*)o;
-	return (uintptr_t) s->str.text;
+	return (uintptr_t) s->text;
 }
 
 //static int String_compareTo(kObject *o, kObject *o2)
@@ -379,26 +373,25 @@ static kString* new_String(CTX, const char *text, size_t len, int spol)
 	if(s != NULL) return s;
 	if(TFLAG_is(int, spol, SPOL_TEXT)) {
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
-		s->str.text = text;
-		s->str.len = len;
-		s->hashCode = 0;
+		s->text = text;
+		s->bytesize = len;
 		S_setTextSgm(s, 1);
 	}
 	else if(len + 1 < sizeof(void*) * 2) {
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
-		s->str.buf = (char*)(&(s->hashCode));
-		s->str.len = len;
-		memcpy(s->str.ubuf, text, len);
-		s->str.ubuf[len] = '\0';
+		s->text = s->inline_text;
+		s->bytesize = len;
+		memcpy(s->ubuf, text, len);
+		s->buf[len] = '\0';
 		S_setTextSgm(s, 1);
 	}
 	else {
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
-		s->str.len = len;
-		s->str.buf = (char*)KNH_MALLOC(len+1);
-		memcpy(s->str.ubuf, text, len);
-		s->str.ubuf[len] = '\0';
-		s->hashCode = 0;
+		s->bytesize = len;
+		s->buf = (char*)KNH_MALLOC(len+1);
+		memcpy(s->buf, text, len);
+		s->buf[len] = '\0';
+		S_setTextSgm(s, 0);
 		S_setMallocText(s, 1);
 	}
 	if(TFLAG_is(int, spol, SPOL_ASCII)) {
@@ -426,26 +419,26 @@ static kString* new_Stringf(CTX, int spol, const char *fmt, ...)
 	Kwb_vprintf(_ctx, &wb, fmt, ap);
 	va_end(ap);
 	const char *text = Kwb_top(_ctx, &wb, 1);
-	kString *s = new_String(_ctx, text, kwb_size(&wb), spol);
+	kString *s = new_String(_ctx, text, kwb_bytesize(&wb), spol);
 	kwb_free(&wb);
 	return s;
 }
 
 // Array
 
-typedef struct {
+struct _kAbstractArray {
 	kObjectHeader h;
-	karray_t astruct;
-} kArray_;
+	karray_t a;
+} ;
 
 static void Array_init(CTX, kObject *o, void *conf)
 {
-	kArray_ *a = (kArray_*)o;
-	a->astruct.body     = NULL;
-	a->astruct.size     = 0;
-	a->astruct.max = (size_t)conf;
-	if(a->astruct.max > 0) {
-		KARRAY_INIT(a->astruct, a->astruct.max, void*);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	a->a.bytebuf     = NULL;
+	a->a.bytesize    = 0;
+	a->a.bytemax = ((size_t)conf * sizeof(void*));
+	if(a->a.bytemax > 0) {
+		KARRAY_INIT(&a->a, a->a.bytemax);
 	}
 	if(TY_isUnbox(O_p1(a))) {
 		kArray_setUnboxData(a, 1);
@@ -457,8 +450,8 @@ static void Array_reftrace(CTX, kObject *o)
 	kArray *a = (kArray*)o;
 	if(!kArray_iS_UNboxData(a)) {
 		size_t i;
-		BEGIN_REFTRACE(a->size);
-		for(i = 0; i < a->size; i++) {
+		BEGIN_REFTRACE(kArray_size(a));
+		for(i = 0; i < kArray_size(a); i++) {
 			KREFTRACEv(a->list[i]);
 		}
 		END_REFTRACE();
@@ -467,10 +460,8 @@ static void Array_reftrace(CTX, kObject *o)
 
 static void Array_free(CTX, kObject *o)
 {
-	kArray_ *a = (kArray_*)o;
-	if(a->astruct.max > 0) {
-		KARRAY_FREE(a->astruct, void*);
-	}
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	KARRAY_FREE(&a->a);
 }
 
 static KDEFINE_CLASS ArrayDef = {
@@ -480,41 +471,38 @@ static KDEFINE_CLASS ArrayDef = {
 	.free = Array_free,
 };
 
-static void Array_expand(CTX, kArray_ *a, size_t min)
+static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
 {
-	if(a->astruct.max == 0) {
-		KARRAY_INIT(a->astruct, 8, void*);
-	}
-	else {
-		KARRAY_EXPAND(a->astruct, min, void*);
+	if(!((min * sizeof(void*)) < a->a.bytemax)) {
+		if(min < sizeof(kObject)) min = sizeof(kObject);
+		KARRAY_EXPAND(&a->a, min);
 	}
 }
 
 #define Array_setsize(A, N)  ((struct _kArray*)A)->size = N
 
-static void Array_add(CTX, kArray *a, kObject *value)
+static void Array_add(CTX, kArray *o, kObject *value)
 {
-	if(a->size == a->capacity) {
-		Array_expand(_ctx, (kArray_*)a, a->size + 1);
-		//DBG_P("ARRAY EXPAND %d=>%d", a->size, a->capacity);
-	}
-	DBG_ASSERT(a->list[a->size] == NULL);
-	KINITv(a->list[a->size], value);
-	Array_setsize(a, a->size+1);
+	size_t asize = kArray_size(o);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	Array_ensureMinimumSize(_ctx, a, asize+1);
+	DBG_ASSERT(a->a.objects[asize] == NULL);
+	KINITv(a->a.objects[asize], value);
+	a->a.bytesize = (asize+1) * sizeof(void*);
 }
 
-static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
+static void Array_insert(CTX, kArray *o, size_t n, kObject *v)
 {
-	if(!(n < a->size)) {
-		Array_add(_ctx, a, v);
+	size_t asize = kArray_size(o);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	if(!(n < asize)) {
+		Array_add(_ctx, o, v);
 	}
 	else {
-		if(a->size == a->capacity) {
-			Array_expand(_ctx, (kArray_*)a, a->size + 1);
-		}
-		memmove(a->list+(n+1), a->list+n, sizeof(kObject*) * (a->size - n));
-		KINITv(a->list[n], v);
-		Array_setsize(a, a->size+1);
+		Array_ensureMinimumSize(_ctx, a, asize+1);
+		memmove(a->a.objects+(n+1), a->a.objects+n, sizeof(kObject*) * (asize - n));
+		KINITv(a->a.objects[n], v);
+		a->a.bytesize = (asize+1) * sizeof(void*);
 	}
 }
 
@@ -530,12 +518,14 @@ static void Array_insert(CTX, kArray *a, size_t n, kObject *v)
 //	a->size--;
 //}
 
-static void Array_clear(CTX, kArray *a, size_t n)
+static void Array_clear(CTX, kArray *o, size_t n)
 {
-	if(a->size > n) {
-		bzero(a->list + n, sizeof(void*) * (a->size - n));
+	size_t asize = kArray_size(o);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	if(asize > n) {
+		bzero(a->a.objects + n, sizeof(void*) * (asize - n));  // RCGC
 	}
-	Array_setsize(a, n);
+	a->a.bytesize = (n) * sizeof(void*);
 }
 
 // ---------------
@@ -644,8 +634,8 @@ static KDEFINE_CLASS *DATATYPES[] = {
 
 static void initStructData(CTX)
 {
-	kclass_t **ctt = (kclass_t**)_ctx->share->ca.ClassTBL;
-	size_t i, size = _ctx->share->ca.size;
+	kclass_t **ctt = (kclass_t**)_ctx->share->ca.cts;
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
 	for(i = 0; i < size; i++) {
 		kclass_t *ct = ctt[i];
 		const char *name = ct->DBG_NAME;
@@ -673,10 +663,6 @@ static void kshare_initklib2(klib2_t *l)
 {
 	l->Kclass   = Kclass;
 	l->Knew_Object = new_Object;
-	l->KObject_getObject = Object_getObjectNULL;
-	l->KObject_setObject = Object_setObject;
-	l->KObject_getUnboxedValue = Object_getUnboxedValue;
-	l->KObject_setUnboxedValue = Object_setUnboxedValue;
 	l->Knew_String   = new_String;
 	l->Knew_Stringf  = new_Stringf;
 	l->KArray_add    = Array_add;
@@ -693,7 +679,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	kshare_t *share = (kshare_t*)KNH_ZMALLOC(sizeof(kshare_t));
 	ctx->share = share;
 	kshare_initklib2(_ctx->lib2);
-	KARRAY_INIT(share->ca, K_CLASSTABLE_INIT, kclass_t);
+	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	KDEFINE_CLASS **dd = DATATYPES;
 	while(*dd != NULL) {
 		new_CT(_ctx, NULL, *dd, 0);
@@ -739,10 +725,10 @@ static void val_reftrace(CTX, kmape_t *p)
 static void kshare_reftrace(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
-	kclass_t **ctt = (kclass_t**)_ctx->share->ca.ClassTBL;
-	size_t i, size = _ctx->share->ca.size;
+	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
 	for(i = 0; i < size; i++) {
-		kclass_t *ct = ctt[i];
+		kclass_t *ct = cts[i];
 		{
 			BEGIN_REFTRACE(6);
 			KREFTRACEv(ct->cparam);
@@ -777,13 +763,13 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 
 static void kshare_freeCT(CTX)
 {
-	kclass_t **ct = (kclass_t**)_ctx->share->ca.ClassTBL;
-	size_t i, size = _ctx->share->ca.size;
+	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
 	for(i = 0; i < size; i++) {
-		if(ct[i]->fallocsize > 0) {
-			KNH_FREE(ct[i]->fields, ct[i]->fallocsize);
+		if(cts[i]->fallocsize > 0) {
+			KNH_FREE(cts[i]->fields, cts[i]->fallocsize);
 		}
-		KNH_FREE(ct[i], sizeof(kclass_t));
+		KNH_FREE(cts[i], sizeof(kclass_t));
 	}
 }
 
@@ -796,7 +782,7 @@ void kshare_free(CTX, kcontext_t *ctx)
 	kmap_free(share->symbolMapNN, NULL);
 	kmap_free(share->unameMapNN, NULL);
 	kshare_freeCT(_ctx);
-	KARRAY_FREE(share->ca, kclass_t);
+	KARRAY_FREE(&share->ca);
 	KNH_FREE(share, sizeof(kshare_t));
 }
 
