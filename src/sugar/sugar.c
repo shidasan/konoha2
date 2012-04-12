@@ -69,7 +69,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$FLOAT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_FLOAT,},
 		{ TOKEN("$URN"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$REGEX"), _EXPR, /*_TERM,*/ },
-		{ TOKEN("$type"), _EXPR, _TERM, .StmtAdd = StmtAdd_type, .ExprTyCheck = TokenTyCheck_TYPE,},
+		{ TOKEN("$type"), _EXPR, _TERM, .StmtAdd = StmtAdd_type, .StmtParseExpr = StmtParseExpr_type, .ExprTyCheck = TokenTyCheck_TYPE,},
 		{ TOKEN("()"), _EXPR, .StmtParseExpr = StmtParseExpr_PARENTHESIS, .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_invoke,}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
 		{ TOKEN("{}"), _EXPR, }, // AST_BRACE

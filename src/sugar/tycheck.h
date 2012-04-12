@@ -610,7 +610,7 @@ static kbool_t Stmt_TyCheck(CTX, ksyntax_t *syn, kStmt *stmt, kGamma *gma)
 	KSETv(lsfp[K_CALLDELTA+1].o, (kObject*)gma);
 	KCALL(lsfp, 0, mtd, 1, knull(CT_Boolean));
 	END_LOCAL();
-	DBG_P("result=%d", lsfp[0].bvalue);
+	DBG_P("syn='%s', result=%d", T_kw(syn->kw), lsfp[0].bvalue);
 	return lsfp[0].bvalue;
 }
 

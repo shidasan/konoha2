@@ -555,13 +555,10 @@ static void dumpToken(CTX, kToken *tk)
 	if(konoha_debug) {
 		if(tk->tt == TK_MN) {
 			char mbuf[128];
-			DUMP_P("%s %d+%d: %s\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, T_mn(mbuf, tk->mn));
-		}
-		else if((int)tk->tt <= TK_TYPE) {
-			DUMP_P("%s %d+%d: '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, S_text(tk->text));
+			DUMP_P("%s %d+%d: %s(%s)\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, T_mn(mbuf, tk->mn), kToken_s(tk));
 		}
 		else {
-			DUMP_P("%s\n", T_tt(tk->tt));
+			DUMP_P("%s %d+%d: kw=%s '%s'\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, T_kw(tk->kw), kToken_s(tk));
 		}
 	}
 }
@@ -662,7 +659,7 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 		if(nest == 0) DUMP_P("\n");
 		dumpIndent(nest);
 		if(Expr_isTerm(expr)) {
-			DUMP_P("[%d] T: %s %s", n, T_tt(expr->tkNUL->tt), kToken_s(expr->tkNUL));
+			DUMP_P("[%d] ExprTerm: kw=%s %s", n, T_kw(expr->tkNUL->kw), kToken_s(expr->tkNUL));
 			if(expr->ty != TY_var) {
 
 			}
@@ -670,7 +667,7 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 		}
 		else {
 			int i;
-			DUMP_P("[%d] C: build=%d, size=%ld", n, expr->build, kArray_size(expr->consNUL));
+			DUMP_P("[%d] Cons: kw=%s, size=%ld", n, T_kw(expr->syn->kw), kArray_size(expr->consNUL));
 			if(expr->ty != TY_var) {
 
 			}

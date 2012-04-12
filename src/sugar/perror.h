@@ -125,8 +125,7 @@ static kString* Kstrerror(CTX, int eno)
 			return emsg;
 		}
 	}
-	DBG_P("kerrno=%d, |errmsgs|=%d", kerrno, kArray_size(base->errors));
-	abort();
+	DBG_ABORT("kerrno=%d, |errmsgs|=%d", kerrno, kArray_size(base->errors));
 	return TS_EMPTY;
 }
 

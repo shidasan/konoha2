@@ -38,6 +38,7 @@ extern "C" {
 
 static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e);
+static int makeTree(CTX, kKonohaSpace *ks, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst);
 
 static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
 {
@@ -55,23 +56,59 @@ static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks)
 	return bk;
 }
 
-static void checkKeyword(CTX, kKonohaSpace *ns, kToken *tk)
+// In future, typeof operator is introduced
+#define TK_isType(TK)    ((TK)->kw == KW_TYPE)
+#define TK_type(TK)       (TK)->ty
+
+static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 {
-	if(tk->tt < TK_OPERATOR) {
-		((struct _kToken*)tk)->kw = tk->tt;
+	keyword_t kw = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NONAME);
+	if(kw != FN_NONAME) {
+		ksyntax_t *syn = SYN_(ks, kw);
+		if(syn != NULL) {
+			if(syn->ty != TY_unknown) {
+				tk->kw = KW_TYPE; tk->ty = syn->ty;
+			}
+			else {
+				tk->kw = kw;
+			}
+			return 1;
+		}
 	}
-	if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL || tk->tt == TK_OPERATOR) {
-		keyword_t kw = keyword(_ctx, S_text(tk->text), S_size(tk->text), FN_NONAME);
-		if(kw != FN_NONAME) {
-			ksyntax_t *syn = SYN_(ns, kw);
-			if(syn != NULL) {
-				((struct _kToken*)tk)->kw = kw;
+	return 0;
+}
+
+static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArray *dst)
+{
+	int next = s; // don't add
+	struct _kToken *tk = tls->Wtoks[s];
+	if(tk->tt < TK_OPERATOR) {
+		tk->kw = tk->tt;
+	}
+	if(tk->tt == TK_SYMBOL) {
+		Token_resolved(_ctx, ks, tk);
+	}
+	if(tk->tt == TK_USYMBOL) {
+		if(!Token_resolved(_ctx, ks, tk)) {
+			kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), TY_unknown);
+			if(ty != TY_unknown) {
+				tk->kw = KW_TYPE; tk->ty = ty;
 			}
 		}
-		else if(tk->tt == TK_OPERATOR) {
+	}
+	if(tk->tt == TK_OPERATOR) {
+		if(!Token_resolved(_ctx, ks, tk)) {
 			SUGAR_P(ERR_, tk->uline, tk->lpos, "operator '%s' is undefined", kToken_s(tk));
+			return e;
 		}
 	}
+	kArray_add(dst, tk);
+	while(TK_isType(tk) && next < e) {
+		kToken *tkN = tls->toks[next];
+		if(tkN->topch != '[') break;
+		next = makeTree(_ctx, ks, tls, AST_BRANCET, next, e, ']', dst);
+	}
+	return next;
 }
 
 static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
@@ -89,7 +126,7 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
 	return 0;
 }
 
-static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst)
+static int makeTree(CTX, kKonohaSpace *ks, kArray *tls, ktoken_t tt, int s, int e, int closech, kArray *tlsdst)
 {
 	int i;
 	kToken *tk = tls->toks[s];
@@ -101,17 +138,16 @@ static int makeTree(CTX, kKonohaSpace *ns, kArray *tls, ktoken_t tt, int s, int 
 		tk = tls->toks[i];
 		//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
 		if(tk->topch == '(') {
-			i = makeTree(_ctx, ns, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
+			i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, ns, tls, AST_BRANCET, i, e, ']', tkp->sub); continue; }
+			i = makeTree(_ctx, ks, tls, AST_BRANCET, i, e, ']', tkp->sub); continue; }
 		if(tk->topch == '{') {
-			i = makeTree(_ctx, ns, tls, AST_BRACE, i, e, '}', tkp->sub); continue; }
+			i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tkp->sub); continue; }
 		if(tk->topch == closech) {
 			return i;
 		}
 		if(tk->tt == TK_INDENT && closech != '}') continue;  // remove INDENT;
-		checkKeyword(_ctx, ns, tk);
-		kArray_add(tkp->sub, tk);
+		appendKeyword(_ctx, ks, tls, i, e, tkp->sub);
 	}
 	/* syntax error */ {
 		SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);
@@ -147,21 +183,20 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 		if(tk->topch == '{') {
 			i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tlsdst); continue;
 		}
-		if(tk->topch == '[') {
+		else if(tk->topch == '[') {
 			i = makeTree(_ctx, ks, tls, AST_BRANCET, i, e, ']', tlsdst); continue;
 		}
-		if(tk->topch == '(') {
+		else if(tk->topch == '(') {
 			i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i, e, ')', tlsdst); continue;
 		}
-		if(tk->topch == ';') {
+		else if(tk->topch == ';') {
 			i++; break;
 		}
 		if(tk->tt == TK_INDENT) {
 			if(tk->lpos <= *indent) break;
 			continue;
 		}
-		checkKeyword(_ctx, ks, tk);
-		kArray_add(tls, tk);
+		i = appendKeyword(_ctx, ks, tls, i, e, tlsdst);
 	}
 	return i;
 }
@@ -284,42 +319,6 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 	return e;
 }
 
-// In future, typeof operator is introduced
-#define TK_isType(TK)    ((TK)->kw == KW_TYPE)
-#define TK_type(TK)       (TK)->ty
-
-static int Stmt_isType(CTX, kStmt *stmt, kArray *tls, int s, int e, int *next)
-{
-	kKonohaSpace *ks = kStmt_ks(stmt);
-	struct _kToken *tk = tls->Wtoks[s];
-	while(tk->tt == TK_NONE) {
-		s++;
-		tk = tls->Wtoks[s];
-	}
-	if(tk->kw == KW_TYPE) {
-		*next = s + 1;
-		return 1;
-	}
-	else if(tk->tt == TK_USYMBOL) {
-		kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), TY_unknown);
-		if(ty != TY_unknown) {
-			tk->kw = KW_TYPE;
-			tk->ty = ty;
-			*next = s + 1;
-			return 1;
-		}
-	}
-	else {
-		ksyntax_t *syn = SYN_(ks, tk->kw);
-		if(syn->ty != TY_unknown) {
-			tk->kw = KW_TYPE;
-			tk->ty = syn->ty;
-			*next = s + 1;
-			return 1;
-		}
-	}
-	return 0;
-}
 
 static inline kToken* TokenArray_lookAhead(CTX, kArray *tls, int s, int e)
 {
@@ -328,12 +327,13 @@ static inline kToken* TokenArray_lookAhead(CTX, kArray *tls, int s, int e)
 
 static keyword_t Stmt_stmttype(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
-	int n = s;
-	if(Stmt_isType(_ctx, stmt, tls, s, e, &n)) {
-		DBG_P("Found a type at the top of stmt");
-		kToken *tk = TokenArray_lookAhead(_ctx, tls, n, e);
+	kToken *tk = tls->toks[s];
+	if(TK_isType(tk)) {
+		tk = TokenArray_lookAhead(_ctx, tls, s+1, e);
+		DBG_P("tk=%s", T_tt(tk->tt));
 		if(tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL) {
-			tk = TokenArray_lookAhead(_ctx, tls, n+1, e);
+			tk = TokenArray_lookAhead(_ctx, tls, s+2, e);
+			DBG_P("tk=%s", T_tt(tk->tt));
 			if(tk->tt == AST_PARENTHESIS || tk->kw == KW_DOT) {
 				return KW_void; // because void is used in defintion
 			}
@@ -341,13 +341,14 @@ static keyword_t Stmt_stmttype(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		}
 		return KW_EXPR;
 	}
-	return (tls->toks[s])->kw;
+	return tk->kw;
 }
 
 static kbool_t Stmt_parseSyntaxRule(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	dumpTokenArray(_ctx, 0, tls, s, e);
 	keyword_t kw = Stmt_stmttype(_ctx, stmt, tls, s, e);
+	DBG_P("stmttype kw=%s", T_kw(kw));
 	ksyntax_t *syn = SYN_(kStmt_ks(stmt), kw);
 	if(syn != NULL && SYN_isExpr(syn) && syn->syntaxRule == NULL) {
 		syn = SYN_(kStmt_ks(stmt), KW_EXPR);
@@ -489,17 +490,6 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 			return ParseExpr(_ctx, syn, stmt, tls, s, idx, e);
 		}
 		int c = s;
-		if(Stmt_isType(_ctx, stmt, tls, s, e, &c)) {
-			kToken *tkT = tls->toks[c-1];
-			if(c < e) {   // typing T v
-				struct _kToken *tk = new_W(Token, TK_OPERATOR);
-				tk->kw  = KW_COLON;
-				KSETv(tk->text, Skeyword(tk->kw));  // tls
-				syn = SYN_(kStmt_ks(stmt), KW_COLON);
-				return new_ConsExpr(_ctx, syn, 3, tk, Stmt_newExpr2(_ctx, stmt, tls, c, e), tkT);
-			}
-			c = c - 1;
-		}
 		syn = SYN_(kStmt_ks(stmt), (tls->toks[c])->kw);
 		return ParseExpr(_ctx, syn, stmt, tls, c, c, e);
 	}
@@ -585,6 +575,21 @@ static KMETHOD StmtParseExpr_Op(CTX, ksfp_t *sfp _RIX)
 	RETURN_(expr);
 }
 
+static KMETHOD StmtParseExpr_type(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_StmtParseExpr(stmt, syn, tls, s, c, e);
+	if(c + 1 < e) {   // typing T v
+		kToken *tkT = tls->toks[c];
+		struct _kToken *tk = new_W(Token, TK_OPERATOR);
+		tk->kw  = KW_COLON;
+//		KSETv(tk->text, Skeyword(tk->kw));  // tls
+		syn = SYN_(kStmt_ks(stmt), KW_COLON);
+		RETURN_(new_ConsExpr(_ctx, syn, 3, tk, Stmt_newExpr2(_ctx, stmt, tls, c+1, e), tkT));
+	}
+	else {
+		StmtParseExpr_Term(_ctx, sfp, K_RIX);
+	}
+}
 /* ------------------------------------------------------------------------ */
 
 static KMETHOD StmtAdd_expr(CTX, ksfp_t *sfp _RIX)
@@ -607,9 +612,10 @@ static KMETHOD StmtAdd_type(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtAdd(stmt, syn, name, tls, s, e);
 	int r = -1;
-	if(Stmt_isType(_ctx, stmt, tls, s, e, &r)) {
-		kToken *tkT = tls->toks[r-1];
-		kObject_setObject(stmt, name, tkT);
+	kToken *tk = tls->toks[s];
+	if(TK_isType(tk)) {
+		kObject_setObject(stmt, name, tk);
+		r = s + 1;
 	}
 	else {
 		r = -1;
