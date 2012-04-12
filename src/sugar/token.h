@@ -83,6 +83,9 @@ static void addToken(CTX, tenv_t *tenv, kToken *tk)
 static size_t skipLine(CTX, tenv_t *tenv, size_t pos)
 {
 	int ch;
+	if(tenv->source[pos+1] == '#' && tenv->source[pos+2] == '@' && isdigit(tenv->source[pos+3])) {
+		tenv->uline = strtoll(tenv->source + pos + 3, NULL, 10);
+	}
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {
 			tenv->uline += 1;
@@ -248,40 +251,35 @@ static size_t addRawQuote(CTX, tenv_t *tenv, size_t pos, int quote)
 	return pos-1;
 }
 
-static size_t checkRegex(CTX, tenv_t *tenv, size_t pos)
+static int checkRegex(CTX, tenv_t *tenv, size_t pos)
 {
 	DBG_ASSERT(pos > 0);
-	if(pos == 1) return 1;
-	int i, ch,  prev = tenv->source[pos-2], next = tenv->source[pos];
-	for(i = pos - 2; i >= 0; i--) {
-		ch = tenv->source[i];
-		if(ch == ' ' || ch == '\t') continue;
-		switch(ch) {
-			case '\n': case '=': case ',': case ':':
-			case '(': case ')': case '[': case ']':
-			case '{': case '}': case ';':
-			case '+': case '-': case '*':
-			case '<': case '>': case '%': case '$':
-			case '!': case '&': case '?':
-				return 1;  // regex
+//	if(pos == 1) return 1;
+	DBG_P("t='%s'", tenv->source + pos);
+	int ch, prev = '/', loc = 0, isregex = 0;
+	int p=0, p2=0, p3 = 0;  // a / b + a / b
+	while((ch = tenv->source[pos++]) != 0) {
+		if(ch == '/') {
+			if(tenv->source[pos] == '/' || tenv->source[pos] == '*') return 0;
+			if(prev != '\\') {
+				loc = pos; break;
+			}
 		}
-	}
-	int p=0, p2=0, p3 = 0;
-	while((ch = tenv->source[pos++]) != '/') {
-		if(ch > 127) return 1; // non ascii
 		switch(ch) {
 			case 0: case '\n': case ' ': return 0;  // Not
 			case '(':  p++;  break;
 			case '[':  p2++; break;
 			case '{':  p3++; break;
-			case ')':  p--; if(p < 0) return 0;   break; // Not
-			case ']':  p2--; if(p2 < 0) return 0; break; // Not
-			case '}':  p3--; if(p3 < 0) return 0; break; // Not
-			case '\\':  return 1; // regex;
+			case ')':  p--; if(p < 0) return 0;   return 0; // Not
+			case ']':  p2--; if(p2 < 0) return 0; return 0; // Not
+			case '}':  p3--; if(p3 < 0) return 0; return 0; // Not
+			case '\\':  isregex = 1; break; // regex;
 		}
+		prev = ch;
 	}
-	if(isalnum(prev) && isalnum(next)) return 0; /* a/a+b/i */
-	if(isspace(prev)) return 1; /* return /a+b/i */
+	if(loc > 0) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -449,9 +447,9 @@ static void tokenize(CTX, tenv_t *tenv)
 			else if(ch == '*') {
 				pos = skipComment(_ctx, tenv, pos);
 			}
-			else if(checkRegex(_ctx, tenv, pos)) {
-				pos = addRegex(_ctx, tenv, pos);
-			}
+//			else if(checkRegex(_ctx, tenv, pos)) {
+//				pos = addRegex(_ctx, tenv, pos);
+//			}
 			else {
 				pos = addOperator(_ctx, tenv, pos-1);
 			}
