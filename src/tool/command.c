@@ -47,7 +47,8 @@ static int verbose_flag     = 0;
 static int compileonly_flag = 0;
 static int interactive_flag = 0;
 static const char* startup_script = NULL;
-static const char* test_script = NULL;
+static const char* test_script    = NULL;
+static const char* builtin_test   = NULL;
 
 static struct option long_options[] = {
 	/* These options set a flag. */
@@ -58,7 +59,9 @@ static struct option long_options[] = {
 	{"interactive", no_argument,   0, 'i'},
 	{"typecheck",   no_argument,   0, 'c'},
 	{"start-with", required_argument, 0, 'S'},
-	{"test-with",   required_argument, 0, 'T'},
+	{"test",  required_argument, 0, 'T'},
+	{"test-with",  required_argument, 0, 'T'},
+	{"builtin-test",  required_argument, 0, 'B'},
 	{NULL, 0, 0, 0},
 };
 
@@ -88,6 +91,11 @@ static int konoha_ginit(int argc, char **argv)
 
 		case 'i':
 			interactive_flag = 1;
+			break;
+
+		case 'B':
+//			DUMP_P ("option --test-with `%s'\n", optarg);
+			builtin_test = optarg;
 			break;
 
 		case 'S':
@@ -322,6 +330,9 @@ static void Kreport(CTX, int level, const char *msg)
 	fputs(" - ", stdlog);
 	fputs(msg, stdlog);
 	fputs("\n", stdlog);
+	fputs(" - ", stdout);
+	fputs(msg, stdout);
+	fputs("\n", stdout);
 }
 
 static const char *T_ERR(int level)
@@ -344,12 +355,15 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	fflush(stdlog);
 	if(pline != 0) {
 		const char *file = T_file(pline);
-		fprintf(stdlog, " - (%s:%d) %s" , shortname(file), (kushort_t)pline,
-				T_ERR(level));
+		fprintf(stdout, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
+		fprintf(stdlog, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
 	}
 	else {
+		fprintf(stdout, " - %s" , T_ERR(level));
 		fprintf(stdlog, " - %s" , T_ERR(level));
 	}
+	vfprintf(stdout, fmt, ap);
+	fprintf(stdout, "\n");
 	vfprintf(stdlog, fmt, ap);
 	fprintf(stdlog, "\n");
 	va_end(ap);
@@ -379,7 +393,7 @@ static int check_result(FILE *fp0, FILE *fp1)
 	return 0; //OK
 }
 
-int konoha_test(const char *testname)
+static int konoha_test(const char *testname)
 {
 	konoha_debug = 0; // reduced error
 	konoha_t konoha = konoha_open();
@@ -424,6 +438,39 @@ int konoha_test(const char *testname)
 	return ret;
 }
 
+#ifdef USE_BUILTINTEST
+
+extern DEFINE_TESTFUNC KonohaTestSet[];
+
+static Ftest lookupTestFunc(DEFINE_TESTFUNC *d, const char *name)
+{
+	while(d->name != NULL) {
+		if(strcasecmp(name, d->name) == 0) {
+			return d->f;
+		}
+		d++;
+	}
+	return NULL;
+}
+#endif
+
+static int konoha_builtintest(const char* name)
+{
+#ifdef USE_BUILTINTEST
+	Ftest f = lookupTestFunc(KonohaTestSet, name);
+	if(f != NULL) {
+		konoha_t konoha = konoha_open();
+		int ret = f((CTX_t)konoha);
+		konoha_close(konoha);
+		return ret;
+	}
+	fprintf(stderr, "Built-in test is not found: '%s'\n", name);
+#else
+	fprintf(stderr, "Built-in tests are not built; rebuild with -DUSE_BUILTINTEST\n");
+#endif
+	return 1;
+}
+
 // -------------------------------------------------------------------------
 // ** main **
 
@@ -431,12 +478,13 @@ int main(int argc, char *argv[])
 {
 	kbool_t ret = 1;
 	int scriptidx = konoha_ginit(argc, argv);
+	if(builtin_test != NULL) {
+		return konoha_builtintest(builtin_test);
+	}
 	if(test_script != NULL) {
 		return konoha_test(test_script);
 	}
 	konoha_t konoha = konoha_open();
-	test_kvproto((CTX_t)konoha);
-	test_kwb((CTX_t)konoha);
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);
 	}

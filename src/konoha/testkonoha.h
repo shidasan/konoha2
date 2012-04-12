@@ -27,7 +27,7 @@ static int checkkvs(size_t key, uintptr_t val)
 	return false;
 }
 
-void test_kvproto(CTX)
+static int test_kvproto(CTX)
 {
 	size_t i;
 	kObject *o = K_NULL;
@@ -51,9 +51,10 @@ void test_kvproto(CTX)
 		intptr_t val = (intptr_t)kObject_getUnboxedValue(o, key, -1);
 		assert(val == -1); // removed
 	}
+	return 0;
 }
 
-void test_kwb(CTX)
+static int test_kwb(CTX)
 {
 	const char *t= "0123456789012345678901234567890123456789";
 	size_t i = 0;
@@ -63,7 +64,7 @@ void test_kwb(CTX)
 	kwb_printf(&wb, "%s%s%s%s", t, t, t, t);
 	t = kwb_top(&wb, 1);
 	while(*t != 0) {
-		DBG_P("i=%d, ch='%c', '%c'", i, *t, '0' + (i % 10));
+//		DBG_P("i=%d, ch='%c', '%c'", i, *t, '0' + (i % 10));
 		assert(*t == '0' + (i % 10));
 		i++; t++;
 	}
@@ -71,7 +72,15 @@ void test_kwb(CTX)
 	kwb_free(&wb);
 	KARRAY_FREE(buf);
 	KNH_FREE(buf, sizeof(karray_t));
+	return 0;
 }
 
+#define FN(T)  #T, T
+
+DEFINE_TESTFUNC KonohaTestSet[] = {
+	{FN(test_kvproto)},
+	{FN(test_kwb)},
+	{NULL, NULL},
+};
 
 #endif /* TESTKONOHA_H_ */

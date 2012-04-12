@@ -43,7 +43,7 @@
 #define K_REVISION  1
 #endif
 
-#define K_USING_UNITTEST  1
+#define USE_BUILTINTEST  1
 
 //#include"konoha2/konoha_config.h"
 
@@ -1321,6 +1321,16 @@ extern kbool_t konoha_run(konoha_t konoha);  // TODO
 extern void MODSUGAR_init(CTX, kcontext_t *ctx);
 //extern void kvproto_free(CTX, struct karray_t *p);
 //extern void kvproto_reftrace(CTX, struct karray_t *p);
+
+
+#ifdef USE_BUILTINTEST
+typedef int (*Ftest)(CTX);
+typedef struct DEFINE_TESTFUNC {
+	const char *name;
+	Ftest f;
+} DEFINE_TESTFUNC ;
+#endif
+
 
 /* for debug mode */
 extern int konoha_debug;

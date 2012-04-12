@@ -318,7 +318,7 @@ kbool_t konoha_eval(konoha_t konoha, const char *script, kline_t uline)
 	return res;
 }
 
-#ifdef K_USING_UNITTEST
+#ifdef USE_BUILTINTEST
 #include"testkonoha.h"
 #endif
 
