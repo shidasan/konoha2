@@ -142,7 +142,7 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	base->h.setup    = kfloatshare_setup;
 	base->h.reftrace = kfloatshare_reftrace;
 	base->h.free     = kfloatshare_free;
-	ksetModule(MOD_FLOAT, &base->h, pline);
+	ksetModule(MOD_float, &base->h, pline);
 
 	KDEFINE_CLASS FloatDef = {
 		STRUCTNAME(Float),

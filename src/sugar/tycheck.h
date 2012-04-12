@@ -35,8 +35,8 @@ static gmabuf_t *Gamma_push(CTX, kGamma *gma, gmabuf_t *newone)
 {
 	gmabuf_t *oldone = gma->genv;
 	gma->genv = newone;
-	newone->lvarlst = kevalmod->lvarlst;
-	newone->lvarlst_top = kArray_size(kevalmod->lvarlst);
+	newone->lvarlst = ctxsugar->lvarlst;
+	newone->lvarlst_top = kArray_size(ctxsugar->lvarlst);
 	return oldone;
 }
 
@@ -127,7 +127,7 @@ static KMETHOD UndefinedExprTyCheck(CTX, ksfp_t *sfp _RIX)
 static kExpr *ExprTyCheck(CTX, kExpr *expr, kGamma *gma, int req_ty)
 {
 	ksyntax_t *syn = expr->syn;
-	kMethod *mtd = (syn == NULL || syn->ExprTyCheck == NULL) ? kevalshare->UndefinedExprTyCheck : syn->ExprTyCheck;
+	kMethod *mtd = (syn == NULL || syn->ExprTyCheck == NULL) ? kmodsugar->UndefinedExprTyCheck : syn->ExprTyCheck;
 	INIT_GCSTACK();
 	BEGIN_LOCAL(lsfp, 3);
 	KSETv(lsfp[K_CALLDELTA+0].o, (kObject*)expr);
@@ -287,13 +287,13 @@ static KMETHOD TokenTyCheck_NULL(CTX, ksfp_t *sfp _RIX)
 	VAR_ExprTyCheck(expr, syn, gma, req_ty);
 	DBG_P("typing null as %s", T_ty(req_ty));
 	if(req_ty == TY_var) req_ty = CLASS_Object;
-	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, 0, gma));
+	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, req_ty, 0, gma));
 }
 
 static KMETHOD TokenTyCheck_TYPE(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, syn, gma, req_ty);
-	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, expr->tkNUL->ty, 0, 0, gma));
+	RETURN_(kExpr_setVariable(expr, TEXPR_NULL, expr->tkNUL->ty, 0, gma));
 }
 
 static KMETHOD TokenTyCheck_TRUE(CTX, ksfp_t *sfp _RIX)
@@ -330,6 +330,7 @@ static kExpr* Expr_tyCheckVariable(CTX, struct _kExpr *expr, kGamma *gma)
 	int i;
 	gmabuf_t *genv = gma->genv;
 	for(i = genv->l.varsize - 1; i >= 0; i--) {
+		DBG_P("searching index=%d, ty=%s fn=%s", i, T_ty(genv->l.vars[i].ty), T_fn(genv->l.vars[i].fn));
 		if(genv->l.vars[i].fn == fn) {
 			expr->build = TEXPR_BLOCKLOCAL_;
 			expr->ty = genv->l.vars[i].ty;
@@ -538,7 +539,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 				mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, gma->genv->this_cid, tk->mn);
 				if(mtd != NULL) {
 					if(!kMethod_isStatic(mtd)) {
-						KSETv(cons->exprs[1], new_Variable(TEXPR_LOCAL, gma->genv->this_cid, 0, 0, gma));
+						KSETv(cons->exprs[1], new_Variable(TEXPR_LOCAL, gma->genv->this_cid, 0, gma));
 						this_cid = gma->genv->this_cid;
 					}
 				}
@@ -555,7 +556,7 @@ static KMETHOD ExprTyCheck_invoke(CTX, ksfp_t *sfp _RIX)
 	}
 	if(IS_Method(cons->methods[0])) {
 		if(this_cid == TY_unknown) {
-			KSETv(cons->exprs[1], new_Variable(TEXPR_NULL, cons->methods[0]->cid, 0, 0, gma));
+			KSETv(cons->exprs[1], new_Variable(TEXPR_NULL, cons->methods[0]->cid, 0, gma));
 		}
 		RETURN_(ExprCall_tycheckParams(_ctx, expr, gma, req_ty));
 	}
@@ -603,7 +604,7 @@ static KMETHOD UndefinedStmtTyCheck(CTX, ksfp_t *sfp _RIX)  // $expr
 static kbool_t Stmt_TyCheck(CTX, ksyntax_t *syn, kStmt *stmt, kGamma *gma)
 {
 	kMethod *mtd = kGamma_isTOPLEVEL(gma) ? syn->TopStmtTyCheck : syn->StmtTyCheck;
-	if(mtd == NULL) mtd = kevalshare->UndefinedStmtTyCheck;
+	if(mtd == NULL) mtd = kmodsugar->UndefinedStmtTyCheck;
 	BEGIN_LOCAL(lsfp, 5);
 	KSETv(lsfp[K_CALLDELTA+0].o, (kObject*)stmt);
 	lsfp[K_CALLDELTA+0].ndata = (uintptr_t)syn;  // quick trace
@@ -636,7 +637,7 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 		}
 	}
 	if(bk != K_NULLBLOCK) {
-		kExpr_setVariable(bk->esp, TEXPR_BLOCKLOCAL_, TY_void, gma->genv->l.varsize, 0, gma);
+		kExpr_setVariable(bk->esp, TEXPR_BLOCKLOCAL_, TY_void, gma->genv->l.varsize, gma);
 	}
 	if(lvarsize < gma->genv->l.varsize) {
 		gma->genv->l.varsize = lvarsize;
@@ -715,6 +716,7 @@ static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
 static kbool_t Token_checkVariableSymbol(CTX, kToken *tk, ksymbol_t *symbol)
 {
 	if(tk->tt == TK_SYMBOL) {
+		*symbol = ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_NAME);
 		return 1;
 	}
 	return 0;
@@ -734,6 +736,7 @@ static int addGammaStack(CTX, gstack_t *s, ktype_t ty, ksymbol_t fn)
 		s->vars = v;
 		s->allocsize = asize;
 	}
+	DBG_P("index=%d, ty=%s fn=%s", index, T_ty(ty), T_fn(fn));
 	s->vars[index].ty = ty;
 	s->vars[index].fn = fn;
 	s->varsize += 1;
@@ -744,7 +747,7 @@ static kbool_t Expr_declLocalVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty,
 {
 	DBG_ASSERT(Expr_isTerm(expr));
 	int index = addGammaStack(_ctx, &gma->genv->l, ty, fn);
-	kExpr_setVariable(expr, TEXPR_BLOCKLOCAL_, ty, index, 0, gma);
+	kExpr_setVariable(expr, TEXPR_BLOCKLOCAL_, ty, index, gma);
 	return 1;
 }
 
@@ -765,7 +768,7 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 	else if(expr->syn->kw == KW_LET) {
 		if(!Expr_declType(_ctx, kExpr_at(expr, 1), gma, ty, NULL)) return false;
 		ty = kExpr_at(expr, 1)->ty;
-		DBG_P("declare %s", T_ty(ty));
+		DBG_P("declare %s index=%d", T_ty(ty), kExpr_at(expr, 1)->index);
 		if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
 			kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, NULL));
 			Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
@@ -871,7 +874,7 @@ static void Stmt_setMethodFunc(CTX, kStmt *stmt, kKonohaSpace *ks, kMethod *mtd)
 		KSETv(((struct _kMethod*)mtd)->tcode, tcode);  //FIXME
 		KSETv(((struct _kMethod*)mtd)->lazyns, ks);
 		kMethod_setFunc(mtd, Fmethod_lazyCompilation);
-		kArray_add(kevalmod->definedMethods, mtd);
+		kArray_add(ctxsugar->definedMethods, mtd);
 	}
 }
 
@@ -965,10 +968,10 @@ static kBlock* Method_newBlock(CTX, kMethod *mtd, kString *source, kline_t uline
 		script = S_text(mtd->tcode->text);
 		uline = mtd->tcode->uline;
 	}
-	kArray *tls = kevalmod->tokens;
+	kArray *tls = ctxsugar->tokens;
 	size_t pos = kArray_size(tls);
 	ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
-	kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), kevalshare->rootks);
+	kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), kmodsugar->rootks);
 	kArray_clear(tls, pos);
 	return bk;
 }
@@ -1003,7 +1006,7 @@ static void Gamma_shiftBlockIndex(CTX, gmabuf_t *genv)
 static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, kKonohaSpace *ks)
 {
 	INIT_GCSTACK();
-	kGamma *gma = kevalmod->gma;
+	kGamma *gma = ctxsugar->gma;
 	kBlock *bk = Method_newBlock(_ctx, mtd, text, uline);
 	gammastack_t fvars[32] = {}, lvars[32] = {};
 	gmabuf_t newgma = {
@@ -1085,7 +1088,7 @@ static ktype_t Gamma_evalMethod(CTX, kGamma *gma, kBlock *bk, kMethod *mtd)
 static kstatus_t SingleBlock_eval(CTX, kBlock *bk, kMethod *mtd, kKonohaSpace *ks)
 {
 	kstatus_t result;
-	kGamma *gma = kevalmod->gma;
+	kGamma *gma = ctxsugar->gma;
 	gammastack_t fvars[32] = {}, lvars[32] = {};
 	gmabuf_t newgma = {
 		.flag = kGamma_TOPLEVEL,
@@ -1125,7 +1128,7 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 {
 	INIT_GCSTACK();
 	BEGIN_LOCAL(lsfp, 0);
-	kBlock *bk1 = kevalmod->singleBlock;
+	kBlock *bk1 = ctxsugar->singleBlock;
 	kMethod *mtd = new_kMethod(kMethod_Static, 0, 0, K_NULLPARAM, NULL);
 	PUSH_GCSTACK(mtd);
 	kstack_t *base = _ctx->stack;

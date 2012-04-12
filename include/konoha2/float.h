@@ -8,8 +8,8 @@
 #ifndef MODFLOAT_H_
 #define MODFLOAT_H_
 
-#define kfloatmod        ((kfloatmod_t*)_ctx->mod[MOD_FLOAT])
-#define kfloatshare      ((kfloatshare_t*)_ctx->modshare[MOD_FLOAT])
+#define kfloatmod        ((kfloatmod_t*)_ctx->mod[MOD_float])
+#define kfloatshare      ((kfloatshare_t*)_ctx->modshare[MOD_float])
 #define CT_Float         kfloatshare->cFloat
 #define TY_Float         kfloatshare->cFloat->cid
 
@@ -21,7 +21,7 @@ typedef struct {
 } kfloatshare_t;
 
 typedef struct {
-	kmod_t h;
+	kmodlocal_t h;
 } kfloatmod_t;
 
 typedef const struct _kFloat kFloat;

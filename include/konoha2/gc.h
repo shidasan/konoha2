@@ -9,7 +9,7 @@
 //} kgcshare_t;
 //
 //typedef struct {
-//	kmod_t h;
+//	kmodlocal_t h;
 //} kgcmod_t;
 
 extern void MODGCSHARE_init(CTX, kcontext_t *ctx);

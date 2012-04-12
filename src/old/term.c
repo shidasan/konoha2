@@ -47,7 +47,7 @@ kTerm* new_Term(CTX, kterm_t tt)
 {
 	kTerm *tk = new_(Term);
 	SP(tk)->tt = tt;
-	tk->uline = kcodemod->uline;
+	tk->uline = ctxcode->uline;
 	return tk;
 }
 
@@ -58,7 +58,7 @@ kStmtExpr* new_Stmt2(CTX, kterm_t stt, ...)
 	va_list ap;
 	DBG_ASSERT(stt < TT_PRAGMA);
 	stmt->stt = stt;
-	stmt->uline = kcodemod->uline;
+	stmt->uline = ctxcode->uline;
 	va_start(ap , stt);
 	while((tm = (kTerm*)va_arg(ap, kTerm*)) != NULL) {
 		DBG_ASSERT(IS_Term(tm) || IS_StmtExpr(tm));
@@ -141,7 +141,7 @@ typedef struct {
 #define ITR_next(itr)        (itr)->c += 1;
 #define ITR_hasNext(itr)     ((itr)->c < (itr)->e)
 #define ITR_size(itr)        ((itr)->e - (itr)->c)
-#define ITR_uline(itr)       if((itr)->c < (itr)->e) kcodemod->uline = ((itr)->ts[(itr)->c])->uline
+#define ITR_uline(itr)       if((itr)->c < (itr)->e) ctxcode->uline = ((itr)->ts[(itr)->c])->uline
 
 static tkitr_t* ITR_new(kTerm *tk, tkitr_t *buf)
 {
@@ -245,7 +245,7 @@ static kTerm *new_TermCID(CTX, kcid_t cid)
 {
 	kTerm *tk = new_(Term);
 	TT_(tk) = TT_UNAME;
-	tk->uline = kcodemod->uline;
+	tk->uline = ctxcode->uline;
 	(tk)->cid = cid;
 	KSETv((tk)->text, ClassTBL(cid)->sname);
 	return tk;
@@ -938,7 +938,7 @@ static int Term_addOPR(CTX, kTerm *tkB, CWB_t *cwb, kInputStream *in, kline_t *u
 			return knh_InputStream_getc(_ctx, in);
 		}else if(ch == '/') {
 			InputStream_skipLINE(_ctx, in, ul);
-			kcodemod->uline = ul[0];
+			ctxcode->uline = ul[0];
 			return knh_InputStream_getc(_ctx, in);
 		}
 		if(Term_startsWithExpr(_ctx, tkB)) {
@@ -1218,7 +1218,7 @@ static void InputStream_parseTerm(CTX, kInputStream *in, kline_t *ul, kTerm *tkB
 	L_NEWLINE:;
 	{
 		int c = 0;
-		kcodemod->uline = ul[0];
+		ctxcode->uline = ul[0];
 		while((ch = knh_InputStream_getc(_ctx, in)) != EOF) {
 			if(ch == '\t') { c += 3; }
 			else if(ch == ' ') { c += 1; }
@@ -1248,7 +1248,7 @@ static void InputStream_parseTerm(CTX, kInputStream *in, kline_t *ul, kTerm *tkB
 	}
 	L_NEWTOKEN:;
 	CWB_clear(cwb, 0);
-	kcodemod->uline = ul[0];
+	ctxcode->uline = ul[0];
 	while((ch = knh_InputStream_getc(_ctx, in)) != EOF) {
 		L_AGAIN:;
 		switch(ch) {
@@ -1294,7 +1294,7 @@ static void InputStream_parseTerm(CTX, kInputStream *in, kline_t *ul, kTerm *tkB
 				tkB = (kTerm*)(tkSUB)->h.meta;
 				(tkSUB)->h.meta = NULL;
 				TermBlock_add(_ctx, tkB, tkSUB);
-				TermB_setline(tkB, kcodemod->uline);
+				TermB_setline(tkB, ctxcode->uline);
 				goto L_NEWTOKEN;
 			}
 		case '}':
@@ -1642,7 +1642,7 @@ kTerm *knh_Stmt_add_(CTX, kStmtExpr *stmt, ...)
 kTerm *new_TermMN(CTX, kmethodn_t mn)
 {
 	kTerm *tk = new_(Term);
-	tk->uline = kcodemod->uline;
+	tk->uline = ctxcode->uline;
 	TT_(tk) = TT_MN;
 	(tk)->mn = mn;
 	if(MN_isGETTER(mn)) {Term_setGetter(tk, 1);};
@@ -1778,7 +1778,7 @@ static void TT_skipMETA(CTX, tkitr_t *itr)
 	itr->meta = -1;
 	while(ITR_hasNext(itr)) {
 		kterm_t tt = ITR_tt(itr);
-		kcodemod->uline = ITR_tk(itr)->uline;
+		ctxcode->uline = ITR_tk(itr)->uline;
 		if(ITR_isN(itr, +1, TT_COLON) && (tt == TT_NAME || tt == TT_UNAME) && !ITR_isN(itr, +2, TT_PARENTHESIS)) {
 			if(itr->meta == -1) itr->meta = itr->c;
 			ITR_next(itr);
@@ -2901,7 +2901,7 @@ static kStmtExpr *Stmt_norm(CTX, kStmtExpr *stmt)
 		stmtITR = DP(stmtITR)->nextNULL;
 	}
 	if(stmtLAST != NULL) {
-		kcodemod->uline = stmtLAST->uline;
+		ctxcode->uline = stmtLAST->uline;
 		//DBG_P("@@@@ STT=%s", TT__(stmtLAST->stt));
 		if(STT_(stmtLAST) == STT_CALL1 && !IS_StmtExpr(DP(stmtLAST)->stmtPOST)) {
 			STT_(stmtLAST) = STT_RETURN;
@@ -3739,7 +3739,7 @@ kStmtExpr *knh_InputStream_parseStmt(CTX, kInputStream *in, kline_t *ul)
 {
 	BEGIN_LOCAL(_ctx, lsfp, 2);
 	DBG_ASSERT(ul[0] != 0);
-	kcodemod->uline = ul[0];
+	ctxcode->uline = ul[0];
 	kStmtExpr *rVALUE = new_Stmt2(_ctx, STT_BLOCK, NULL);
 	kTerm *tk = new_Term(_ctx, TT_BRACE);
 	KSETv(lsfp[0].o, rVALUE);
@@ -3773,7 +3773,7 @@ kStmtExpr *knh_Term_parseStmt(CTX, kline_t uline, kTerm *tk)
 {
 	BEGIN_LOCAL(_ctx, lsfp, 1);
 	//DBG_P("uline=%d, tk->uline=%d src='''%s'''", (kshort_t)uline, (kshort_t)tk->uline, S_text(tk->text));
-	kcodemod->uline = tk->uline;
+	ctxcode->uline = tk->uline;
 	kStmtExpr *rVALUE = new_Stmt2(_ctx, STT_BLOCK, NULL);
 	KSETv(lsfp[0].o, rVALUE);
 	Term_toBRACE(_ctx, tk, 1/*isEXPANDING*/);
@@ -3795,7 +3795,7 @@ kStmtExpr *knh_Term_parseStmt(CTX, kline_t uline, kTerm *tk)
 
 kStmtExpr *knh_bytes_parseStmt(CTX, kbytes_t expr, kline_t uline)
 {
-	kcodemod->uline = uline;
+	ctxcode->uline = uline;
 	BEGIN_LOCAL(_ctx, lsfp, 2);
 	LOCAL_NEW(_ctx, lsfp, 0, kStmtExpr*, rVALUE, new_Stmt2(_ctx, STT_BLOCK, NULL));
 	LOCAL_NEW(_ctx, lsfp, 1, kTerm*, tk, new_Term(_ctx, TT_CODE));

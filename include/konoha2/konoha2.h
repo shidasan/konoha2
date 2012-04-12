@@ -303,25 +303,27 @@ struct  kcontext_t;
 typedef const struct kcontext_t *const CTX_t;
 #define CTX      CTX_t _ctx
 
-#define K_PKGMATRIX 128
+#define MOD_MAX    128
 struct _kObject;
 
-#define MOD_CODE  0
-#define MOD_EVAL  1
-#define MOD_FLOAT 2
+#define MOD_logger   0
+#define MOD_gc       1
+#define MOD_code     2
+#define MOD_sugar    3
+#define MOD_float   11
 
-struct kmod_t;
-typedef struct kmod_t {
+struct kmodlocal_t;
+typedef struct kmodlocal_t {
 	uintptr_t unique;
-	void (*reftrace)(CTX, struct kmod_t *);
-	void (*free)(CTX, struct kmod_t *);
-} kmod_t;
+	void (*reftrace)(CTX, struct kmodlocal_t *);
+	void (*free)(CTX, struct kmodlocal_t *);
+} kmodlocal_t;
 
 struct kmodshare_t;
 typedef struct kmodshare_t {
 	const char *name;
 	int mod_id;
-	void (*setup)(CTX, struct kmodshare_t *);
+	void (*setup)(CTX, struct kmodshare_t *, int newctx);
 	void (*reftrace)(CTX, struct kmodshare_t *);
 	void (*free)(CTX, struct kmodshare_t *);
 } kmodshare_t;
@@ -341,7 +343,7 @@ typedef struct kcontext_t {
 	struct kstack_t                   *stack;
 	struct klogger_t                  *logger;
 	struct kmodshare_t               **modshare;
-	struct kmod_t                    **mod;
+	struct kmodlocal_t               **modlocal;
 } kcontext_t ;
 
 typedef struct kshare_t {

@@ -38,9 +38,8 @@ extern "C" {
 
 #include<konoha2/konoha2_local.h>
 
-//
 static const char *Pkeyword_(CTX, keyword_t kw);
-static kString *Skw_(CTX, keyword_t kw);
+//static kString *Skw_(CTX, keyword_t kw);
 static void Kraise(CTX, int isContinue);
 
 #include "perror.h"
@@ -109,15 +108,15 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 }
 
 /* ------------------------------------------------------------------------ */
-/* kevalmod_t global functions */
+/* ctxsugar_t global functions */
 
 static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kline_t uline)
 {
 	kstatus_t result;
-	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
+	kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar, 0/*lazy*/);
 	{
 		INIT_GCSTACK();
-		kArray *tls = kevalmod->tokens;
+		kArray *tls = ctxsugar->tokens;
 		size_t pos = kArray_size(tls);
 		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
 		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), ks);
@@ -133,16 +132,16 @@ kstatus_t MODSUGAR_eval(CTX, const char *script, kline_t uline)
 	if(konoha_debug) {
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
 	}
-	kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
-	return KonohaSpace_eval(_ctx, kevalshare->rootks, script, uline);
+	kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar, 0/*lazy*/);
+	return KonohaSpace_eval(_ctx, kmodsugar->rootks, script, uline);
 }
 
 /* ------------------------------------------------------------------------ */
-/* [kevalmod] */
+/* [ctxsugar] */
 
-static void kevalmod_reftrace(CTX, struct kmod_t *baseh)
+static void ctxsugar_reftrace(CTX, struct kmodlocal_t *baseh)
 {
-	kevalmod_t *base = (kevalmod_t*)baseh;
+	ctxsugar_t *base = (ctxsugar_t*)baseh;
 	BEGIN_REFTRACE(7);
 	KREFTRACEv(base->tokens);
 	KREFTRACEv(base->errors);
@@ -152,21 +151,19 @@ static void kevalmod_reftrace(CTX, struct kmod_t *baseh)
 	KREFTRACEv(base->definedMethods);
 	END_REFTRACE();
 }
-static void kevalmod_free(CTX, struct kmod_t *baseh)
+static void ctxsugar_free(CTX, struct kmodlocal_t *baseh)
 {
-	kevalmod_t *base = (kevalmod_t*)baseh;
+	ctxsugar_t *base = (ctxsugar_t*)baseh;
 	KARRAY_FREE(&base->cwb);
-	KNH_FREE(base, sizeof(kevalmod_t));
+	KNH_FREE(base, sizeof(ctxsugar_t));
 }
 
-#define char_t char
-
-static void kevalshare_setup(CTX, struct kmodshare_t *def)
+static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 {
-	if(_ctx->mod[MOD_EVAL] == NULL) {
-		kevalmod_t *base = (kevalmod_t*)KNH_ZMALLOC(sizeof(kevalmod_t));
-		base->h.reftrace = kevalmod_reftrace;
-		base->h.free     = kevalmod_free;
+	if(!newctx && _ctx->modlocal[MOD_sugar] == NULL) {
+		ctxsugar_t *base = (ctxsugar_t*)KNH_ZMALLOC(sizeof(ctxsugar_t));
+		base->h.reftrace = ctxsugar_reftrace;
+		base->h.free     = ctxsugar_free;
 		KINITv(base->tokens, new_(Array, K_PAGESIZE/sizeof(void*)));
 		KINITv(base->errors, new_(Array, 8));
 		KINITv(base->lvarlst, new_(Array, K_PAGESIZE/sizeof(void*)));
@@ -176,7 +173,7 @@ static void kevalshare_setup(CTX, struct kmodshare_t *def)
 		KINITv(base->singleBlock, new_(Block, NULL));
 		kArray_add(base->singleBlock->blockS, K_NULL);
 		KARRAY_INIT(&base->cwb, K_PAGESIZE);
-		_ctx->mod[MOD_EVAL] = (kmod_t*)base;
+		_ctx->modlocal[MOD_sugar] = (kmodlocal_t*)base;
 	}
 }
 
@@ -193,9 +190,9 @@ static void pack_free(CTX, void *p)
 	KNH_FREE(p, sizeof(kpackage_t));
 }
 
-static void kevalshare_reftrace(CTX, struct kmodshare_t *baseh)
+static void kmodsugar_reftrace(CTX, struct kmodshare_t *baseh)
 {
-	kevalshare_t *base = (kevalshare_t*)baseh;
+	kmodsugar_t *base = (kmodsugar_t*)baseh;
 	kmap_reftrace(base->packageMapNO, pack_reftrace);
 	BEGIN_REFTRACE(7);
 	KREFTRACEv(base->rootks);
@@ -208,21 +205,21 @@ static void kevalshare_reftrace(CTX, struct kmodshare_t *baseh)
 	END_REFTRACE();
 }
 
-static void kevalshare_free(CTX, struct kmodshare_t *baseh)
+static void kmodsugar_free(CTX, struct kmodshare_t *baseh)
 {
-	kevalshare_t *base = (kevalshare_t*)baseh;
+	kmodsugar_t *base = (kmodsugar_t*)baseh;
 	kmap_free(base->keywordMapNN, NULL);
 	kmap_free(base->packageMapNO, pack_free);
-	KNH_FREE(baseh, sizeof(kevalshare_t));
+	KNH_FREE(baseh, sizeof(kmodsugar_t));
 }
 
 void MODSUGAR_init(CTX, kcontext_t *ctx)
 {
-	kevalshare_t *base = (kevalshare_t*)KNH_ZMALLOC(sizeof(kevalshare_t));
+	kmodsugar_t *base = (kmodsugar_t*)KNH_ZMALLOC(sizeof(kmodsugar_t));
 	base->h.name     = "sugar";
-	base->h.setup    = kevalshare_setup;
-	base->h.reftrace = kevalshare_reftrace;
-	base->h.free     = kevalshare_free;
+	base->h.setup    = kmodsugar_setup;
+	base->h.reftrace = kmodsugar_reftrace;
+	base->h.free     = kmodsugar_free;
 
 	klib2_t *l = ctx->lib2;
 	l->KKonohaSpace_getcid   = KonohaSpace_getcid;
@@ -235,7 +232,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->packageList, new_(Array, 8));
 	base->packageMapNO = kmap_init(0);
 
-	ksetModule(MOD_EVAL, (kmodshare_t*)base, 0);
+	ksetModule(MOD_sugar, (kmodshare_t*)base, 0);
 	base->cKonohaSpace = kaddClassDef(NULL, &KonohaSpaceDef, 0);
 	base->cToken = kaddClassDef(NULL, &TokenDef, 0);
 	base->cExpr  = kaddClassDef(NULL, &ExprDef, 0);
@@ -287,26 +284,26 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 
 static const char *Pkeyword_(CTX, keyword_t kw)
 {
-	kArray *a = kevalshare->keywordList;
+	kArray *a = kmodsugar->keywordList;
 	if(kw < kArray_size(a)) {
 		return S_text(a->strings[kw]);
 	}
 	return "unknown keyword";
 }
 
-static kString *Skw_(CTX, keyword_t kw)
-{
-	kArray *a = kevalshare->keywordList;
-	if(kw < kArray_size(a)) {
-		return a->strings[kw];
-	}
-	return TS_EMPTY;
-}
+//static kString *Skw_(CTX, keyword_t kw)
+//{
+//	kArray *a = kmodsugar->keywordList;
+//	if(kw < kArray_size(a)) {
+//		return a->strings[kw];
+//	}
+//	return TS_EMPTY;
+//}
 
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);
-	return kmap_getcode(kevalshare->keywordMapNN, kevalshare->keywordList, name, len, hcode, SPOL_ASCII|SPOL_POOL, def);
+	return kmap_getcode(kmodsugar->keywordMapNN, kmodsugar->keywordList, name, len, hcode, SPOL_ASCII|SPOL_POOL, def);
 }
 
 // -------------------------------------------------------------------------
@@ -443,11 +440,11 @@ static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path,
 
 kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline)
 {
-	if (kevalmod == NULL) {
-		kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
+	if (ctxsugar == NULL) {
+		kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar, 0/*lazy*/);
 	}
 	INIT_GCSTACK();
-	kKonohaSpace *ns = new_(KonohaSpace, kevalshare->rootks);
+	kKonohaSpace *ns = new_(KonohaSpace, kmodsugar->rootks);
 	PUSH_GCSTACK(ns);
 	kstatus_t result = KonohaSpace_loadscript(_ctx, ns, path, len, pline);
 	RESET_GCSTACK();
@@ -534,7 +531,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
 		INIT_GCSTACK();
-		kKonohaSpace *ks = new_(KonohaSpace, kevalshare->rootks);
+		kKonohaSpace *ks = new_(KonohaSpace, kmodsugar->rootks);
 		PUSH_GCSTACK(ks);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
 		KPACKDEF *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), T_PN(packid), pline);
@@ -563,11 +560,11 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 
 static kpackage_t *getPackageNULL(CTX, kpack_t packid, kline_t pline)
 {
-	kpackage_t *pack = (kpackage_t*)map_getu(_ctx, kevalshare->packageMapNO, packid, uNULL);
+	kpackage_t *pack = (kpackage_t*)map_getu(_ctx, kmodsugar->packageMapNO, packid, uNULL);
 	if(pack != NULL) return pack;
 	pack = loadPackageNULL(_ctx, packid, pline);
 	if(pack != NULL) {
-		map_addu(_ctx, kevalshare->packageMapNO, packid, (uintptr_t)pack);
+		map_addu(_ctx, kmodsugar->packageMapNO, packid, (uintptr_t)pack);
 	}
 	return pack;
 }
@@ -667,7 +664,7 @@ void MODSUGAR_defMethods(CTX)
 		{"INT_MIN", TY_Int, KINT_MIN},
 		{}
 	};
-	kloadConstData(kevalshare->rootks, IntData, 0);
+	kloadConstData(kmodsugar->rootks, IntData, 0);
 }
 
 #ifdef __cplusplus

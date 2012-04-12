@@ -32,7 +32,7 @@ static KMETHOD Block_tyCheckAll(CTX, ksfp_t *sfp _RIX)
 
 static inline kbool_t isStmtTyCheck(CTX, kParam *pa)
 {
-	return (pa->psize == 1 && pa->rtype == TY_Boolean && pa->p[0].ty == kevalshare->cGamma->cid);
+	return (pa->psize == 1 && pa->rtype == TY_Boolean && pa->p[0].ty == kmodsugar->cGamma->cid);
 }
 
 //## void KonohaSpace.defineSyntaxRule(String keyword, String rule);

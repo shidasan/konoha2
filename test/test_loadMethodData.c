@@ -37,8 +37,8 @@ static const char *methoddata[] = {
 
 void test_KloadMethodData(CTX)
 {
-    kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
-    _ctx->lib2->KloadMethodData(_ctx, kevalshare->rootns, methoddata);
+    kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar);
+    _ctx->lib2->KloadMethodData(_ctx, kmodsugar->rootns, methoddata);
 }
 
 int main(int argc, const char *argv[])

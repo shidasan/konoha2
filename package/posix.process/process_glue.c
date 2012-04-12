@@ -34,7 +34,7 @@ static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 		{_KVi(SIGKILL)},
 		{}
 	};
-	kloadConstData(kevalshare->rootks, IntData, 0);
+	kloadConstData(kmodsugar->rootks, IntData, 0);
 	return true;
 }
 

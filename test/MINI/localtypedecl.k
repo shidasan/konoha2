@@ -6,3 +6,12 @@ int f(int n) {
 System.p(f(0));
 System.p(f(1));
 
+void g() {
+	int a = 1;
+	int b = 2;
+	System.p(a);
+	System.p(b);
+}
+
+g();
+

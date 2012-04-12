@@ -37,16 +37,16 @@ extern "C" {
 
 #define K_USING_THCODE_
 
-#define kcodemod        ((kcodemod_t*)_ctx->mod[MOD_CODE])
-#define kcodeshare      ((kcodeshare_t*)_ctx->modshare[MOD_CODE])
-#define CT_BasicBlock    kcodeshare->cBasicBlock
-#define CT_KonohaCode    kcodeshare->cKonohaCode
+#define ctxcode    ((ctxcode_t*)_ctx->modlocal[MOD_code])
+#define kmodcode         ((kmodcode_t*)_ctx->modshare[MOD_code])
+#define CT_BasicBlock    kmodcode->cBasicBlock
+#define CT_KonohaCode    kmodcode->cKonohaCode
 
 #define IS_BasicBlock(O)  ((O)->h.ct == CT_BasicBlock)
 #define IS_KonohaCode(O)  ((O)->h.ct == CT_KonohaCode)
 
-#define CODE_ENTER   kcodeshare->PRECOMPILED_ENTER
-#define CODE_NCALL   kcodeshare->PRECOMPILED_NCALL
+#define CODE_ENTER   kmodcode->PRECOMPILED_ENTER
+#define CODE_NCALL   kmodcode->PRECOMPILED_NCALL
 
 typedef struct {
 	kmodshare_t h;
@@ -55,10 +55,10 @@ typedef struct {
 	const struct _kKonohaCode *codeNull;
 	struct kopl_t  *PRECOMPILED_ENTER;
 	struct kopl_t  *PRECOMPILED_NCALL;
-} kcodeshare_t;
+} kmodcode_t;
 
 typedef struct {
-	kmod_t h;
+	kmodlocal_t h;
 	kArray *insts;
 	kArray *lstacks;
 	kArray *constPools;
@@ -67,7 +67,7 @@ typedef struct {
 		struct _kBasicBlock *WcurbbNC;
 	};
 	kline_t uline;
-} kcodemod_t;
+} ctxcode_t;
 
 /* ------------------------------------------------------------------------ */
 /* KCODE */

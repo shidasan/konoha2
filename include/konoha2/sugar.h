@@ -250,12 +250,9 @@ struct _kExpr {
 		kint_t     ivalue;
 		kfloat_t   fvalue;
 		uintptr_t  ndata;
-		union {
-			kshort_t   index;
-			kcid_t     cid;
-			kmethodn_t mn;
-		};
-		kflag_t xindex;
+		intptr_t   index;
+		uintptr_t     cid;
+//		uintptr_t	   mn;
 	};
 };
 
@@ -326,14 +323,14 @@ struct _kGamma {
 
 /* ------------------------------------------------------------------------ */
 
-#define kevalmod    ((kevalmod_t*)_ctx->mod[MOD_EVAL])
-#define kevalshare  ((kevalshare_t*)_ctx->modshare[MOD_EVAL])
-#define CT_Token    kevalshare->cToken
-#define CT_Expr     kevalshare->cExpr
-#define CT_Stmt     kevalshare->cStmt
-#define CT_Block    kevalshare->cBlock
-#define CT_KonohaSpace    kevalshare->cKonohaSpace
-#define CT_Gamma    kevalshare->cGamma
+#define ctxsugar    ((ctxsugar_t*)_ctx->modlocal[MOD_sugar])
+#define kmodsugar  ((kmodsugar_t*)_ctx->modshare[MOD_sugar])
+#define CT_Token    kmodsugar->cToken
+#define CT_Expr     kmodsugar->cExpr
+#define CT_Stmt     kmodsugar->cStmt
+#define CT_Block    kmodsugar->cBlock
+#define CT_KonohaSpace    kmodsugar->cKonohaSpace
+#define CT_Gamma    kmodsugar->cGamma
 
 #define IS_Token(O)  ((O)->h.ct == CT_Token)
 #define IS_Expr(O)  ((O)->h.ct == CT_Expr)
@@ -403,15 +400,15 @@ struct _kGamma {
 #define KW_return    (9+KW_void)
 
 
-#define SYN_ERR      kevalshare->syn_err
-#define SYN_EXPR     kevalshare->syn_expr
-#define SYN_CALL     kevalshare->syn_expr
+#define SYN_ERR      kmodsugar->syn_err
+#define SYN_EXPR     kmodsugar->syn_expr
+#define SYN_CALL     kmodsugar->syn_expr
 
 #define FN_this      FN_("this")
 
 struct _kKonohaSpace;
 
-#define kKonohaSpace_defineSyntax(L, S)  kevalshare->KKonohaSpace_defineSyntax(_ctx, L, S)
+#define kKonohaSpace_defineSyntax(L, S)  kmodsugar->KKonohaSpace_defineSyntax(_ctx, L, S)
 
 typedef struct {
 	kmodshare_t h;
@@ -442,7 +439,7 @@ typedef struct {
 
 	kExpr* (*Expr_setConstValue)(CTX, kExpr *expr, ktype_t ty, kObject *o);
 	kExpr* (*Expr_setNConstValue)(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata);
-	kExpr* (*Expr_setVariable)(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int index, int xindex, kGamma *gma);
+	kExpr* (*Expr_setVariable)(CTX, kExpr *expr, kexpr_t build, ktype_t ty, intptr_t index, kGamma *gma);
 
 	kToken* (*Stmt_token)(CTX, kStmt *stmt, keyword_t kw, kToken *def);
 	kExpr* (*Stmt_expr)(CTX, kStmt *stmt, keyword_t kw, kExpr *def);
@@ -457,10 +454,10 @@ typedef struct {
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, DEFINE_SYNTAX_SUGAR *);
 	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
-} kevalshare_t;
+} kmodsugar_t;
 
 typedef struct {
-	kmod_t h;
+	kmodlocal_t h;
 	kArray *tokens;
 	karray_t cwb;
 	kArray *errors;
@@ -468,7 +465,7 @@ typedef struct {
 	kGamma *gma;
 	kArray *lvarlst;
 	kArray *definedMethods;
-} kevalmod_t;
+} ctxsugar_t;
 
 #define TPOL_NOCHECK              1
 #define TPOL_ALLOWVOID      (1 << 1)
@@ -488,13 +485,13 @@ typedef struct {
 #define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
 #define kExpr_setNConstValue(EXPR, T, D)  Expr_setNConstValue(_ctx, EXPR, T, D)
-#define new_Variable(B, T, I, I2, G)         Expr_setVariable(_ctx, NULL, B, T, I, I2, G)
-#define kExpr_setVariable(E, B, T, I, I2, G) Expr_setVariable(_ctx, E, B, T, I, I2, G)
+#define new_Variable(B, T, I, G)          Expr_setVariable(_ctx, NULL, B, T, I, G)
+#define kExpr_setVariable(E, B, T, I, G)  Expr_setVariable(_ctx, E, B, T, I, G)
 #define kExpr_tyCheckAt(E, N, GMA, T, P)     Expr_tyCheckAt(_ctx, E, N, GMA, T, P)
 #define kStmt_tyCheck(E, NI, GMA, T, P)      Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
 
 #else/*SUGAR_EXPORTS*/
-#define USING_SUGAR                          const kevalshare_t *_e = (const kevalshare_t *)kevalshare
+#define USING_SUGAR                          const kmodsugar_t *_e = (const kmodsugar_t *)kmodsugar
 #define SUGAR                                _e->
 #define TY_KonohaSpace                       _e->cKonohaSpace->cid
 #define TY_Token                             _e->cToken->cid

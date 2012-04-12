@@ -1319,33 +1319,6 @@ static char *write_key(char *p, char *ebuf, const char *key)
 //	return p + 1;
 //}
 
-static void reverse(char *const start, char *const end, const int len)
-{
-	int i, l = len / 2;
-	register char *s = start;
-	register char *e = end - 1;
-	for (i = 0; i < l; i++) {
-		char tmp = *s;
-		tmp  = *s;
-		*s++ = *e;
-		*e-- = tmp;
-	}
-}
-
-static char *write_d(char *const p, const char *const end, uintptr_t uvalue)
-{
-	int i = 0;
-	while (p + i < end) {
-		int tmp = uvalue % 10;
-		uvalue /= 10;
-		p[i] = '0' + tmp;
-		++i;
-		if (uvalue == 0)
-			break;
-	}
-	reverse(p, p + i, i);
-	return p + i;
-}
 
 static char *write_i(char *p, char *ebuf, const knh_ldata2_t *d)
 {

@@ -1,6 +1,6 @@
 #include "mod_sample.h"
 
-void ksamplemod_reftrace(CTX, struct kmod_t *mod_)
+void ksamplemod_reftrace(CTX, struct kmodlocal_t *mod_)
 {
 	ksamplemod_t *mod = (ksamplemod_t*)mod_;
 	BEGIN_REFTRACE(2);
@@ -8,7 +8,7 @@ void ksamplemod_reftrace(CTX, struct kmod_t *mod_)
 	END_REFTRACE();
 }
 
-void ksamplemod_free(CTX, struct kmod_t *mod_)
+void ksamplemod_free(CTX, struct kmodlocal_t *mod_)
 {
 	ksamplemod_t *mod = (ksamplemod_t*)mod_;
 	KNH_FREE(mod, sizeof(ksamplemod_t));
@@ -21,7 +21,7 @@ void ksampleshare_setup(CTX, struct kmodshare_t *def)
 		mod->h.reftrace = ksamplemod_reftrace;
 		mod->h.free     = ksamplemod_free;
 		KINITv(mod->array, new_(Array, 8));
-		_ctx->mod[MOD_SAMPLE] = (kmod_t*)mod;
+		_ctx->mod[MOD_SAMPLE] = (kmodlocal_t*)mod;
 	}
 }
 

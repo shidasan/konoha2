@@ -3125,7 +3125,7 @@ static kTerm *new_TermCID(CTX, kcid_t cid)
 {
 	kTerm *tk = new_(Term);
 	TT_(tk) = TT_CID;
-	tk->uline = kcodemod->uline;
+	tk->uline = ctxcode->uline;
 	(tk)->cid = cid;
 	return tk;
 }
@@ -3622,7 +3622,7 @@ static int/*hasRETURN*/ StmtITR_typing(CTX, kStmtExpr *stmt, int needsRETURN)
 	DBG_ASSERT(IS_StmtExpr(stmtITR));
 	while(stmtITR != NULL) {
 		kTerm *tkRES;
-		kcodemod->uline = stmtITR->uline;
+		ctxcode->uline = stmtITR->uline;
 		Stmt_setESPIDX(_ctx, stmtITR);
 		tkRES = Stmt_typing(_ctx, stmtITR, needs);
 		if(TT_(tkRES) == TT_ERR) {
@@ -4646,7 +4646,7 @@ static kTerm* CLASS_typing(CTX, kStmtExpr *stmt)
 	if(DP(stmt)->size == 5) {
 		kStmtExpr *stmtFIELD = stmtNN(stmt, 4/*instmt*/);
 		while(stmtFIELD != NULL) {
-			kcodemod->uline = stmtFIELD->uline;
+			ctxcode->uline = stmtFIELD->uline;
 			if(STT_(stmtFIELD) == STT_DECLFIELD) {
 				if(!isAllowedNewField) {
 					return ERROR_UnableToAdd(_ctx, this_cid, "field");
@@ -4665,7 +4665,7 @@ static kTerm* CLASS_typing(CTX, kStmtExpr *stmt)
 		kStmtExpr *stmtFIELD = stmtNN(stmt, 4/*instmt*/);
 		while(stmtFIELD != NULL) {
 			tkRES = NULL;
-			kcodemod->uline = stmtFIELD->uline;
+			ctxcode->uline = stmtFIELD->uline;
 			switch(STT_(stmtFIELD)) {
 				CASE_STMT(METHOD, stmtFIELD);
 				CASE_STMT(FORMAT, stmtFIELD);
@@ -4875,7 +4875,7 @@ void SCRIPT_typing(CTX, kStmtExpr *stmt)
 	if(DP(_ctx->gma)->gcapacity == 0) {
 		GammaBuilder_expand(_ctx, ctx->gma, 8/*init*/);
 	}
-	kcodemod->uline = stmt->uline;
+	ctxcode->uline = stmt->uline;
 	DP(_ctx->gma)->this_cid = O_cid(_ctx->gma->scr);
 	KSETv(DP(_ctx->gma)->mtd, K_NULL);
 	switch(STT_(stmt)) {
@@ -4996,7 +4996,7 @@ static void CLASS_asm(CTX, kStmtExpr *stmt)
 	kStmtExpr *stmtFIELD = stmtNN(stmt, 4/*instmt*/);
 	DP(kc)->this_cid = this_cid;
 	while(stmtFIELD != NULL) {
-		kcodemod->uline = stmtFIELD->uline;
+		ctxcode->uline = stmtFIELD->uline;
 		if(STT_(stmtFIELD) == STT_METHOD) {
 			METHOD_asm(_ctx, stmtFIELD);
 		}

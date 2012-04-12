@@ -402,7 +402,7 @@ static KMETHOD UndefinedStmtParseExpr(CTX, ksfp_t *sfp _RIX)
 
 static kExpr *ParseExpr(CTX, ksyntax_t *syn, kStmt *stmt, kArray *tls, int s, int c, int e)
 {
-	kMethod *mtd = (syn == NULL || syn->StmtParseExpr == NULL) ? kevalshare->UndefinedStmtParseExpr : syn->StmtParseExpr;
+	kMethod *mtd = (syn == NULL || syn->StmtParseExpr == NULL) ? kmodsugar->UndefinedStmtParseExpr : syn->StmtParseExpr;
 	BEGIN_LOCAL(lsfp, 10);
 	KSETv(lsfp[K_CALLDELTA+0].o, (kObject*)stmt);
 	lsfp[K_CALLDELTA+0].ndata = (uintptr_t)syn;  // quick access

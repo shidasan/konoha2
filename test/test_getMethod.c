@@ -55,8 +55,8 @@ void init_test(CTX)
         DF_(0), DF_(Dummy_f),     DT_(Int), DF_("Dummy"), "f", DF_(0),
         DEND
     };
-    kevalshare->h.setup(_ctx, (kmodshare_t*)kevalshare);
-    _ctx->lib2->KloadMethodData(_ctx, kevalshare->rootns,
+    kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar);
+    _ctx->lib2->KloadMethodData(_ctx, kmodsugar->rootns,
             (const char **)methoddata);
 }
 
@@ -68,19 +68,19 @@ void test_getMethod(CTX)
     mn_g = ksymbol("g", 127, FN_NEWID, SYMPOL_METHOD);
     mn_h = ksymbol("h", 127, FN_NEWID, SYMPOL_METHOD);
 
-    mtd = NameSpace_getMethodNULL(_ctx, kevalshare->rootns,
+    mtd = NameSpace_getMethodNULL(_ctx, kmodsugar->rootns,
             ct_dummy->cid, mn_f);
     fprintf(stderr, "mtd=%p, mtd->cid=%d, mtd->mn=%d\n",
             mtd, mtd->cid, mtd->mn);
     assert(mtd != NULL && mtd->cid == ct_dummy->cid && mtd->mn == mn_f);
 
-    mtd = NameSpace_getMethodNULL(_ctx, kevalshare->rootns,
+    mtd = NameSpace_getMethodNULL(_ctx, kmodsugar->rootns,
             ct_dummybase->cid, mn_g);
     fprintf(stderr, "mtd=%p, mtd->cid=%d, mtd->mn=%d\n",
             mtd, mtd->cid, mtd->mn);
     assert(mtd != NULL && mtd->cid == ct_dummybase->cid && mtd->mn == mn_g);
 
-    mtd = NameSpace_getMethodNULL(_ctx, kevalshare->rootns,
+    mtd = NameSpace_getMethodNULL(_ctx, kmodsugar->rootns,
             ct_dummybase->cid, mn_h);
     fprintf(stderr, "mtd=%p\n", mtd);
     assert(mtd == NULL);

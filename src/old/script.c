@@ -867,7 +867,7 @@ static void StmtITR_eval(CTX, kStmtExpr *stmtITR)
 			KNH_FINALv(_ctx, DP(stmt)->nextNULL);
 			DP(stmt)->nextNULL = NULL;
 		}
-		kcodemod->uline = stmt->uline;
+		ctxcode->uline = stmt->uline;
 		switch(STT_(stmt)) {
 		case STT_NAMESPACE:
 		{
@@ -925,7 +925,7 @@ static void StmtITR_eval(CTX, kStmtExpr *stmtITR)
 
 	L_RETURN:;
 	END_LOCAL(_ctx, lsfp);
-	kcodemod->uline = 0;
+	ctxcode->uline = 0;
 }
 
 #ifdef K_USING_SUGAR

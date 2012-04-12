@@ -604,7 +604,7 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 
 static void parseSyntaxRule(CTX, const char *rule, kline_t uline, kArray *a)
 {
-	kArray *tls = kevalshare->aBuffer;
+	kArray *tls = kmodsugar->aBuffer;
 	size_t pos = kArray_size(tls);
 	ktokenize(_ctx, rule, uline, _TOPLEVEL, tls);
 	makeSyntaxTree(_ctx, tls, pos, kArray_size(tls), a);

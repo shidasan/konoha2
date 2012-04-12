@@ -9,7 +9,7 @@ typedef struct ksampleshare_t {
 } ksampleshare_t;
 
 typedef struct {
-	kmod_t h;
+	kmodlocal_t h;
 	struct kArray *array;
 } ksamplemod_t;
 

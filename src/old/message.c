@@ -79,12 +79,12 @@ static kString *GammaBuilder_vperror(CTX, int pe, const char *fmt, va_list ap)
 	if(pe != KC_DEBUG && (CTX_isInteractive(_ctx) || knh_isCompileOnly(_ctx))) {
 		isPRINT = 1;
 	}
-	if(GammaBuilder_isQuiet(_ctx->gma) || kcodemod->uline == 0) {
+	if(GammaBuilder_isQuiet(_ctx->gma) || ctxcode->uline == 0) {
 		isPRINT = 0;
 	}
 	if(isPRINT == 1) {
 		CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
-		knh_write_uline(_ctx, cwb->w, kcodemod->uline);
+		knh_write_uline(_ctx, cwb->w, ctxcode->uline);
 		knh_write_ascii(_ctx, cwb->w, KC__(pe));
 		knh_vprintf(_ctx, cwb->w, fmt, ap);
 		msg = CWB_newString(_ctx, cwb, SPOL_POOLNEVER);
@@ -118,7 +118,7 @@ static kTerm *kTermoERR(CTX, kTerm *tk, const char *fmt, ...)
 		kString *msg;
 		va_list ap;
 		va_start(ap, fmt);
-		kcodemod->uline = tk->uline;
+		ctxcode->uline = tk->uline;
 		msg = GammaBuilder_vperror(_ctx, KC_ERR, fmt, ap);
 		va_end(ap);
 		TT_(tk) = TT_ERR;
@@ -322,10 +322,10 @@ void WARN_Overflow(CTX, const char *floatorint, kbytes_t t)
 }
 void WARN_Unused(CTX, kTerm *tk, ksymbol_t fn)
 {
-	kline_t uline = kcodemod->uline;
-	kcodemod->uline = tk->uline;
+	kline_t uline = ctxcode->uline;
+	ctxcode->uline = tk->uline;
 	GammaBuilder_perror(_ctx, KC_DWARN, _("unused %N"), fn);
-	kcodemod->uline = uline;
+	ctxcode->uline = uline;
 }
 kTerm* ERROR_AlreadyDefinedType(CTX, ksymbol_t fn, ktype_t type)
 {

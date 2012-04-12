@@ -58,7 +58,7 @@
 //} kregexshare_t;
 //
 //typedef struct {
-//	kmod_t h;
+//	kmodlocal_t h;
 //} kregexmod_t;
 //
 //

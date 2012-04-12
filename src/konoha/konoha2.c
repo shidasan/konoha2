@@ -181,7 +181,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		MODLOG_init(_ctx, newctx);
 		MODGCSHARE_init(_ctx, newctx);
 		kshare_init(_ctx, newctx);
-		newctx->modshare = (kmodshare_t**)KNH_ZMALLOC(sizeof(kmodshare_t*) * K_PKGMATRIX);
+		newctx->modshare = (kmodshare_t**)KNH_ZMALLOC(sizeof(kmodshare_t*) * MOD_MAX);
 	}
 	else {   // others take ctx as its parent
 		newctx = (kcontext_t*)KNH_ZMALLOC(sizeof(kcontext_t));
@@ -193,8 +193,8 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 	}
 	//MODGC_init(_ctx, newctx);
 	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
-	newctx->mod = (kmod_t**)KNH_ZMALLOC(sizeof(kmod_t*) * K_PKGMATRIX);
-//	for(i = 0; i < K_PKGMATRIX; i++) {
+	newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*) * MOD_MAX);
+//	for(i = 0; i < MOD_MAX; i++) {
 //		if(newctx->modshare[i] != NULL && newctx->modshare[i]->new_local != NULL) {
 //			newctx->mod[i] = newctx->modshare[i]->new_local((CTX_t)newctx, newctx->modshare[i]);
 //		}
@@ -213,7 +213,7 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 	size_t i;
 	if(IS_ROOTCTX(_ctx)) {
 		kshare_reftrace(_ctx, ctx);
-		for(i = 0; i < K_PKGMATRIX; i++) {
+		for(i = 0; i < MOD_MAX; i++) {
 			kmodshare_t *p = ctx->modshare[i];
 			if(p != NULL && p->reftrace != NULL) {
 				p->reftrace(_ctx, p);
@@ -221,8 +221,8 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 		}
 	}
 	kstack_reftrace(_ctx, ctx);
-	for(i = 0; i < K_PKGMATRIX; i++) {
-		kmod_t *p = ctx->mod[i];
+	for(i = 0; i < MOD_MAX; i++) {
+		kmodlocal_t *p = ctx->modlocal[i];
 		if(p != NULL && p->reftrace != NULL) {
 			p->reftrace(_ctx, p);
 		}
@@ -237,23 +237,23 @@ void kSystem_reftraceAll(CTX)
 static void kcontext_free(CTX, kcontext_t *ctx)
 {
 	size_t i;
-	for(i = 0; i < K_PKGMATRIX; i++) {
-		kmod_t *p = ctx->mod[i];
+	for(i = 0; i < MOD_MAX; i++) {
+		kmodlocal_t *p = ctx->modlocal[i];
 		if(p != NULL && p->reftrace != NULL) {
 			p->free(_ctx, p);
 		}
 	}
-	KNH_FREE(_ctx->mod, sizeof(kmod_t*) * K_PKGMATRIX);
+	KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 	kstack_free(_ctx, ctx);
 	if(IS_ROOTCTX(_ctx)){  // share
 		klib2_t *klib2 = (klib2_t*)ctx - 1;
-		for(i = 0; i < K_PKGMATRIX; i++) {
+		for(i = 0; i < MOD_MAX; i++) {
 			kmodshare_t *p = ctx->modshare[i];
 			if(p != NULL && p->free != NULL) {
 				p->free(_ctx, p);
 			}
 		}
-		KNH_FREE(_ctx->modshare, sizeof(kmodshare_t*) * K_PKGMATRIX);
+		KNH_FREE(_ctx->modshare, sizeof(kmodshare_t*) * MOD_MAX);
 		MODGCSHARE_gc_destroy(_ctx, ctx);
 		kshare_free(_ctx, ctx);
 		MODGCSHARE_free(_ctx, ctx);

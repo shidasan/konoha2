@@ -300,7 +300,7 @@ static void show_version(CTX)
 	fprintf(stdout, "Konoha 2.0-alpha (Miyajima) (%d, %s)\n", K_REVISION, __DATE__);
 	fprintf(stdout, "[gcc %s]\n", __VERSION__);
 	fprintf(stdout, "options:");
-	for(i = 0; i < K_PKGMATRIX; i++) {
+	for(i = 0; i < MOD_MAX; i++) {
 		if(_ctx->modshare[i] != NULL) {
 			fprintf(stdout, " %s", _ctx->modshare[i]->name);
 		}

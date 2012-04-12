@@ -148,7 +148,7 @@ static void KonohaSpace_mergeConstData(CTX, struct _kKonohaSpace *ks, kvs_t *kvs
 	}
 	else {
 		kwb_t wb;
-		kwb_init(&(kevalmod->cwb), &wb);
+		kwb_init(&(ctxsugar->cwb), &wb);
 		for(i = 0; i < nitems; i++) {
 			if(kvs[i].ty == TY_TYPE) continue;  // class table
 			if(checkConflictedConst(_ctx, ks, kvs+i, pline)) continue;
@@ -605,7 +605,6 @@ static void Expr_init(CTX, kObject *o, void *conf)
 	expr->build      =   TEXPR_UNTYPED;
 	expr->ty         =   TY_var;
 	expr->index      =   0;
-	expr->xindex     =   0;
 	expr->dataNUL    = NULL;
 	expr->tkNUL      = NULL;
 }
@@ -728,14 +727,13 @@ static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 	return expr;
 }
 
-static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, int index, int xindex, kGamma *gma)
+static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, uintptr_t index, kGamma *gma)
 {
 	if(expr == NULL) expr = new_W(Expr, 0);
 	W(kExpr, expr);
 	Wexpr->build = build;
 	Wexpr->ty = ty;
 	Wexpr->index = index;
-	Wexpr->xindex = xindex;
 	if(build == TEXPR_BLOCKLOCAL_) {
 		DBG_P("index=%d, expr %p", kArray_size(gma->genv->lvarlst), Wexpr);
 		kArray_add(gma->genv->lvarlst, Wexpr);
@@ -918,7 +916,7 @@ static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
 static void Block_init(CTX, kObject *o, void *conf)
 {
 	struct _kBlock *bk = (struct _kBlock*)o;
-	kKonohaSpace *ks = (conf != NULL) ? (kKonohaSpace*)conf : kevalshare->rootks;
+	kKonohaSpace *ks = (conf != NULL) ? (kKonohaSpace*)conf : kmodsugar->rootks;
 	bk->parentNULL = NULL;
 	KINITv(bk->ks, ks);
 	KINITv(bk->blockS, new_(Array, 0));

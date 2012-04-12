@@ -532,6 +532,7 @@ static const size_t BM_SIZE[] = {
 
 /* ------------------------------------------------------------------------ */
 /* prototype declaration */
+
 static kObject *bm_malloc_internal(CTX, HeapManager *mng, size_t n);
 void *bm_malloc(CTX, size_t n);
 void *bm_realloc(CTX, void *ptr, size_t os, size_t ns);
@@ -744,6 +745,7 @@ void MODGC_check_malloced_size(void)
 }
 
 /* ------------------------------------------------------------------------ */
+
 void MODGCSHARE_init(CTX, kcontext_t *ctx)
 {
 	(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
@@ -1937,6 +1939,8 @@ void MODGC_gc_invoke(CTX, int needsCStackTrace)
 	_ctx->memshare->gcTime += (_ctx->memshare->latestGcTime - start_time);
 	_ctx->memshare->collectedObject = 0;
 }
+
+/* ------------------------------------------------------------------------ */
 
 #ifdef __cplusplus
 }

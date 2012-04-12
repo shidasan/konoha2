@@ -59,7 +59,7 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 {
 	const char *msg = T_emsg(_ctx, pe);
 	if(msg != NULL) {
-		kevalmod_t *base = kevalmod;
+		ctxsugar_t *base = ctxsugar;
 		kwb_t wb;
 		kwb_init(&base->cwb, &wb);
 		if(uline > 0) {
@@ -112,12 +112,12 @@ static kExpr* Token_p(CTX, kToken *tk, int pe, const char *fmt, ...)
 
 static int Kerrno(CTX)
 {
-	return kArray_size(kevalmod->errors);
+	return kArray_size(ctxsugar->errors);
 }
 
 static kString* Kstrerror(CTX, int eno)
 {
-	kevalmod_t *base = kevalmod;
+	ctxsugar_t *base = ctxsugar;
 	size_t i;
 	for(i = eno; i < kArray_size(base->errors); i++) {
 		kString *emsg = base->errors->strings[i];
