@@ -276,8 +276,8 @@ struct _kObject** KONOHA_reftail(CTX, size_t size)
 {
 	kstack_t *stack = _ctx->stack;
 	size_t ref_size = stack->reftail - stack->ref.refhead;
-	if((stack->ref.bytemax * sizeof(kObject*)) < size + ref_size) {
-		KARRAY_EXPAND(&stack->ref, (size + ref_size * sizeof(kObject*)));
+	if(stack->ref.bytemax/sizeof(void*) < size + ref_size) {
+		KARRAY_EXPAND(&stack->ref, (size + ref_size) * sizeof(kObject*));
 		stack->reftail = stack->ref.refhead + ref_size;
 	}
 	struct _kObject **reftail = stack->reftail;
