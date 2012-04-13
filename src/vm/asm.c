@@ -40,7 +40,7 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 /* kcode */
 
-int verbose_code = 1;  // global variable
+int verbose_code = 0;  // global variable
 
 #define BBSIZE(BB)  ((BB)->op.bytesize / sizeof(kopl_t))
 #define BBOP(BB)     (BB)->op.opl

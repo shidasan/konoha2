@@ -350,8 +350,9 @@ static const char *T_ERR(int level)
 static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
 	if(level == DEBUG_ && !konoha_debug) return;
-	va_list ap;
+	va_list ap, ap2;
 	va_start(ap , fmt);
+	va_copy(ap2, ap);
 	fflush(stdlog);
 	if(pline != 0) {
 		const char *file = T_file(pline);
@@ -364,9 +365,10 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	}
 	vfprintf(stdout, fmt, ap);
 	fprintf(stdout, "\n");
-	vfprintf(stdlog, fmt, ap);
+	vfprintf(stdlog, fmt, ap2);
 	fprintf(stdlog, "\n");
 	va_end(ap);
+	va_end(ap2);
 	if(level == CRIT_) {
 		kraise(0);
 	}
