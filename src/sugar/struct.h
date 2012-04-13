@@ -255,8 +255,8 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 		else {
 			syn->kw = kw;
 			syn->ty  = TY_unknown;
-			syn->op1 = 0; /*MN_NONAME;*/
-			syn->op2 = 0; /*MN_NONAME;*/
+			syn->op1 = 0;
+			syn->op2 = 0;
 		}
 		//syn->parent = parent;
 		return syn;

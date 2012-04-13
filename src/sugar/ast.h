@@ -442,8 +442,9 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
 		kToken *tk = tls->toks[i];
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
+		//DBG_P("i=%d, kw=%d,%s, syn=%p, op2=%d", i, tk->kw, T_kw(tk->kw), syn, syn->op2);
 		if(syn != NULL && syn->op2 != 0) {
-			//DBG_P("operator: %s priotiry=%d", Pkeyword(syn->kw), syn->priority);
+			//DBG_P("operator: %s priotiry=%d", T_kw(syn->kw), syn->priority);
 			if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {
 				prif = syn->priority;
 				idx = i;

@@ -705,6 +705,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	FILEID_("(konoha.c)");
 	PN_("konoha");    // PN_konoha
 	PN_("sugar");     // PKG_sugar
+	FN_("");          // MN_
 	initStructData(_ctx);
 }
 
