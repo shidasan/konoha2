@@ -1,0 +1,49 @@
+ - (string.k:4) false
+ - (string.k:5) true
+ - (string.k:6) false
+ - (string.k:7) false
+ - (string.k:8) false
+ - (string.k:9) false
+ - (string.k:12) true
+ - (string.k:13) true
+ - (string.k:14) false
+ - (string.k:15) true
+ - (string.k:16) true
+ - (string.k:19) true
+ - (string.k:20) true
+ - (string.k:21) false
+ - (string.k:22) true
+ - (string.k:23) true
+ - (string.k:26) 0
+ - (string.k:27) 1
+ - (string.k:28) -1
+ - (string.k:29) 3
+ - (string.k:30) -1
+ - (string.k:31) -1
+ - (string.k:34) 0
+ - (string.k:35) 2
+ - (string.k:36) -1
+ - (string.k:37) 9
+ - (string.k:38) -1
+ - (string.k:39) -1
+ - (string.k:42) 4
+ - (string.k:43) 0
+ - (string.k:46) g
+ - (string.k:47) e
+ - (string.k:48) 
+ - (string.k:49) 
+ - (string.k:50) 
+ - (string.k:53) foo
+ - (string.k:54) bar
+ - (string.k:55) bar
+ - (string.k:56) oobar
+ - (string.k:57) 
+ - (string.k:58) ar
+ - (string.k:59) obar
+ - (string.k:62) FOOBAR123
+ - (string.k:62) foobar123
+ - (string.k:68) foo \t\n bar
+ - (string.k:69) 
+ - (string.k:72) foobar
+ - (string.k:73) foo
+ - (string.k:74) foo
