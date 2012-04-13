@@ -105,6 +105,7 @@ int main(int argc, const char *argv[])
 //    MODGC_check_malloced_size();
 //    fclose(stdlog);
 //    return check_result(result_file, output_file);
+    return 0;
 }
 
 #ifdef __cplusplus

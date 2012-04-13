@@ -20,7 +20,7 @@ static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "%f", sfp[pos].fvalue);
 }
 
-static void kfloatshare_setup(CTX, struct kmodshare_t *def)
+static void kfloatshare_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 }
 

@@ -727,7 +727,7 @@ static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 	return expr;
 }
 
-static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, uintptr_t index, kGamma *gma)
+static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, intptr_t index, kGamma *gma)
 {
 	if(expr == NULL) expr = new_W(Expr, 0);
 	W(kExpr, expr);
