@@ -1049,17 +1049,17 @@ static KMETHOD k_MPI_File_iwrite_at(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(MPI_File_iwrite_at(p0, p1, p2, p3, p4, p5));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-	RETURNi_(MPI_File_(p0, p1, p2, p3, p4));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_File_(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
+//static KMETHOD k_MPI_File_(CTX, ksfp_t *sfp _RIX)
+//{
+//	MPI_File p0 = (MPI_File)sfp[0].p;
+//	void* p1 = (void*)sfp[1].p;
+//	int p2 = sfp[2].ivalue;
+//	MPI_Datatype p3 = sfp[3].ivalue;
+//	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
+//	RETURNi_(MPI_File_(p0, p1, p2, p3, p4));
+//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
@@ -2372,23 +2372,23 @@ static KMETHOD k_MPI_Startall(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(MPI_Startall(p0, p1));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
-static KMETHOD k_MPI_Status_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint* p0 = (MPI_Fint*)sfp[0].p;
-	MPI_Status* p1 = (MPI_Status*)sfp[1].p;
-	RETURNi_(MPI_Status_f2c(p0, p1));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
+//static KMETHOD k_MPI_Status_f2c(CTX, ksfp_t *sfp _RIX)
+//{
+//	MPI_Fint* p0 = (MPI_Fint*)sfp[0].p;
+//	MPI_Status* p1 = (MPI_Status*)sfp[1].p;
+//	RETURNi_(MPI_Status_f2c(p0, p1));
+//}
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
-static KMETHOD k_MPI_Status_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	MPI_Fint* p1 = (MPI_Fint*)sfp[1].p;
-	RETURNi_(MPI_Status_c2f(p0, p1));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
+//static KMETHOD k_MPI_Status_c2f(CTX, ksfp_t *sfp _RIX)
+//{
+//	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
+//	MPI_Fint* p1 = (MPI_Fint*)sfp[1].p;
+//	RETURNi_(MPI_Status_c2f(p0, p1));
+//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Status_set_cancelled(MPI_Status *status, int flag);
@@ -2507,34 +2507,34 @@ static KMETHOD k_MPI_Type_create_darray(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(MPI_Type_create_darray(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_f90_complex(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-	RETURNi_(MPI_Type_create_f90_complex(p0, p1, p2));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
+//static KMETHOD k_MPI_Type_create_f90_complex(CTX, ksfp_t *sfp _RIX)
+//{
+//	int p0 = sfp[0].ivalue;
+//	int p1 = sfp[1].ivalue;
+//	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
+//	RETURNi_(MPI_Type_create_f90_complex(p0, p1, p2));
+//}
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_f90_integer(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Datatype* p1 = (MPI_Datatype*)sfp[1].p;
-	RETURNi_(MPI_Type_create_f90_integer(p0, p1));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
+//static KMETHOD k_MPI_Type_create_f90_integer(CTX, ksfp_t *sfp _RIX)
+//{
+//	int p0 = sfp[0].ivalue;
+//	MPI_Datatype* p1 = (MPI_Datatype*)sfp[1].p;
+//	RETURNi_(MPI_Type_create_f90_integer(p0, p1));
+//}
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_f90_real(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-	RETURNi_(MPI_Type_create_f90_real(p0, p1, p2));
-}
+///* ------------------------------------------------------------------------ */
+////## method int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
+//static KMETHOD k_MPI_Type_create_f90_real(CTX, ksfp_t *sfp _RIX)
+//{
+//	int p0 = sfp[0].ivalue;
+//	int p1 = sfp[1].ivalue;
+//	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
+//	RETURNi_(MPI_Type_create_f90_real(p0, p1, p2));
+//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Type_create_hindexed(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
@@ -3112,7 +3112,7 @@ static KMETHOD k_MPI_Win_wait(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int init = 0;
 	MPI_Initialized(&init);
@@ -3121,10 +3121,10 @@ static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const cha
 		//MPI_Comm_create_errhandler(knh_MPI_errhandler, &errfn);
 		MPI_Errhandler_set(MPI_COMM_WORLD, errfn);
 	} else {
-		KNH_NOTE("process is not initialized for MPI: MPI functions are NOT available");
+		DBG_P("process is not initialized for MPI: MPI functions are NOT available");
 	}
-	knh_MPI_initArrayFuncData(_ctx);
-	knh_MPI_initArrayPrintFunc(_ctx);
+	//knh_MPI_initArrayFuncData(_ctx);
+	//knh_MPI_initArrayPrintFunc(_ctx);
 
 	static KDEFINE_CLASS MPIDef = {
 		"MPI"/*structname*/,
@@ -3250,7 +3250,7 @@ static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const cha
 		_Public|_Static, _F(k_MPI_File_iread_shared), TY_Int, TY_MPI, MN_("MPI_File_iread_shared"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
 		_Public|_Static, _F(k_MPI_File_iwrite), TY_Int, TY_MPI, MN_("MPI_File_iwrite"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
 		_Public|_Static, _F(k_MPI_File_iwrite_at), TY_Int, TY_MPI, MN_("MPI_File_iwrite_at"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_), TY_Int, TY_MPI, MN_("MPI_File_"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
+		//_Public|_Static, _F(k_MPI_File_), TY_Int, TY_MPI, MN_("MPI_File_"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
 		_Public|_Static, _F(k_MPI_File_open), TY_Int, TY_MPI, MN_("MPI_File_open"), 5, TY_Int, MN_("comm"), TY_Array, MN_("filename"), TY_Int, MN_("amode"), TY_Int, MN_("info"), TY_Array, MN_("fh"), 
 		_Public|_Static, _F(k_MPI_File_preallocate), TY_Int, TY_MPI, MN_("MPI_File_preallocate"), 2, TY_Object, MN_("fh"), TY_Int, MN_("size"), 
 		_Public|_Static, _F(k_MPI_File_read), TY_Int, TY_MPI, MN_("MPI_File_read"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
@@ -3369,8 +3369,8 @@ static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const cha
 		_Public|_Static, _F(k_MPI_Ssend_init), TY_Int, TY_MPI, MN_("MPI_Ssend_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
 		_Public|_Static, _F(k_MPI_Start), TY_Int, TY_MPI, MN_("MPI_Start"), 1, TY_Array, MN_("request"), 
 		_Public|_Static, _F(k_MPI_Startall), TY_Int, TY_MPI, MN_("MPI_Startall"), 2, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), 
-		_Public|_Static, _F(k_MPI_Status_f2c), TY_Int, TY_MPI, MN_("MPI_Status_f2c"), 2, TY_Array, MN_("f_status"), TY_Array, MN_("c_status"), 
-		_Public|_Static, _F(k_MPI_Status_c2f), TY_Int, TY_MPI, MN_("MPI_Status_c2f"), 2, TY_Array, MN_("c_status"), TY_Array, MN_("f_status"), 
+		//_Public|_Static, _F(k_MPI_Status_f2c), TY_Int, TY_MPI, MN_("MPI_Status_f2c"), 2, TY_Array, MN_("f_status"), TY_Array, MN_("c_status"), 
+		//_Public|_Static, _F(k_MPI_Status_c2f), TY_Int, TY_MPI, MN_("MPI_Status_c2f"), 2, TY_Array, MN_("c_status"), TY_Array, MN_("f_status"), 
 		_Public|_Static, _F(k_MPI_Status_set_cancelled), TY_Int, TY_MPI, MN_("MPI_Status_set_cancelled"), 2, TY_Array, MN_("status"), TY_Int, MN_("flag"), 
 		_Public|_Static, _F(k_MPI_Status_set_elements), TY_Int, TY_MPI, MN_("MPI_Status_set_elements"), 3, TY_Array, MN_("status"), TY_Int, MN_("datatype"), TY_Int, MN_("count"), 
 		_Public|_Static, _F(k_MPI_Test), TY_Int, TY_MPI, MN_("MPI_Test"), 3, TY_Array, MN_("request"), TY_Array, MN_("flag"), TY_Array, MN_("status"), 
@@ -3382,9 +3382,9 @@ static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const cha
 		_Public|_Static, _F(k_MPI_Type_commit), TY_Int, TY_MPI, MN_("MPI_Type_commit"), 1, TY_Array, MN_("datatype"), 
 		_Public|_Static, _F(k_MPI_Type_contiguous), TY_Int, TY_MPI, MN_("MPI_Type_contiguous"), 3, TY_Int, MN_("count"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
 		_Public|_Static, _F(k_MPI_Type_create_darray), TY_Int, TY_MPI, MN_("MPI_Type_create_darray"), 10, TY_Int, MN_("size"), TY_Int, MN_("rank"), TY_Int, MN_("ndims"), TY_Array, MN_("array_of_gsizes"), TY_Array, MN_("array_of_distribs"), TY_Array, MN_("array_of_dargs"), TY_Array, MN_("array_of_psizes"), TY_Int, MN_("order"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_f90_complex), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_complex"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_f90_integer), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_integer"), 2, TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_f90_real), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_real"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
+		//_Public|_Static, _F(k_MPI_Type_create_f90_complex), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_complex"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
+		//_Public|_Static, _F(k_MPI_Type_create_f90_integer), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_integer"), 2, TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
+		//_Public|_Static, _F(k_MPI_Type_create_f90_real), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_real"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
 		_Public|_Static, _F(k_MPI_Type_create_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_create_hindexed"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
 		_Public|_Static, _F(k_MPI_Type_create_hvector), TY_Int, TY_MPI, MN_("MPI_Type_create_hvector"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Int, MN_("stride"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
 		_Public|_Static, _F(k_MPI_Type_create_indexed_block), TY_Int, TY_MPI, MN_("MPI_Type_create_indexed_block"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
@@ -3447,17 +3447,17 @@ static kbool_t mpi_initPackage(CTX, struct kKonohaSpace *ks, int argc, const cha
 	return true;
 }
 
-static kbool_t mpi_setupPackage(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t mpi_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t mpi_initKonohaSpace(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t mpi_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t mpi_setupLingo(CTX, struct kKonohaSpace *ks, kline_t pline)
+static kbool_t mpi_setupLingo(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
