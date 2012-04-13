@@ -91,21 +91,35 @@
 #include <konoha2/sugar.h>
 #include <konoha2/float.h>
 
+struct kRawPtr {
+	kObjectHeader h;
+	void *rawptr;
+};
+
 namespace konoha {
 template <class T>
 inline T object_cast(kObject *po)
 {
-	return static_cast<T>(po->rawptr);
+	struct _kObject *o_ = const_cast<struct _kObject*>(po);
+	kRawPtr *o = reinterpret_cast<kRawPtr*>(o_);
+	return static_cast<T>(o->rawptr);
 }
 
 template <class T>
 inline void convert_array(std::vector<T> &vec, kArray *a)
 {
-	size_t size = a->size;
+	size_t size = a->bytesize;
 	for (size_t i=0; i < size; i++) {
-		T v = konoha::object_cast<T>(a->ptrs[i]);
+		T v = konoha::object_cast<T>(a->list[i]);
 		vec.push_back(v);
 	}
+}
+
+inline void SetRawPtr(kObject *po, void *rawptr)
+{
+	struct _kObject *o_ = const_cast<struct _kObject*>(po);
+	kRawPtr *o = reinterpret_cast<kRawPtr*>(o_);
+	o->rawptr = rawptr;
 }
 }
 
@@ -150,11 +164,11 @@ extern "C" {
 
 static void Type_init(CTX _UNUSED_, kObject *po, void *conf)
 {
-	po->rawptr = conf;
+	konoha::SetRawPtr(po, conf);
 }
 static void Type_free(CTX _UNUSED_, kObject *po)
 {
-	po->rawptr = NULL;
+	konoha::SetRawPtr(po, NULL);
 }
 
 static inline kObject *new_ReturnCppObject(CTX, ksfp_t *sfp, void *ptr _RIX)
@@ -2058,7 +2072,9 @@ KMETHOD Module_createExecutionEngine(CTX, ksfp_t *sfp _RIX)
 
 static int BasicBlock_compareTo(kObject *p1, kObject *p2)
 {
-	return (p1->rawptr != p2->rawptr);
+	BasicBlock *bb1 = konoha::object_cast<BasicBlock*>(p1);
+	BasicBlock *bb2 = konoha::object_cast<BasicBlock*>(p2);
+	return (bb1 != bb2);
 }
 
 //void defBasicBlock(CTX _UNUSED_, kcid_t cid _UNUSED_, kclassdef_t *cdef)
@@ -2268,12 +2284,12 @@ KMETHOD GlobalVariable_new(CTX, ksfp_t *sfp _RIX)
 #ifndef USE_LLVM_2_9
 static void PassManagerBuilder_ptr_init(CTX _UNUSED_, kObject *po, void *conf)
 {
-	po->rawptr = conf;
+	konoha::SetRawPtr(po, conf);
 }
 
 static void PassManagerBuilder_ptr_free(CTX _UNUSED_, kObject *po)
 {
-	PassManagerBuilder *o = static_cast<PassManagerBuilder *>(po->rawptr);
+	PassManagerBuilder *o = konoha::object_cast<PassManagerBuilder *>(po);
 	delete o;
 }
 
@@ -2296,12 +2312,12 @@ KMETHOD PassManagerBuilder_populateModulePassManager(CTX _UNUSED_, ksfp_t *sfp _
 
 static void PassManager_ptr_init(CTX _UNUSED_, kObject *po, void *conf)
 {
-	po->rawptr = conf;
+	konoha::SetRawPtr(po, conf);
 }
 
 static void PassManager_ptr_free(CTX _UNUSED_, kObject *po)
 {
-	PassManager *o = static_cast<PassManager *>(po->rawptr);
+	PassManager *o = konoha::object_cast<PassManager *>(po);
 	delete o;
 }
 
@@ -2356,12 +2372,12 @@ KMETHOD PassManager_addModulePass(CTX _UNUSED_, ksfp_t *sfp _RIX)
 
 static void FunctionPassManager_ptr_init(CTX _UNUSED_, kObject *po, void *conf)
 {
-	po->rawptr = conf;
+	konoha::SetRawPtr(po, conf);
 }
 
 static void FunctionPassManager_ptr_free(CTX _UNUSED_, kObject *po)
 {
-	FunctionPassManager *o = static_cast<FunctionPassManager *>(po->rawptr);
+	FunctionPassManager *o = konoha::object_cast<FunctionPassManager *>(po);
 	delete o;
 }
 
@@ -2412,7 +2428,8 @@ KMETHOD Method_setFunction(CTX, ksfp_t *sfp _RIX)
 {
 	kMethod *mtd = (kMethod*) sfp[0].o;
 	kObject *po = sfp[1].p;
-	union anyptr { void *p; knh_Fmethod f;} ptr = {po->rawptr};
+	union anyptr { void *p; knh_Fmethod f;} ptr;
+	ptr.p = konoha::object_cast<void*>(po);
 	kMethod_setFunc(mtd, ptr.f);
 	RETURNvoid_();
 }

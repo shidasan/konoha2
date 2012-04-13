@@ -182,7 +182,7 @@ typedef enum {
 	TK_WHITESPACE,    //
 	TK_METANAME,
 	TK_MN,
-	AST_OPTIONAL,  // for syntax sugar
+	AST_OPTIONAL  // for syntax sugar
 //	// ast
 //	AST_TYPE,
 //	AST_EXPR,
