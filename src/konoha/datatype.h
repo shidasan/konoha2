@@ -381,18 +381,24 @@ static kString* new_String(CTX, const char *text, size_t len, int spol)
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->text = s->inline_text;
 		s->bytesize = len;
-		memcpy(s->ubuf, text, len);
-		s->buf[len] = '\0';
 		S_setTextSgm(s, 1);
+		if(text != NULL) {
+			DBG_ASSERT(!TFLAG_is(int, spol, SPOL_NOCOPY));
+			memcpy(s->ubuf, text, len);
+		}
+		s->buf[len] = '\0';
 	}
 	else {
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->bytesize = len;
 		s->buf = (char*)KNH_MALLOC(len+1);
-		memcpy(s->buf, text, len);
-		s->buf[len] = '\0';
 		S_setTextSgm(s, 0);
 		S_setMallocText(s, 1);
+		if(text != NULL) {
+			DBG_ASSERT(!TFLAG_is(int, spol, SPOL_NOCOPY));
+			memcpy(s->ubuf, text, len);
+		}
+		s->buf[len] = '\0';
 	}
 	if(TFLAG_is(int, spol, SPOL_ASCII)) {
 		S_setASCII(s, 1);
@@ -791,30 +797,32 @@ void kshare_free(CTX, kcontext_t *ctx)
 #include "methods.h"
 
 #define _Public kMethod_Public
-#define _Const kMethod_Const
+#define _Const  kMethod_Const
+#define _Immutable kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
 static void kshare_init_methods(CTX)
 {
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
-		_Public|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
-		_Public, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
-		_Public, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
-		_Public, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
-		_Public, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
-		_Public, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
-		_Public, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
-		_Public, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
-		_Public|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
-		_Public|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
-		_Public, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
+		_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
+		_Public|_Immutable, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
+		_Public|_Immutable, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
+		_Public|_Immutable, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
+		_Public|_Immutable, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
+		_Public|_Immutable|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
+		_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
+		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};
 	kloadMethodData(NULL, methoddata);

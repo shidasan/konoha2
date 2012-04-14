@@ -105,14 +105,16 @@ static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)
 	RETURNi_((kint_t)strtoll(S_text(sfp[0].s), NULL, 10));
 }
 
-////## @Const method String Boolean.toString();
-// sorry ide. it isn't necessary
-//static KMETHOD Boolean_toString(CTX, ksfp_t *sfp _RIX)
-//{
-//	kbool_t b = !!(sfp[0].bvalue);
-//	const char *s[] = {"false", "true"};
-//	RETURN_(new_kString(s[b], strlen(s[b]), SPOL_ASCII));
-//}
+//## @Const @Immutable method String String.opAdd(@Coercion String x);
+static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
+{
+	kString *lhs = sfp[0].s, *rhs = sfp[1].s;
+	int spol = (S_isASCII(lhs) && S_isASCII(rhs)) ? SPOL_ASCII : SPOL_UTF8;
+	kString *s = new_kString(NULL, S_size(lhs)+S_size(rhs), spol|SPOL_NOCOPY);
+	memcpy(s->buf, S_text(lhs), S_size(lhs));
+	memcpy(s->buf+S_size(lhs), S_text(rhs), S_size(rhs));
+	RETURN_(s);
+}
 
 //## method void System.p(@Coercion String msg);
 static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
