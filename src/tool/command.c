@@ -43,19 +43,24 @@ kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);
 // -------------------------------------------------------------------------
 // getopt
 
-static int verbose_flag     = 0;
 static int compileonly_flag = 0;
 static int interactive_flag = 0;
+
+extern int verbose_debug;
+extern int verbose_code;
+extern int verbose_sugar;
+extern int verbose_gc;
+
 static const char* startup_script = NULL;
 static const char* test_script    = NULL;
 static const char* builtin_test   = NULL;
 
 static struct option long_options[] = {
 	/* These options set a flag. */
-	{"verbose", no_argument, &verbose_flag, 1},
-	{"verbose:gc", no_argument, &verbose_flag, 1},
-	{"verbose:sugar", no_argument, &verbose_flag, 1},
-	{"verbose:vm", no_argument, &verbose_flag, 1},
+	{"verbose", no_argument,       &verbose_debug, 1},
+	{"verbose:gc",    no_argument, &verbose_gc, 1},
+	{"verbose:sugar", no_argument, &verbose_sugar, 1},
+	{"verbose:code",  no_argument, &verbose_code, 1},
 	{"interactive", no_argument,   0, 'i'},
 	{"typecheck",   no_argument,   0, 'c'},
 	{"start-with", required_argument, 0, 'S'},
@@ -68,7 +73,10 @@ static struct option long_options[] = {
 static int konoha_ginit(int argc, char **argv)
 {
 	if(getenv("KONOHA_DEBUG") != NULL) {
-		konoha_debug = 1;
+		verbose_debug = 1;
+		verbose_gc = 1;
+		verbose_sugar = 1;
+		verbose_code = 1;
 	}
 	while (1) {
 		int option_index = 0;
@@ -349,7 +357,7 @@ static const char *T_ERR(int level)
 
 static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
-	if(level == DEBUG_ && !konoha_debug) return;
+	if(level == DEBUG_ && !verbose_sugar) return;
 	va_list ap, ap2;
 	va_start(ap , fmt);
 	va_copy(ap2, ap);
@@ -397,7 +405,7 @@ static int check_result(FILE *fp0, FILE *fp1)
 
 static int konoha_test(const char *testname)
 {
-	konoha_debug = 0; // reduced error
+	verbose_sugar = 0; // reduced error
 	konoha_t konoha = konoha_open();
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);

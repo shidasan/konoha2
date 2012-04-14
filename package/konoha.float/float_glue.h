@@ -33,7 +33,7 @@ static void kfloatshare_free(CTX, struct kmodshare_t *baseh)
 	KNH_FREE(baseh, sizeof(kfloatshare_t));
 }
 
-static KMETHOD TokenTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
+static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ExprTyCheck(expr, syn, gma, req_ty);
@@ -186,7 +186,7 @@ static kbool_t local_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 		{ TOKEN("float"), .type = TY_Float, },
 		{ TOKEN("double"), .type = TY_Float, },
-		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

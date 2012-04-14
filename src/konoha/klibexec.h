@@ -614,7 +614,7 @@ static void KObject_removeKey(CTX, kObject *o, ksymbol_t key)
 // -------------------------------------------------------------------------
 
 /* debug mode */
-int konoha_debug = 0;
+int verbose_debug = 0;
 
 #define CTX_isTERM()     CTX_isInteractive()
 
@@ -662,7 +662,7 @@ static const char *T_ERR(int level)
 
 static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
-	if(level == DEBUG_ && !konoha_debug) return;
+	if(level == DEBUG_ && !verbose_debug) return;
 	va_list ap;
 	va_start(ap , fmt);
 	fflush(stdout);
@@ -686,7 +686,7 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 // -------------------------------------------------------------------------
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)
 {
-	if(konoha_debug) {
+	if(verbose_debug) {
 		va_list ap;
 		va_start(ap , fmt);
 		fflush(stdout);

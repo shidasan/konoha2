@@ -42,7 +42,7 @@ static kbool_t stub_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 //	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 //		{ TOKEN("float"), .type = TY_Float, },
 //		{ TOKEN("double"), .type = TY_Float, },
-//		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = TokenTyCheck_FLOAT, },
+//		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
 //		{ .name = NULL, },
 //	};
 //	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

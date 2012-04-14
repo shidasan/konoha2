@@ -1333,8 +1333,4 @@ typedef struct DEFINE_TESTFUNC {
 } DEFINE_TESTFUNC ;
 #endif
 
-
-/* for debug mode */
-extern int konoha_debug;
-
 #endif /* KONOHA2_H_ */

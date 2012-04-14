@@ -30,7 +30,7 @@ extern "C" {
 //
 //static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 //{
-//    if(level == DEBUG_ && !konoha_debug) return;
+//    if(level == DEBUG_ && !verbose_sugar) return;
 //    va_list ap;
 //    va_start(ap , fmt);
 //    fflush(stdlog);

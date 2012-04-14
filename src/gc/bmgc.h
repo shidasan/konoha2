@@ -738,7 +738,7 @@ static void Kfree(CTX, void *p, size_t s)
 
 void MODGC_check_malloced_size(void)
 {
-	if(konoha_debug) {
+	if(verbose_gc) {
 		DUMP_P("\nklib:memory leaked=%ld\n", klib2_malloced);
 		DUMP_P("sys :memory leaked=%ld\n", malloced_size);
 	}

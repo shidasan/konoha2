@@ -418,7 +418,7 @@ static kExpr *ParseExpr(CTX, ksyntax_t *syn, kStmt *stmt, kArray *tls, int s, in
 
 /* ------------------------------------------------------------------------ */
 
-static kbool_t Stmt_isUniaryOp(CTX, kStmt *stmt, kToken *tk)
+static kbool_t Stmt_isUnaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
 	return (syn != NULL && syn->op1 != 0);
@@ -429,7 +429,7 @@ static int Stmt_skipUninaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	int i;
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->toks[i];
-		if(!Stmt_isUniaryOp(_ctx, stmt, tk)) {
+		if(!Stmt_isUnaryOp(_ctx, stmt, tk)) {
 			break;
 		}
 	}

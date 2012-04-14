@@ -552,7 +552,7 @@ static const char *T_tt(ktoken_t t)
 
 static void dumpToken(CTX, kToken *tk)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		if(tk->tt == TK_MN) {
 			char mbuf[128];
 			DUMP_P("%s %d+%d: %s(%s)\n", T_tt(tk->tt), (short)tk->uline, tk->lpos, T_mn(mbuf, tk->mn), kToken_s(tk));
@@ -565,7 +565,7 @@ static void dumpToken(CTX, kToken *tk)
 
 static void dumpIndent(int nest)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		int i;
 		for(i = 0; i < nest; i++) {
 			DUMP_P("  ");
@@ -575,7 +575,7 @@ static void dumpIndent(int nest)
 
 static void dumpTokenArray(CTX, int nest, kArray *a, int s, int e)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		if(nest == 0) DUMP_P("\n");
 		while(s < e) {
 			kToken *tk = a->toks[s];
@@ -654,7 +654,7 @@ static kExpr* Expr_add(CTX, kExpr *expr, kExpr *e)
 
 static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		if(nest == 0) DUMP_P("\n");
 		dumpIndent(nest);
 		if(Expr_isTerm(expr)) {
@@ -782,7 +782,7 @@ static void _dumpToken(CTX, void *arg, kvs_t *d)
 
 static void dumpStmt(CTX, kStmt *stmt)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		if(stmt->syn == NULL) {
 			DUMP_P("STMT (DONE)\n");
 		}

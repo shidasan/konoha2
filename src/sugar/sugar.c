@@ -38,6 +38,9 @@ extern "C" {
 
 #include<konoha2/konoha2_local.h>
 
+// global variable
+int verbose_sugar = 0;
+
 static const char *Pkeyword_(CTX, keyword_t kw);
 //static kString *Skw_(CTX, keyword_t kw);
 static void Kraise(CTX, int isContinue);
@@ -50,58 +53,62 @@ static void Kraise(CTX, int isContinue);
 
 #define TOKEN(T)  .name = T /*, .namelen = (sizeof(T)-1)*/
 #define _EXPR     .flag = SYN_ExprFlag
-#define _TERM     .StmtParseExpr = StmtParseExpr_Term
-#define _OP       .StmtParseExpr = StmtParseExpr_Op
+#define StmtAdd_(NAME)  .StmtAdd = StmtAdd_##NAME
+#define StmtParseExpr_(NAME)   .StmtParseExpr = StmtParseExpr_##NAME
+#define TopStmtTyCheck_(NAME)  .TopStmtTyCheck = StmtTyCheck_##NAME
+#define StmtTyCheck_(NAME)     .StmtTyCheck = StmtTyCheck_##NAME
+#define ExprTyCheck_(NAME)     .ExprTyCheck = ExprTyCheck_##NAME
+#define _TERM     StmtParseExpr_(Term)
+#define _OP       StmtParseExpr_(Op)
 
 static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
 		{ TOKEN("$ERR"), },
-		{ TOKEN("$expr"),  .rule ="$expr", .StmtAdd = StmtAdd_expr,
-			.TopStmtTyCheck = StmtTyCheck_EXPR, .StmtTyCheck = StmtTyCheck_EXPR,  },
-		{ TOKEN("$SYMBOL"),  _EXPR, .StmtAdd = StmtAdd_name,  _TERM, .ExprTyCheck = TokenTyCheck_SYMBOL,},
-		{ TOKEN("$USYMBOL"), _EXPR, .StmtAdd = StmtAdd_cname, _TERM, .ExprTyCheck = TokenTyCheck_USYMBOL,},
-		{ TOKEN("$TEXT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_TEXT,},
+		{ TOKEN("$expr"),  .rule ="$expr", StmtAdd_(expr), TopStmtTyCheck_(EXPR), StmtTyCheck_(EXPR),  },
+		{ TOKEN("$SYMBOL"),  _EXPR, StmtAdd_(name),  _TERM, ExprTyCheck_(SYMBOL),},
+		{ TOKEN("$USYMBOL"), _EXPR, StmtAdd_(cname), _TERM, ExprTyCheck_(USYMBOL),},
+		{ TOKEN("$TEXT"), _EXPR, _TERM, ExprTyCheck_(TEXT),},
 		{ TOKEN("$STEXT"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$BTEXT"), _EXPR, /*_TERM,*/ },
-		{ TOKEN("$INT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_INT,},
-		{ TOKEN("$FLOAT"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_FLOAT,},
+		{ TOKEN("$INT"), _EXPR, _TERM, ExprTyCheck_(INT),},
+		{ TOKEN("$FLOAT"), _EXPR, _TERM, ExprTyCheck_(FLOAT),},
 		{ TOKEN("$URN"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$REGEX"), _EXPR, /*_TERM,*/ },
-		{ TOKEN("$type"), _EXPR, _TERM, .StmtAdd = StmtAdd_type, .StmtParseExpr = StmtParseExpr_type, .ExprTyCheck = TokenTyCheck_TYPE,},
-		{ TOKEN("()"), _EXPR, .StmtParseExpr = StmtParseExpr_PARENTHESIS, .op2 = "*", .priority_op2 = 16, .right = 1, .ExprTyCheck = ExprTyCheck_invoke,}, //AST_PARENTHESIS
+		{ TOKEN("$type"), _EXPR, _TERM, StmtAdd_(type), StmtParseExpr_(type), ExprTyCheck_(TYPE),},
+		{ TOKEN("()"), _EXPR, StmtParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(invoke),}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
 		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
-		{ TOKEN("$block"), .StmtAdd = StmtAdd_block, },
-		{ TOKEN("$params"), .StmtAdd = StmtAdd_params, .TopStmtTyCheck = StmtTyCheck_declParams, .ExprTyCheck = ExprTyCheck_call,},
-		{ TOKEN("."), _OP, .op2 = "*", .priority_op2 = 16, .right = 1, /*.ExprTyCheck = ExprTyCheck_getter*/ },
-		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call  },
-		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("+"), _EXPR, _OP, .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call},
-		{ TOKEN("-"), _EXPR, _OP, .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("<"), _OP, .op2 = "opLT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("<="), _OP, .op2 = "opLTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN(">"), _OP, .op2 = "opGT", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1, .ExprTyCheck = ExprTyCheck_call },
-		{ TOKEN("&&"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 1024, .right = 1, },
-		{ TOKEN("||"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, },
-		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", },
-		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, .StmtTyCheck = StmtTyCheck_declType},
+		{ TOKEN("$block"), StmtAdd_(block), },
+		{ TOKEN("$params"), StmtAdd_(params), TopStmtTyCheck_(declParams), ExprTyCheck_(call),},
+		{ TOKEN("."), _OP, .op2 = "*", .priority_op2 = 16, .right = 1, /*ExprTyCheck_(getter*/ },
+		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call),  },
+		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call), },
+		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("+"), _EXPR, _OP, .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, ExprTyCheck_(call)},
+		{ TOKEN("-"), _EXPR, _OP, .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("<"), _OP, .op2 = "opLT", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("<="), _OP, .op2 = "opLTE", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN(">"), _OP, .op2 = "opGT", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1, ExprTyCheck_(call) },
+		{ TOKEN("&&"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 1024, .right = 1, ExprTyCheck_(and)},
+		{ TOKEN("||"), _OP, .op2 = "" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
+		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
+		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
 		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
-		{ TOKEN(","), .StmtParseExpr = StmtParseExpr_COMMA, .op2 = "*", .priority_op2 = 8192, },
-		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL '.'] $SYMBOL $params [$block]", .TopStmtTyCheck = StmtTyCheck_declMethod},
+		{ TOKEN(","), StmtParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
+		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL '.'] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
 		{ TOKEN("var"),  /*.type = TY_var, .rule ="$type $expr",*/ },
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		{ TOKEN("null"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_NULL,},
-		{ TOKEN("true"),  _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_TRUE,},
-		{ TOKEN("false"), _EXPR, _TERM, .ExprTyCheck = TokenTyCheck_FALSE,},
-		{ TOKEN("if"), .rule ="'if' '(' $expr ')' $block ['else' else: $block]", .TopStmtTyCheck = StmtTyCheck_if, .StmtTyCheck = StmtTyCheck_if, },
+		{ TOKEN("null"), _EXPR, _TERM, ExprTyCheck_(NULL),},
+		{ TOKEN("true"),  _EXPR, _TERM, ExprTyCheck_(TRUE),},
+		{ TOKEN("false"), _EXPR, _TERM, ExprTyCheck_(FALSE),},
+		{ TOKEN("if"), .rule ="'if' '(' $expr ')' $block ['else' else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
 		{ TOKEN("else"), .rule = "'else' $block" },
-		{ TOKEN("return"), .rule ="'return' [$expr]", .StmtTyCheck = StmtTyCheck_return, },
+		{ TOKEN("return"), .rule ="'return' [$expr]", StmtTyCheck_(return), },
 		{ .name = NULL, },
 	};
 	KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
@@ -129,7 +136,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 
 kstatus_t MODSUGAR_eval(CTX, const char *script, kline_t uline)
 {
-	if(konoha_debug) {
+	if(verbose_sugar) {
 		DUMP_P("\n>>>----\n'%s'\n------\n", script);
 	}
 	kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar, 0/*lazy*/);
