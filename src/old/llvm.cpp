@@ -1,5 +1,5 @@
 /****************************************************************************
- * KONOHA COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
+ * KONOHA2 COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
  *
  * Copyright (c) 2011 Masahiro Ide <imasahiro9 at gmail.com>
  *           (c) 2011 Shunsuke Shida

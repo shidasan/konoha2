@@ -1,5 +1,5 @@
 /****************************************************************************
- * KONOHA COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
+ * KONOHA2 COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
  *
  * Copyright (c) 2006-2012, Kimio Kuramitsu <kimio at ynu.ac.jp>
  *           (c) 2008-      Konoha Team konohaken@googlegroups.com
@@ -1218,6 +1218,7 @@ typedef struct {
 #define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)
 #define kraise(PARAM)                  (KPI)->Kraise(_ctx, PARAM)
+
 #define KSET_KLIB2(T, UL)   do {\
 		void *func = _ctx->lib2->K##T;\
 		((struct _klib2*)_ctx->lib2)->K##T = K##T;\

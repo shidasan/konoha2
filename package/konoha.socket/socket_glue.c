@@ -1,5 +1,5 @@
 /****************************************************************************
- * KONOHA COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
+ * KONOHA2 COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
  *
  * Copyright (c)  2010-      Konoha Team konohaken@googlegroups.com
  * All rights reserved.

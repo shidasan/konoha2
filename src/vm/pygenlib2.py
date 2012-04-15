@@ -150,7 +150,7 @@ def write_BOM(f):
 
 def write_license(f):
 	f.write('''/****************************************************************************
- * KONOHA COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
+ * KONOHA2 COPYRIGHT, LICENSE NOTICE, AND DISCRIMER
  * 
  * Copyright (c) 2006-2012, Kimio Kuramitsu <kimio at ynu.ac.jp>
  *           (c) 2008-      Konoha Team konohaken@googlegroups.com
