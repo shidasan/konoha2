@@ -105,8 +105,6 @@ static kExpr* Token_p(CTX, kToken *tk, int pe, const char *fmt, ...)
 	return K_NULLEXPR;
 }
 
-
-
 #define kerrno   Kerrno(_ctx)
 #define kstrerror(ENO)  Kstrerror(_ctx, ENO)
 

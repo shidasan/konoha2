@@ -23,9 +23,9 @@ static kbool_t assignment_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* assignment_init(void)
+KDEFINE_PACKAGE* assignment_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("assignment", "1.0"),
 		.initPackage = assignment_initPackage,
 		.setupPackage = assignment_setupPackage,

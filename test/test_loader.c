@@ -30,7 +30,7 @@ void test_module_load(CTX)
 static kcid_t sample_cid;
 void test_classdef_load(CTX)
 {
-    const kclass_t *ct;
+    kclass_t *ct;
     ct = class_load(_ctx, BUILD_DIR "classdef_sample.dylib", "Sample");
     assert(ct);
     assert(strcmp(S_totext(ct->name), "Sample") == 0);

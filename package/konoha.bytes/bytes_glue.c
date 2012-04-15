@@ -26,9 +26,9 @@
 //	return true;
 //}
 //
-//KPACKDEF* bytes_init(void)
+//KDEFINE_PACKAGE* bytes_init(void)
 //{
-//	static KPACKDEF d = {
+//	static KDEFINE_PACKAGE d = {
 //		KPACKNAME("bytes", "1.0"),
 //		.initPackage = bytes_initPackage,
 //		.setupPackage = bytes_setupPackage,

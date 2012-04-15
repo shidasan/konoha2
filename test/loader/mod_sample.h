@@ -5,7 +5,7 @@
 
 typedef struct ksampleshare_t {
 	struct kmodshare_t h;
-	const kclass_t *cSample;
+	kclass_t *cSample;
 } ksampleshare_t;
 
 typedef struct {

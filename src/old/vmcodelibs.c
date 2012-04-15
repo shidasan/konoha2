@@ -505,7 +505,7 @@ void knh_opcode_dump(CTX, kopl_t *c, kOutputStream *w, kopl_t *pc_start)
 		case VMT_F:
 			knh_write_vmfunc(_ctx, w, c->p[i]); break;
 		case VMT_CID:
-			knh_write_cname(_ctx, w, ((kclass_t*)c->data[i])->cid); break;
+			knh_write_cname(_ctx, w, ((struct _kclass*)c->data[i])->cid); break;
 		case VMT_HCACHE: {
 			kcachedata_t *hc = (kcachedata_t*)&(c->p[i]);
 			knh_write_cname(_ctx, w, hc->cid); 

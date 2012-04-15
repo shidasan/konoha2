@@ -572,9 +572,9 @@ static kbool_t socket_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* socket_init(void)
+KDEFINE_PACKAGE* socket_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("socket", "1.0"),
 		.initPackage = socket_initPackage,
 		.setupPackage = socket_setupPackage,

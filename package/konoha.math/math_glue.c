@@ -42,9 +42,9 @@ static kbool_t math_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* math_init(void)
+KDEFINE_PACKAGE* math_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("math", "1.0"),
 		.initPackage = math_initPackage,
 		.setupPackage = math_setupPackage,

@@ -763,7 +763,7 @@ static kTerm* GammaBuilder_rindexFNQ(CTX, kGammaBuilder *gma, ksymbol_t fnq, int
 static kfieldinfo_t* class_rindexFNQ(CTX, kcid_t cid, ksymbol_t fnq, kindex_t *n)
 {
 	ksymbol_t fn = FN_UNMASK(fnq);
-	const kclass_t *t = ClassTBL(cid);
+	kclass_t *t = ClassTBL(cid);
 	kindex_t idx;
 	for(idx = (kindex_t)t->fsize - 1; idx >= 0 ; idx--) {
 		kfieldinfo_t *cf = t->fields + idx;
@@ -1438,7 +1438,7 @@ static kTerm* TURN_typing(CTX, kTerm *tk, kcid_t reqt)
 	else {
 		kKonohaSpace *ns = K_GMANS;
 		kString *path = (tk)->text;
-		const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
+		kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 		if(ct == NULL) {
 			return ERROR_Undefined(_ctx, "link", TY_unknown, tk);
 		}
@@ -1462,7 +1462,7 @@ static kTerm* TLINK_typing(CTX, kStmtExpr *stmt, ktype_t reqt)
 	kTerm *tkLNK = tkNN(stmt, 1);
 	kKonohaSpace *ns = K_GMANS;
 	kString *path = (tkLNK)->text;
-	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
+	kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), reqt);
 	if(ct == NULL) {
 		return ERROR_Undefined(_ctx, "link", TY_unknown, tkLNK);
 	}
@@ -1736,7 +1736,7 @@ static void ObjectField_add(CTX, kcid_t this_cid, kObject **v, size_t i, ktype_t
 
 static kindex_t Script_addField(CTX, kScript *scr, kflag_t flag, ktype_t type, ksymbol_t fn)
 {
-	const kclass_t *ct = O_ct(scr);
+	kclass_t *ct = O_ct(scr);
 	size_t fsize = ct->fsize, fcapacity = ct->fcapacity;
 	DBG_ASSERT(scr == (kScript*)ct->defnull);
 	class_addField(_ctx, ct->cid, flag, type, fn);
@@ -1756,7 +1756,7 @@ static kTerm *DECLSCRIPT_typing(CTX, kStmtExpr *stmt)
 	if(TT_(tkT) != TT_ERR) {
 		kScript *scr = K_GMASCR;
 		ksymbol_t fn = Term_fn(_ctx, tkN);
-		const kclass_t *t = O_ct(scr);
+		kclass_t *t = O_ct(scr);
 		kindex_t idx = -1;
 		for(idx = (kindex_t)t->fsize - 1; idx >= 0 ; idx--) {
 			if(t->fields[idx].fn == fn) {
@@ -1901,7 +1901,7 @@ static kTerm *LETM_typing(CTX, kStmtExpr *stmt)
 	int CheckReadOnly = 0;  // TODO
 	TYPING(_ctx, stmt, msize, T_Tuple, _BCHECK);
 	kcid_t tplcid = Tn_cid(stmt, msize);
-	const kclass_t *ct = ClassTBL(tplcid);
+	kclass_t *ct = ClassTBL(tplcid);
 	if(ct->cparam->psize < tsize) {
 		kTerm *tkN = tkNN(stmt, ct->cparam->psize);
 		WARN_TooMany(_ctx, "variables", S_text(tkN->text));
@@ -1965,7 +1965,7 @@ static kTerm *SELECT_typing(CTX, kStmtExpr *stmt)
 	int CheckReadOnly = 0;  // TODO
 	TYPING_UntypedExpr(_ctx, stmt, msize);
 	kcid_t cid = Tn_cid(stmt, msize);
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	if(ct->bcid == CLASS_Tuple) {
 		WARN_MuchBetter(_ctx, "=", "from");
 		STT_(stmt) = STT_LETM;
@@ -2344,7 +2344,7 @@ static void KonohaSpace_lookupMethods(CTX, kKonohaSpace *ns, kcid_t cid, kmethod
 		ns = ns->parentNULL;
 	}
 	{
-		const kclass_t *p , *t0 = ClassTBL(cid);
+		kclass_t *p , *t0 = ClassTBL(cid);
 		do {
 			size_t i;
 			kArray *a = t0->methods;
@@ -4477,11 +4477,11 @@ static kTerm *DECLFIELD_typing(CTX, kStmtExpr *stmt, size_t i)
 
 static int GammaBuilder_initClassTBLField(CTX, kcid_t cid)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	if(ct->fsize == 0 && (ct->bcid == CLASS_Object || ct->bcid == CLASS_CppObject)) {
 		knh_gamma2_t *gf = DP(_ctx->gma)->gf;
 		size_t i;
-		const kclass_t *supct = ct->supTBL;
+		kclass_t *supct = ct->supTBL;
 		DP(_ctx->gma)->flag = 0;
 		DP(_ctx->gma)->this_cid = cid;
 		if(!(supct->fsize < DP(_ctx->gma)->gcapacity)) {
@@ -4502,7 +4502,7 @@ static int GammaBuilder_initClassTBLField(CTX, kcid_t cid)
 			gf[i].fn   = FN_xdata;
 			gf[i].ucnt = 1;
 			KSETv(gf[i].tk, K_NULL);
-			((kclass_t*)ct)->xdataidx = (kshort_t)i;
+			((struct _kclass*)ct)->xdataidx = (kshort_t)i;
 			DP(_ctx->gma)->gsize += 1;
 		}
 		return 1;
@@ -4544,7 +4544,7 @@ static void ClassTBL_newField(CTX, kclass_t *ct)
 
 static kObject** ObjectField_new(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->bcid == CLASS_CppObject) {
 		kObject *p = (kObject*)o;
 		p->kfields = (kObject**)KNH_ZMALLOC(sizeof(kObject*) * ct->fsize);
@@ -4563,7 +4563,7 @@ static void ObjectField_init(CTX, kObject *o)
 {
 	size_t i;
 	knh_gamma2_t *gf = DP(_ctx->gma)->gf;
-	const kclass_t *ct = O_ct(o), *supct = ct->supTBL;
+	kclass_t *ct = O_ct(o), *supct = ct->supTBL;
 	kObject **v = ObjectField_new(_ctx, o);
 	if(supct->fsize > 0) {
 		kObject **supv = (supct->bcid == CLASS_Object) ? supct->protoNULL->fields : ((kObject*)supct->protoNULL)->kfields;

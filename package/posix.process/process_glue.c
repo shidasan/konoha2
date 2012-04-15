@@ -53,9 +53,9 @@ static kbool_t process_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* process_init(void)
+KDEFINE_PACKAGE* process_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("package.posix", "1.0"),
 		KPACKLIB("POSIX.1", "1.0"),
 		.initPackage = process_initPackage,

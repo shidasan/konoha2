@@ -84,7 +84,8 @@ static size_t skipLine(CTX, tenv_t *tenv, size_t pos)
 {
 	int ch;
 	if(tenv->source[pos+1] == '#' && tenv->source[pos+2] == '@' && isdigit(tenv->source[pos+3])) {
-		tenv->uline = strtoll(tenv->source + pos + 3, NULL, 10);
+		tenv->uline >>= (sizeof(kshort_t)*8);
+		tenv->uline = (tenv->uline<<(sizeof(kshort_t)*8))  | strtoll(tenv->source + pos + 3, NULL, 10);
 	}
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {

@@ -1198,7 +1198,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 {
 	switch(expr->build) {
 	case TEXPR_CONST : {
-		kObject *v = expr->dataNUL;
+		kObject *v = expr->data;
 		if(TY_isUnbox(expr->ty)) {
 			ASM(NSET, NC_(a), (uintptr_t)N_toint(v), CT_(expr->ty));
 		}
@@ -1241,9 +1241,9 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	}
 	case TEXPR_BOX   : {
-		DBG_ASSERT(IS_Expr(expr->singleNUL));
-		EXPR_asm(_ctx, a, expr->singleNUL, espidx);
-		ASM(BOX, OC_(a), NC_(a), CT_(expr->singleNUL->ty));
+		DBG_ASSERT(IS_Expr(expr->single));
+		EXPR_asm(_ctx, a, expr->single, espidx);
+		ASM(BOX, OC_(a), NC_(a), CT_(expr->single->ty));
 		break;
 	}
 	case TEXPR_UNBOX   : {
@@ -1273,15 +1273,15 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 
 static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 {
-	kMethod *mtd = expr->consNUL->methods[0];
+	kMethod *mtd = expr->cons->methods[0];
 	DBG_ASSERT(IS_Method(mtd));
 	int i, s = kMethod_isStatic(mtd) ? 2 : 1, thisidx = espidx + K_CALLDELTA;
-	for(i = s; i < kArray_size(expr->consNUL); i++) {
+	for(i = s; i < kArray_size(expr->cons); i++) {
 		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
 	}
-	int argc = kArray_size(expr->consNUL) - 2;
+	int argc = kArray_size(expr->cons) - 2;
 	if(kMethod_isVirtual(mtd)) {
 		//ASM(LDMTD, SFP_(thisidx), _LOOKUPMTD, {mtd->cid, mtd->mn}, mtd);
 		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
@@ -1299,7 +1299,7 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 
 static void OR_asm(CTX, int a, kExpr *expr, int espidx)
 {
-	int i, size = kArray_size(expr->consNUL);
+	int i, size = kArray_size(expr->cons);
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 0; i < size; i++) {
@@ -1314,7 +1314,7 @@ static void OR_asm(CTX, int a, kExpr *expr, int espidx)
 
 static void AND_asm(CTX, int a, kExpr *expr, int espidx)
 {
-	int i, size = kArray_size(expr->consNUL);
+	int i, size = kArray_size(expr->cons);
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 1; i < size; i++) {
@@ -1983,7 +1983,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kArray_clear(ctxcode->insts, 0);
 		RESET_GCSTACK();
 	}
-	klib2_t *l = ctx->lib2;
+	struct _klib2 *l = (struct _klib2*)_ctx->lib2;
 	l->KMethod_setFunc = Method_setFunc;
 }
 

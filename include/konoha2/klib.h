@@ -72,7 +72,7 @@ static inline kString* S_UN_(CTX, kuname_t un)
 #define S_CT(X)   S_CT_(_ctx, X)
 #define T_CT(X)   S_text(S_CT_(_ctx, X))
 
-static inline kString* S_CT_(CTX, const kclass_t *ct)
+static inline kString* S_CT_(CTX, kclass_t *ct)
 {
 	return S_UN(ct->nameid);
 }
@@ -120,5 +120,13 @@ static inline uintptr_t map_getu(CTX, kmap_t *kmp, uintptr_t hcode, uintptr_t de
 	return def;
 }
 
+static inline size_t check_index(CTX, kint_t n, size_t max, kline_t pline)
+{
+	size_t n1 = (size_t)n;
+	if(unlikely(!(n1 < max))) {
+		kreportf(CRIT_, pline, "Script!!: out of array index %ld < %lu", n, max);
+	}
+	return n1;
+}
 
 #endif /* KONOHA2_INLINELIBS_H_ */

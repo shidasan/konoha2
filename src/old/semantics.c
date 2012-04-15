@@ -534,7 +534,7 @@ kSemantics* new_Vocab(CTX, char *tag, kbytes_t urn, int base, char **terms)
 //		TypeMap *mpr = new_TypeMap(_ctx, FLAG_TypeMap_Affine, scid, tcid,
 //				knh_TypeMap_fvocab, (Object*)K_NULL);
 //		if(_ctx->share->ClassTBL[scid].cmap == NULL) {
-//			kclass_t *TC = (kclass_t*)(&ctx->share->ClassTBL[scid]);
+//			kclass_t *TC = (struct _kclass*)(&ctx->share->ClassTBL[scid]);
 //			KINITv(TC->cmap, new_ClassMap0(_ctx, 4));
 //		}
 //		knh_ClassMap_add(_ctx, ctx->share->ClassTBL[scid].cmap, mpr);
@@ -542,7 +542,7 @@ kSemantics* new_Vocab(CTX, char *tag, kbytes_t urn, int base, char **terms)
 //		mpr = new_TypeMap(_ctx, FLAG_TypeMap_Affine, tcid, scid,
 //				knh_TypeMap_fvocab, (Object*)K_NULL);
 //		if(_ctx->share->ClassTBL[tcid].cmap == NULL) {
-//			kclass_t *TC = (kclass_t*)(&ctx->share->ClassTBL[tcid]);
+//			kclass_t *TC = (struct _kclass*)(&ctx->share->ClassTBL[tcid]);
 //			KINITv(TC->cmap, new_ClassMap0(_ctx, 4));
 //		}
 //		knh_ClassMap_add(_ctx, ctx->share->ClassTBL[tcid].cmap, mpr);

@@ -111,9 +111,9 @@ static kbool_t sugar_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* sugar_init(void)
+KDEFINE_PACKAGE* sugar_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("sugar", "1.0"),
 		.initPackage = sugar_initPackage,
 		.setupPackage = sugar_setupPackage,

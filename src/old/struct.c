@@ -83,7 +83,7 @@ static void DEFAULT_initcopy(CTX, kObject *dst, kObject *src)
 
 kbool_t knh_class_canObjectCopy(CTX, kcid_t cid)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	return (ct->cdef->initcopy != DEFAULT_initcopy);
 }
 
@@ -169,7 +169,7 @@ static void DEFAULT_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packs
 //#define DEFAULT_6 NULL
 #define sizeof_O(T) (sizeof(k##T))
 
-static const kclass_t TvoidDef = {
+static kclass_t TvoidDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -178,7 +178,7 @@ static const kclass_t TvoidDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Object), 0,
 };
 
-static const kclass_t TvarDef = {
+static kclass_t TvarDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -187,7 +187,7 @@ static const kclass_t TvarDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Object), 0,
 };
 
-static const kclass_t TdynamicDef = {
+static kclass_t TdynamicDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -196,15 +196,15 @@ static const kclass_t TdynamicDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Object), 0,
 };
 
-const kclass_t* knh_getDefaultClassDef(void)
+kclass_t* knh_getDefaultClassDef(void)
 {
 	return &TdynamicDef;
 }
 
-void knh_ClassTBL_setConstPool(CTX, const kclass_t *ct)
+void knh_ClassTBL_setConstPool(CTX, kclass_t *ct)
 {
 	if(ct->constPoolMapNULL == NULL) {
-		KINITv(((kclass_t*)ct)->constPoolMapNULL, new_PtrMap(_ctx, 0));
+		KINITv(((struct _kclass*)ct)->constPoolMapNULL, new_PtrMap(_ctx, 0));
 	}
 }
 
@@ -214,7 +214,7 @@ void knh_ClassTBL_setConstPool(CTX, const kclass_t *ct)
 static void ObjectField_init(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
@@ -238,7 +238,7 @@ static void ObjectField_init(CTX, kObject *o)
 
 static void CppObject_init(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	o->rawptr = NULL;
 	if(ct->fsize > 0) {
 		o->kfields = (Object**)KNH_ZMALLOC(ct->fsize * sizeof(kObject*));
@@ -260,7 +260,7 @@ static void CppObject_init(CTX, kObject *o)
 static void ObjectField_initcopy(CTX, kObject *o, kObject *src)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *t = O_ct(o);
+	kclass_t *t = O_ct(o);
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
@@ -285,7 +285,7 @@ static void ObjectField_initcopy(CTX, kObject *o, kObject *src)
 static void ObjectField_reftrace(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	size_t i;
 	for(i = 0; i < ct->fsize; i++) {
 		if(ct->fields[i].israw == 0) {
@@ -297,7 +297,7 @@ static void ObjectField_reftrace(CTX, kObject *o)
 
 static void CppObject_reftrace(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	size_t i;
 	for(i = 0; i < ct->fsize; i++) {
 		if(ct->fields[i].israw == 0) {
@@ -310,7 +310,7 @@ static void CppObject_reftrace(CTX, kObject *o)
 static void ObjectField_free(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
 		KNH_FREE(_ctx, of->fields, ct->fsize * sizeof(kObject*));
 	}
@@ -319,7 +319,7 @@ static void ObjectField_free(CTX, kObject *o)
 
 static void CppObject_free(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->fsize > 0) {
 		KNH_FREE(_ctx, o->kfields, ct->fsize * sizeof(kObject*));
 		o->kfields = NULL;
@@ -394,7 +394,7 @@ static void pack_unbox(CTX, void *pkr, kcid_t cid, kObject **v, const knh_PackSP
 
 static void Object_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	kObject *of = (kObject*) o;
 	Object **v = of->fields;
 	size_t i = 0, field_count = ct->fsize;
@@ -435,7 +435,7 @@ static void Object_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packsp
 	packspi->pack_endmap(_ctx, pkr);
 }
 
-static const kclass_t ObjectDef = {
+static kclass_t ObjectDef = {
 	ObjectField_init, ObjectField_initcopy, ObjectField_reftrace, ObjectField_free,
 	DEFAULT_checkin, DEFAULT_checkout, ObjectField_compareTo, ObjectField_p,
 	ObjectField_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -447,7 +447,7 @@ static const kclass_t ObjectDef = {
 static void ObjectFieldN_init(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *t = O_ct(o);
+	kclass_t *t = O_ct(o);
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
@@ -464,7 +464,7 @@ static void ObjectFieldN_init(CTX, kObject *o)
 static void ObjectFieldN_initcopy(CTX, kObject *o, kObject *src)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
@@ -525,7 +525,7 @@ static void ObjectField4_reftrace(CTX, kObject *o)
 #endif
 }
 
-static const kclass_t ObjectNDef[] = {
+static kclass_t ObjectNDef[] = {
 	{
 		ObjectFieldN_init,
 		ObjectFieldN_initcopy,
@@ -593,7 +593,7 @@ void knh_ClassTBL_setObjectCSPI(CTX, kclass_t *ct)
 	}
 }
 
-static const kclass_t CppObjectDef = {
+static kclass_t CppObjectDef = {
 	CppObject_init, DEFAULT_initcopy, CppObject_reftrace, CppObject_free,
 	DEFAULT_checkin, CppObject_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -602,7 +602,7 @@ static const kclass_t CppObjectDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Object), 0,
 };
 
-const kclass_t* knh_getCppClassDef(void)
+kclass_t* knh_getCppClassDef(void)
 {
 	return &CppObjectDef;
 }
@@ -709,7 +709,7 @@ static void Float_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi
 	packspi->pack_float(_ctx, pkr, ((kFloat *)o)->n.fvalue);
 }
 
-static const kclass_t BooleanDef = {
+static kclass_t BooleanDef = {
 	NDATA_init, NDATA_initcopy, DEFAULT_reftrace, NDATA_free,
 	DEFAULT_checkin, DEFAULT_checkout, Int_compareTo, Boolean_p,
 	ObjectField_getkey, NDATA_hashCode, DEFAULT_0, DEFAULT_1,
@@ -718,7 +718,7 @@ static const kclass_t BooleanDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Boolean), 0,
 };
 
-static const kclass_t NumberDef = {
+static kclass_t NumberDef = {
 	NDATA_init, NDATA_initcopy, DEFAULT_reftrace, NDATA_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	ObjectField_getkey, NDATA_hashCode, DEFAULT_0, DEFAULT_1,
@@ -727,7 +727,7 @@ static const kclass_t NumberDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Number), 0,
 };
 
-static const kclass_t IntDef = {
+static kclass_t IntDef = {
 	NDATA_init, NDATA_initcopy, DEFAULT_reftrace, NDATA_free,
 	DEFAULT_checkin, DEFAULT_checkout, Int_compareTo, Int_p,
 	ObjectField_getkey, NDATA_hashCode, Int_toint, Int_tofloat,
@@ -736,7 +736,7 @@ static const kclass_t IntDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Int), 0,
 };
 
-static const kclass_t FloatDef = {
+static kclass_t FloatDef = {
 	NDATA_init, NDATA_initcopy, DEFAULT_reftrace, NDATA_free,
 	DEFAULT_checkin, DEFAULT_checkout, Float_compareTo, Float_p,
 	ObjectField_getkey, NDATA_hashCode, Float_toint, Float_tofloat,
@@ -820,7 +820,7 @@ static void Date_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi)
 //	packspi->pack_string(_ctx, pkr, S_text(s), S_size(s));
 }
 
-static const kclass_t DateDef = {
+static kclass_t DateDef = {
 	Date_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, Date_compareTo, Date_p,
 	DEFAULT_getkey, Date_hashCode, DEFAULT_0, DEFAULT_1,
@@ -896,7 +896,7 @@ static void String_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packsp
 	packspi->pack_string(_ctx, pkr, S_text(s), S_size(s));
 }
 
-static const kclass_t StringDef = {
+static kclass_t StringDef = {
 	String_init, DEFAULT_initcopy, DEFAULT_reftrace, String_free,
 	DEFAULT_checkin, DEFAULT_checkout, String_compareTo, String_p,
 	String_getkey, String_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1012,7 +1012,7 @@ static kuint_t Bytes_hashCode(CTX, kObject *o)
 	return knh_hash(0, ba->bu.text, ba->bu.len);
 }
 
-static const kclass_t BytesDef = {
+static kclass_t BytesDef = {
 	Bytes_init, Bytes_initcopy, DEFAULT_reftrace, Bytes_free,
 	DEFAULT_checkin, DEFAULT_checkout, Bytes_compareTo, Bytes_p,
 	DEFAULT_getkey, Bytes_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1064,7 +1064,7 @@ static kuint_t Pointer_hashCode(CTX, kObject *o)
 	return (kuint_t)(p->ptr) / sizeof(void*);
 }
 
-static const kclass_t PointerDef = {
+static kclass_t PointerDef = {
 	Pointer_init, DEFAULT_initcopy, Pointer_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, Pointer_compareTo, Pointer_p,
 	DEFAULT_getkey, Pointer_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1079,7 +1079,7 @@ static const kclass_t PointerDef = {
 static void Tuple_init(CTX, kObject *o)
 {
 	kTuple *of = (kTuple*)o;
-	const kclass_t *t = O_ct(o);
+	kclass_t *t = O_ct(o);
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
@@ -1118,7 +1118,7 @@ static void TUPLE_p(CTX, kOutputStream *w, kObject *o, int level)
 	kwb_putc(wb, ')');
 }
 
-static const kclass_t TupleDef = {
+static kclass_t TupleDef = {
 	Tuple_init, ObjectField_initcopy, ObjectField_reftrace, ObjectField_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, TUPLE_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1166,7 +1166,7 @@ static void Range_p(CTX, kOutputStream *w, kObject *o, int level)
 	kwb_putc(wb, ']');
 }
 
-static const kclass_t RangeDef = {
+static kclass_t RangeDef = {
 	Range_init, DEFAULT_initcopy, Range_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Range_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1352,7 +1352,7 @@ static void Array_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi
 	packspi->pack_endarray(_ctx, pkr);
 }
 
-static const kclass_t ArrayDef = {
+static kclass_t ArrayDef = {
 	Array_init, Array_initcopy, Array_reftrace, Array_free,
 	DEFAULT_checkin, DEFAULT_checkout, Array_compareTo, Array_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1439,7 +1439,7 @@ static void Iterator_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t IteratorDef = {
+static kclass_t IteratorDef = {
 	Iterator_init, DEFAULT_initcopy, Iterator_reftrace, Iterator_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Iterator_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1566,7 +1566,7 @@ static void Map_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi)
 }
 
 
-static const kclass_t MapDef = {
+static kclass_t MapDef = {
 	Map_init, TODO_initcopy, Map_reftrace, Map_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Map_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1602,7 +1602,7 @@ static void Class_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write_cid(_ctx, w, knh_Class_cid((kClass*)o));
 }
 
-static const kclass_t ClassDef = {
+static kclass_t ClassDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, Class_compareTo, Class_p,
 	Class_getkey, Class_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1653,7 +1653,7 @@ static void Param_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t ParamDef = {
+static kclass_t ParamDef = {
 	Param_init, TODO_initcopy, DEFAULT_reftrace, Param_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Param_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1698,7 +1698,7 @@ static void Method_reftrace(CTX, kObject *o)
 static void BODY_free(CTX, kObject *o)
 {
 #ifndef K_USING_BMGC
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	DBG_ASSERT(ct->cdef->struct_size > 0);
 	KNH_FREE(_ctx, o->rawptr, ct->cdef->struct_size);
 #endif
@@ -1748,7 +1748,7 @@ static void Method_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t MethodDef = {
+static kclass_t MethodDef = {
 	Method_init, TODO_initcopy, Method_reftrace, BODY_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Method_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1785,7 +1785,7 @@ static void TypeMap_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write_type(_ctx, w, tmr->tcid);
 }
 
-static const kclass_t TypeMapDef = {
+static kclass_t TypeMapDef = {
 	TypeMap_init, TODO_initcopy, TypeMap_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, TypeMap_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1813,7 +1813,7 @@ static KMETHOD Fmethod_funcRTYPE(CTX, ksfp_t *sfp _RIX)
 static void Func_init(CTX, kObject *o)
 {
 	kFunc *fo = (kFunc*)o;
-	const kclass_t *t = O_ct(o);
+	kclass_t *t = O_ct(o);
 	kMethod *mtd;
 	if(t->defnull == NULL) {
 		mtd = new_Method(_ctx, 0, O_cid(o), MN_LAMBDA, Fmethod_funcRTYPE);
@@ -1854,7 +1854,7 @@ static void Func_p(CTX, kOutputStream *w, kObject *o, int level)
 
 }
 
-static const kclass_t FuncDef = {
+static kclass_t FuncDef = {
 	Func_init, TODO_initcopy, Func_reftrace, Func_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Func_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1913,7 +1913,7 @@ static void Thunk_free(CTX, kObject *o)
 	thunk->envsize = 0;
 }
 
-static const kclass_t ThunkDef = {
+static kclass_t ThunkDef = {
 	Thunk_init, TODO_initcopy, Thunk_reftrace, Thunk_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -1972,7 +1972,7 @@ static void Exception_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t ExceptionDef = {
+static kclass_t ExceptionDef = {
 	Exception_init, TODO_initcopy, Exception_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Exception_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2005,7 +2005,7 @@ static void ExceptionHandler_reftrace(CTX, kObject *o)
 	kref_setSize();
 }
 
-static const kclass_t ExceptionHandlerDef = {
+static kclass_t ExceptionHandlerDef = {
 	ExceptionHandler_init, TODO_initcopy, ExceptionHandler_reftrace, BODY_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2058,7 +2058,7 @@ static void Regex_p(CTX, kOutputStream *w, kObject *o, int level)
 	kwb_putc(wb, '/');
 }
 
-static const kclass_t RegexDef = {
+static kclass_t RegexDef = {
 	Regex_init, DEFAULT_initcopy, Regex_reftrace, Regex_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Regex_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2104,7 +2104,7 @@ static void Converter_free(CTX, kObject *o)
 	}
 }
 
-static const kclass_t ConverterDef = {
+static kclass_t ConverterDef = {
 	Converter_init, DEFAULT_initcopy, DEFAULT_reftrace, Converter_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2113,7 +2113,7 @@ static const kclass_t ConverterDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Converter), 0,
 };
 
-static const kclass_t StringEncoderDef = {
+static kclass_t StringEncoderDef = {
 	Converter_init, DEFAULT_initcopy, DEFAULT_reftrace, Converter_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2122,7 +2122,7 @@ static const kclass_t StringEncoderDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(StringEncoder), 0,
 };
 
-static const kclass_t StringDecoderDef = {
+static kclass_t StringDecoderDef = {
 	Converter_init, DEFAULT_initcopy, DEFAULT_reftrace, Converter_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2131,7 +2131,7 @@ static const kclass_t StringDecoderDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(StringDecoder), 0,
 };
 
-static const kclass_t StringConverterDef = {
+static kclass_t StringConverterDef = {
 	Converter_init, DEFAULT_initcopy, DEFAULT_reftrace, Converter_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2246,7 +2246,7 @@ static void Semantics_reftrace(CTX, kObject *o)
 	kref_setSize();
 }
 
-static const kclass_t SemanticsDef = {
+static kclass_t SemanticsDef = {
 	Semantics_init, TODO_initcopy, Semantics_reftrace, BODY_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2289,7 +2289,7 @@ static void Path_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write(_ctx, w, S_tobytes(pth->urn));
 }
 
-static const kclass_t PathDef = {
+static kclass_t PathDef = {
 	Path_init, TODO_initcopy, Path_reftrace, Path_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Path_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2329,7 +2329,7 @@ static void InputStream_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write_quote(_ctx, w, '\'', S_tobytes(in->path->urn), !String_isASCII(in->path->urn));
 }
 
-static const kclass_t InputStreamDef = {
+static kclass_t InputStreamDef = {
 	InputStream_init, DEFAULT_initcopy, InputStream_reftrace, InputStream_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, InputStream_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2371,7 +2371,7 @@ static void OutputStream_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write_quote(_ctx, w, '\'', S_tobytes(ous->path->urn) , !String_isASCII(ous->path->urn));
 }
 
-static const kclass_t OutputStreamDef = {
+static kclass_t OutputStreamDef = {
 	OutputStream_init, DEFAULT_initcopy, OutputStream_reftrace, OutputStream_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, OutputStream_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2398,7 +2398,7 @@ static void View_reftrace(CTX, kObject *o)
 	kref_setSize();
 }
 
-static const kclass_t ViewDef = {
+static kclass_t ViewDef = {
 	View_init, DEFAULT_initcopy, View_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2415,7 +2415,7 @@ static void Script_init(CTX, kObject *o)
 	kScript *scr = (kScript*)o;
 	kcid_t cid = new_ClassId(_ctx);
 	kclass_t *ct = varClassTBL(cid);
-	scr->h.ct = (const kclass_t*)ct;
+	scr->h.ct = (kclass_t*)ct;
 	DBG_ASSERT(ct->cdef == NULL);
 	ct->cflag  = CFLAG_Script;
 	ct->magicflag = KNH_MAGICFLAG(ct->cflag);
@@ -2436,7 +2436,7 @@ static void Script_init(CTX, kObject *o)
 static void Script_p(CTX, kOutputStream *w, kObject *o, int level)
 {
 	if(IS_FMTdump(level)) {
-		const kclass_t *ct = O_ct(o);
+		kclass_t *ct = O_ct(o);
 		kScript *scr = (kScript*)o;
 		size_t i;
 		for(i = 0; i < ct->fsize; i++) {
@@ -2462,7 +2462,7 @@ static void Script_reftrace(CTX, kObject *o)
 	ObjectField_reftrace(_ctx, o FTRDATA);
 }
 
-static const kclass_t ScriptDef = {
+static kclass_t ScriptDef = {
 	Script_init, DEFAULT_initcopy, Script_reftrace, ObjectField_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Script_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2526,7 +2526,7 @@ static void KonohaSpace_p(CTX, kOutputStream *w, kObject *o, int level)
 	knh_write(_ctx, w, S_tobytes(ns->path->urn));
 }
 
-static const kclass_t KonohaSpaceDef = {
+static kclass_t KonohaSpaceDef = {
 	KonohaSpace_init, TODO_initcopy, KonohaSpace_reftrace, KonohaSpace_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, KonohaSpace_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2544,7 +2544,7 @@ static const kclass_t KonohaSpaceDef = {
 #define stderr NULL
 #endif
 
-static const kclass_t SystemDef = {
+static kclass_t SystemDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2571,7 +2571,7 @@ static void Context_free(CTX, kObject *o)
 	//KNH_TODO(__FUNCTION__);
 }
 
-static const kclass_t ContextDef = {
+static kclass_t ContextDef = {
 	Context_init, DEFAULT_initcopy, Context_reftrace, Context_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2635,7 +2635,7 @@ static void Assurance_checkout(CTX, kObject *o, int isFailed)
 	Assurance_setCheckedIn(g, 0);
 }
 
-static const kclass_t AssuranceDef = {
+static kclass_t AssuranceDef = {
 	Assurance_init, DEFAULT_initcopy, Assurance_reftrace, DEFAULT_free,
 	Assurance_checkin, Assurance_checkout, DEFAULT_compareTo, Assurance_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2779,7 +2779,7 @@ static void Term_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t TermDef = {
+static kclass_t TermDef = {
 	Term_init, TODO_initcopy, Term_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, Term_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2884,7 +2884,7 @@ static void StmtExpr_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t StmtExprDef = {
+static kclass_t StmtExprDef = {
 	StmtExpr_init, TODO_initcopy, StmtExpr_reftrace, StmtExpr_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, StmtExpr_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2943,7 +2943,7 @@ static void GammaBuilder_free(CTX, kObject *o)
 	knh_bodyfree(_ctx, b, GammaBuilder);
 }
 
-static const kclass_t GammaBuilderDef = {
+static kclass_t GammaBuilderDef = {
 	GammaBuilder_init, TODO_initcopy, GammaBuilder_reftrace, GammaBuilder_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -2987,7 +2987,7 @@ static void BasicBlock_free(CTX, kObject *o)
 	knh_bodyfree(_ctx, DP(bb), BasicBlock);
 }
 
-static const kclass_t BasicBlockDef = {
+static kclass_t BasicBlockDef = {
 	BasicBlock_init, TODO_initcopy, BasicBlock_reftrace, BasicBlock_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -3038,7 +3038,7 @@ static void KonohaCode_p(CTX, kOutputStream *w, kObject *o, int level)
 	}
 }
 
-static const kclass_t KonohaCodeDef = {
+static kclass_t KonohaCodeDef = {
 	KonohaCode_init, TODO_initcopy, KonohaCode_reftrace, KonohaCode_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, KonohaCode_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -3047,7 +3047,7 @@ static const kclass_t KonohaCodeDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(KonohaCode), 0,
 };
 
-static const kclass_t ImmutableDef = {
+static kclass_t ImmutableDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,
@@ -3056,7 +3056,7 @@ static const kclass_t ImmutableDef = {
 	NULL, DEFAULT_4, DEFAULT_5, sizeof_O(Immutable), 0,
 };
 
-static const kclass_t KindOfDef = {
+static kclass_t KindOfDef = {
 	DEFAULT_init, DEFAULT_initcopy, DEFAULT_reftrace, DEFAULT_free,
 	DEFAULT_checkin, DEFAULT_checkout, DEFAULT_compareTo, DEFAULT_p,
 	DEFAULT_getkey, DEFAULT_hashCode, DEFAULT_0, DEFAULT_1,

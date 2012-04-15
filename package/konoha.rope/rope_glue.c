@@ -130,7 +130,7 @@ static LinerString *RopeString_toLinerString(RopeString *o, char *text, size_t l
 	return s;
 }
 
-static kString *new_String2(CTX, const char *text, size_t len, int policy)
+static kString *Knew_String(CTX, const char *text, size_t len, int policy)
 {
 	StringBase *s = (StringBase *) new_StringBase(_ctx, 0);
 	if (len < SIZEOF_INLINETEXT)
@@ -274,16 +274,20 @@ static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 		_Public|_Const, _F(Rope_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(ks, methoddata);
+//	{
+//		kclass_t *cString = (struct _kclass*) CT_String;
+//		cString->unbox = String2_unbox;
+//		cString->free  = String2_free;
+//		cString->reftrace = String2_reftrace;
+//	}
+	KSET_CLASSFUNC(CT_String, unbox, String2, pline);
+	KSET_CLASSFUNC(CT_String, free, String2, pline);
+	KSET_CLASSFUNC(CT_String, reftrace, String2, pline);
+	KSET_KLIB2(new_String, pline);
 	{
-		kclass_t *cString = (kclass_t*) CT_String;
-		cString->unbox = String2_unbox;
-		cString->free  = String2_free;
-		cString->reftrace = String2_reftrace;
-	}
-	{
-		klib2_t *l = _ctx->lib2;
-		l->Knew_String = new_String2;
+		struct _klib2 *l = (struct _klib2*)_ctx->lib2;
+		l->Knew_String = Knew_String;
 	}
 	return true;
 }
@@ -303,9 +307,9 @@ static kbool_t Rope_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* rope_init(void)
+KDEFINE_PACKAGE* rope_init(void)
 {
-	static const KPACKDEF d = {
+	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("Rope", "1.0"),
 		.initPackage = Rope_initPackage,
 		.setupPackage = Rope_setupPackage,

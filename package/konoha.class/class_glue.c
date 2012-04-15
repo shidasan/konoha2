@@ -85,7 +85,7 @@ static intptr_t Method_indexOfGetterSetterField(kMethod *mtd)
 //	RETURNd_(sfp[1].ndata);
 //}
 
-static intptr_t CT_indexOfClassField(const kclass_t *ct, ksymbol_t fn)
+static intptr_t CT_indexOfClassField(kclass_t *ct, ksymbol_t fn)
 {
 	intptr_t i = ct->fsize;
 	for(i = ct->fsize - 1; i >=0; i--) {
@@ -115,12 +115,12 @@ static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 	cdef.packid = ks->packid;
 	cdef.packdom = ks->packdom;
 	if(cdef.supcid == 0) cdef.supcid = TY_Object;
-	const kclass_t *supct = kclass(cdef.supcid, sfp[K_RTNIDX].uline);
+	kclass_t *supct = kclass(cdef.supcid, sfp[K_RTNIDX].uline);
 	if(CT_isFinal(supct)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "%s is @Final", T_cid(cdef.supcid));
 		kraise(0);
 	}
-	const kclass_t *c = kaddClassDef(sfp[2].s, &cdef, sfp[K_RTNIDX].uline);
+	kclass_t *c = kaddClassDef(sfp[2].s, &cdef, sfp[K_RTNIDX].uline);
 	RETURNi_(c->cid);
 }
 
@@ -132,7 +132,7 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	ktype_t ty = (ktype_t)sfp[3].ivalue;
 	kString *name = sfp[4].s;
 	kObject *value = sfp[5].o;
-	kclass_t *ct = (kclass_t*)kclass(cid, sfp[K_RTNIDX].uline);
+	struct _kclass *ct = (struct _kclass*)kclass(cid, sfp[K_RTNIDX].uline);
 	if(!CT_iS_UNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "all fields are defined: %s", T_cid(ct->cid));
 		kraise(0);
@@ -192,9 +192,9 @@ static kbool_t class_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* class_init(void)
+KDEFINE_PACKAGE* class_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("class", "1.0"),
 		.initPackage = class_initPackage,
 		.setupPackage = class_setupPackage,

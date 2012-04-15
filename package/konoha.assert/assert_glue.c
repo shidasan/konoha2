@@ -66,7 +66,7 @@ static kbool_t assert_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 static kbool_t assert_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
-	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
+	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("assert"), .rule = "'assert' '(' $expr ')'", .TopStmtTyCheck = StmtTyCheck_assert, .StmtTyCheck = StmtTyCheck_assert},
 		{ .name = NULL, },
 	};
@@ -81,9 +81,9 @@ static kbool_t assert_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* assert_init(void)
+KDEFINE_PACKAGE* assert_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("assert", "1.0"),
 		.initPackage = assert_initPackage,
 		.setupPackage = assert_setupPackage,

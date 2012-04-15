@@ -239,8 +239,8 @@ static kcontext_t* new_RootContext(void)
 	initServiceSPI((knh_ServiceSPI_t*)ctx->spi);
 
 	kmemshare_init(_ctx);
-	share->ClassTBL = (const kclass_t**)KNH_MALLOC((CTX)ctx, sizeof(kclass_t*)*(K_CLASSTABLE_INIT));
-	knh_bzero(share->ClassTBL, sizeof(kclass_t*)*(K_CLASSTABLE_INIT));
+	share->ClassTBL = (kclass_t**)KNH_MALLOC((CTX)ctx, sizeof(struct _kclass*)*(K_CLASSTABLE_INIT));
+	knh_bzero(share->ClassTBL, sizeof(struct _kclass*)*(K_CLASSTABLE_INIT));
 	share->sizeClassTBL = 0;
 	share->capacityClassTBL  = K_CLASSTABLE_INIT;
 
@@ -507,7 +507,7 @@ static kObject **share_reftrace(CTX, kshare_t *share)
 	/* tclass */
 	kref_ensureSize(share->sizeClassTBL * 11);
 	for(i = 0; i < share->sizeClassTBL; i++) {
-		const kclass_t *ct = ClassTBL(i);
+		kclass_t *ct = ClassTBL(i);
 		DBG_ASSERT(ct->lname != NULL);
 		KREFTRACEn(  ct->typeNULL);
 		KREFTRACEv(    ct->methods);
@@ -548,7 +548,7 @@ static void share_free(CTX, kshare_t *share)
 	/* freeing cdef */
 	for(i = 0; i < share->sizeClassTBL; i++) {
 		kclass_t *ct = varClassTBL(i);
-		const kclass_t *supTBL = ClassTBL(ct->supcid);
+		kclass_t *supTBL = ClassTBL(ct->supcid);
 		if (ct->cdef != supTBL ->cdef && ct->cdef->asize > 0) {
 			DBG_P("freeing ClassDef cid=%d %s", i, ct->cdef->name);
 			KNH_FREE(_ctx, (void*)ct->cdef, ct->cdef->asize);
@@ -563,7 +563,7 @@ static void share_free(CTX, kshare_t *share)
 		}
 		KNH_FREE(_ctx, ct, sizeof(kclass_t));
 	}
-	KNH_FREE(_ctx, (void*)share->ClassTBL, sizeof(kclass_t*)*(share->capacityClassTBL));
+	KNH_FREE(_ctx, (void*)share->ClassTBL, sizeof(struct _kclass*)*(share->capacityClassTBL));
 	share->ClassTBL = NULL;
 
 	if(_ctx->stat->usedMemorySize != 0) {

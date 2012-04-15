@@ -32,7 +32,7 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
 	if(lexpr != K_NULLEXPR) {
 		kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
-		if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_BLOCKLOCAL_ || lexpr->build == TEXPR_FIELD) {
+		if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_LOCAL_ || lexpr->build == TEXPR_FIELD) {
 			if(rexpr != K_NULLEXPR) {
 				((struct _kExpr*)expr)->build = TEXPR_LET;
 				((struct _kExpr*)rexpr)->ty = lexpr->ty;
@@ -51,7 +51,7 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 static kbool_t local_initassignment(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
-	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
+	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, .ExprTyCheck = ExprTyCheck_assignment},
 		{ .name = NULL, },
 	};

@@ -93,7 +93,7 @@ kfloat_t kfloat_rand(void)
 
 kInt* new_Int_(CTX, kcid_t cid, kint_t value)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	if(ct->constPoolMapNULL != NULL) {
 		kInt *n = knh_PtrMap_getI(_ctx, ct->constPoolMapNULL, (kunbox_t)value);
 		if(n == NULL) {
@@ -112,7 +112,7 @@ kInt* new_Int_(CTX, kcid_t cid, kint_t value)
 
 kFloat* new_Float_(CTX, kcid_t cid, kfloat_t value)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	if(ct->constPoolMapNULL != NULL) {
 		ksfp_t lsfp;
 		lsfp.fvalue = value;
@@ -141,7 +141,7 @@ KNHAPI2(kFloat*) new_Float(CTX, kfloat_t value)
 	return new_Float_(_ctx, CLASS_Float, value);
 }
 
-Object* new_Boxing(CTX, ksfp_t *sfp, const kclass_t *ct)
+Object* new_Boxing(CTX, ksfp_t *sfp, kclass_t *ct)
 {
 	kObject *o = NULL;
 	if(ct->constPoolMapNULL != NULL) {
@@ -162,7 +162,7 @@ Object* new_Boxing(CTX, ksfp_t *sfp, const kclass_t *ct)
 KNHAPI2(void) knh_boxing(CTX, ksfp_t *sfp, int type)
 {
 	if(TY_isUnbox(type)) {
-		const kclass_t *ct = ClassTBL(type);
+		kclass_t *ct = ClassTBL(type);
 		kObject *o;
 		if(ct->constPoolMapNULL != NULL) {
 			o = (kObject*)knh_PtrMap_getI(_ctx, ct->constPoolMapNULL, sfp[0].ndata);

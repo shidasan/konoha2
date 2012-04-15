@@ -439,7 +439,7 @@ static kbool_t checkStringPooling(const char *text, size_t len)
 
 kString* new_String2(CTX, kcid_t cid, const char *text, size_t len, int policy)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	int isPooling = 0;
 #ifdef K_USING_STRINGPOOL
 	if(!TFLAG_is(int, policy, SPOL_POOLNEVER) && ct->constPoolMapNULL != NULL) {

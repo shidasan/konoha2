@@ -102,9 +102,9 @@ KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 	kArray *list = _ctx->stack->gcstack;
 	size_t start = kArray_size(list);
 	kKonohaSpace *ks = sfp[0].ks;
-	const kclass_t *ct = O_ct(sfp[1].o);
+	kclass_t *ct = O_ct(sfp[1].o);
 	DBG_P("*** man %s", T_cid(ct->cid));
-//	((kclass_t*)CT_Method)->p = Method_p;
+//	((struct _kclass*)CT_Method)->p = Method_p;
 	while(ks != NULL) {
 		if(ks->methodsNULL != NULL) {
 			copyMethodList(_ctx, ct->cid, ks->methodsNULL, list);
@@ -126,8 +126,8 @@ KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 static	kbool_t i_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	USING_SUGAR;
-	kclass_t *ct = (kclass_t*)kclass(TY_Method, pline);
-	ct->p = Method_p;
+	kclass_t *ct = kclass(TY_Method, pline);
+	KSET_CLASSFUNC(ct, p, Method, pline);
 	intptr_t methoddata[] = {
 		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
@@ -144,7 +144,7 @@ static kbool_t i_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 static kbool_t i_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
-//	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
+//	KDEFINE_SYNTAX SYNTAX[] = {
 //		{ TOKEN("float"), .type = TY_Float, },
 //		{ TOKEN("double"), .type = TY_Float, },
 //		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
@@ -159,9 +159,9 @@ static kbool_t i_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* i_init(void)
+KDEFINE_PACKAGE* i_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("konoha.i", "1.0"),
 		.initPackage = i_initPackage,
 		.setupPackage = i_setupPackage,

@@ -264,13 +264,13 @@ static kstatus_t readstmt(CTX, kwb_t *wb, kline_t *uline)
 	return status;
 }
 
-static void MODSUGAR_dumpEval(CTX, kwb_t *wb)
+static void dumpEval(CTX, kwb_t *wb)
 {
 	kstack_t *base = _ctx->stack;
 	ktype_t ty = base->evalty;
 	if(ty != TY_void) {
 		ksfp_t *lsfp = base->stack + base->evalidx;
-		CT_(ty)->p(_ctx, lsfp, 0, wb, KP_DUMP);
+		CT_(ty)->p(_ctx, lsfp, 0, wb, P_DUMP);
 		fflush(stdout);
 		fprintf(stdout, "TY=%s EVAL=%s\n", T_cid(ty), kwb_top(wb,1));
 	}
@@ -289,7 +289,7 @@ static void shell(CTX)
 			uline += inc;
 			kwb_free(&wb);
 			if(status != K_FAILED) {
-				MODSUGAR_dumpEval(_ctx, &wb);
+				dumpEval(_ctx, &wb);
 				kwb_free(&wb);
 			}
 		}
@@ -338,9 +338,9 @@ static void Kreport(CTX, int level, const char *msg)
 	fputs(" - ", stdlog);
 	fputs(msg, stdlog);
 	fputs("\n", stdlog);
-	fputs(" - ", stdout);
-	fputs(msg, stdout);
-	fputs("\n", stdout);
+//	fputs(" - ", stdout);
+//	fputs(msg, stdout);
+//	fputs("\n", stdout);
 }
 
 static const char *T_ERR(int level)
@@ -358,25 +358,25 @@ static const char *T_ERR(int level)
 static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
 	if(level == DEBUG_ && !verbose_sugar) return;
-	va_list ap, ap2;
+	va_list ap;
 	va_start(ap , fmt);
-	va_copy(ap2, ap);
+//	va_copy(ap2, ap);
 	fflush(stdlog);
 	if(pline != 0) {
 		const char *file = T_file(pline);
-		fprintf(stdout, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
+//		fprintf(stdout, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
 		fprintf(stdlog, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
 	}
 	else {
-		fprintf(stdout, " - %s" , T_ERR(level));
+//		fprintf(stdout, " - %s" , T_ERR(level));
 		fprintf(stdlog, " - %s" , T_ERR(level));
 	}
-	vfprintf(stdout, fmt, ap);
-	fprintf(stdout, "\n");
-	vfprintf(stdlog, fmt, ap2);
+//	vfprintf(stdout, fmt, ap);
+//	fprintf(stdout, "\n");
+	vfprintf(stdlog, fmt, ap);
 	fprintf(stdlog, "\n");
 	va_end(ap);
-	va_end(ap2);
+//	va_end(ap2);
 	if(level == CRIT_) {
 		kraise(0);
 	}
@@ -405,7 +405,11 @@ static int check_result(FILE *fp0, FILE *fp1)
 
 static int konoha_test(const char *testname)
 {
-	verbose_sugar = 0; // reduced error
+	// reduced error message
+	verbose_debug = 0;
+	verbose_sugar = 0;
+	verbose_gc    = 0;
+	verbose_code  = 0;
 	konoha_t konoha = konoha_open();
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);
@@ -424,15 +428,15 @@ static int konoha_test(const char *testname)
 	else {
 		stdlog = fopen(result_file, "w");
 	}
-	konoha->lib2->Kreport  = Kreport;
-	konoha->lib2->Kreportf = Kreportf;
+	((struct _klib2*)konoha->lib2)->Kreport  = Kreport;
+	((struct _klib2*)konoha->lib2)->Kreportf = Kreportf;
 	konoha_load(konoha, script_file);
 	fclose(stdlog);
 	if(fp != NULL) {
 		FILE *fp2 = fopen(result_file, "r");
 		ret = check_result(fp, fp2);
 		if(ret != 0) {
-			fprintf(stdout, "[FAILED]: %s\n", testname);
+//			fprintf(stdout, "[FAILED]: %s\n", testname);
 		}
 		else {
 			fprintf(stdout, "[PASS]: %s\n", testname);

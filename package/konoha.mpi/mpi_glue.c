@@ -3142,7 +3142,7 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	const kclass_t *CT_MPI = kaddClassDef(NULL, &MPIDef, pline);
+	kclass_t *CT_MPI = kaddClassDef(NULL, &MPIDef, pline);
 #define TY_MPI    (CT_MPI->cid)
 
 	intptr_t methoddata[] = {
@@ -3462,9 +3462,9 @@ static kbool_t mpi_setupLingo(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* mpi_init(void)
+KDEFINE_PACKAGE* mpi_init(void)
 {
-	static const KPACKDEF d = {
+	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("mpi", "1.0"),
 		.initPackage  = mpi_initPackage,
 		.setupPackage = mpi_setupPackage,

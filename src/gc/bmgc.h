@@ -755,12 +755,9 @@ void MODGCSHARE_init(CTX, kcontext_t *ctx)
 	ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
 	MODGC_init(_ctx, ctx);
 	(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
-	{
-		klib2_t *l = ctx->lib2;
-		l->Kmalloc       = Kmalloc;
-		l->Kzmalloc      = Kzmalloc;
-		l->Kfree         = Kfree;
-	}
+	KSET_KLIB2(malloc, 0);
+	KSET_KLIB2(zmalloc, 0);
+	KSET_KLIB2(free, 0);
 }
 
 void MODGCSHARE_gc_destroy(CTX, kcontext_t *ctx)
@@ -1888,7 +1885,7 @@ static kbool_t knh_isObject(CTX, kObject *o)
 
 static inline void bmgc_Object_free(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if (ct) {
 		MEMLOG(ctx, "~Object", K_NOTICE, KNH_LDATA(LOG_p("ptr", o), LOG_i("cid", ct->cid)));
 		//gc_info("~Object ptr=%p, cid=%d, o->h.meta=%p", o, ct->cid, o->h.meta);

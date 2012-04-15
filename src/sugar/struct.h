@@ -43,20 +43,12 @@ static void syntax_reftrace(CTX, kmape_t *p)
 	ksyntax_t *syn = (ksyntax_t*)p->uvalue;
 	BEGIN_REFTRACE(5);
 	KREFTRACEn(syn->syntaxRule);
-	KREFTRACEn(syn->StmtAdd);
+	KREFTRACEn(syn->ParseStmt);
 	KREFTRACEn(syn->TopStmtTyCheck);
 	KREFTRACEn(syn->StmtTyCheck);
 	KREFTRACEn(syn->ExprTyCheck);
 	END_REFTRACE();
 }
-
-//static void symtbl_reftrace(CTX, kmape_t *p)
-//{
-//	BEGIN_REFTRACE(2);
-//	KREFTRACEn(p->skey);
-//	KREFTRACEn(p->ovalue);
-//	END_REFTRACE();
-//}
 
 static void KonohaSpace_reftrace(CTX, kObject *o)
 {
@@ -64,9 +56,6 @@ static void KonohaSpace_reftrace(CTX, kObject *o)
 	if(ks->syntaxMapNN != NULL) {
 		kmap_reftrace(ks->syntaxMapNN, syntax_reftrace);
 	}
-//	if(ks->symtblMapSO != NULL) {
-//		kmap_reftrace(ks->symtblMapSO, symtbl_reftrace);
-//	}
 	size_t i, size = KARRAYSIZE(ks->cl.bytesize, kvs);
 	BEGIN_REFTRACE(size);
 	for(i = 0; i < size; i++) {
@@ -173,7 +162,7 @@ static void KonohaSpace_importClassName(CTX, kKonohaSpace *ks, kpack_t packdom, 
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	size_t i, size = KARRAYSIZE(_ctx->share->ca.bytesize, uintptr);
 	for(i = 0; i < size; i++) {
-		const kclass_t *ct = CT_(i);
+		kclass_t *ct = CT_(i);
 		if(ct->packdom == packdom) {
 			kv.key = ct->nameid;
 			kv.ty  = TY_TYPE;
@@ -278,10 +267,10 @@ static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, 
 	}
 }
 
-static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, DEFINE_SYNTAX_SUGAR *syndef)
+static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *syndef)
 {
-	knh_Fmethod pStmtAdd = NULL, pStmtParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
-	kMethod *mStmtAdd = NULL, *mStmtParseExpr = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
+	knh_Fmethod pParseStmt = NULL, pParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
+	kMethod *mParseStmt = NULL, *mParseExpr = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
 	while(syndef->name != NULL) {
 		keyword_t kw = keyword(_ctx, syndef->name, strlen(syndef->name), FN_NEWID);
 		struct _ksyntax* syn = (struct _ksyntax*)KonohaSpace_syntax(_ctx, ks, kw, 1);
@@ -302,8 +291,8 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, DEFINE_SYNTAX_SUGAR 
 			syn->priority = syndef->priority_op2;
 			syn->right = syndef->right;
 		}
-		setSyntaxMethod(_ctx, syndef->StmtAdd, &(syn->StmtAdd), &pStmtAdd, &mStmtAdd);
-		setSyntaxMethod(_ctx, syndef->StmtParseExpr, &(syn->StmtParseExpr), &pStmtParseExpr, &mStmtParseExpr);
+		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmt), &pParseStmt, &mParseStmt);
+		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr);
 		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
 		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
 		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck);
@@ -318,7 +307,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, DEFINE_SYNTAX_SUGAR 
 static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
 {
 	uintptr_t hcode = longid(PN_konoha, kuname(name, len, 0, FN_NONAME));
-	const kclass_t *ct = (const kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+	kclass_t *ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
 	return (ct != NULL) ? ct->cid : def;
 }
 
@@ -332,9 +321,9 @@ static void KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd)
 }
 
 /* KonohaSpace/Class/Method */
-static kMethod* CT_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn)
+static kMethod* CT_findMethodNULL(CTX, kclass_t *ct, kmethodn_t mn)
 {
-	const kclass_t *p, *t0 = ct;
+	kclass_t *p, *t0 = ct;
 	do {
 		size_t i;
 		kArray *a = t0->methods;
@@ -410,7 +399,7 @@ static kbool_t KonohaSpace_defineMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kli
 	if(mtd->packid == 0) {
 		((struct _kMethod*)mtd)->packid = ks->packid;
 	}
-	const kclass_t *ct = CT_(mtd->cid);
+	kclass_t *ct = CT_(mtd->cid);
 	if(ct->packdom == ks->packdom && kMethod_isPublic(mtd)) {
 		kArray_add(ct->methods, mtd);
 	}
@@ -604,17 +593,17 @@ static void Expr_init(CTX, kObject *o, void *conf)
 	struct _kExpr *expr      =   (struct _kExpr*)o;
 	expr->build      =   TEXPR_UNTYPED;
 	expr->ty         =   TY_var;
-	expr->index      =   0;
-	expr->dataNUL    = NULL;
-	expr->tkNUL      = NULL;
+	KINITv(expr->tk, K_NULLTOKEN);
+	KINITv(expr->data, K_NULL);
+	expr->syn = (ksyntax_t*)conf;
 }
 
 static void Expr_reftrace(CTX, kObject *o)
 {
 	kExpr *expr = (kExpr*)o;
 	BEGIN_REFTRACE(2);
-	KREFTRACEn(expr->tkNUL);
-	KREFTRACEn(expr->dataNUL);
+	KREFTRACEv(expr->tk);
+	KREFTRACEv(expr->data);
 	END_REFTRACE();
 }
 
@@ -624,29 +613,48 @@ static KDEFINE_CLASS ExprDef = {
 	.reftrace = Expr_reftrace,
 };
 
-static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
+static struct _kExpr* Expr_vadd(CTX, struct _kExpr *expr, int n, va_list ap)
 {
 	int i;
+	KSETv(expr->cons, new_(Array, 8));
+	for(i = 0; i < n; i++) {
+		kObject *v =  (kObject*)va_arg(ap, kObject*);
+		if(v == NULL || v == (kObject*)K_NULLEXPR) return (struct _kExpr*)K_NULLEXPR;
+		kArray_add(expr->cons, v);
+	}
+	return expr;
+}
+
+static kExpr* new_ConsExpr(CTX, ksyntax_t *syn, int n, ...)
+{
+	va_list ap;
+	va_start(ap, n);
+	DBG_ASSERT(syn != NULL);
+	struct _kExpr *expr = new_W(Expr, syn);
+	PUSH_GCSTACK(expr);
+	expr = Expr_vadd(_ctx, expr, n, ap);
+	va_end(ap);
+	return (kExpr*)expr;
+}
+
+static kExpr* new_TypedConsExpr(CTX, int build, ktype_t ty, int n, ...)
+{
 	va_list ap;
 	va_start(ap, n);
 	struct _kExpr *expr = new_W(Expr, NULL);
 	PUSH_GCSTACK(expr);
-	DBG_ASSERT(syn != NULL);
-	expr->syn = syn;
-	KINITv(expr->consNUL, new_(Array, 8));
-	for(i = 0; i < n; i++) {
-		kObject *v =  (kObject*)va_arg(ap, kObject*);
-		if(v == NULL || v == (kObject*)K_NULLEXPR) return K_NULLEXPR;
-		kArray_add(expr->consNUL, v);
-	}
+	expr = Expr_vadd(_ctx, expr, n, ap);
 	va_end(ap);
+	expr->build = build;
+	expr->ty = ty;
 	return (kExpr*)expr;
 }
 
 static kExpr* Expr_add(CTX, kExpr *expr, kExpr *e)
 {
+	DBG_ASSERT(IS_Array(expr->cons));
 	if(expr != K_NULLEXPR && e != NULL && e != K_NULLEXPR) {
-		kArray_add(expr->consNUL, e);
+		kArray_add(expr->cons, e);
 		return expr;
 	}
 	return K_NULLEXPR;
@@ -658,7 +666,7 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 		if(nest == 0) DUMP_P("\n");
 		dumpIndent(nest);
 		if(Expr_isTerm(expr)) {
-			DUMP_P("[%d] ExprTerm: kw=%s %s", n, T_kw(expr->tkNUL->kw), kToken_s(expr->tkNUL));
+			DUMP_P("[%d] ExprTerm: kw=%s %s", n, T_kw(expr->tk->kw), kToken_s(expr->tk));
 			if(expr->ty != TY_var) {
 
 			}
@@ -666,13 +674,13 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 		}
 		else {
 			int i;
-			DUMP_P("[%d] Cons: kw=%s, size=%ld", n, T_kw(expr->syn->kw), kArray_size(expr->consNUL));
+			DUMP_P("[%d] Cons: kw=%s, size=%ld", n, T_kw(expr->syn->kw), kArray_size(expr->cons));
 			if(expr->ty != TY_var) {
 
 			}
 			DUMP_P("\n");
-			for(i=0; i < kArray_size(expr->consNUL); i++) {
-				kObject *o = expr->consNUL->list[i];
+			for(i=0; i < kArray_size(expr->cons); i++) {
+				kObject *o = expr->cons->list[i];
 				if(O_ct(o) == CT_Expr) {
 					dumpExpr(_ctx, i, nest+1, (kExpr*)o);
 				}
@@ -699,16 +707,15 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 {
 	if(expr == NULL) expr = new_(Expr, 0);
 	W(kExpr, expr);
-	//DBG_ASSERT(expr->dataNUL == NULL);
-	Wexpr->dataNUL = NULL;   // consNUL is used in context of constant folding
 	Wexpr->ty = ty;
 	if(TY_isUnbox(ty)) {
 		Wexpr->build = TEXPR_NCONST;
 		Wexpr->ndata = N_toint(o);
+		KSETv(Wexpr->data, K_NULL);
 	}
 	else {
 		Wexpr->build = TEXPR_CONST;
-		KINITv(Wexpr->dataNUL, o);
+		KINITv(Wexpr->data, o);
 	}
 	WASSERT(expr);
 	return expr;
@@ -717,25 +724,24 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 {
 	if(expr == NULL) expr = new_(Expr, 0);
-	//DBG_ASSERT(expr->dataNUL == NULL);
 	W(kExpr, expr);
-	Wexpr->dataNUL = NULL; // cons NUL is used in context of constant folding
 	Wexpr->build = TEXPR_NCONST;
 	Wexpr->ndata = ndata;
+	KSETv(Wexpr->data, K_NULL);
 	Wexpr->ty = ty;
 	WASSERT(expr);
 	return expr;
 }
 
-static kExpr *Expr_setVariable(CTX, kExpr *expr, kexpr_t build, ktype_t ty, intptr_t index, kGamma *gma)
+static kExpr *Expr_setVariable(CTX, kExpr *expr, int build, ktype_t ty, intptr_t index, kGamma *gma)
 {
 	if(expr == NULL) expr = new_W(Expr, 0);
 	W(kExpr, expr);
 	Wexpr->build = build;
 	Wexpr->ty = ty;
 	Wexpr->index = index;
-	if(build == TEXPR_BLOCKLOCAL_) {
-		DBG_P("index=%d, expr %p", kArray_size(gma->genv->lvarlst), Wexpr);
+	KSETv(Wexpr->data, K_NULL);
+	if(build < TEXPR_UNTYPED) {
 		kArray_add(gma->genv->lvarlst, Wexpr);
 	}
 	WASSERT(expr);
@@ -879,7 +885,7 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, kw);
 	if(expr != NULL) {
 		if(IS_Expr(expr) && Expr_isTerm(expr)) {
-			return S_text(expr->tkNUL->text);
+			return S_text(expr->tk->text);
 		}
 		else if(IS_Token(expr)) {
 			kToken *tk = (kToken*)expr;

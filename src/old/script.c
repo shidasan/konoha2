@@ -59,7 +59,7 @@ kcid_t knh_KonohaSpace_getcid(CTX, kKonohaSpace *ns, kbytes_t sname)
 	}
 	L_TAIL:
 	if(DP(ns)->name2ctDictSetNULL != NULL) {
-		const kclass_t *ct = (kclass_t*)knh_DictSet_get(_ctx, DP(ns)->name2ctDictSetNULL, sname);
+		kclass_t *ct = (struct _kclass*)knh_DictSet_get(_ctx, DP(ns)->name2ctDictSetNULL, sname);
 		if(ct != NULL) return ct->cid;
 	}
 	if(ns->parentNULL != NULL) {
@@ -108,7 +108,7 @@ kcid_t knh_KonohaSpace_getFuncClass(CTX, kKonohaSpace *ns, kmethodn_t mn)
 //		kbytes_t name = S_tobytes(knh_getFieldName(_ctx, MN_toFN(mn)));
 //		L_TAIL:
 //		if(DP(ns)->name2ctDictSetNULL != NULL) {
-//			const kclass_t *ct = (const kclass_t*)knh_DictSet_get(_ctx, DP(ns)->name2ctDictSetNULL, sname);
+//			kclass_t *ct = (kclass_t*)knh_DictSet_get(_ctx, DP(ns)->name2ctDictSetNULL, sname);
 //			if(ct != NULL) return ct->cid;
 //		}
 //		if(ns->parentNULL != NULL) {
@@ -362,7 +362,7 @@ void knh_Script_setNSName(CTX, kScript* scr, kString *nsname)
 	KSETv(DP(scr->ns)->nsname, nsname);
 	knh_Bytes_write(_ctx, cwb->ba, S_tobytes(nsname));
 	knh_Bytes_write(_ctx, cwb->ba, STEXT(".Script"));
-	KSETv(((kclass_t*)O_ct(scr))->lname, CWB_newString(_ctx, cwb, SPOL_ASCII));
+	KSETv(((struct _kclass*)O_ct(scr))->lname, CWB_newString(_ctx, cwb, SPOL_ASCII));
 }
 
 typedef void (*knh_Fpkgcomplete)(CTX);
@@ -736,17 +736,17 @@ static void knh_loadNativeClass(CTX, const char *cname, kclass_t *ct)
 {
 	char fname[256];
 	kKonohaSpace *ns = K_GMANS;
-	const kclass_t *cdef = NULL;
+	kclass_t *cdef = NULL;
 	if(ns->gluehdr != NULL) {
 		knh_snprintf(fname, sizeof(fname), "def%s", cname);
 		knh_Fclassdef classdef = (knh_Fclassdef)knh_dlsym(_ctx, ns->gluehdr, fname, cname, 0/*isTest*/);
 		if(classdef != NULL) {
-			kclass_t *cdefbuf = (kclass_t*)KNH_ZMALLOC(sizeof(kclass_t));
+			kclass_t *cdefbuf = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t));
 			knh_memcpy(cdefbuf, knh_getDefaultClassDef(), sizeof(kclass_t));
 			LANG_LOG("loading glue func: %s", fname);
 			classdef(_ctx, ct->cid, cdefbuf);
 			cdefbuf->asize = sizeof(kclass_t);
-			cdef = (const kclass_t*)cdefbuf;
+			cdef = (kclass_t*)cdefbuf;
 		}
 	}
 	if(cdef == NULL) {
@@ -770,11 +770,11 @@ static void knh_loadNativeClass(CTX, const char *cname, kclass_t *ct)
 
 /* ------------------------------------------------------------------------ */
 
-static void ClassTBL_inherit(CTX, kclass_t *ct, const kclass_t *supct) {
+static void ClassTBL_inherit(CTX, kclass_t *ct, kclass_t *supct) {
 	ct->supTBL = ClassTBL(ct->supcid);
 	ct->kwx = supct->kwx;
 	ct->xdataidx = supct->xdataidx;
-	((kclass_t*)supct)->subclass += 1;
+	((struct _kclass*)supct)->subclass += 1;
 	ct->bcid = supct->bcid;
 	ct->baseTBL = ClassTBL(supct->bcid);
 

@@ -182,7 +182,7 @@ static KMETHOD Object_isNotNull(CTX, ksfp_t *sfp _RIX)
 //	kObject *src = sfp[0].o;
 //	kcid_t cid = O_cid(src);
 //	if(knh_class_canObjectCopy(_ctx, cid) && IS_NOTNULL(src)) {
-//		const kclass_t *ct = O_ct(src);
+//		kclass_t *ct = O_ct(src);
 //		kObject *o = new_hObject_(_ctx, ct);
 //		o->h.magicflag = src->h.magicflag;
 //		ct->cdef->initcopy(_ctx, RAWPTR(o), RAWPTR(src));
@@ -308,7 +308,7 @@ static KMETHOD Object__dump(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Tdynamic_opLINK(CTX, ksfp_t *sfp _RIX)
 {
 	kbytes_t t = knh_bytes_next(S_tobytes(sfp[1].s), ':');
-	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, sfp[2].ns, t, CLASS_Tdynamic);
+	kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, sfp[2].ns, t, CLASS_Tdynamic);
 	if(ct != NULL) {
 		RETURN_(new_Type(_ctx, ct->cid));
 	}
@@ -1989,7 +1989,7 @@ static KMETHOD Map_newMAP(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD Map_open(CTX, ksfp_t *sfp _RIX)
 {
-	const kclass_t *ct = (sfp[4].c)->ct;
+	kclass_t *ct = (sfp[4].c)->ct;
 	const knh_MapDPI_t *spi = knh_KonohaSpace_getMapDPINULL(_ctx, sfp[3].ns, S_tobytes(sfp[1].s));
 	kMap *m = NULL;
 	DBG_P("reqt = %s", CLASS__(ct->cid));

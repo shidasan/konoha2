@@ -171,7 +171,7 @@ void knh_checkSafePoint(CTX, ksfp_t *sfp, const char *file, int line)
 //	argc = Param_isVARGs(DP(mtd)->mp) ? (_ctx->esp - sfp) : knh_Method_psize(mtd);
 //	for(i = 1; i < argc; i++) {
 //		ktype_t reqt = knh_Method_ptype(_ctx, mtd, this_cid, i - 1);
-//		const kclass_t *t = O_ct(sfp[i].o);
+//		kclass_t *t = O_ct(sfp[i].o);
 //		if(!ClassTBL_isa(t, reqt)) {
 //			THROW_ParamTypeError(_ctx, sfp, (mtd)->mn, i, reqt, O_cid(sfp[i].o));
 //			break;

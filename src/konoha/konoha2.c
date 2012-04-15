@@ -148,7 +148,7 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 		return 1;
 	}
 	else {
-		kreportf(ERR_, pline, "already registered: %s", _ctx->modshare[x]->name);
+		kreportf(CRIT_, pline, "module already registered: %s", _ctx->modshare[x]->name);
 		return 0;
 	}
 }
@@ -170,12 +170,11 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 	static volatile size_t ctxid_counter = 0;
 	ctxid_counter++;
 	if(_ctx == NULL) {  // NULL means first one
-		klib2_t *klib2 = (klib2_t*)malloc(sizeof(klib2_t) + sizeof(kcontext_t));
+		struct _klib2 *klib2 = (struct _klib2*)malloc(sizeof(klib2_t) + sizeof(kcontext_t));
 		bzero(klib2, sizeof(klib2_t) + sizeof(kcontext_t));
 		klib2_init(klib2);
-		klib2->KsetModule = kshare_setModule;
 		newctx = (kcontext_t*)(klib2 + 1);
-		newctx->lib2 = klib2;
+		newctx->lib2 = (klib2_t*)klib2;
 		_ctx = (CTX_t)newctx;
 
 		MODLOG_init(_ctx, newctx);
@@ -246,7 +245,7 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 	KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 	kstack_free(_ctx, ctx);
 	if(IS_ROOTCTX(_ctx)){  // share
-		klib2_t *klib2 = (klib2_t*)ctx - 1;
+		struct _klib2 *klib2 = (struct _klib2*)ctx - 1;
 		for(i = 0; i < MOD_MAX; i++) {
 			kmodshare_t *p = ctx->modshare[i];
 			if(p != NULL && p->free != NULL) {

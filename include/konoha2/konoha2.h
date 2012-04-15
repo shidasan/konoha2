@@ -205,8 +205,8 @@ typedef struct {
 	size_t bytesize;
 	union {
 		char  *bytebuf;
-		const struct kclass_t **cts;
-		struct kvs_t           *kvs;
+		const struct _kclass **cts;
+		struct kvs_t          *kvs;
 		struct kopl_t          *opl;
 		const struct _kObject **objects;
 		struct _kObject       **refhead;  // stack->ref
@@ -335,7 +335,7 @@ typedef struct kmodshare_t {
 typedef struct kcontext_t {
 	int						          safepoint; // set to 1
 	struct ksfp_t                    *esp;
-	struct klib2_t                   *lib2;
+	const struct _klib2              *lib2;
 	struct kmemshare_t                *memshare;
 	struct kmemlocal_t                *memlocal;
 	struct kshare_t                   *share;
@@ -445,7 +445,6 @@ typedef struct kstack_t {
 	kjmpbuf_t* evaljmpbuf;
 } kstack_t;
 
-
 typedef struct kfield_t {
 	kflag_t    flag    ;
 	kshort_t   isobj   ;
@@ -453,22 +452,22 @@ typedef struct kfield_t {
 	ksymbol_t  fn      ;
 } kfield_t ;
 
-struct kp_api;
+#define P_STR    0
+#define P_DUMP   1
 
-#define KP_STR    0
-#define KP_DUMP   1
+struct _kclass;
 
 #define KCLASSSPI \
 		void (*init)(CTX, const struct _kObject*, void *conf);\
 		void (*reftrace)(CTX, const struct _kObject*);\
 		void (*free)(CTX, const struct _kObject*);\
-		const struct _kObject* (*fnull)(CTX, const struct kclass_t *);\
+		const struct _kObject* (*fnull)(CTX, const struct _kclass*);\
 		void (*p)(CTX, ksfp_t *, int, kwb_t *, int);\
 		uintptr_t (*unbox)(CTX, const struct _kObject*);\
 		int  (*compareTo)(const struct _kObject*, const struct _kObject*);\
-		void (*initdef)(CTX, struct kclass_t *, kline_t);\
-		kbool_t (*issubtype)(CTX, const struct kclass_t*, const struct kclass_t*);\
-		const struct kclass_t* (*realtype)(CTX, const struct kclass_t*, const struct kclass_t*)
+		void (*initdef)(CTX, struct _kclass*, kline_t);\
+		kbool_t (*issubtype)(CTX, const struct _kclass*, const struct _kclass*);\
+		const struct _kclass* (*realtype)(CTX, const struct _kclass*, const struct _kclass*)
 
 //struct kString* (*getkey)(CTX, const struct _kObject*);
 //kuint_t (*hashCode)(CTX, const struct _kObject*);
@@ -491,11 +490,11 @@ typedef struct KDEFINE_CLASS {
 
 struct _kString;
 struct _kObject;
-struct kclass_t;
-
+//struct _kclass;
 typedef uintptr_t kmagicflag_t;
 
-typedef struct kclass_t {
+typedef const struct _kclass kclass_t;
+struct _kclass {
 	KCLASSSPI;
 	kpack_t   packid;       kpack_t   packdom;
 	kcid_t   cid;          kflag_t  cflag;
@@ -504,7 +503,7 @@ typedef struct kclass_t {
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
-	kushort_t  fsize;      kushort_t fallocsize;
+	kushort_t  fsize;         kushort_t fallocsize;
 	const char               *DBG_NAME;
 
 	kuname_t                  nameid;
@@ -513,11 +512,11 @@ typedef struct kclass_t {
 	const struct _kArray     *methods;
 	union {
 		const struct _kObject  *nulvalNUL;
-		struct _kObject  *WnulvalNUL;
+		struct _kObject        *WnulvalNUL;
 	};
 	struct kmap_t            *constPoolMapNO;
-	const struct kclass_t    *simbody;
-} kclass_t;
+	kclass_t                 *simbody;
+} ;
 
 /* ----------------------------------------------------------------------- */
 /* CLASS */
@@ -631,7 +630,7 @@ typedef struct kclass_t {
 
 typedef struct kObjectHeader {
 	kmagicflag_t magicflag;
-	const struct kclass_t *ct;  //@RENAME
+	kclass_t *ct;  //@RENAME
 	union {
 		uintptr_t refc;  // RCGC
 		void *gcinfo;
@@ -1020,8 +1019,8 @@ struct _kSystem {
 // klib2
 
 struct _kKonohaSpace;
-
-typedef struct klib2_t {
+typedef const struct _klib2  klib2_t;
+struct _klib2 {
 	void* (*Kmalloc)(CTX, size_t);
 	void* (*Kzmalloc)(CTX, size_t);
 	void  (*Kfree)(CTX, void *, size_t);
@@ -1055,9 +1054,9 @@ typedef struct klib2_t {
 	ksymbol_t   (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 
-	const kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
-	kObject* (*Knew_Object)(CTX, const kclass_t *, void *);
-	kObject* (*Knull)(CTX, const kclass_t *);
+	kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
+	kObject* (*Knew_Object)(CTX, kclass_t *, void *);
+	kObject* (*Knull)(CTX, kclass_t *);
 	kObject* (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
 	void (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
 	uintptr_t (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
@@ -1078,7 +1077,7 @@ typedef struct klib2_t {
 	void (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
 
 	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
-	const kclass_t* (*KaddClassDef)(CTX, kString *, KDEFINE_CLASS *, kline_t);
+	kclass_t* (*KaddClassDef)(CTX, kString *, KDEFINE_CLASS *, kline_t);
 
 	kcid_t  (*KKonohaSpace_getcid)(CTX, const struct _kKonohaSpace *, const char *, size_t, kcid_t def);
 	void    (*KloadMethodData)(CTX, const struct _kKonohaSpace *, intptr_t *d);
@@ -1090,9 +1089,9 @@ typedef struct klib2_t {
 	void (*Kraise)(CTX, int isContinue);     // module
 
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
-//	void (*KKonohaSpace_defineSyntax)(CTX, const struct _kKonohaSpace*, struct DEFINE_SYNTAX_SUGAR *);
+//	void (*KKonohaSpace_defineSyntax)(CTX, const struct _kKonohaSpace*, struct KDEFINE_SYNTAX *);
 
-} klib2_t;
+};
 
 #define K_NULL            (_ctx->share->constNull)
 #define K_TRUE            (_ctx->share->constTrue)
@@ -1218,7 +1217,23 @@ typedef struct {
 
 #define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)
-#define kraise(isContinue)             (KPI)->Kraise(_ctx, isContinue)
+#define kraise(PARAM)                  (KPI)->Kraise(_ctx, PARAM)
+#define KSET_KLIB2(T, UL)   do {\
+		void *func = _ctx->lib2->K##T;\
+		((struct _klib2*)_ctx->lib2)->K##T = K##T;\
+		if(func != NULL) {\
+			kreportf(INFO_, UL, "override of klib2->" #T ", file=%s, line=%d", __FILE__, __LINE__);\
+		}\
+	}while(0)\
+
+#define KSET_CLASSFUNC(ct, T, PREFIX, UL)   do {\
+		void *func = ct->T;\
+		((struct _kclass*)ct)->T = PREFIX##_##T;\
+		if(func != NULL) {\
+			kreportf(INFO_, UL, "override of %s->" #T ", file=%s, line=%d", T_CT(ct), __FILE__, __LINE__);\
+		}\
+	}while(0)\
+
 // gc
 
 #define KTODO(MSG) do { fprintf(stderr, "TODO: %s\n", MSG);abort(); } while (0)

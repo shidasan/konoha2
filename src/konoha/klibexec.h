@@ -461,7 +461,7 @@ static inline karray_t* kvproto_null(void)  // for proto_get safe null
 
 void KONOHA_freeObjectField(CTX, struct _kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
 		karray_t *p = o->h.kvproto;
 		KNH_FREE(p->bytebuf, p->bytemax);
@@ -526,7 +526,7 @@ static void kvproto_rehash(CTX, karray_t *p)
 
 void KONOHA_reftraceObject(CTX, kObject *o)
 {
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
 		size_t i, pmax = o->h.kvproto->bytemax / sizeof(kvs_t);
 		kvs_t *d = o->h.kvproto->kvs;
@@ -699,7 +699,20 @@ static void Kdbg_p(const char *file, const char *func, int line, const char *fmt
 
 // -------------------------------------------------------------------------
 
-void klib2_init(klib2_t *l)
+static void Kraise(CTX, int param)
+{
+	kstack_t *base = _ctx->stack;
+	if(base->evaljmpbuf != NULL) {
+		klongjmp(*base->evaljmpbuf, param+1);  // in setjmp 0 means good
+	}
+	abort();
+}
+
+// -------------------------------------------------------------------------
+
+static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline);
+
+static void klib2_init(struct _klib2 *l)
 {
 	l->Karray_init   = karray_init;
 	l->Karray_resize = karray_resize;
@@ -734,4 +747,6 @@ void klib2_init(klib2_t *l)
 	l->Kreport       = Kreport;
 	l->Kreportf      = Kreportf;
 	l->Kp            = Kdbg_p;
+	l->Kraise        = Kraise;
+	l->KsetModule    = kshare_setModule;
 }

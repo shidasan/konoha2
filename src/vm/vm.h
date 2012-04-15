@@ -50,8 +50,8 @@ extern "C" {
 
 typedef struct {
 	kmodshare_t h;
-	const kclass_t *cBasicBlock;
-	const kclass_t *cKonohaCode;
+	kclass_t *cBasicBlock;
+	kclass_t *cKonohaCode;
 	const struct _kKonohaCode *codeNull;
 	struct kopl_t  *PRECOMPILED_ENTER;
 	struct kopl_t  *PRECOMPILED_NCALL;
@@ -112,7 +112,7 @@ typedef struct kopl_t {
 		intptr_t data[5];
 		void *p[5];
 		kObject *o[5];
-		const kclass_t *ct[5];
+		kclass_t *ct[5];
 		char *u[5];
 	};
 } kopl_t;

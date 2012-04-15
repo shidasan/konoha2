@@ -26,9 +26,9 @@ static kbool_t float_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* float_init(void)
+KDEFINE_PACKAGE* float_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("float", "1.0"),
 		.initPackage = float_initPackage,
 		.setupPackage = float_setupPackage,

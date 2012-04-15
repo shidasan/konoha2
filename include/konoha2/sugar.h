@@ -54,20 +54,21 @@ typedef struct {
 	kbool_t (*initKonohaSpace)(CTX, const struct _kKonohaSpace *, kline_t);
 	kbool_t (*setupKonohaSpace)(CTX, const struct _kKonohaSpace *, kline_t);
 	int konoha_revision;
-} KPACKDEF_;
+} KDEFINE_PACKAGE_;
 
-typedef const KPACKDEF_ KPACKDEF;
-typedef KPACKDEF* (*Fpackageinit)(void);
+typedef const KDEFINE_PACKAGE_ KDEFINE_PACKAGE;
+typedef KDEFINE_PACKAGE* (*Fpackageinit)(void);
 
-typedef struct {
+typedef struct _kpackage kpackage_t;
+struct _kpackage {
 	kpack_t                      packid;
 	const struct _kKonohaSpace  *ks;
-	KPACKDEF                    *packdef;
+	KDEFINE_PACKAGE             *packdef;
 	kline_t                      export_script;
-} kpackage_t;
+};
 
-// StmtAdd
-#define VAR_StmtAdd(STMT, SYN, NAME, TLS, S, E) \
+// ParseStmt
+#define VAR_ParseStmt(STMT, SYN, NAME, TLS, S, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
 		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
 		ksymbol_t NAME = (ksymbol_t)sfp[1].ivalue;\
@@ -77,7 +78,7 @@ typedef struct {
 		(void)STMT; (void)SYN; (void)NAME; (void)TLS; (void)S; (void)E;\
 
 // Expr Stmt.parseExpr(Token[] tls, int s, int c, int e)
-#define VAR_StmtParseExpr(STMT, SYN, TLS, S, C, E) \
+#define VAR_ParseExpr(STMT, SYN, TLS, S, C, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
 		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
 		kArray *TLS = (kArray*)sfp[1].o;\
@@ -111,8 +112,8 @@ struct _ksyntax {
 	const char *token;
 	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
-	kMethod  *StmtAdd;
-	kMethod  *StmtParseExpr;
+	kMethod  *ParseStmt;
+	kMethod  *ParseExpr;
 	kMethod  *TopStmtTyCheck;
 	kMethod  *StmtTyCheck;
 	kMethod  *ExprTyCheck;
@@ -125,7 +126,7 @@ struct _ksyntax {
 
 #define TOKEN(T)  .name = T
 
-typedef struct DEFINE_SYNTAX_SUGAR {
+typedef struct KDEFINE_SYNTAX {
 	const char *name;
 //	size_t      namelen;
 	keyword_t kw;  kflag_t flag;
@@ -134,27 +135,26 @@ typedef struct DEFINE_SYNTAX_SUGAR {
 	const char *op1;
 	int priority_op2; int right;
 	int type;
-	knh_Fmethod StmtAdd;
-	knh_Fmethod StmtParseExpr;
+	knh_Fmethod ParseStmt;
+	knh_Fmethod ParseExpr;
 	knh_Fmethod TopStmtTyCheck;
 	knh_Fmethod StmtTyCheck;
 	knh_Fmethod ExprTyCheck;
-} DEFINE_SYNTAX_SUGAR;
+} KDEFINE_SYNTAX;
 
 
 typedef const struct _kKonohaSpace kKonohaSpace;
-
 struct _kKonohaSpace {
 	kObjectHeader h;
 	kpack_t packid;  kpack_t packdom;
 	const struct _kKonohaSpace   *parentNULL;
 	struct kmap_t   *syntaxMapNN;
 	//
-	void                *gluehdr;
+	void         *gluehdr;
 	kObject      *script;
 	kcid_t static_cid;   kcid_t function_cid;
 	kArray*       methodsNULL;
-	karray_t cl;
+	karray_t      cl;
 };
 
 typedef kshort_t    ksugar_t;
@@ -167,7 +167,6 @@ typedef enum {
 	TK_USYMBOL,       // KW_USYMBOL
 	TK_TEXT,
 	TK_STEXT,
-	TK_BTEXT,
 	TK_INT,
 	TK_FLOAT,
 	TK_URN,
@@ -183,11 +182,6 @@ typedef enum {
 	TK_METANAME,
 	TK_MN,
 	AST_OPTIONAL  // for syntax sugar
-//	// ast
-//	AST_TYPE,
-//	AST_EXPR,
-//	AST_STMT,
-//	AST_BLOCK
 } ktoken_t ;
 
 typedef const struct _kToken kToken;
@@ -215,35 +209,41 @@ struct _kToken {
 	};
 };
 
-#define TEXPR_BLOCKLOCAL_   -2   /*THIS IS NEVER PASSED*/
+#define TEXPR_LOCAL_   -4   /*THIS IS NEVER PASSED*/
+#define TEXPR_BLOCK_   -3   /*THIS IS NEVER PASSED*/
+#define TEXPR_FIELD_   -2   /*THIS IS NEVER PASSED*/
+#define TEXPR_shift    (TEXPR_LOCAL - (TEXPR_LOCAL_))
 #define TEXPR_UNTYPED       -1   /*THIS MUST NOT HAPPEN*/
 #define TEXPR_CONST          0
 #define TEXPR_NEW            1
 #define TEXPR_NULL           2
 #define TEXPR_NCONST         3
 #define TEXPR_LOCAL          4
-#define TEXPR_FIELD          5
-#define TEXPR_BOX            6
-#define TEXPR_UNBOX          7
-#define TEXPR_CALL           8
-#define TEXPR_AND            9
-#define TEXPR_OR            10
-#define TEXPR_LET           11
+#define TEXPR_BLOCK          5
+#define TEXPR_FIELD          6
+#define TEXPR_BOX            7
+#define TEXPR_UNBOX          8
+#define TEXPR_CALL           9
+#define TEXPR_AND           10
+#define TEXPR_OR            11
+#define TEXPR_LET           12
+#define TEXPR_MAX           13
 
 #define Expr_isCONST(o)     (TEXPR_CONST <= (o)->build && (o)->build <= TEXPR_NCONST)
 #define Expr_isTerm(o)      (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define Expr_setTerm(o,B)   TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,B)
-#define kExpr_at(E,N)        ((E)->consNUL->exprs[(N)])
+#define kExpr_at(E,N)        ((E)->cons->exprs[(N)])
 
 typedef const struct _kExpr kExpr;
 struct _kExpr {
 	kObjectHeader h;
 	ktype_t ty; kexpr_t build;
-	kToken *tkNUL;     // Term
+	kToken *tk;     // Term
 	union {
-		kObject* dataNUL;
-		kArray*  consNUL;  // Cons
-		kExpr*   singleNUL;
+		kObject* data;
+		kArray*  cons;  // Cons
+		kExpr*   single;
+		const struct _kBlock* block;
 	};
 	union {
 		ksyntax_t *syn;
@@ -251,7 +251,7 @@ struct _kExpr {
 		kfloat_t   fvalue;
 		uintptr_t  ndata;
 		intptr_t   index;
-		uintptr_t     cid;
+		uintptr_t  cid;
 //		uintptr_t	   mn;
 	};
 };
@@ -309,6 +309,8 @@ typedef struct gmabuf_t {
 
 	kcid_t                   this_cid;
 	kcid_t                   static_cid;
+	ktype_t           requested_return_type;
+	ktype_t           found_return_type;
 	kMethod*          mtd;
 	gstack_t f;
 	gstack_t l;
@@ -353,21 +355,19 @@ struct _kGamma {
 #define KW_cname   3
 #define KW_TEXT    4
 #define KW_STEXT   5
-#define KW_BTEXT   6
-#define KW_INT     7
-#define KW_FLOAT   8
-#define KW_URN     9
-#define KW_REGEX   10
-#define KW_TYPE    11
-#define KW_type    11
-#define KW_PARENTHESIS  12
-#define KW_BRANCET      13
-#define KW_BRACE        14
+#define KW_INT     6
+#define KW_FLOAT   7
+#define KW_URN     8
+#define KW_REGEX   9
+#define KW_TYPE    10
+#define KW_type    10
+#define KW_PARENTHESIS  11
+#define KW_BRANCET      12
+#define KW_BRACE        13
 
-//#define KW_BLOCK   15
-#define KW_block   15
-//#define KW_PARAMS  16
-#define KW_params  16
+#define KW_block   14
+#define KW_params  15
+#define KW_toks    16
 
 #define KW_DOT     17
 #define KW_DIV     (1+KW_DOT)
@@ -387,17 +387,17 @@ struct _kGamma {
 #define KW_COLON   (15+KW_DOT)
 #define KW_LET     (16+KW_DOT)
 #define KW_COMMA   (17+KW_DOT)
+#define KW_DOLLAR  (18+KW_DOT)
 
-#define KW_void      (18+KW_DOT)
-#define KW_var       (1+KW_void)
-#define KW_boolean   (2+KW_void)
-#define KW_int       (3+KW_void)
-#define KW_null      (4+KW_void)
-#define KW_true      (5+KW_void)
-#define KW_false     (6+KW_void)
-#define KW_if        (7+KW_void)
-#define KW_else      (8+KW_void)
-#define KW_return    (9+KW_void)
+#define KW_void      (19+KW_DOT)
+#define KW_boolean   (1+KW_void)
+#define KW_int       (2+KW_void)
+#define KW_null      (3+KW_void)
+#define KW_true      (4+KW_void)
+#define KW_false     (5+KW_void)
+#define KW_if        (6+KW_void)
+#define KW_else      (7+KW_void)
+#define KW_return    (8+KW_void)
 
 
 #define SYN_ERR      kmodsugar->syn_err
@@ -412,12 +412,12 @@ struct _kKonohaSpace;
 
 typedef struct {
 	kmodshare_t h;
-	const kclass_t *cToken;
-	const kclass_t *cExpr;
-	const kclass_t *cStmt;
-	const kclass_t *cBlock;
-	const kclass_t *cKonohaSpace;
-	const kclass_t *cGamma;
+	kclass_t *cToken;
+	kclass_t *cExpr;
+	kclass_t *cStmt;
+	kclass_t *cBlock;
+	kclass_t *cKonohaSpace;
+	kclass_t *cGamma;
 	//
 	kArray         *keywordList;
 	struct kmap_t         *keywordMapNN;
@@ -426,8 +426,8 @@ typedef struct {
 	kKonohaSpace         *rootks;
 	kArray         *aBuffer;
 
-//	struct _kMethod *UndefinedStmtAdd;
-	kMethod *UndefinedStmtParseExpr;
+//	struct _kMethod *UndefinedParseStmt;
+	kMethod *UndefinedParseExpr;
 	kMethod *UndefinedStmtTyCheck;
 	kMethod *UndefinedExprTyCheck;
 
@@ -452,7 +452,7 @@ typedef struct {
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
-	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, DEFINE_SYNTAX_SUGAR *);
+	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, KDEFINE_SYNTAX *);
 	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
 } kmodsugar_t;
 
@@ -485,8 +485,8 @@ typedef struct {
 #define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
 #define kExpr_setNConstValue(EXPR, T, D)  Expr_setNConstValue(_ctx, EXPR, T, D)
-#define new_Variable(B, T, I, G)          Expr_setVariable(_ctx, NULL, B, T, I, G)
-#define kExpr_setVariable(E, B, T, I, G)  Expr_setVariable(_ctx, E, B, T, I, G)
+#define new_Variable(B, T, I, G)          Expr_setVariable(_ctx, NULL, TEXPR_##B, T, I, G)
+#define kExpr_setVariable(E, B, T, I, G)  Expr_setVariable(_ctx, E, TEXPR_##B, T, I, G)
 #define kExpr_tyCheckAt(E, N, GMA, T, P)     Expr_tyCheckAt(_ctx, E, N, GMA, T, P)
 #define kStmt_tyCheck(E, NI, GMA, T, P)      Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
 
@@ -513,8 +513,8 @@ typedef struct {
 #define kExpr_setConstValue(EXPR, T, O)      _e->Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)                _e->Expr_setNConstValue(_ctx, NULL, T, D)
 #define kExpr_setNConstValue(EXPR, T, D)     _e->Expr_setNConstValue(_ctx, EXPR, T, D)
-#define new_Variable(B, T, I, I2, G)         _e->Expr_setVariable(_ctx, NULL, B, T, I, I2, G)
-#define kExpr_setVariable(E, B, T, I, I2, G) _e->Expr_setVariable(_ctx, E, B, T, I, I2, G)
+#define new_Variable(B, T, I, I2, G)         _e->Expr_setVariable(_ctx, NULL, TEXPR_##B, T, I, I2, G)
+#define kExpr_setVariable(E, B, T, I, I2, G) _e->Expr_setVariable(_ctx, E, TEXPR_##B, T, I, I2, G)
 #define kExpr_tyCheckAt(E, N, GMA, T, P)     _e->Expr_tyCheckAt(_ctx, E, N, GMA, T, P)
 #define kStmt_tyCheck(E, NI, GMA, T, P)      _e->Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
 

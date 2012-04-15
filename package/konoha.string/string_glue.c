@@ -518,9 +518,9 @@ static kbool_t String_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* string_init(void)
+KDEFINE_PACKAGE* string_init(void)
 {
-	static const KPACKDEF d = {
+	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("String", "1.0"),
 		.initPackage = String_initPackage,
 		.setupPackage = String_setupPackage,

@@ -46,13 +46,21 @@ static KMETHOD Int_opMUL(CTX, ksfp_t *sfp _RIX)
 //## @Const method Int Int.opDIV(Int x);
 static KMETHOD Int_opDIV(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(sfp[0].ivalue / sfp[1].ivalue);
+	kint_t n = sfp[1].ivalue;
+	if(unlikely(n == 0)) {
+		kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: zero divided");
+	}
+	RETURNi_(sfp[0].ivalue / n);
 }
 
 //## @Const method Int Int.opMOD(Int x);
 static KMETHOD Int_opMOD(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(sfp[0].ivalue % sfp[1].ivalue);
+	kint_t n = sfp[1].ivalue;
+	if(unlikely(n == 0)) {
+		kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: zero divided");
+	}
+	RETURNi_(sfp[0].ivalue % n);
 }
 
 //## @Const method Boolean Int.opEQ(Int x);
@@ -114,6 +122,16 @@ static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 	memcpy(s->buf, S_text(lhs), S_size(lhs));
 	memcpy(s->buf+S_size(lhs), S_text(rhs), S_size(rhs));
 	RETURN_(s);
+}
+
+//## @Const @Static void System.assert(boolean x)
+static KMETHOD System_assert(CTX, ksfp_t *sfp _RIX)
+{
+	kbool_t cond = sfp[1].bvalue;
+	if (cond == false) {
+		kline_t pline  = sfp[K_RTNIDX].uline;
+		kreportf(CRIT_, pline, "Assert!!");
+	}
 }
 
 //## method void System.p(@Coercion String msg);

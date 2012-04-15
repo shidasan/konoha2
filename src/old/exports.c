@@ -184,7 +184,7 @@ static void knh_loadSystemData(CTX, const kloaddata_t *data, kParam **buf)
 		case DATA_END: return;
 		case DATA_STRUCT0: {
 			kcid_t cid0 = _CID(data[0]);
-			kclass_t *cspi = (kclass_t*)data[1];
+			kclass_t *cspi = (struct _kclass*)data[1];
 			kflag_t cflag = (kflag_t)data[2];
 			data += 3;
 			kcid_t cid = new_ClassId(_ctx);

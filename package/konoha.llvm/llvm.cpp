@@ -3578,8 +3578,8 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		"ArrayType",
 		"StructType"
 	};
-	const kclass_t *CT_TypeTBL[6];
-	const kclass_t *CT_BasicBlock, *CT_IRBuilder;
+	kclass_t *CT_TypeTBL[6];
+	kclass_t *CT_BasicBlock, *CT_IRBuilder;
 #define TY_BasicBlock  (CT_BasicBlock)->cid
 #define TY_IRBuilder   (CT_BasicBlock)->cid
 #define TY_Type         (CT_TypeTBL[0])->cid
@@ -3651,7 +3651,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	const kclass_t *CT_PassManagerBuilder = kaddClassDef(NULL, &PassManagerBuilderDef, pline);
+	kclass_t *CT_PassManagerBuilder = kaddClassDef(NULL, &PassManagerBuilderDef, pline);
 #define TY_PassManagerBuilder         (CT_PassManagerBuilder)->cid
 #endif
 	static KDEFINE_CLASS PassManagerDef = {
@@ -3686,9 +3686,9 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	const kclass_t *CT_PassManager = kaddClassDef(NULL, &PassManagerDef, pline);
-	const kclass_t *CT_FunctionPassManager = kaddClassDef(NULL, &FunctionPassManagerDef, pline);
-	const kclass_t *CT_InstTBL[19];
+	kclass_t *CT_PassManager = kaddClassDef(NULL, &PassManagerDef, pline);
+	kclass_t *CT_FunctionPassManager = kaddClassDef(NULL, &FunctionPassManagerDef, pline);
+	kclass_t *CT_InstTBL[19];
 	{
 		static const char *InstDefName[] = {
 			"Instruction",
@@ -3759,8 +3759,8 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	const kclass_t *CT_Value = kaddClassDef(NULL, &ValueDef, pline);
-	const kclass_t *CT_PassTBL[4];
+	kclass_t *CT_Value = kaddClassDef(NULL, &ValueDef, pline);
+	kclass_t *CT_PassTBL[4];
 	{
 		static const char *PassDefName[] = {
 			"Pass",
@@ -4123,10 +4123,10 @@ static kbool_t llvm_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* llvm_init(void)
+KDEFINE_PACKAGE* llvm_init(void)
 {
 	InitializeNativeTarget();
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		K_CHECKSUM,
 		"llvm", "3.0", "", "", "",
 		llvm_initPackage,

@@ -54,7 +54,7 @@
 //
 //typedef struct {
 //	kmodshare_t h;
-//	const kclass_t *cRegex;
+//	kclass_t *cRegex;
 //} kregexshare_t;
 //
 //typedef struct {
@@ -730,9 +730,9 @@
 //	return true;
 //}
 //
-//KPACKDEF* regex_init(void)
+//KDEFINE_PACKAGE* regex_init(void)
 //{
-//	static const KPACKDEF d = {
+//	static const KDEFINE_PACKAGE d = {
 //		KPACKNAME("regex", "1.0"),
 //		.initPackage = regex_initPackage,
 //		.setupPackage = regex_setupPackage,

@@ -39,7 +39,7 @@ static kbool_t stub_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 static kbool_t stub_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 //	USING_SUGAR;
-//	DEFINE_SYNTAX_SUGAR SYNTAX[] = {
+//	KDEFINE_SYNTAX SYNTAX[] = {
 //		{ TOKEN("float"), .type = TY_Float, },
 //		{ TOKEN("double"), .type = TY_Float, },
 //		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
@@ -54,9 +54,9 @@ static kbool_t stub_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* stub_init(void)
+KDEFINE_PACKAGE* stub_init(void)
 {
-	static KPACKDEF d = {
+	static KDEFINE_PACKAGE d = {
 		KPACKNAME("stub", "1.0"),
 		.initPackage = stub_initPackage,
 		.setupPackage = stub_setupPackage,

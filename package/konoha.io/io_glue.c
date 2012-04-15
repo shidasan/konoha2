@@ -29,8 +29,8 @@ static kString *kwb_newString(CTX, kwb_t *wb, int flg)
 
 typedef struct {
 	kmodshare_t h;
-	const kclass_t *cInputStream;
-	const kclass_t *cOutputStream;
+	kclass_t *cInputStream;
+	kclass_t *cOutputStream;
 } kioshare_t;
 
 typedef struct {
@@ -905,9 +905,9 @@ static kbool_t io_setupLingo(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-KPACKDEF* io_init(void)
+KDEFINE_PACKAGE* io_init(void)
 {
-	static const KPACKDEF d = {
+	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("io", "1.0"),
 		.initPackage  = io_initPackage,
 		.setupPackage = io_setupPackage,

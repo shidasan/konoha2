@@ -9,10 +9,10 @@
 // ----------------------
 // class table
 
-static const kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
+static kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
-	if(cid < (share->ca.bytesize/sizeof(kclass_t*))) {
+	if(cid < (share->ca.bytesize/sizeof(struct _kclass*))) {
 		return share->ca.cts[cid];
 	}
 	kreportf(CRIT_, pline, "invalid cid=%d", (int)cid);
@@ -33,52 +33,52 @@ static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, "&%p(:%s)", sfp[pos].o, T_cid(O_cid(sfp[pos].o)));
 }
 
-static uintptr_t DEFAULT_UNbox(CTX, kObject *o)
+static uintptr_t DEFAULT_unbox(CTX, kObject *o)
 {
 	return 0;
 }
 
-static kbool_t DEFAULT_issubtype(CTX, const kclass_t* c, const kclass_t *t)
+static kbool_t DEFAULT_issubtype(CTX, kclass_t* c, kclass_t *t)
 {
 	return 0;
 }
 
-static const kclass_t* DEFAULT_realtype(CTX, const kclass_t* c, const kclass_t *self)
+static kclass_t* DEFAULT_realtype(CTX, kclass_t* c, kclass_t *self)
 {
 	return c;
 }
 
-static kObject* DEFAULT_fnull(CTX, const kclass_t *ct)
+static kObject* DEFAULT_fnull(CTX, kclass_t *ct)
 {
 	DBG_ASSERT(ct->nulvalNUL != NULL);
 	return ct->nulvalNUL;
 }
 
-static kObject* DEFAULT_fnullinit(CTX, const kclass_t *ct)
+static kObject* DEFAULT_fnullinit(CTX, kclass_t *ct)
 {
 	assert(ct->nulvalNUL == NULL);
 	DBG_P("creating new nulval for %s", T_CT(ct));
-	KINITv(((kclass_t*)ct)->nulvalNUL, new_kObject(ct, 0));
+	KINITv(((struct _kclass*)ct)->nulvalNUL, new_kObject(ct, 0));
 	kObject_setNullObject(ct->nulvalNUL, 1);
-	((kclass_t*)ct)->fnull = DEFAULT_fnull;
+	((struct _kclass*)ct)->fnull = DEFAULT_fnull;
 	return ct->nulvalNUL;
 }
 
-static kObject *CT_null(CTX, const kclass_t *ct)
+static kObject *CT_null(CTX, kclass_t *ct)
 {
 	return ct->fnull(_ctx, ct);
 }
 
-static kclass_t* new_CT(CTX, const kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
+static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
-	kcid_t newid = share->ca.bytesize / sizeof(kclass_t*);
+	kcid_t newid = share->ca.bytesize / sizeof(struct _kclass*);
 	if(share->ca.bytesize == share->ca.bytemax) {
 		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
 	}
-	share->ca.bytesize += sizeof(kclass_t*);
-	kclass_t *ct = (kclass_t*)KNH_ZMALLOC(sizeof(kclass_t));
-	share->ca.cts[newid] = (const kclass_t*)ct;
+	share->ca.bytesize += sizeof(struct _kclass*);
+	struct _kclass *ct = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t));
+	share->ca.cts[newid] = (kclass_t*)ct;
 	if(bct != NULL) {
 		memcpy(ct, bct, offsetof(kclass_t, cparam));
 		ct->cid = newid;
@@ -101,7 +101,7 @@ static kclass_t* new_CT(CTX, const kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
 		ct->reftrace = s->reftrace;
 		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
-		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_UNbox;
+		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
 		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
 		ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
@@ -114,57 +114,55 @@ static kclass_t* new_CT(CTX, const kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 	return ct;
 }
 
-static const kclass_t *CT_body(CTX, const kclass_t *ct, size_t head, size_t body)
+static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 {
-	const kclass_t *bct = ct;
+	kclass_t *bct = ct;
 	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
 		DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
 		if(ct->simbody == NULL) {
-			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
+			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 			newct->cstruct_size *= 2;
 			KINITv(newct->cparam, ct->cparam);
 			KINITv(newct->methods, ct->methods);
-			((kclass_t*)ct)->simbody = (const kclass_t*)newct;
+			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
 		}
 		ct = ct->simbody;
 	}
 	return ct;
 }
 
-static void CT_setName(CTX, kclass_t *ct, kline_t pline);
-
-//static const kclass_t *CT_T(CTX, const kclass_t *ct, kushort_t optvalue)
+//static kclass_t *CT_T(CTX, kclass_t *ct, kushort_t optvalue)
 //{
-//	const kclass_t *bct = ct;
+//	kclass_t *bct = ct;
 //	while(ct->optvalue != optvalue) {
 //		if(ct->simbody == NULL) {
 //			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 //			newct->optvalue = optvalue;
-//			((kclass_t*)ct)->simbody = (const kclass_t*)newct;
+//			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
 //		}
 //		ct = ct->simbody;
 //	}
 //	return ct;
 //}
 
-//static const kclass_t *CT_P(CTX, const kclass_t *ct, ktype_t p1, ktype_t p2)
+//static kclass_t *CT_P(CTX, kclass_t *ct, ktype_t p1, ktype_t p2)
 //{
-//	const kclass_t *bct = ct;
+//	kclass_t *bct = ct;
 //	while(ct->p1 != p1 && ct->p2_optvalue != p2) {
 //		if(ct->simbody == NULL) {
 //			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
-//			((kclass_t*)ct)->simbody = (const kclass_t*)newct;
+//			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
 //		}
 //		ct = ct->simbody;
 //	}
 //	return ct;
 //}
 
-static void CT_setName(CTX, kclass_t *ct, kline_t pline)
+static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
 {
 	uintptr_t lname = longid(ct->packdom, ct->nameid);
 	kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_PN(ct->packdom), T_PN(ct->packid), T_UN(ct->nameid));
-	const kclass_t *ct2 = (const kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
+	kclass_t *ct2 = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
 	if(ct2 == NULL) {
 		map_addu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)ct);
 	}
@@ -207,7 +205,7 @@ static void Object_init(CTX, kObject *o, void *conf)
 static void Object_reftrace(CTX, kObject *o)
 {
 	kObject *of = (kObject*)o;
-	const kclass_t *ct = O_ct(of);
+	kclass_t *ct = O_ct(of);
 	BEGIN_REFTRACE(ct->fsize);
 	size_t i;
 	for(i = 0; i < ct->fsize; i++) {
@@ -221,16 +219,16 @@ static void Object_reftrace(CTX, kObject *o)
 static void ObjectX_init(CTX, kObject *o, void *conf)
 {
 	struct _kObject *of = (struct _kObject*)o;
-	const kclass_t *ct = O_ct(of);
+	kclass_t *ct = O_ct(of);
 	assert(ct->nulvalNUL != NULL);
 	memcpy(of->fields, ct->nulvalNUL->fields, ct->cstruct_size - sizeof(kObjectHeader));
 }
 
-static void Object_initdef(CTX, kclass_t *ct, kline_t pline)
+static void Object_initdef(CTX, struct _kclass *ct, kline_t pline)
 {
 	if(ct->cid == TY_Object) return;
 	DBG_P("new object initialization");
-	const kclass_t *supct = kclass(ct->cid, pline);
+	kclass_t *supct = kclass(ct->cid, pline);
 	if(CT_iS_UNDEF(supct)) {
 		kreportf(CRIT_, pline, "%s's fields are not all set", T_cid(ct->cid));
 	}
@@ -250,7 +248,7 @@ static KDEFINE_CLASS ObjectDef = {
 	.initdef = Object_initdef,
 };
 
-static kObject *new_Object(CTX, const kclass_t *ct, void *conf)
+static kObject *new_Object(CTX, kclass_t *ct, void *conf)
 {
 	DBG_ASSERT(ct->cstruct_size > 0);
 	struct _kObject *o = (struct _kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
@@ -279,7 +277,7 @@ static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
 }
 
-static kObject* Boolean_fnull(CTX, const kclass_t *ct)
+static kObject* Boolean_fnull(CTX, kclass_t *ct)
 {
 	return (kObject*)K_FALSE;
 }
@@ -368,7 +366,7 @@ static void String_checkASCII(CTX, kString *s)
 
 static kString* new_String(CTX, const char *text, size_t len, int spol)
 {
-	const kclass_t *ct = CT_(CLASS_String);
+	kclass_t *ct = CT_(CLASS_String);
 	struct _kString *s = NULL; //knh_PtrMap_getS(_ctx, ct->constPoolMapNULL, text, len);
 	if(s != NULL) return s;
 	if(TFLAG_is(int, spol, SPOL_TEXT)) {
@@ -551,7 +549,7 @@ static KDEFINE_CLASS ParamDef = {
 
 static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 {
-	const kclass_t *ct = CT_(CLASS_Param);
+	kclass_t *ct = CT_(CLASS_Param);
 	ct = CT_body(_ctx, ct, sizeof(void*), psize * sizeof(kparam_t));
 	struct _kParam *pa = (struct _kParam*)new_Object(_ctx, ct, (void*)0);
 	pa->rtype = rtype;
@@ -641,18 +639,18 @@ static KDEFINE_CLASS *DATATYPES[] = {
 static void initStructData(CTX)
 {
 	kclass_t **ctt = (kclass_t**)_ctx->share->ca.cts;
-	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
 	for(i = 0; i < size; i++) {
-		kclass_t *ct = ctt[i];
+		struct _kclass *ct = (struct _kclass *)ctt[i];
 		const char *name = ct->DBG_NAME;
 		ct->nameid = kuname(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
 		CT_setName(_ctx, ct, 0);
 	}
 }
 
-static const kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
+static kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
 {
-	kclass_t *ct = new_CT(_ctx, NULL, cdef, pline);
+	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
 	if(name == NULL) {
 		const char *n = cdef->structname;
 		assert(n != NULL); // structname must be set;
@@ -662,10 +660,10 @@ static const kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, klin
 		ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
 	}
 	CT_setName(_ctx, ct, pline);
-	return (const kclass_t*)ct;
+	return (kclass_t*)ct;
 }
 
-static void kshare_initklib2(klib2_t *l)
+static void kshare_initklib2(struct _klib2 *l)
 {
 	l->Kclass   = Kclass;
 	l->Knew_Object = new_Object;
@@ -684,7 +682,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = (kshare_t*)KNH_ZMALLOC(sizeof(kshare_t));
 	ctx->share = share;
-	kshare_initklib2(_ctx->lib2);
+	kshare_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	KDEFINE_CLASS **dd = DATATYPES;
 	while(*dd != NULL) {
@@ -715,13 +713,6 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	initStructData(_ctx);
 }
 
-//static void key_reftrace(CTX, kmape_t *p)
-//{
-//	BEGIN_REFTRACE(1);
-//	KREFTRACEv(p->skey);
-//	END_REFTRACE();
-//}
-
 static void val_reftrace(CTX, kmape_t *p)
 {
 	BEGIN_REFTRACE(1);
@@ -733,7 +724,7 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
 	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
-	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
 	for(i = 0; i < size; i++) {
 		kclass_t *ct = cts[i];
 		{
@@ -770,8 +761,8 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 
 static void kshare_freeCT(CTX)
 {
-	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
-	size_t i, size = _ctx->share->ca.bytesize/sizeof(kclass_t*);
+	struct _kclass **cts = (struct _kclass**)_ctx->share->ca.cts;
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
 	for(i = 0; i < size; i++) {
 		if(cts[i]->fallocsize > 0) {
 			KNH_FREE(cts[i]->fields, cts[i]->fallocsize);
@@ -796,32 +787,34 @@ void kshare_free(CTX, kcontext_t *ctx)
 /* operator */
 #include "methods.h"
 
-#define _Public kMethod_Public
-#define _Const  kMethod_Const
+#define _Public    kMethod_Public
+#define _Const     kMethod_Const
 #define _Immutable kMethod_Immutable
-#define _F(F)   (intptr_t)(F)
+#define _F(F)      (intptr_t)(F)
 
 static void kshare_init_methods(CTX)
 {
 	int FN_x = FN_("x");
 	intptr_t methoddata[] = {
 		_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
-		_Public|_Immutable, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
-		_Public|_Immutable, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
-		_Public|_Immutable, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
+		_Public|_Immutable|_Const, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
+		_Public|_Immutable|_Const, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
+		/* opDIV and opMOD raise zero divided exception. Don't set _Const */
 		_Public|_Immutable, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
 		_Public|_Immutable, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
-		_Public|_Immutable, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
+		_Public|_Immutable|_Const, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
 		_Public|_Immutable|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
 		_Public|_Immutable|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
 		_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
+		_Public|_Immutable, _F(System_assert), TY_void, TY_System, MN_("assert"), 1, TY_Boolean, FN_x,
 		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};

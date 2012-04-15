@@ -137,7 +137,7 @@ static void nofree(void *p)
 {
 }
 
-KNHAPI2(kObject*) new_RawPtr(CTX, const kclass_t *ct, void *rawptr)
+KNHAPI2(kObject*) new_RawPtr(CTX, kclass_t *ct, void *rawptr)
 {
 	kObject *npo = (kObject*)new_hObject_(_ctx, ct);
 	npo->rawptr = rawptr;
@@ -222,7 +222,7 @@ const char *SAFECLASS__(CTX, kcid_t cid)
 }
 
 #ifdef K_USING_DEBUG
-const kclass_t* DBG_ClassTBL(CTX, kcid_t cid)
+kclass_t* DBG_ClassTBL(CTX, kcid_t cid)
 {
 	if(cid < ctx->share->sizeClassTBL) {
 		return ctx->share->ClassTBL[cid];
@@ -237,13 +237,13 @@ const kclass_t* DBG_ClassTBL(CTX, kcid_t cid)
 kClass *new_Type(CTX, ktype_t type)
 {
 	kcid_t cid = CLASS_t(type);
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	if(ct->typeNULL == NULL) {
 		kClass *o = new_(Class);
 		o->cid = cid;
 		o->type = cid;
 		o->ct = ct;
-		KINITv(((kclass_t*)ct)->typeNULL, o);
+		KINITv(((struct _kclass*)ct)->typeNULL, o);
 		if(cid == CLASS_Tvoid) {
 			Object_setNullObject(o, 1);
 		}
@@ -367,7 +367,7 @@ void knh_setClassName(CTX, kcid_t cid, kString *lname, kString *snameNULL)
 
 kcid_t knh_getcid(CTX, kbytes_t lname)
 {
-	const kclass_t *ct = (const kclass_t *)knh_DictSet_get(_ctx, ctx->share->classNameDictSet, lname);
+	kclass_t *ct = (kclass_t *)knh_DictSet_get(_ctx, ctx->share->classNameDictSet, lname);
 	if(ct != NULL) return ct->cid;
 #if defined(K_USING_SEMANTICS)
 	if(lname.buf[lname.len-1] == '}') {
@@ -388,7 +388,7 @@ static kObject *Fdefnull_getConst(CTX, kcid_t cid)
 static kObject *Fdefnull_newValue(CTX, kcid_t cid)
 {
 	kclass_t *ct = varClassTBL(cid);
-	Object *v = new_Object_init2(_ctx, (const kclass_t*)ct);
+	Object *v = new_Object_init2(_ctx, (kclass_t*)ct);
 	Object_setNullObject(v, 1);
 	KNH_ASSERT(ct->defnull == NULL);
 	KINITv(ct->defnull, v);
@@ -418,7 +418,7 @@ KNHAPI2(Object*) knh_getClassDefaultValue(CTX, kcid_t cid)
 	return ClassTBL(cid)->fdefnull(_ctx, cid);
 }
 
-void knh_setClassDef(CTX, kclass_t *ct, const kclass_t *cdef)
+void knh_setClassDef(CTX, kclass_t *ct, kclass_t *cdef)
 {
 	//DBG_P("setClassDef(%s)", cdef->name);
 	ct->cdef = cdef;
@@ -437,7 +437,7 @@ void knh_setClassDef(CTX, kclass_t *ct, const kclass_t *cdef)
 /* ------------------------------------------------------------------------ */
 /* [instaceof] */
 
-kbool_t ClassTBL_isa_(CTX, const kclass_t *ct, const kclass_t *ct2)
+kbool_t ClassTBL_isa_(CTX, kclass_t *ct, kclass_t *ct2)
 {
 	kcid_t reqt = ct2->cid;
 	if(reqt == CLASS_Object || reqt == CLASS_Tdynamic || ct->cid == reqt) return 1;
@@ -494,7 +494,7 @@ kbool_t ClassTBL_isa_(CTX, const kclass_t *ct, const kclass_t *ct2)
 
 int knh_class_isGenerics(CTX, kcid_t cid)
 {
-	const kclass_t *ct = ClassTBL(cid);
+	kclass_t *ct = ClassTBL(cid);
 	return (ct->cparam != NULL);
 }
 
@@ -582,9 +582,9 @@ static void SimTBL_append(CTX, kcid_t cid, kclass_t *newt)
 {
 	kclass_t *t = varClassTBL(cid);
 	while(t->simTBL != NULL) {
-		t = (kclass_t*)t->simTBL;
+		t = (struct _kclass*)t->simTBL;
 	}
-	t->simTBL = (const kclass_t*)newt;
+	t->simTBL = (kclass_t*)newt;
 }
 
 void knh_setClassParam(CTX, kclass_t *t, kParam *pa)
@@ -607,7 +607,7 @@ void knh_setClassParam(CTX, kclass_t *t, kParam *pa)
 	}
 }
 
-static void ClassTBL_addTuple(CTX, kclass_t *ct, const kclass_t *bct, kParam *pa)
+static void ClassTBL_addTuple(CTX, kclass_t *ct, kclass_t *bct, kParam *pa)
 {
 	size_t i, fi = 0;
 	ct->magicflag  = bct->magicflag;
@@ -620,7 +620,7 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, const kclass_t *bct, kParam *pa
 	knh_setClassParam(_ctx, ct, pa);
 	SimTBL_append(_ctx, bct->cid, ct);
 
-	kTuple *tpl = (kTuple*)new_hObject_(_ctx, (kclass_t*)ct);
+	kTuple *tpl = (kTuple*)new_hObject_(_ctx, (struct _kclass*)ct);
 	Object_setNullObject(tpl, 1);
 	knh_setClassDefaultValue(_ctx, ct->cid, tpl, NULL);
 	ct->fcapacity = pa->psize;
@@ -669,7 +669,7 @@ kcid_t knh_addGenericsClass(CTX, kcid_t cid, kcid_t bcid, kParam *pa)
 		ClassTBL_addTuple(_ctx, ct, ClassTBL(bcid), pa);
 	}
 	else {
-		const kclass_t *bct = ClassTBL(bcid);
+		kclass_t *bct = ClassTBL(bcid);
 		ct->magicflag  = bct->magicflag;
 		ct->cflag  = bct->cflag;
 		knh_setClassDef(_ctx, ct, bct->cdef);
@@ -701,7 +701,7 @@ kcid_t knh_addGenericsClass(CTX, kcid_t cid, kcid_t bcid, kParam *pa)
 
 kcid_t knh_class_Generics(CTX, kcid_t bcid, kParam *pa)
 {
-	const kclass_t *t = ClassTBL(bcid);
+	kclass_t *t = ClassTBL(bcid);
 	while(t != NULL) {
 		if(t->cparam != NULL && knh_Param_equalsType(pa, t->cparam)) {
 			return t->cid;
@@ -717,7 +717,7 @@ kcid_t knh_class_Generics(CTX, kcid_t bcid, kParam *pa)
 
 kcid_t knh_class_P1(CTX, kcid_t bcid, ktype_t p1)
 {
-	const kclass_t *ct = ClassTBL(bcid);
+	kclass_t *ct = ClassTBL(bcid);
 	while(ct != NULL) {
 		if(ct->p1 == p1) return ct->cid;
 		ct = ct->simTBL;
@@ -737,7 +737,7 @@ kcid_t knh_class_P1(CTX, kcid_t bcid, ktype_t p1)
 
 kcid_t knh_class_P2(CTX, kcid_t bcid, ktype_t p1, ktype_t p2)
 {
-	const kclass_t *ct = ClassTBL(bcid);
+	kclass_t *ct = ClassTBL(bcid);
 	while(ct != NULL) {
 		if(ct->p2 == p2 && ct->p1 == p1) return ct->cid;
 		ct = ct->simTBL;
@@ -1150,7 +1150,7 @@ kindex_t knh_Method_indexOfSetterField(kMethod *o)
 kDictMap* knh_Object_getXData(CTX, kObject *o)
 {
 	kDictMap *m;
-	const kclass_t *ct = O_ct(o);
+	kclass_t *ct = O_ct(o);
 	if(ct->xdataidx != -1) {
 		kObject **v = (ct->bcid == CLASS_Object) ? ((kObject*)o)->fields : ((kObject*)o)->kfields;
 		m = (kDictMap*)v[ct->xdataidx];
@@ -1225,7 +1225,7 @@ static KMETHOD Fmethod_xnsetter(CTX, ksfp_t *sfp _RIX)
 	RETURNd_(sfp[1].ndata);
 }
 
-void knh_ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, ksymbol_t fn)
+void knh_ClassTBL_addXField(CTX, kclass_t *ct, ktype_t type, ksymbol_t fn)
 {
 	knh_Fmethod f = (TY_isUnbox(type)) ? Fmethod_xngetter : Fmethod_xgetter;
 	kMethod *mtd = new_Method(_ctx, 0, ct->cid, (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_toGETTER(fn), f);
@@ -1240,7 +1240,7 @@ void knh_ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, ksymbol_t fn)
 	knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 }
 
-kMethod *knh_KonohaSpace_addXSetter(CTX, kKonohaSpace *ns, const kclass_t *ct, ktype_t type, kmethodn_t mn_setter)
+kMethod *knh_KonohaSpace_addXSetter(CTX, kKonohaSpace *ns, kclass_t *ct, ktype_t type, kmethodn_t mn_setter)
 {
 	if(FLAG_is(ct->cflag, FLAG_Class_Expando)) {
 		ksymbol_t fn = FN_UNMASK(mn_setter);
@@ -1300,14 +1300,14 @@ static inline kMethod *Cache_setMethod(knh_mtdcache_t *mcache, kcid_t cid, kmeth
 	return mtd;
 }
 
-void knh_ClassTBL_addMethod(CTX, const kclass_t *t, kMethod *mtd, int isCHECK)
+void knh_ClassTBL_addMethod(CTX, kclass_t *t, kMethod *mtd, int isCHECK)
 {
 	DBG_ASSERT(IS_Method(mtd));
 	kArray *a = t->methods;
 	if(unlikely(a == K_EMPTYARRAY)) {
 		KNH_ASSERT(kArray_size(a) == 0);
 		a = new_Array0(_ctx, K_FASTMALLOC_SIZE/sizeof(kMethod*));
-		KSETv(((kclass_t*)t)->methods, a);
+		KSETv(((struct _kclass*)t)->methods, a);
 	}
 //	if(isCHECK) {
 //		size_t i;
@@ -1332,7 +1332,7 @@ void knh_ClassTBL_addMethod(CTX, const kclass_t *t, kMethod *mtd, int isCHECK)
 
 
 
-kMethod* knh_ClassTBL_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn, int isGEN)
+kMethod* knh_ClassTBL_findMethodNULL(CTX, kclass_t *ct, kmethodn_t mn, int isGEN)
 {
 	{
 		kcid_t cid = ct->cid;
@@ -1345,7 +1345,7 @@ kMethod* knh_ClassTBL_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn, int
 		}
 	}
 	{
-		const kclass_t *p, *t0 = ct;
+		kclass_t *p, *t0 = ct;
 		do {
 			size_t i;
 			kArray *a = t0->methods;
@@ -1415,7 +1415,7 @@ kMethod* knh_ClassTBL_findMethodNULL(CTX, const kclass_t *ct, kmethodn_t mn, int
 	}
 }
 
-kMethod *knh_ClassTBL_getFmtNULL(CTX, const kclass_t *t, kmethodn_t mn0)
+kMethod *knh_ClassTBL_getFmtNULL(CTX, kclass_t *t, kmethodn_t mn0)
 {
 	kmethodn_t mn = mn0;
 	kMethod *mtd = knh_ClassTBL_findMethodNULL(_ctx, t, mn, 0);
@@ -1425,7 +1425,7 @@ kMethod *knh_ClassTBL_getFmtNULL(CTX, const kclass_t *t, kmethodn_t mn0)
 	return NULL;
 }
 
-kMethod *knh_ClassTBL_getFmt(CTX, const kclass_t *t, kmethodn_t mn0)
+kMethod *knh_ClassTBL_getFmt(CTX, kclass_t *t, kmethodn_t mn0)
 {
 	kMethod *mtd = knh_ClassTBL_getFmtNULL(_ctx, t, mn0);
 	if(mtd == NULL) {
@@ -1674,7 +1674,7 @@ static TYPEMAP Ftypemap_dcast(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
-static kTypeMap *knh_getSubtypeMap(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_getSubtypeMap(CTX, kclass_t *sct, kclass_t *tct)
 {
 	knh_Ftypemap f = NULL;
 	if(sct->cid == tct->cid || ClassTBL_isa_(_ctx, sct, tct) || tct->cid == CLASS_Tdynamic) {
@@ -1776,7 +1776,7 @@ static knh_Ftypemaprule knh_getTypeMapRule(CTX, kcid_t scid, kcid_t tcid)
 	return (knh_Ftypemaprule)knh_PtrMap_get(_ctx, ctx->share->inferPtrMap, (void*)hkey);
 }
 
-static kTypeMap *knh_findTypeMap1NULL(CTX, const kclass_t *sct, kcid_t tcid)
+static kTypeMap *knh_findTypeMap1NULL(CTX, kclass_t *sct, kcid_t tcid)
 {
 	kcid_t scid = sct->cid;
 	kTypeMap *tmr = Cache_getTypeMap(_ctx, scid, tcid);
@@ -1815,7 +1815,7 @@ KNHAPI2(kTypeMap*) knh_findTypeMapNULL(CTX, kcid_t scid0, kcid_t tcid0)
 		}
 	}
 	DBG_ASSERT_cid(scid0); DBG_ASSERT_cid(tcid0);
-	const kclass_t *sct = ClassTBL(scid0), *tct = ClassTBL(tcid0);
+	kclass_t *sct = ClassTBL(scid0), *tct = ClassTBL(tcid0);
 	while(1) {
 		//DBG_P("finding3.. %s ==> %s",CLASS__(sct->cid), CLASS__(tct->cid));
 		tmr = knh_findTypeMap1NULL(_ctx, sct, tct->cid);
@@ -1918,7 +1918,7 @@ static TYPEMAP Iterator_Iterator(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_IteratorIterator(_ctx, tmr0->scid, sfp[0].it));
 }
 
-static kTypeMap *knh_inferIteratorIterator(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferIteratorIterator(CTX, kclass_t *sct, kclass_t *tct)
 {
 	kcid_t sp1 = sct->p1, tp1 = tct->p1;
 	kTypeMap *tmr = knh_findTypeMapNULL(_ctx, sp1, tp1);
@@ -1951,7 +1951,7 @@ static TYPEMAP Array_Array(CTX, ksfp_t *sfp _RIX)
 	RETURN_(ta);
 }
 
-static kTypeMap *knh_inferArrayArray(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferArrayArray(CTX, kclass_t *sct, kclass_t *tct)
 {
 	kcid_t sp1 = sct->p1, tp1 = tct->p1;
 	kTypeMap *tmr = knh_findTypeMapNULL(_ctx, sp1, tp1);
@@ -2024,7 +2024,7 @@ static TYPEMAP Array_MIterator(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_IteratorIterator(_ctx, tmr0->scid, new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext)));
 }
 
-static kTypeMap *knh_inferArrayIterator(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferArrayIterator(CTX, kclass_t *sct, kclass_t *tct)
 {
 	kcid_t sp1 = sct->p1, tp1 = tct->p1;
 	if(sp1 == tp1) {
@@ -2086,7 +2086,7 @@ static TYPEMAP Iterator_MArray(CTX, ksfp_t *sfp _RIX)
 	RETURN_(Iterator_toMArray(_ctx, tmrNC->tcid, sfp[0].it, tmrNC->tmr1));
 }
 
-static kTypeMap *knh_inferIteratorArray(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferIteratorArray(CTX, kclass_t *sct, kclass_t *tct)
 {
 	kcid_t sp1 = sct->p1, tp1 = tct->p1;
 	if(sp1 == tp1) {
@@ -2136,7 +2136,7 @@ static TYPEMAP Map_Iterator(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext));
 }
 
-static kTypeMap *knh_inferMapIterator(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferMapIterator(CTX, kclass_t *sct, kclass_t *tct)
 {
 	kcid_t sp1 = sct->p1, tp1 = tct->p1;
 	if(sp1 == tp1) {
@@ -2241,7 +2241,7 @@ static TYPEMAP Map_Object(CTX, ksfp_t *sfp _RIX)
 	RETURN_(lsfp[0].o);
 }
 
-static kTypeMap *knh_inferMapObject(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferMapObject(CTX, kclass_t *sct, kclass_t *tct)
 {
 	if(sct->p1 == CLASS_String) {
 		return new_TypeMap(_ctx, 0, sct->cid, tct->cid, Map_Object);
@@ -2255,7 +2255,7 @@ static TYPEMAP Object_Map(CTX, ksfp_t *sfp _RIX)
 	kDictMap *dm = new_DictMap0(_ctx, 0, 1/*isCaseMap*/, NULL);
 	KSETv(lsfp[0].o, dm);
 	size_t rtnidx = 1, thisidx = rtnidx + K_CALLDELTA;
-	const kclass_t *ct = O_ct(sfp[0].o);
+	kclass_t *ct = O_ct(sfp[0].o);
 	kcid_t this_cid = ct->cid;
 	while(ct->cid != CLASS_Object) {
 		size_t i, size = kArray_size(ct->methods);
@@ -2278,7 +2278,7 @@ static TYPEMAP Object_Map(CTX, ksfp_t *sfp _RIX)
 	RETURN_(dm);
 }
 
-static void ClassTBL_checkGetter(CTX, const kclass_t *sct)
+static void ClassTBL_checkGetter(CTX, kclass_t *sct)
 {
 	size_t i;
 	for(i = 0; i < sct->fsize; i++) {
@@ -2290,7 +2290,7 @@ static void ClassTBL_checkGetter(CTX, const kclass_t *sct)
 	}
 }
 
-static kTypeMap *knh_inferObjectMap(CTX, const kclass_t *sct, const kclass_t *tct)
+static kTypeMap *knh_inferObjectMap(CTX, kclass_t *sct, kclass_t *tct)
 {
 	if(tct->p1 == CLASS_String && tct->p2 == CLASS_Tdynamic) {
 		ClassTBL_checkGetter(_ctx, sct);
@@ -2317,7 +2317,7 @@ void knh_loadSystemTypeMapRule(CTX)
 
 /* ------------------------------------------------------------------------ */
 
-void knh_KonohaSpace_setLinkClass(CTX, kKonohaSpace *ns, kbytes_t linkname, const kclass_t *ct)
+void knh_KonohaSpace_setLinkClass(CTX, kKonohaSpace *ns, kbytes_t linkname, kclass_t *ct)
 {
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	knh_Bytes_write(_ctx, cwb->ba, knh_bytes_head(linkname, ':'));
@@ -2328,7 +2328,7 @@ void knh_KonohaSpace_setLinkClass(CTX, kKonohaSpace *ns, kbytes_t linkname, cons
 	knh_DictSet_set(_ctx, DP(ns)->name2ctDictSetNULL, CWB_newString(_ctx, cwb, SPOL_POOLNEVER|SPOL_ASCII), (uintptr_t)ct);
 }
 
-const kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbytes_t path, kcid_t tcid)
+kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbytes_t path, kcid_t tcid)
 {
 	if(path.text[0] == 't' && path.text[1] == 'o' && (path.text[2] == ':' || path.text[2] == 0)) {
 		if(CLASS_Converter <= tcid && tcid <= CLASS_StringConverter) return ClassTBL(tcid);
@@ -2352,7 +2352,7 @@ const kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbyte
 	return NULL;
 }
 
-kcid_t knh_ClassTBL_linkType(CTX, const kclass_t *ct, kcid_t tcid)
+kcid_t knh_ClassTBL_linkType(CTX, kclass_t *ct, kcid_t tcid)
 {
 	if(tcid == CLASS_String || tcid == CLASS_Boolean) return tcid;
 	if(ct->cid == tcid || ClassTBL_isa_(_ctx, ct, ClassTBL(tcid))) {
@@ -2365,7 +2365,7 @@ kcid_t knh_ClassTBL_linkType(CTX, const kclass_t *ct, kcid_t tcid)
 kObject *knh_KonohaSpace_newObject(CTX, kKonohaSpace *ns, kString *path, kcid_t tcid)
 {
 	if(tcid == CLASS_String) return UPCAST(path);
-	const kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), tcid);
+	kclass_t *ct = knh_KonohaSpace_getLinkClassTBLNULL(_ctx, ns, S_tobytes(path), tcid);
 	Object *value = NULL;
 	if(ct == NULL) {
 		if(tcid == CLASS_Boolean) return K_FALSE;
@@ -2461,7 +2461,7 @@ static KMETHOD Object_invokeMethod(CTX, ksfp_t *sfp _RIX)
 	KNH_SCALL(_ctx, sfp, rtnidx, mtd, psize);
 }
 
-static kbool_t ClassTBL_addXField(CTX, const kclass_t *ct, ktype_t type, kString *name)
+static kbool_t ClassTBL_addXField(CTX, kclass_t *ct, ktype_t type, kString *name)
 {
 	ksymbol_t fn = knh_getmn(_ctx, S_tobytes(name), FN_NEWID);  // FIXME: NOIZE
 	kMethod *mtd = knh_ClassTBL_findMethodNULL(_ctx, ct, MN_toSETTER(fn), 0);
@@ -2484,7 +2484,7 @@ static KMETHOD System_addClassField(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(ClassTBL_addXField(_ctx, (sfp[1].c)->ct, (sfp[2].c)->type, sfp[3].s));
 }
 
-static kArray *new_MethodList(CTX, const kclass_t *ct, kKonohaSpace *ns)
+static kArray *new_MethodList(CTX, kclass_t *ct, kKonohaSpace *ns)
 {
 	kArray *ma = new_Array(_ctx, CLASS_Method, kArray_size(ct->methods));
 	size_t i;
@@ -2544,7 +2544,7 @@ static KMETHOD Class_query(CTX, ksfp_t *sfp _RIX)
 	kbytes_t q = S_tobytes(sfp[1].s);
 	for(i = 0; i < csize; i++) {
 		kcid_t cid = (kcid_t)i;
-		const kclass_t *ct = ClassTBL(cid);
+		kclass_t *ct = ClassTBL(cid);
 		DBG_P("lname=%s", S_text(ct->lname));
 		if(!knh_bytes_startsWith_(S_tobytes(ct->lname), q)) continue;
 		kArray_add(ca, new_Type(_ctx, cid));
