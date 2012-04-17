@@ -423,7 +423,7 @@ static kbool_t Stmt_isUnaryOp(CTX, kStmt *stmt, kToken *tk)
 	return (syn != NULL && syn->op1 != 0);
 }
 
-static int Stmt_skipUninaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
+static int Stmt_skipUnaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 {
 	int i;
 	for(i = s; i < e; i++) {
@@ -438,7 +438,7 @@ static int Stmt_skipUninaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksyntax_t **synR)
 {
 	int idx = -1, i, prif = 0;
-	for(i = Stmt_skipUninaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
+	for(i = Stmt_skipUnaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
 		kToken *tk = tls->toks[i];
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
 		//DBG_P("i=%d, kw=%d,%s, syn=%p, op2=%d", i, tk->kw, T_kw(tk->kw), syn, syn->op2);
@@ -450,7 +450,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 				*synR = syn;
 			}
 			if(syn->op2 != MN_NONAME) {  /* check if real binary operator to parse f() + 1 */
-				i = Stmt_skipUninaryOp(_ctx, stmt, tls, i+1, e) - 1;
+				i = Stmt_skipUnaryOp(_ctx, stmt, tls, i+1, e) - 1;
 			}
 		}
 	}
