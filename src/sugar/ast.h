@@ -117,8 +117,8 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
 		INIT_GCSTACK();
 		kArray *a = new_(Array, 0);
 		PUSH_GCSTACK(a);
-		ktokenize(_ctx, S_text(tk->text), tk->uline, _TOPLEVEL, a);
-		tk->tt = AST_BRACE; tk->topch = '{'; tk->lpos = '}';
+		ktokenize(_ctx, S_text(tk->text), tk->uline,a);
+		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
 		return 1;

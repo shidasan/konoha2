@@ -1030,7 +1030,7 @@ static kBlock* Method_newBlock(CTX, kMethod *mtd, kString *source, kline_t uline
 	}
 	kArray *tls = ctxsugar->tokens;
 	size_t pos = kArray_size(tls);
-	ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
+	ktokenize(_ctx, script, uline, tls);
 	kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), kmodsugar->rootks);
 	kArray_clear(tls, pos);
 	return bk;

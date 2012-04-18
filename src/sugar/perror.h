@@ -42,12 +42,12 @@ static const char* T_emsg(CTX, int pe)
 		case ERR_: return "(error)";
 		case WARN_: return "(warning)";
 		case INFO_:
-			if(CTX_isInteractive() || CTX_isCompileOnly() || CTX_isDebug()) {
+			if(CTX_isInteractive() || CTX_isCompileOnly() || verbose_sugar) {
 				return "(info)";
 			}
 			return NULL;
 		case DEBUG_:
-			if(CTX_isDebug()) {
+			if(verbose_sugar) {
 				return "(debug)";
 			}
 			return NULL;
@@ -83,7 +83,6 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 }
 
 #define SUGAR_P(PE, UL, POS, FMT, ...)  Kpef(_ctx, PE, UL, POS, FMT,  ## __VA_ARGS__)
-
 #define ERR_SyntaxError(UL)  SUGAR_P(ERR_, UL, -1, "syntax sugar error at %s:%d", __FUNCTION__, __LINE__)
 
 static void Kpef(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
@@ -127,109 +126,10 @@ static kString* Kstrerror(CTX, int eno)
 	return TS_EMPTY;
 }
 
-static void WARN_MustCloseWith(CTX, kline_t uline, int ch)
-{
-	SUGAR_P(WARN_, uline, 0, "must close with %c", ch);
-}
-
-static void IGNORE_UnxpectedMultiByteChar(CTX, kline_t uline, int lpos, char *text, size_t len)
-{
-	int ch = text[len];
-	text[len] = 0;
-	SUGAR_P(WARN_, uline, lpos, "unexpected multi-byte character: %s", text);
-	text[len] = ch; // danger a little
-}
-
-//static void DEBUG_TokenAlias(CTX, kline_t uline, int lpos, kbytes_t t, kString *alias)
+//static void WARN_MustCloseWith(CTX, kline_t uline, int ch)
 //{
-//	char buf[256] = {0};
-//	if(t.len < 256) {
-//		memcpy(buf, t.buf, t.len);
-//		kerror(_ctx, INFO_, uline, lpos, "rewrite '%s' to '%s'", buf, S_text(alias));
-//	}
+//	SUGAR_P(WARN_, uline, 0, "must close with %c", ch);
 //}
-//
-//static void WARN_LiteralMustCloseWith(CTX, kline_t uline, int lpos, int quote)
-//{
-//	char buf[8];
-//	knh_snprintf(buf, sizeof(buf), "%c", quote);
-//	kerror(_ctx, WARN_, uline, lpos, "Literal must close with %s", buf);
-//}
-//
-//
-//static void ERROR_Expected(CTX, kToken *tk, int closech, const char *token)
-//{
-//	if(token == NULL) {
-//		char buf[8];
-//		knh_snprintf(buf, sizeof(buf), "%c", closech);
-//	}
-//	else {
-//		kerror(_ctx, ERR_, tk->uline, 0, "%s is expected", token);
-//	}
-//}
-//
-//static kExpr* ERROR_UnexpectedToken(CTX, kToken *tk, const char *token)
-//{
-//	if(IS_String(tk->text)) {
-//		kerror(_ctx, ERR_, tk->uline, tk->lpos, "unexpected %s; %s is expected", S_text(tk->text), token);
-//	}
-//	else {
-//		kerror(_ctx, ERR_, tk->uline, tk->lpos, "unexpected token; %s is expected", token);
-//	}
-//	return NULL;
-//}
-//
-//static void ERROR_UndefinedToken(CTX, kToken *tk, const char *whatis)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined %s: %s", whatis, S_text(tk->text));
-//}
-//
-//
-//static kbool_t ERROR_SyntaxError(CTX, kline_t uline)
-//{
-//	kerror(_ctx, ERR_, uline, 0, "syntax error");
-//	return 0;
-//}
-//
-//static kbool_t ERROR_TokenError(CTX, kToken *tk)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: token '%s' is unavailable", S_text(tk->text));
-//	return 0;
-//}
-//
-//static kbool_t ERROR_TokenMustBe(CTX, kToken *tk, const char *token)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: '%s' must be %s", S_text(tk->text), token);
-//	return 0;
-//}
-//
-//static kExpr *ERROR_TokenUndefinedMethod(CTX, kToken *tk, kcid_t cid)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "undefined method: %T.%s", cid, S_text(tk->text));
-//	return NULL;
-//}
-//
-//static kExpr* ERROR_TokenUndefined(CTX, kToken *tk, const char *whatis, kcid_t cid)
-//{
-//	if(cid != TY_unknown) {
-//		kerror(_ctx, ERR_, tk->uline, tk->lpos, _("undefined %s: %T.%O"), whatis, cid, tk);
-//	}
-//	else {
-//		kerror(_ctx, ERR_, tk->uline, tk->lpos, _("undefined %s: %O"), whatis, tk);
-//	}
-//	return NULL;
-//}
-//
-//void WARN_TokenMuchBetter(CTX, kToken *tk, const char *token)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is much better than %s", S_text(tk->text), token);
-//}
-//
-//void WARN_TokenOverflow(CTX, kToken *tk)
-//{
-//	kerror(_ctx, ERR_, tk->uline, tk->lpos, "%s is overflow", S_text(tk->text));
-//}
-
 
 #ifdef __cplusplus
 }

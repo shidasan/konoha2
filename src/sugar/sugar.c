@@ -68,11 +68,8 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$SYMBOL"),  _EXPR, ParseStmt_(name),  _TERM, ExprTyCheck_(SYMBOL),},
 		{ TOKEN("$USYMBOL"), _EXPR, ParseStmt_(cname), _TERM, ExprTyCheck_(USYMBOL),},
 		{ TOKEN("$TEXT"), _EXPR, _TERM, ExprTyCheck_(TEXT),},
-		{ TOKEN("$STEXT"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$INT"), _EXPR, _TERM, ExprTyCheck_(INT),},
 		{ TOKEN("$FLOAT"), _EXPR, _TERM, ExprTyCheck_(FLOAT),},
-		{ TOKEN("$URN"), _EXPR, /*_TERM,*/ },
-		{ TOKEN("$REGEX"), _EXPR, /*_TERM,*/ },
 		{ TOKEN("$type"), _EXPR, _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
 		{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(invoke),}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
@@ -99,16 +96,15 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
-		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL '.'] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
-//		{ TOKEN("var"),  /*.type = TY_var, .rule ="$type $expr",*/ },
+		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
 		{ TOKEN("null"), _EXPR, _TERM, ExprTyCheck_(NULL),},
 		{ TOKEN("true"),  _EXPR, _TERM, ExprTyCheck_(TRUE),},
 		{ TOKEN("false"), _EXPR, _TERM, ExprTyCheck_(FALSE),},
-		{ TOKEN("if"), .rule ="'if' '(' $expr ')' $block ['else' else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
-		{ TOKEN("else"), .rule = "'else' $block" },
-		{ TOKEN("return"), .rule ="'return' [$expr]", StmtTyCheck_(return), },
+		{ TOKEN("if"), .rule ="\"if\" \"(\" $expr \")\" $block [\"else\" else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
+		{ TOKEN("else"), .rule = "\"else\" $block" },
+		{ TOKEN("return"), .rule ="\"return\" [$expr]", StmtTyCheck_(return), },
 		{ .name = NULL, },
 	};
 	KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
@@ -125,7 +121,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 		INIT_GCSTACK();
 		kArray *tls = ctxsugar->tokens;
 		size_t pos = kArray_size(tls);
-		ktokenize(_ctx, script, uline, _TOPLEVEL, tls);
+		ktokenize(_ctx, script, uline, tls);
 		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), ks);
 		kArray_clear(tls, pos);
 		result = Block_eval(_ctx, bk);
@@ -205,7 +201,7 @@ static void kmodsugar_reftrace(CTX, struct kmodshare_t *baseh)
 	KREFTRACEv(base->rootks);
 	KREFTRACEv(base->keywordList);
 	KREFTRACEv(base->packageList);
-	KREFTRACEv(base->aBuffer);
+//	KREFTRACEv(base->aBuffer);
 	KREFTRACEv(base->UndefinedParseExpr);
 	KREFTRACEv(base->UndefinedStmtTyCheck);
 	KREFTRACEv(base->UndefinedExprTyCheck);
@@ -250,7 +246,9 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	knull(base->cToken);
 	knull(base->cExpr);
 	knull(base->cBlock);
-	KINITv(base->aBuffer, new_(Array, 0));
+//	KINITv(base->aBuffer, new_(Array, 0));
+	kmodsugar_setup(_ctx, &base->h, 0);
+
 
 	KINITv(base->UndefinedParseExpr, new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
 	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));

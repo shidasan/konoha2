@@ -166,22 +166,21 @@ typedef enum {
 	TK_SYMBOL,        // KW_SYMBOL
 	TK_USYMBOL,       // KW_USYMBOL
 	TK_TEXT,
-	TK_STEXT,
 	TK_INT,
 	TK_FLOAT,
-	TK_URN,
-	TK_REGEX,
 	TK_TYPE,
 	AST_PARENTHESIS,
 	AST_BRANCET,
 	AST_BRACE,
 
 	TK_OPERATOR,
+	TK_MSYMBOL,       //
+	TK_ERR,           //
 	TK_CODE,          //
 	TK_WHITESPACE,    //
 	TK_METANAME,
 	TK_MN,
-	AST_OPTIONAL  // for syntax sugar
+	AST_OPTIONAL      // for syntax sugar
 } ktoken_t ;
 
 typedef const struct _kToken kToken;
@@ -354,22 +353,19 @@ struct _kGamma {
 #define KW_USYMBOL 3
 #define KW_cname   3
 #define KW_TEXT    4
-#define KW_STEXT   5
-#define KW_INT     6
-#define KW_FLOAT   7
-#define KW_URN     8
-#define KW_REGEX   9
-#define KW_TYPE    10
-#define KW_type    10
-#define KW_PARENTHESIS  11
-#define KW_BRANCET      12
-#define KW_BRACE        13
+#define KW_INT     5
+#define KW_FLOAT   6
+#define KW_TYPE    7
+#define KW_type    7
+#define KW_PARENTHESIS  8
+#define KW_BRANCET      9
+#define KW_BRACE        10
 
-#define KW_block   14
-#define KW_params  15
-#define KW_toks    16
+#define KW_block   11
+#define KW_params  12
+#define KW_toks    13
 
-#define KW_DOT     17
+#define KW_DOT     14
 #define KW_DIV     (1+KW_DOT)
 #define KW_MOD     (2+KW_DOT)
 #define KW_MUL     (3+KW_DOT)
@@ -424,7 +420,7 @@ typedef struct {
 	kArray         *packageList;
 	struct kmap_t         *packageMapNO;
 	kKonohaSpace         *rootks;
-	kArray         *aBuffer;
+//	kArray         *aBuffer;
 
 //	struct _kMethod *UndefinedParseStmt;
 	kMethod *UndefinedParseExpr;
