@@ -197,6 +197,8 @@ static char *String_getReference(CTX, StringBase *s)
 	return NULL;
 }
 
+extern struct _kObject** KONOHA_reftail(CTX, size_t size);
+
 static void StringBase_reftrace(CTX, StringBase *s)
 {
 	while (1) {
@@ -275,20 +277,10 @@ static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 		DEND,
 	};
 	kloadMethodData(ks, MethodData);
-//	{
-//		kclass_t *cString = (struct _kclass*) CT_String;
-//		cString->unbox = String2_unbox;
-//		cString->free  = String2_free;
-//		cString->reftrace = String2_reftrace;
-//	}
 	KSET_CLASSFUNC(CT_String, unbox, String2, pline);
 	KSET_CLASSFUNC(CT_String, free, String2, pline);
 	KSET_CLASSFUNC(CT_String, reftrace, String2, pline);
 	KSET_KLIB2(new_String, pline);
-	{
-		struct _klib2 *l = (struct _klib2*)_ctx->lib2;
-		l->Knew_String = Knew_String;
-	}
 	return true;
 }
 

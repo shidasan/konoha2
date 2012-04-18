@@ -38,7 +38,7 @@ execute_process(
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -Wno-variadic-macros")
+set(CMAKE_CXX_FLAGS "${LLVM_CXXFLAGS} -Wno-variadic-macros ${CMAKE_CXX_FLAGS} -UNDEBUG")
 string(REPLACE " " ";" v ${LLVM_JIT_LIBS})
 link_directories(${LINK_DIRECTORIES} ${LLVM_LIBDIR})
 set(ExtraLibs ${ExtraLibs} ${v})
