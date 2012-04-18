@@ -849,21 +849,23 @@ static int kchar(const char *t, int pos)
 
 static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
-	int ch, level = 1, pos = tok_start;
+	int ch, level = 1, pos = tok_start + 1;
 	const Ftoken *fmat = MiniKonohaTokenMatrix;
+	tk->lpos += 1;
 	while((ch = kchar(tenv->source, pos)) != 0) {
 		if(ch == _RBR/*}*/) {
 			level--;
 			if(level == 0) {
 				if(IS_NOTNULL(tk)) {
-					KSETv(tk->text, new_kString(tenv->source + tok_start, ((pos)-tok_start), 0));
+					KSETv(tk->text, new_kString(tenv->source + tok_start + 1, ((pos-2)-(tok_start)+1), 0));
 					tk->tt = TK_CODE;
 				}
 				return pos + 1;
 			}
+			pos++;
 		}
 		else if(ch == _LBR/*'{'*/) {
-			level++;
+			level++; pos++;
 		}
 		else {
 			pos = fmat[ch](_ctx, (struct _kToken*)K_NULLTOKEN, tenv, pos, NULL);
