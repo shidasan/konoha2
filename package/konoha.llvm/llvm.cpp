@@ -3791,7 +3791,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 #define TY_Array_Type     (0)
 #define TY_Array_Constant (0)
 #define TY_NativeFunction (TY_Int)
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Static, _F(Type_getVoidTy), TY_Type, MN_("getVoidTy"), 0,
 		_Public|_Static, _F(Type_getLabelTy), TY_Type, MN_("getLabelTy"), 0,
 		_Public|_Static, _F(Type_getFloatTy), TY_Type, MN_("getFloatTy"), 0,
@@ -4103,7 +4103,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(LLVM_parseBitcodeFile), TY_LLVM, MN_("parseBitcodeFile"), 1, TY_String, MN_("bcfile"),
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 
 	return true;
 }

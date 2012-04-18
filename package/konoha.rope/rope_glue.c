@@ -270,11 +270,11 @@ static KMETHOD Rope_opADD(CTX, ksfp_t *sfp _RIX)
 static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_x = FN_("x");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Const, _F(Rope_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
 //	{
 //		kclass_t *cString = (struct _kclass*) CT_String;
 //		cString->unbox = String2_unbox;

@@ -871,6 +871,7 @@ typedef const struct _kMethod kMethod;
 #define kMethod_D                    ((uintptr_t)(1<<10))
 #define kMethod_Abstract             ((uintptr_t)(1<<11))
 #define kMethod_Coercion             ((uintptr_t)(1<<12))
+#define kMethod_SmartReturn          ((uintptr_t)(1<<13))
 
 #define kMethod_isPublic(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Public))
 //#define kMethod_setPublic(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Public,B)
@@ -884,6 +885,8 @@ typedef const struct _kMethod kMethod;
 //#define kMethod_setConst(o,B)   TFLAG_set(uintptr_t, (o)->flag,kMethod_Const,B)
 #define kMethod_isVirtual(o)     (TFLAG_is(uintptr_t, (o)->flag,kMethod_Virtual))
 #define kMethod_setVirtual(o,B)  TFLAG_set(uintptr_t, (o)->flag,kMethod_Virtual,B)
+
+#define kMethod_isSmartReturn(o)     (TFLAG_is(uintptr_t, (o)->flag, kMethod_SmartReturn))
 
 #define kMethod_isTransCast(mtd)    MN_isTOCID(mtd->mn)
 #define kMethod_isCast(mtd)         MN_isASCID(mtd->mn)

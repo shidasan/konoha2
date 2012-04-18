@@ -795,7 +795,7 @@ void kshare_free(CTX, kcontext_t *ctx)
 static void kshare_init_methods(CTX)
 {
 	int FN_x = FN_("x");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
 		_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
 		_Public|_Immutable|_Const, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
@@ -818,7 +818,7 @@ static void kshare_init_methods(CTX)
 		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 }
 
 #ifdef __cplusplus

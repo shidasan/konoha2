@@ -164,23 +164,25 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 // modshare[128] mod[128]
 // keval
 
+void KX_init(CTX);
+
 static kcontext_t* new_context(const kcontext_t *_ctx)
 {
 	kcontext_t *newctx;
 	static volatile size_t ctxid_counter = 0;
 	ctxid_counter++;
 	if(_ctx == NULL) {  // NULL means first one
-		struct _klib2 *klib2 = (struct _klib2*)malloc(sizeof(klib2_t) + sizeof(kcontext_t));
-		bzero(klib2, sizeof(klib2_t) + sizeof(kcontext_t));
+		struct _klib2 *klib2 = (struct _klib2*)calloc(sizeof(klib2_t) + sizeof(kcontext_t), 1);
 		klib2_init(klib2);
 		newctx = (kcontext_t*)(klib2 + 1);
 		newctx->lib2 = (klib2_t*)klib2;
 		_ctx = (CTX_t)newctx;
+		newctx->modshare = (kmodshare_t**)calloc(sizeof(kmodshare_t*), MOD_MAX);
+		newctx->modlocal = (kmodlocal_t**)calloc(sizeof(kmodlocal_t*), MOD_MAX);
 
 		MODLOG_init(_ctx, newctx);
 		MODGCSHARE_init(_ctx, newctx);
 		kshare_init(_ctx, newctx);
-		newctx->modshare = (kmodshare_t**)KNH_ZMALLOC(sizeof(kmodshare_t*) * MOD_MAX);
 	}
 	else {   // others take ctx as its parent
 		newctx = (kcontext_t*)KNH_ZMALLOC(sizeof(kcontext_t));
@@ -188,11 +190,11 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->memshare = _ctx->memshare;
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
+		newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*) * MOD_MAX);
 		MODLOG_init(_ctx, newctx);
 	}
 	//MODGC_init(_ctx, newctx);
 	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
-	newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*) * MOD_MAX);
 //	for(i = 0; i < MOD_MAX; i++) {
 //		if(newctx->modshare[i] != NULL && newctx->modshare[i]->new_local != NULL) {
 //			newctx->mod[i] = newctx->modshare[i]->new_local((CTX_t)newctx, newctx->modshare[i]);
@@ -203,6 +205,9 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		MODSUGAR_init(_ctx, newctx);
 		kshare_init_methods(_ctx);
 		MODSUGAR_defMethods(_ctx);
+#ifdef WITH_ECLIPSE
+		KX_init(_ctx);
+#endif
 	}
 	return newctx;
 }
@@ -242,7 +247,6 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 			p->free(_ctx, p);
 		}
 	}
-	KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 	kstack_free(_ctx, ctx);
 	if(IS_ROOTCTX(_ctx)){  // share
 		struct _klib2 *klib2 = (struct _klib2*)ctx - 1;
@@ -252,7 +256,8 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 				p->free(_ctx, p);
 			}
 		}
-		KNH_FREE(_ctx->modshare, sizeof(kmodshare_t*) * MOD_MAX);
+		free(_ctx->modlocal);
+		free(_ctx->modshare);
 		MODGCSHARE_gc_destroy(_ctx, ctx);
 		kshare_free(_ctx, ctx);
 		MODGCSHARE_free(_ctx, ctx);
@@ -262,6 +267,7 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 	}
 	else {
 		MODLOG_free(_ctx, ctx);
+		KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 		KNH_FREE(ctx, sizeof(kcontext_t));
 	}
 }

@@ -478,7 +478,7 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 {
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
 		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("concat"), 1, TY_String, FN_x,
 //		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_x,
@@ -499,7 +499,7 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_x, TY_Int, FN_y,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 	return true;
 }
 

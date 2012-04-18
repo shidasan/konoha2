@@ -475,7 +475,7 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	int FN_y = FN_("y");
 	int FN_z = FN_("z");
 	int FN_v = FN_("v");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 //		_Public, _F(System_accept), TY_Int, TY_System, MN_("accept"), 1, TY_String, FN_x,
 		_Public, _F(System_bind), TY_Int, TY_System, MN_("bind"), 4, TY_Int, FN_x, TY_String, FN_y, TY_Int, FN_z, TY_Int, FN_v,
 		_Public, _F(System_close), TY_Int, TY_System, MN_("close"), 1, TY_Int, FN_x,
@@ -496,7 +496,7 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 //		_Public, _F(System_socketpair), TY_Int, TY_System, MN_("socketpair"),
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 			{"PF_LOCAL",TY_Int, PF_LOCAL},
 			{"PF_UNIX", TY_Int, PF_UNIX},

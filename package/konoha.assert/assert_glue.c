@@ -48,11 +48,11 @@ static kbool_t assert_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 {
 	USING_SUGAR;
 	int FN_cond = FN_("cond");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Static|_Public, _F(KonohaSpace_assert), TY_Int, TY_KonohaSpace, MN_("assert"), 1, TY_Boolean, FN_cond,
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
 	return true;
 }
 

@@ -3145,7 +3145,7 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 	kclass_t *CT_MPI = kaddClassDef(NULL, &MPIDef, pline);
 #define TY_MPI    (CT_MPI->cid)
 
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Static, _F(k_MPI_Abort), TY_Int, TY_MPI, MN_("MPI_Abort"), 2, TY_Int, MN_("comm"), TY_Int, MN_("errorcode"), 
 		_Public|_Static, _F(k_MPI_Accumulate), TY_Int, TY_MPI, MN_("MPI_Accumulate"), 9, TY_Array, MN_("origin_addr"), TY_Int, MN_("origin_count"), TY_Int, MN_("origin_datatype"), TY_Int, MN_("target_rank"), TY_Int, MN_("target_disp"), TY_Int, MN_("target_count"), TY_Int, MN_("target_datatype"), TY_Int, MN_("op"), TY_Int, MN_("win"), 
 		_Public|_Static, _F(k_MPI_Add_error_class), TY_Int, TY_MPI, MN_("MPI_Add_error_class"), 1, TY_Array, MN_("errorclass"), 
@@ -3443,7 +3443,7 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 	return true;
 }
 

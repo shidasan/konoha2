@@ -23,11 +23,11 @@ static kExpr *Expr_toSetter(CTX, kExpr *expr, kExpr *vexpr)
 
 // --------------------------------------------------------------------------
 
-// Expr Expr.tyCheckStub(Gamma gma, int req_tyid);
+// Expr Expr.tyCheckStub(Gamma gma, int reqtyid);
 static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, req_ty);
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	DBG_P("typing: assignment .. ");
 	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
 	if(lexpr != K_NULLEXPR) {

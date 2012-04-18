@@ -871,7 +871,7 @@ static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args,
 	int FN_path = FN_("path");
 	int FN_mode = FN_("mode");
 	int FN_value = FN_("value");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public, _F(InputStream_getByte),  TY_Int,         TY_InputStream,  MN_("getByte"), 0,
 		_Public, _F(InputStream_isClosed), TY_Boolean,     TY_InputStream,  MN_("isClosed"), 0,
 		_Public, _F(InputStream_new),      TY_InputStream, TY_InputStream,  MN_("new"), 2, TY_String, FN_path, TY_String, FN_mode,
@@ -886,7 +886,7 @@ static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args,
 		_Public, _F(OutputStream_close),     TY_void,         TY_OutputStream, MN_("close"), 0,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 	return true;
 }
 

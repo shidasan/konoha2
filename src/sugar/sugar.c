@@ -71,7 +71,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$INT"), _EXPR, _TERM, ExprTyCheck_(INT),},
 		{ TOKEN("$FLOAT"), _EXPR, _TERM, ExprTyCheck_(FLOAT),},
 		{ TOKEN("$type"), _EXPR, _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
-		{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(invoke),}, //AST_PARENTHESIS
+		{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
 		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
 		{ TOKEN("$block"), ParseStmt_(block), ExprTyCheck_(block), },
@@ -656,13 +656,13 @@ KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX);
 void MODSUGAR_defMethods(CTX)
 {
 	int FN_pkgname = FN_("pkgname");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public, _F(KonohaSpace_importPackage_), TY_Boolean, TY_KonohaSpace, MN_("importPackage"), 1, TY_String, FN_pkgname,
 		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("loadScript"), 1, TY_String, FN_("path"),
 //		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
+	kloadMethodData(NULL, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 		{"INT_MAX", TY_Int, KINT_MAX},
 		{"INT_MIN", TY_Int, KINT_MIN},

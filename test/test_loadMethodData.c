@@ -20,7 +20,7 @@
 static const char *Pkeyword_(CTX, keyword_t kw) { return NULL; }
 static kString *Skw_(CTX, keyword_t kw) { return NULL; }
 
-static const char *methoddata[] = {
+static const char *MethodData[] = {
 	DF_(FF_(Static)), DF_(Int_opADD), DT_(Int), DC_(Int), "opAdd", DF_(2), "Int", "a", "Int", "b",
 	DF_(FF_(Static)), DF_(Int_opSUB), DT_(Int), DC_(Int), "opSUB", DF_(2), "Int", "a", "Int", "b",
 	DF_(FF_(Static)), DF_(Int_opMUL), DT_(Int), DC_(Int), "opMUL", DF_(2), "Int", "a", "Int", "b",
@@ -38,7 +38,7 @@ static const char *methoddata[] = {
 void test_KloadMethodData(CTX)
 {
     kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar);
-    _ctx->lib2->KloadMethodData(_ctx, kmodsugar->rootns, methoddata);
+    _ctx->lib2->KloadMethodData(_ctx, kmodsugar->rootns, MethodData);
 }
 
 int main(int argc, const char *argv[])

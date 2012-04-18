@@ -38,7 +38,7 @@ static void kmodfloat_free(CTX, struct kmodshare_t *baseh)
 static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, req_ty);
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	kToken *tk = expr->tk;
 	sfp[4].fvalue = strtod(S_text(tk->text), NULL);
 	RETURN_(kExpr_setNConstValue(expr, TY_Float, sfp[4].ndata));
@@ -161,7 +161,7 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	};
 	base->cFloat = kaddClassDef(NULL, &FloatDef, pline);
 	int FN_x = FN_("x");
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public|_Const|_Im, _F(Float_opADD), TY_Float, TY_Float, MN_("opADD"), 1, TY_Float, FN_x,
 		_Public|_Const|_Im, _F(Float_opSUB), TY_Float, TY_Float, MN_("opSUB"), 1, TY_Float, FN_x,
 		_Public|_Const|_Im, _F(Float_opMUL), TY_Float, TY_Float, MN_("opMUL"), 1, TY_Float, FN_x,
@@ -178,7 +178,7 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 		_Public|_Const|_Im, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
 	KDEFINE_FLOAT_CONST FloatData[] = {
 		{"FLOAT_EPSILON", TY_Float, DBL_EPSILON},
 		{}

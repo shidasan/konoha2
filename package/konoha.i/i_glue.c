@@ -128,11 +128,11 @@ static	kbool_t i_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, 
 	USING_SUGAR;
 	kclass_t *ct = kclass(TY_Method, pline);
 	KSET_CLASSFUNC(ct, p, Method, pline);
-	intptr_t methoddata[] = {
+	intptr_t MethodData[] = {
 		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(ks, methoddata);
+	kloadMethodData(ks, MethodData);
 	return true;
 }
 

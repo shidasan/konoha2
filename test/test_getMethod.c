@@ -49,7 +49,7 @@ void init_test(CTX)
     ct_dummybase = (kclass_t *) kaddClassDef(&DummyBaseDef);
     DummyDef.supcid = ct_dummybase->cid;
     ct_dummy = (kclass_t *) kaddClassDef(&DummyDef);
-    const char *methoddata[] = {
+    const char *MethodData[] = {
         DF_(0L), DF_(DummyBase_f), DT_(Int), DF_("DummyBase"), "f", DF_(0),
         DF_(0), DF_(DummyBase_g), DT_(Int), DF_("DummyBase"), "g", DF_(0),
         DF_(0), DF_(Dummy_f),     DT_(Int), DF_("Dummy"), "f", DF_(0),
@@ -57,7 +57,7 @@ void init_test(CTX)
     };
     kmodsugar->h.setup(_ctx, (kmodshare_t*)kmodsugar);
     _ctx->lib2->KloadMethodData(_ctx, kmodsugar->rootns,
-            (const char **)methoddata);
+            (const char **)MethodData);
 }
 
 void test_getMethod(CTX)

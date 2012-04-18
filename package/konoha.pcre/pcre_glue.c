@@ -705,13 +705,13 @@
 //
 //	int FN_x = FN_("x");
 //	int FN_y = FN_("y");
-//	intptr_t methoddata[] = {
+//	intptr_t MethodData[] = {
 //		_Public|_Const, _F(Regex_new),     TY_Regex,  TY_Regex,  MN_("new"), 2, TY_String, FN_x, TY_String, FN_y,
 //		_Public|_Const, _F(String_search), TY_Int,    TY_String, MN_("search"),  1, TY_Regex, FN_x,
 //		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
 //		DEND,
 //	};
-//	kloadMethodData(ks, methoddata);
+//	kloadMethodData(ks, MethodData);
 //	return true;
 //}
 //

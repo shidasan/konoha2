@@ -22,6 +22,9 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.macosx.exe.debug.642580575" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.macosx.exe.debug"/>
 							<builder buildPath="${workspace_loc:/konoha2/Debug}" id="cdt.managedbuild.target.gnu.builder.macosx.exe.debug.1844494223" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.macosx.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.debug.891171039" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.debug">
+								<option id="macosx.c.link.option.libs.1907156673" name="Libraries (-l)" superClass="macosx.c.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="python2.7"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.c.linker.input.1193786626" superClass="cdt.managedbuild.tool.macosx.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -41,6 +44,9 @@
 								<option id="gnu.c.compiler.macosx.exe.debug.option.debugging.level.1963605535" name="Debug Level" superClass="gnu.c.compiler.macosx.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1386677214" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+								</option>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1849438792" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="WITH_ECLIPSE"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1140421862" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -104,6 +110,11 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="konoha2.cdt.managedbuild.target.macosx.exe.1362480990" name="Executable" projectType="cdt.managedbuild.target.macosx.exe"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/konoha2"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
@@ -156,7 +167,7 @@
 				<parser enabled="true"/>
 			</scannerInfoProvider>
 		</profile>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.1847236243;cdt.managedbuild.config.gnu.macosx.exe.debug.1847236243.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1030494777;cdt.managedbuild.tool.gnu.c.compiler.input.1116991382">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1205525173;cdt.managedbuild.config.macosx.exe.release.1205525173.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.release.37744756;cdt.managedbuild.tool.gnu.c.compiler.input.1414663789">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
@@ -209,7 +220,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1205525173;cdt.managedbuild.config.macosx.exe.release.1205525173.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.release.37744756;cdt.managedbuild.tool.gnu.c.compiler.input.1414663789">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.1847236243;cdt.managedbuild.config.gnu.macosx.exe.debug.1847236243.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1030494777;cdt.managedbuild.tool.gnu.c.compiler.input.1116991382">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
@@ -315,7 +326,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.49515402;cdt.managedbuild.config.gnu.macosx.exe.debug.49515402.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.862639510;cdt.managedbuild.tool.gnu.c.compiler.input.1179903762">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1356879715;cdt.managedbuild.config.macosx.exe.release.1356879715.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.release.1299999747;cdt.managedbuild.tool.gnu.c.compiler.input.309641030">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
@@ -368,7 +379,7 @@
 				</scannerInfoProvider>
 			</profile>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1356879715;cdt.managedbuild.config.macosx.exe.release.1356879715.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.release.1299999747;cdt.managedbuild.tool.gnu.c.compiler.input.309641030">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.49515402;cdt.managedbuild.config.gnu.macosx.exe.debug.49515402.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.862639510;cdt.managedbuild.tool.gnu.c.compiler.input.1179903762">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 			<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 				<buildOutputProvider>
@@ -581,9 +592,4 @@
 			</profile>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/konoha2"/>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>
