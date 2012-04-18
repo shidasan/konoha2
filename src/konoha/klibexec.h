@@ -178,6 +178,7 @@ static kmape_t *Kmap_newentry(CTX, kmap_t *kmap, kuint_t hcode)
 		char *oarena = (char*)kmap->arena;
 		kmap->arenasize *= 2;
 		kmap->arena = KNH_MALLOC(kmap->arenasize * sizeof(kmape_t));
+		memcpy(kmap->arena, oarena, kmap->arenasize * sizeof(kmape_t));
 		kmap_shiftptr(kmap, (char*)kmap->arena - oarena);
 		kmap_makeFreeList(kmap, oarenasize, kmap->arenasize);
 		KNH_FREE(oarena, oarenasize * sizeof(kmape_t));
