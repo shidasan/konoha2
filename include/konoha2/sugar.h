@@ -67,6 +67,13 @@ struct _kpackage {
 	kline_t                      export_script;
 };
 
+// ParseToken
+#define VAR_ParseToken(TK, STR, UL) \
+		struct _kToken *TK = (struct _kToken*)sfp[0].o;\
+		kString *STR = sfp[1].s;\
+		int UL = (int)sfp[2].ivalue;\
+		(void)TK; (void)STR; (void)UL;\
+
 // ParseStmt
 #define VAR_ParseStmt(STMT, SYN, NAME, TLS, S, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
