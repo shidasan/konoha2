@@ -170,7 +170,7 @@ static	kbool_t class_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 	intptr_t MethodData[] = {
 		_Public, _F(KonohaSpace_getCid), TY_Int, TY_KonohaSpace, MN_("cid"), 2, TY_String, FN_name, TY_Int, FN_defval,
 		_Public, _F(KonohaSpace_defineClass), TY_Int, TY_KonohaSpace, MN_("defineClass"), 4, TY_Int, FN_flag, TY_String, FN_name, TY_Int, FN_("supcid"), TY_Int, FN_("fieldSize"),
-		_Public, _F(KonohaSpace_defineClassField), TY_Int, TY_KonohaSpace, MN_("defineClassField"), 4, TY_Int, FN_cid, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
+		_Public, _F(KonohaSpace_defineClassField), TY_Int, TY_KonohaSpace, MN_("defineClassField"), 5, TY_Int, FN_cid, TY_Int, FN_flag, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
 		DEND,
 	};
 	kloadMethodData(ks, MethodData);
