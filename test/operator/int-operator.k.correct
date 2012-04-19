@@ -1,51 +1,44 @@
-void global_setup() { 
-	
-}
-
-global_setup();
-boolean int_operator_add() { 
-	int i1 = 1;
-	int i2 = 2;
-	System.p( 1  +  2 );
-	System.p( 1  +  i1 );
-	System.p( i1  +  1 );
-	System.p( i1  +  i2 );
-}
-boolean int_operator_sub() { 
-	int i6 = 6;
-	int i3 = 3;
-	System.p( 5  -  4 );
-	System.p( 5  -  i6 );
-	System.p( i6  -  5 );
-	System.p( i6  -  i3 );
-}
-boolean int_operator_mul() { 
-	int i6 = 6;
-	int i3 = 3;
-	System.p( 5  *  4 );
-	System.p( 5  *  i6 );
-	System.p( i6  *  5 );
-	System.p( i6  *  i3 );
-}
-boolean int_operator_div() { 
-	int i6 = 6;
-	int i3 = 3;
-	System.p( 5  /  4 );
-	System.p( 5  /  i6 );
-	System.p( i6  /  5 );
-	System.p( i6  /  i3 );
-}
-boolean int_operator_mod() { 
-	int i6 = 6;
-	int i3 = 3;
-	System.p( 5  %  2 );
-	System.p( 5  %  i6 );
-	System.p( i6  %  5 );
-	System.p( i6  %  i3 );
-}
-int_operator_add();
-int_operator_sub();
-int_operator_mul();
-int_operator_div();
-int_operator_mod();
-
+ - (int_operator.k:9) 3
+ - (int_operator.k:10) 2
+ - (int_operator.k:11) 2
+ - (int_operator.k:12) 3
+ - (int_operator.k:17) 1
+ - (int_operator.k:18) -1
+ - (int_operator.k:19) 1
+ - (int_operator.k:20) 3
+ - (int_operator.k:25) 20
+ - (int_operator.k:26) 30
+ - (int_operator.k:27) 30
+ - (int_operator.k:28) 18
+ - (int_operator.k:33) 1
+ - (int_operator.k:34) 0
+ - (int_operator.k:35) 1
+ - (int_operator.k:36) 2
+ - (int_operator.k:41) 1
+ - (int_operator.k:42) 5
+ - (int_operator.k:43) 1
+ - (int_operator.k:44) 0
+ - (int_operator.k:49) false
+ - (int_operator.k:50) true
+ - (int_operator.k:51) true
+ - (int_operator.k:52) false
+ - (int_operator.k:57) true
+ - (int_operator.k:58) false
+ - (int_operator.k:59) false
+ - (int_operator.k:60) true
+ - (int_operator.k:65) true
+ - (int_operator.k:66) false
+ - (int_operator.k:67) false
+ - (int_operator.k:68) true
+ - (int_operator.k:73) true
+ - (int_operator.k:74) true
+ - (int_operator.k:75) true
+ - (int_operator.k:76) true
+ - (int_operator.k:81) false
+ - (int_operator.k:82) false
+ - (int_operator.k:83) false
+ - (int_operator.k:84) false
+ - (int_operator.k:89) false
+ - (int_operator.k:90) true
+ - (int_operator.k:91) true
+ - (int_operator.k:92) false

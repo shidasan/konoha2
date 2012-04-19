@@ -14,3 +14,27 @@
  - (float_operator.k:34) 0.833333
  - (float_operator.k:35) 1.200000
  - (float_operator.k:36) 2.000000
+ - (float_operator.k:41) false
+ - (float_operator.k:42) true
+ - (float_operator.k:43) true
+ - (float_operator.k:44) false
+ - (float_operator.k:49) true
+ - (float_operator.k:50) false
+ - (float_operator.k:51) false
+ - (float_operator.k:52) true
+ - (float_operator.k:57) true
+ - (float_operator.k:58) false
+ - (float_operator.k:59) false
+ - (float_operator.k:60) true
+ - (float_operator.k:65) true
+ - (float_operator.k:66) true
+ - (float_operator.k:67) true
+ - (float_operator.k:68) true
+ - (float_operator.k:73) false
+ - (float_operator.k:74) false
+ - (float_operator.k:75) false
+ - (float_operator.k:76) false
+ - (float_operator.k:81) false
+ - (float_operator.k:82) true
+ - (float_operator.k:83) true
+ - (float_operator.k:84) false
