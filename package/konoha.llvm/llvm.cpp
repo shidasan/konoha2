@@ -33,50 +33,64 @@
 #define __STDC_LIMIT_MACROS
 #endif
 
-#include <llvm/LLVMContext.h>
-#include <llvm/Module.h>
-#include <llvm/Intrinsics.h>
-#include <llvm/Attributes.h>
-#include <llvm/PassManager.h>
-#include <llvm/Transforms/Scalar.h>
-#include <llvm/Transforms/IPO.h>
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/Attributes.h"
+#include "llvm/PassManager.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/IPO.h"
 
-#ifndef USE_LLVM_2_9
-#include <llvm/Transforms/IPO/PassManagerBuilder.h>
+#if LLVM_VERSION > 209
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #endif
-#include <llvm/Transforms/Scalar.h>
-#include <llvm/Transforms/Utils/UnifyFunctionExitNodes.h>
-#ifdef USE_LLVM_3_1
-#include <llvm/Transforms/Vectorize.h>
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
+#if LLVM_VERSION >= 301
+#include "llvm/Transforms/Vectorize.h"
 #endif
-#include <llvm/Analysis/Verifier.h>
-#include <llvm/Analysis/Passes.h>
-#include <llvm/Analysis/DomPrinter.h>
-#include <llvm/Analysis/RegionPass.h>
-#include <llvm/Analysis/RegionPrinter.h>
-#include <llvm/Analysis/ScalarEvolution.h>
-#include <llvm/Analysis/Lint.h>
-#include <llvm/ExecutionEngine/JIT.h>
-#include <llvm/ExecutionEngine/Interpreter.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/Support/IRBuilder.h>
-#include <llvm/Support/DynamicLibrary.h>
-#ifdef USE_LLVM_2_9
-#include <llvm/Target/TargetSelect.h>
-#include <llvm/Target/TargetRegistry.h>
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/DomPrinter.h"
+#if LLVM_VERSION > 208
+#include "llvm/Analysis/RegionPass.h"
+#endif
+#include "llvm/Analysis/RegionPrinter.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/Lint.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/IRBuilder.h"
+
+#if LLVM_VERSION <= 208
+#include "llvm/Support/DynamicLinker.h"
 #else
-#include <llvm/Support/TargetSelect.h>
-#include <llvm/Support/TargetRegistry.h>
+#include "llvm/Support/DynamicLibrary.h"
 #endif
-#include <llvm/Support/Host.h>
-#include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/system_error.h>
-#include <llvm/Bitcode/ReaderWriter.h>
-#include <llvm/Target/TargetData.h>
-#include <llvm/Target/TargetMachine.h>
-#include <llvm/ADT/Statistic.h>
-#include <llvm/ADT/OwningPtr.h>
-#include <llvm/ADT/Triple.h>
+
+#if LLVM_VERSION <= 209
+#include "llvm/Target/TargetSelect.h"
+#include "llvm/Target/TargetRegistry.h"
+#else
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
+#endif
+#if LLVM_VERSION <= 208
+#include "llvm/System/Host.h"
+#else
+#include "llvm/Support/Host.h"
+#endif
+#include "llvm/Support/MemoryBuffer.h"
+#if LLVM_VERSION > 208
+#include "llvm/Support/system_error.h"
+#endif
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Triple.h"
 
 #include <iostream>
 
@@ -123,13 +137,13 @@ inline void SetRawPtr(kObject *po, void *rawptr)
 }
 }
 
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 #define _ITERATOR(ITR) (ITR).begin(), (ITR).end()
 #else
 #define _ITERATOR(ITR) (ITR)
 #endif
 
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 #define CONST_CAST(T, V) (const_cast<T>(V))
 #else
 #define CONST_CAST(T, V) (V)
@@ -246,9 +260,14 @@ KMETHOD Type_getPPCFP128Ty(CTX, ksfp_t *sfp _RIX)
 //## @Static Type Type.getX86MMXTy();
 KMETHOD Type_getX86MMXTy(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	const Type *ptr = Type::getX86_MMXTy(getGlobalContext());
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## @Static IntegerType Type.getInt1Ty();
@@ -334,9 +353,14 @@ KMETHOD Type_getPPCFP128PtrTy(CTX, ksfp_t *sfp _RIX)
 //## @Static PointerType Type.getX86MMXPtrTy();
 KMETHOD Type_getX86MMXPtrTy(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	const Type *ptr = Type::getX86_MMXPtrTy(getGlobalContext());
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## @Static PointerType Type.getInt1PtrTy();
@@ -691,12 +715,17 @@ KMETHOD IRBuilder_createUDiv(CTX, ksfp_t *sfp _RIX)
 //## Value IRBuilder.CreateExactUDiv(Value LHS, Value RHS);
 KMETHOD IRBuilder_createExactUDiv(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	IRBuilder<> *self = konoha::object_cast<IRBuilder<> *>(sfp[0].p);
 	Value *LHS = konoha::object_cast<Value *>(sfp[1].p);
 	Value *RHS = konoha::object_cast<Value *>(sfp[2].p);
 	Value *ptr = self->CreateExactUDiv(LHS, RHS);
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## Value IRBuilder.CreateSDiv(Value LHS, Value RHS);
@@ -1635,7 +1664,7 @@ KMETHOD IRBuilder_createPHI(CTX, ksfp_t *sfp _RIX)
 	PHINode *ptr;
 	IRBuilder<> *self = konoha::object_cast<IRBuilder<> *>(sfp[0].p);
 	Type *Ty = konoha::object_cast<Type *>(sfp[1].p);
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	ptr = self->CreatePHI(Ty, "");
 #else
 	kint_t num = sfp[2].ivalue;
@@ -2104,7 +2133,7 @@ KMETHOD FunctionType_get(CTX, ksfp_t *sfp _RIX)
 	Type *retTy = konoha::object_cast<Type *>(sfp[1].p);
 	kArray * args = sfp[2].a;
 	kbool_t b = sfp[3].bvalue;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	std::vector<const Type*> List;
 #else
 	std::vector<Type*> List;
@@ -2161,7 +2190,7 @@ KMETHOD StructType_get(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *args = sfp[1].a;
 	kbool_t isPacked = sfp[2].bvalue;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	std::vector<const Type*> List;
 #else
 	std::vector<Type*> List;
@@ -2176,19 +2205,19 @@ KMETHOD StructType_get(CTX, ksfp_t *sfp _RIX)
 KMETHOD StructType_create(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *args = sfp[1].a;
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION > 209
 	kString *name = sfp[2].s;
 #endif
 	kbool_t isPacked = sfp[3].bvalue;
 	StructType *ptr;
 	if (IS_NULL(args)) {
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 		ptr = StructType::get(getGlobalContext());
 #else
 		ptr = StructType::create(getGlobalContext(), S_text(name));
 #endif
 	} else if (kArray_size(args) == 0) {
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 		std::vector<const Type*> List;
 		ptr = StructType::get(getGlobalContext(), List, isPacked);
 #else
@@ -2197,7 +2226,7 @@ KMETHOD StructType_create(CTX, ksfp_t *sfp _RIX)
 		ptr->setBody(List, isPacked);
 #endif
 	} else {
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 		std::vector<const Type*> List;
 		konoha::convert_array(List, args);
 		ptr = StructType::get(getGlobalContext(), List, isPacked);
@@ -2224,7 +2253,8 @@ KMETHOD ArrayType_get(CTX, ksfp_t *sfp _RIX)
 //## @Native void StructType.setBody(Array<Type> args, boolean isPacked);
 KMETHOD StructType_setBody(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
+	(void)_ctx;(void)sfp;(void)K_RIX;
 	LLVM_TODO("NO SUPPORT");
 #else
 	StructType *type  = konoha::object_cast<StructType *>(sfp[0].p);
@@ -2233,15 +2263,15 @@ KMETHOD StructType_setBody(CTX _UNUSED_, ksfp_t *sfp _RIX)
 	std::vector<Type*> List;
 	konoha::convert_array(List, args);
 	type->setBody(List, isPacked);
-#endif
 	RETURNvoid_();
+#endif
 }
 
 //## @Native boolean StructType.isOpaque();
 KMETHOD StructType_isOpaque(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
 	bool ret = false;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	LLVM_TODO("NO SUPPORT");
 #else
 	StructType *type  = konoha::object_cast<StructType *>(sfp[0].p);
@@ -2282,7 +2312,7 @@ KMETHOD GlobalVariable_new(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 static void PassManagerBuilder_ptr_init(CTX _UNUSED_, kObject *po, void *conf)
 {
 	konoha::SetRawPtr(po, conf);
@@ -2512,7 +2542,14 @@ KMETHOD DynamicLibrary_loadLibraryPermanently(CTX, ksfp_t *sfp _RIX)
 {
 	const char *libname = S_text(sfp[1].s);
 	std::string ErrMsg;
-	kbool_t ret = sys::DynamicLibrary::LoadLibraryPermanently(libname, &ErrMsg);
+	kbool_t ret;
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+	ret = LinkDynamicObject(libname, &ErrMsg);
+#else
+	ret = sys::DynamicLibrary::LoadLibraryPermanently(libname, &ErrMsg);
+#endif
 	if (ret == 0) {
 		//TODO
 		//KNH_NTRACE2(_ctx, "LoadLibraryPermanently", K_FAILED, KNH_LDATA(LOG_s("libname", libname), LOG_msg(ErrMsg.c_str())));
@@ -2526,7 +2563,14 @@ KMETHOD DynamicLibrary_searchForAddressOfSymbol(CTX _UNUSED_, ksfp_t *sfp _RIX)
 	const char *fname = S_text(sfp[1].s);
 	kint_t ret = 0;
 	void *symAddr = NULL;
-	if (!(symAddr = sys::DynamicLibrary::SearchForAddressOfSymbol(fname))) {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+	//symAddr = GetAddressOfSymbol(fname);
+#else
+	symAddr = sys::DynamicLibrary::SearchForAddressOfSymbol(fname);
+#endif
+	if (!symAddr) {
 		ret = reinterpret_cast<kint_t>(symAddr);
 	}
 	RETURNi_(ret);
@@ -2672,17 +2716,27 @@ KMETHOD LLVM_createProfileVerifierPass(CTX, ksfp_t *sfp _RIX)
 //## ModulePass LLVM.createPathProfileLoaderPass();
 KMETHOD LLVM_createPathProfileLoaderPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	ModulePass *ptr = createPathProfileLoaderPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## ModulePass LLVM.createPathProfileVerifierPass();
 KMETHOD LLVM_createPathProfileVerifierPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	ModulePass *ptr = createPathProfileVerifierPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## FunctionPass LLVM.createLazyValueInfoPass();
@@ -2736,17 +2790,27 @@ KMETHOD LLVM_createModuleDebugInfoPrinterPass(CTX, ksfp_t *sfp _RIX)
 //## FunctionPass LLVM.createMemDepPrinter();
 KMETHOD LLVM_createMemDepPrinter(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	FunctionPass *ptr = createMemDepPrinter();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## FunctionPass LLVM.createPostDomTree();
 KMETHOD LLVM_createPostDomTree(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	FunctionPass *ptr = createPostDomTree();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## FunctionPass LLVM.createRegionViewerPass();
@@ -3109,16 +3173,21 @@ KMETHOD LLVM_createLoopUnswitchPass(CTX, ksfp_t *sfp _RIX)
 //## Pass LLVM.createLoopInstSimplifyPass();
 KMETHOD LLVM_createLoopInstSimplifyPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	Pass *ptr = createLoopInstSimplifyPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## Pass LLVM.createLoopUnrollPass(int threshold, int count, int allowPartial);
 KMETHOD LLVM_createLoopUnrollPass(CTX, ksfp_t *sfp _RIX)
 {
 	Pass *ptr;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	ptr = createLoopUnrollPass();
 #else
 	int threshold = sfp[0].ivalue;
@@ -3141,9 +3210,14 @@ KMETHOD LLVM_createLoopRotatePass(CTX, ksfp_t *sfp _RIX)
 //## Pass LLVM.createLoopIdiomPass();
 KMETHOD LLVM_createLoopIdiomPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	Pass *ptr = createLoopIdiomPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## FunctionPass LLVM.createPromoteMemoryToRegisterPass();
@@ -3237,9 +3311,14 @@ KMETHOD LLVM_createLCSSAPass(CTX, ksfp_t *sfp _RIX)
 //## FunctionPass LLVM.createEarlyCSEPass();
 KMETHOD LLVM_createEarlyCSEPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	FunctionPass *ptr = createEarlyCSEPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
 //## FunctionPass LLVM.createGVNPass(bool noLoads);
@@ -3307,7 +3386,7 @@ KMETHOD LLVM_createCorrelatedValuePropagationPass(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 //## Pass LLVM.createObjCARCExpandPass();
 KMETHOD LLVM_createObjCARCExpandPass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3336,12 +3415,17 @@ KMETHOD LLVM_createObjCARCOptPass(CTX, ksfp_t *sfp _RIX)
 //## FunctionPass LLVM.createInstructionSimplifierPass();
 KMETHOD LLVM_createInstructionSimplifierPass(CTX, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	FunctionPass *ptr = createInstructionSimplifierPass();
 	kObject *p = new_ReturnCppObject(_ctx, sfp, WRAP(ptr) K_RIXPARAM);
 	RETURN_(p);
+#endif
 }
 
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 //## FunctionPass LLVM.createLowerExpectIntrinsicPass();
 KMETHOD LLVM_createLowerExpectIntrinsicPass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3383,7 +3467,7 @@ KMETHOD LLVM_createVerifierPass(CTX, ksfp_t *sfp _RIX)
 	RETURN_(p);
 }
 
-#ifdef USE_LLVM_3_1
+#if LLVM_VERSION >= 301
 //## BasicBlockPass LLVM.createBBVectorizePass();
 KMETHOD LLVM_createBBVectorizePass(CTX, ksfp_t *sfp _RIX)
 {
@@ -3398,7 +3482,7 @@ KMETHOD Intrinsic_getType(CTX, ksfp_t *sfp _RIX)
 {
 	Intrinsic::ID id = (Intrinsic::ID) sfp[1].ivalue;
 	kArray *args = sfp[2].a;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	const FunctionType *ptr;
 	ptr = Intrinsic::getType(getGlobalContext(), id, (const Type **) args->list);
 #else
@@ -3418,7 +3502,7 @@ KMETHOD Intrinsic_getDeclaration(CTX, ksfp_t *sfp _RIX)
 	Intrinsic::ID id = (Intrinsic::ID) sfp[2].ivalue;
 	kArray *args = sfp[3].a;
 	Function *ptr;
-#ifdef USE_LLVM_2_9
+#if LLVM_VERSION <= 209
 	ptr = Intrinsic::getDeclaration(m, id, (const Type **) args->list);
 #else
 	std::vector<Type*> List;
@@ -3435,10 +3519,18 @@ KMETHOD LLVM_parseBitcodeFile(CTX, ksfp_t *sfp _RIX)
 	LLVMContext &Context = getGlobalContext();
 	std::string ErrMsg;
 	OwningPtr<MemoryBuffer> BufferPtr;
+#if LLVM_VERSION <= 208
+	const char *fname = S_text(Str);
+	BufferPtr.reset(MemoryBuffer::getFile(fname, &ErrMsg));
+	if (!BufferPtr) {
+		std::cout << "Could not open file " << ErrMsg << std::endl;
+	}
+#else
 	std::string fname(S_text(Str));
 	if (error_code ec = MemoryBuffer::getFile(fname, BufferPtr)) {
-		std::cout << "Could not open file" << ec.message() << std::endl;
+		std::cout << "Could not open file " << ec.message() << std::endl;
 	}
+#endif
 	MemoryBuffer *Buffer = BufferPtr.take();
 	//Module *m = getLazyBitcodeModule(Buffer, Context, &ErrMsg);
 	Module *m = ParseBitcodeFile(Buffer, Context, &ErrMsg);
@@ -3452,6 +3544,10 @@ KMETHOD LLVM_parseBitcodeFile(CTX, ksfp_t *sfp _RIX)
 //TODO Scriptnize
 KMETHOD Instruction_setMetadata(CTX _UNUSED_, ksfp_t *sfp _RIX)
 {
+#if LLVM_VERSION <= 208
+	(void)_ctx;(void)sfp;(void)K_RIX;
+	LLVM_TODO("NO SUPPORT");
+#else
 	Instruction *inst = konoha::object_cast<Instruction *>(sfp[0].p);
 	Module *m = konoha::object_cast<Module *>(sfp[1].p);
 	kString *Str = sfp[2].s;
@@ -3465,6 +3561,7 @@ KMETHOD Instruction_setMetadata(CTX _UNUSED_, ksfp_t *sfp _RIX)
 	unsigned KindID = Context.getMDKindID(S_text(Str));
 	NMD->addOperand(node);
 	inst->setMetadata(KindID, node);
+#endif
 	RETURNvoid_();
 }
 
@@ -3498,7 +3595,11 @@ static KDEFINE_INT_CONST IntGlobalVariable[] = {
 	{NULL, 0, 0}
 };
 
+#if LLVM_VERSION >= 301
 #define C_(S) {#S , TY_Int, S ## _i}
+#else
+#define C_(S) {#S , TY_Int, S}
+#endif
 using namespace llvm::Attribute;
 static KDEFINE_INT_CONST IntAttributes[] = {
 	C_(None),
@@ -3525,9 +3626,11 @@ static KDEFINE_INT_CONST IntAttributes[] = {
 	C_(Naked),
 	C_(InlineHint),
 	C_(StackAlignment),
+#if LLVM_VERSION >= 300
 	C_(ReturnsTwice),
 	C_(UWTable),
 	C_(NonLazyBind),
+#endif
 	{NULL, 0, 0}
 };
 #undef C_
@@ -3637,7 +3740,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*initdef*/
 	};
 	CT_IRBuilder = kaddClassDef(NULL, &IRBuilderDef, pline);
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 	static KDEFINE_CLASS PassManagerBuilderDef = {
 		"PassManagerBuilder"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
@@ -3978,7 +4081,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public, _F(ExecutionEngine_getPointerToFunction), TY_NativeFunction, TY_ExecutionEngine, MN_("getPointerToFunction"), 1, TY_Function, FN_("func"),
 		_Public, _F(ExecutionEngine_addGlobalMapping), TY_void, TY_ExecutionEngine, MN_("addGlobalMapping"), 2, TY_GlobalVariable, FN_("g"),TY_Int, FN_("addr"),
 		_Public, _F(GlobalVariable_new), TY_Value, TY_GlobalVariable, MN_("new"), 5, TY_Module, FN_("m"),TY_Type, FN_("ty"),TY_Constant, FN_("c"),TY_Int, FN_("linkage"),TY_String, FN_("name"),
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 		_Public, _F(PassManagerBuilder_new), TY_PassManagerBuilder, TY_PassManagerBuilder, MN_("new"), 0,
 		_Public, _F(PassManagerBuilder_populateModulePassManager), TY_void, TY_PassManagerBuilder, MN_("populateModulePassManager"), 1, TY_PassManager, FN_("manager"),
 #endif
@@ -4094,7 +4197,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(LLVM_createSinkingPass),                 TY_Pass, TY_LLVM, MN_("createSinkingPass"), 0,
 		_Public|_Static, _F(LLVM_createLowerAtomicPass),             TY_Pass, TY_LLVM, MN_("createLowerAtomicPass"), 0,
 		_Public|_Static, _F(LLVM_createCorrelatedValuePropagationPass), TY_Pass, TY_LLVM, MN_("createCorrelatedValuePropagationPass"), 0,
-#ifndef USE_LLVM_2_9
+#if LLVM_VERSION >= 300
 		_Public|_Static, _F(LLVM_createObjCARCExpandPass),   TY_Pass, TY_LLVM, MN_("createObjCARCExpandPass"), 0,
 		_Public|_Static, _F(LLVM_createObjCARCContractPass), TY_Pass, TY_LLVM, MN_("createObjCARCContractPass"), 0,
 		_Public|_Static, _F(LLVM_createObjCARCOptPass),      TY_Pass, TY_LLVM, MN_("createObjCARCOptPass"), 0,
