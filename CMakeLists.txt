@@ -100,6 +100,7 @@ set(PACKAGES
 	konoha.socket
 	konoha.rope
 	konoha.mpi
+	python
 )
 
 find_library(HAVE_LIBDL NAMES dl)
