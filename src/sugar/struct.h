@@ -306,8 +306,14 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 
 static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
 {
-	uintptr_t hcode = longid(PN_konoha, kuname(name, len, 0, FN_NONAME));
+	ksymbol_t un = kuname(name, len, 0, FN_NONAME);
+	uintptr_t hcode = longid(PN_konoha, un);
 	kclass_t *ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+	//FIXME
+	if (!ct) {
+		hcode = longid(PN_sugar, un);
+		ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+	}
 	return (ct != NULL) ? ct->cid : def;
 }
 
