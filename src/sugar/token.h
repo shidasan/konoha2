@@ -85,7 +85,6 @@ static int parseNUM(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMetho
 		if(ch == '_') continue; // nothing
 		if(ch == '.') {
 			if(!isdigit(ts[pos])) {
-				//XXX(imasahiro) Comment outed to fix 20120328_int_call.k
 				pos--;
 				break;
 			}
