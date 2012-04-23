@@ -42,3 +42,19 @@
  - (int_operator.k:90) true
  - (int_operator.k:91) true
  - (int_operator.k:92) false
+ - (int_operator.k:98) 1
+ - (int_operator.k:99) 14
+ - (int_operator.k:100) 2
+ - (int_operator.k:101) 5
+ - (int_operator.k:102) 3
+ - (int_operator.k:103) -10
+ - (int_operator.k:104) 2
+ - (int_operator.k:105) -1
+ - (int_operator.k:106) 10
+ - (int_operator.k:107) 2
+ - (int_operator.k:108) 1
+ - (int_operator.k:109) 2
+ - (int_operator.k:110) 6
+ - (int_operator.k:111) -2
+ - (int_operator.k:112) 8
+ - (int_operator.k:113) 0

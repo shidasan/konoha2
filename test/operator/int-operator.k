@@ -91,6 +91,27 @@ boolean int_operator_cmpMoreThanEqual() {
 	System.p( i1  >=  1 );
 	System.p( i1  >=  i2 );
 }
+boolean int_operator_intOperatorPriority() { 
+	int i2 = 2;
+	int i3 = 3;
+	int i4 = 4;
+	System.p(i2 + i3 - i4);
+	System.p(i2 + i3 * i4);
+	System.p(i2 + i3 / i4);
+	System.p(i2 + i3 % i4);
+	System.p(i2 - i3 + i4);
+	System.p(i2 - i3 * i4);
+	System.p(i2 - i3 / i4);
+	System.p(i2 - i3 % i4);
+	System.p(i2 * i3 + i4);
+	System.p(i2 * i3 - i4);
+	System.p(i2 * i3 / i4);
+	System.p(i2 * i3 % i4);
+	System.p(i2 % i3 + i4);
+	System.p(i2 % i3 - i4);
+	System.p(i2 % i3 * i4);
+	System.p(i2 % i3 / i4);
+}
 int_operator_add();
 int_operator_sub();
 int_operator_mul();
@@ -102,4 +123,5 @@ int_operator_cmpLessThan();
 int_operator_cmpLessThanEqual();
 int_operator_cmpMoreThan();
 int_operator_cmpMoreThanEqual();
+int_operator_intOperatorPriority();
 
