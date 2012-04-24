@@ -438,10 +438,10 @@ static int Stmt_skipUnaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksyntax_t **synR)
 {
 	int idx = -1, i, prif = 0;
-	for(i = Stmt_skipUnaryOp(_ctx, stmt, tls, s, e); i < e; i++) {
+	for(i = Stmt_skipUnaryOp(_ctx, stmt, tls, s, e) + 1; i < e; i++) {
 		kToken *tk = tls->toks[i];
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
-		//DBG_P("i=%d, kw=%d,%s, syn=%p, op2=%d", i, tk->kw, T_kw(tk->kw), syn, syn->op2);
+		//DBG_P("@NKT: i=%d, kw=%d,%s, syn=%p, op2=%d", i, tk->kw, T_kw(tk->kw), syn, syn->op2);
 		if(syn != NULL && syn->op2 != 0) {
 			//DBG_P("operator: %s priotiry=%d", T_kw(syn->kw), syn->priority);
 			if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {
@@ -583,7 +583,7 @@ static KMETHOD ParseExpr_Op(CTX, ksfp_t *sfp _RIX)
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	kToken *tk = tls->toks[c];
 	kExpr *expr, *rexpr = Stmt_newExpr2(_ctx, stmt, tls, c+1, e);
-	if(s == c) { // uniary operator
+	if(s == c) { // unary operator
 		expr = new_ConsExpr(_ctx, syn, 2, tk, rexpr);
 	}
 	else {   // binary operator

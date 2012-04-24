@@ -70,7 +70,7 @@ static inline void Expr_typed(kExpr *expr, int build, ktype_t ty)
 	((struct _kExpr*)expr)->ty = ty;
 }
 
-static kline_t Expr_uline(CTX, kExpr *expr, int* lposNUL)
+static kline_t Expr_uline(CTX, kExpr *expr, int pe, int* lposNUL)
 {
 	kToken *tk = expr->tk;
 	kArray *a = expr->cons;
@@ -86,15 +86,17 @@ static kline_t Expr_uline(CTX, kExpr *expr, int* lposNUL)
 				return tk->uline;
 			}
 			if(IS_Expr(tk)) {
-				kline_t uline = Expr_uline(_ctx, a->exprs[i], lposNUL);
+				kline_t uline = Expr_uline(_ctx, a->exprs[i], pe, lposNUL);
 				if(uline > 0) return uline;
 			}
 		}
 	}
 	if(IS_Expr(a)) {
-		return Expr_uline(_ctx, expr->single, lposNUL);
+		return Expr_uline(_ctx, expr->single, pe, lposNUL);
 	}
-	DBG_ABORT("@@@@@@@@ Cannot Find Uline @@@@@@@@@@@");
+	if (pe < INFO_) {
+		DBG_ABORT("@@@@@@@@ Cannot Find Uline @@@@@@@@@@@");
+	}
 	return 0;
 }
 
@@ -102,7 +104,7 @@ static kExpr *Expr_p(CTX, kExpr *expr, int pe, const char *fmt, ...)
 {
 	if(expr != K_NULLEXPR) {
 		int lpos = -1;
-		kline_t uline = Expr_uline(_ctx, expr, &lpos);
+		kline_t uline = Expr_uline(_ctx, expr, pe, &lpos);
 		va_list ap;
 		va_start(ap, fmt);
 		vperrorf(_ctx, pe, uline, lpos, fmt, ap);
@@ -444,10 +446,11 @@ static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma
 		}
 		if(!Expr_isCONST(expr)) isConst = 0;
 	}
+	expr = Expr_typedWithMethod(_ctx, expr, mtd, reqty);
 	if(isConst && kMethod_isConst(mtd)) {
 		return ExprCall_toConstValue(_ctx, expr, cons, rtype);
 	}
-	return Expr_typedWithMethod(_ctx, expr, mtd, reqty);
+	return expr;
 }
 
 static inline void kToken_setmn(kToken *tk, kmethodn_t mn)
@@ -498,7 +501,7 @@ static kExpr *CallParams(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma, ktype_t
 		if(kArray_size(expr->cons) == 2) {
 			mtd = kKonohaSpace_getMethodNULL(ks, this_cid, expr->syn->op1);
 			if(mtd == NULL) {
-				kToken_p(tkMN, ERR_, "undefined uninary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
+				kToken_p(tkMN, ERR_, "undefined unary operator: %s of %s", S_text(tkMN->text), T_cid(this_cid));
 			}
 			goto L_RETURN;
 		}
@@ -847,7 +850,7 @@ static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **
 		ty = kExpr_at(expr, 1)->ty;
 		DBG_P("declare %s index=%d", T_ty(ty), kExpr_at(expr, 1)->index);
 		if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
-			kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, NULL));
+			kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, INFO_, NULL));
 			Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
 			kStmt_setsyn(newstmt, SYN_(kStmt_ks(newstmt), KW_EXPR));
 			kExpr_typed(expr, LET, TY_void);
