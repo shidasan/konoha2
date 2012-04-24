@@ -64,10 +64,11 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 // --------------------------------------------------------------------------
 
 #define kExpr_typed(E, B, TY)   Expr_typed(E, TEXPR_##B, TY)
-static inline void Expr_typed(kExpr *expr, int build, ktype_t ty)
+static inline kExpr *Expr_typed(kExpr *expr, int build, ktype_t ty)
 {
 	((struct _kExpr*)expr)->build = build;
 	((struct _kExpr*)expr)->ty = ty;
+	return expr;
 }
 
 static kline_t Expr_uline(CTX, kExpr *expr, int pe, int* lposNUL)
@@ -612,7 +613,7 @@ static KMETHOD ExprTyCheck_and(CTX, ksfp_t *sfp _RIX)
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	if(kExpr_tyCheckAt(expr, 1, gma, TY_Boolean, 0) != K_NULLEXPR) {
 		if(kExpr_tyCheckAt(expr, 2, gma, TY_Boolean, 0) != K_NULLEXPR) {
-			kExpr_typed(expr, AND, TY_Boolean);
+			RETURN_(kExpr_typed(expr, AND, TY_Boolean));
 		}
 	}
 	RETURN_(K_NULLEXPR);
@@ -623,7 +624,7 @@ static KMETHOD ExprTyCheck_or(CTX, ksfp_t *sfp _RIX)
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	if(kExpr_tyCheckAt(expr, 1, gma, TY_Boolean, 0) != K_NULLEXPR) {
 		if(kExpr_tyCheckAt(expr, 2, gma, TY_Boolean, 0) != K_NULLEXPR) {
-			kExpr_typed(expr, OR, TY_Boolean);
+			RETURN_(kExpr_typed(expr, OR, TY_Boolean));
 		}
 	}
 	RETURN_(K_NULLEXPR);
