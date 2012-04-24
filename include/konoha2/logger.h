@@ -8,7 +8,7 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-#define LOGPOL_RECORD       (1<<0)
+#define LOGPOL_RECORD       (1<<0) /* logger works only with this flag */
 #define LOGPOL_CRIT         (1<<1)
 #define LOGPOL_ERR          (0)  /*DEFAULT */
 #define LOGPOL_WARN         (1<<2)
@@ -22,7 +22,7 @@
 
 typedef struct {
 	int policy;
-	void *ptr;
+	void *ptr; // for precompiled formattings
 	union {
 		const char *func;
 		const struct _kMethod *mtd;
@@ -36,7 +36,7 @@ typedef struct {
 #define LOG_u_  2
 
 #define ktrace(POLICY, ...)    do {\
-		static klogconf_t _logconf = {LOGPOL_RECORD|LOGPOL_INIT|LOGPOL_CFUNC|POLICY, NULL, {__FUNCNAME__}};\
+		static klogconf_t _logconf = {LOGPOL_RECORD|LOGPOL_INIT|LOGPOL_CFUNC|POLICY, NULL, {__FUNCTION__}};\
 		if(TFLAG_is(int, _logconf.policy, LOGPOL_RECORD)) {\
 			(KPI)->Ktrace(_ctx, &_logconf, ## __VA_ARGS__, LOG_END);\
 		}\

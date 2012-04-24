@@ -1091,6 +1091,7 @@ struct _klib2 {
 	void (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
 	void (*Kraise)(CTX, int isContinue);     // module
 
+	uintptr_t (*Ktrace)(CTX, struct klogconf_t *logconf, ...);
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
 //	void (*KKonohaSpace_defineSyntax)(CTX, const struct _kKonohaSpace*, struct KDEFINE_SYNTAX *);
 

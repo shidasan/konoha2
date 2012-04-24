@@ -74,12 +74,29 @@ static int test_kwb(CTX)
 	KNH_FREE(buf, sizeof(karray_t));
 	return 0;
 }
+#include "konoha2/logger.h"
 
+static int test_logger(CTX)
+{
+	MODLOGGER_init(_ctx, _ctx);
+	int v2 = 3;
+	int v3 = -3;
+	int i;
+	for (i = 0; i < 10; i++) {
+		ktrace(LOGPOL_ERR,
+				LOG_s "key1", "hello world",
+				LOG_u "key2", v2,
+				LOG_u "key3", v3
+				);
+	}
+	return 0;
+}
 #define FN(T)  #T, T
 
 DEFINE_TESTFUNC KonohaTestSet[] = {
 	{FN(test_kvproto)},
 	{FN(test_kwb)},
+	{FN(test_logger)},
 	{NULL, NULL},
 };
 

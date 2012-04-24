@@ -135,7 +135,7 @@ static uintptr_t Ktrace_p(CTX, klogconf_t *logconf, va_list ap)
 		}
 	}
 	p[0] = '}'; p++;
-	p[0] = '0';
+	p[0] = '\0';
 	fprintf(stderr, "%s\n", buf);
 	return 0;// FIXME reference to log
 }
@@ -191,6 +191,6 @@ void MODLOGGER_init(CTX, kcontext_t *ctx)
 	base->h.reftrace = kmodlogger_reftrace;
 	base->h.free     = kmodlogger_free;
 	ksetModule(MOD_logger, (kmodshare_t*)base, 0);
-	//KSET_KLIB2(trace, 0);
+	KSET_KLIB2(trace, 0);
 }
 
