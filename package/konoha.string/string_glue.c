@@ -29,7 +29,6 @@
 
 #include <konoha2/konoha2.h>
 #include <konoha2/sugar.h>
-#define K_USING_UTF8 1 /*FIXME*/
 
 #define _SUB(s0) (S_isASCII(s0) ? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
 #define _SUBCHAR(s0) (S_isASCII(s0) ? SPOL_ASCII : 0)

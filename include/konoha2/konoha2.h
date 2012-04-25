@@ -43,6 +43,8 @@
 #define K_REVISION  1
 #endif
 
+#define K_USING_UTF8 1
+
 #define USE_BUILTINTEST  1
 
 //#include"konoha2/konoha_config.h"
