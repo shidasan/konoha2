@@ -20,7 +20,7 @@
 #define LOGPOL_INIT         (1<<8)
 #define LOGPOL_CFUNC        (1<<9)
 
-typedef struct {
+typedef struct klogconf_t {
 	int policy;
 	void *ptr; // for precompiled formattings
 	union {
