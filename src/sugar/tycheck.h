@@ -1102,7 +1102,7 @@ static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, k
 	Gamma_initParam(_ctx, &newgma, mtd->pa);
 	Block_tyCheckAll(_ctx, bk, gma);
 	Gamma_shiftBlockIndex(_ctx, &newgma);
-	MODCODE_genCode(_ctx, mtd, bk);
+	kMethod_genCode(mtd, bk);
 	GAMMA_POP(gma, &newgma);
 	RESET_GCSTACK();
 	return 1;
@@ -1163,7 +1163,7 @@ static ktype_t Gamma_evalMethod(CTX, kGamma *gma, kBlock *bk, kMethod *mtd)
 	}
 	if(stmt->syn == SYN_ERR) return K_FAILED;
 	ktype_t rtype = Stmt_checkReturnType(_ctx, stmt);
-	MODCODE_genCode(_ctx, mtd, bk);
+	kMethod_genCode(mtd, bk);
 	return Method_runEval(_ctx, mtd, rtype);
 }
 
@@ -1200,7 +1200,7 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	INIT_GCSTACK();
 	BEGIN_LOCAL(lsfp, 0);
 	kBlock *bk1 = ctxsugar->singleBlock;
-	kMethod *mtd = new_kMethod(kMethod_Static, 0, 0, K_NULLPARAM, NULL);
+	kMethod *mtd = new_kMethod(kMethod_Static, 0, 0, K_DEFPARAM, NULL);
 	PUSH_GCSTACK(mtd);
 	kstack_t *base = _ctx->stack;
 	kstatus_t result = K_CONTINUE;

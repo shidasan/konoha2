@@ -1799,7 +1799,7 @@ static void _THCODE(CTX, kopl_t *pc, void **codeaddr)
 #endif
 }
 
-void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
+static void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 {
 	DBG_P("START CODE GENERATION..");
 	if(ctxcode == NULL) {
@@ -1985,6 +1985,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 	}
 	struct _klib2 *l = (struct _klib2*)_ctx->lib2;
 	l->KMethod_setFunc = Method_setFunc;
+	l->KMethod_genCode = MODCODE_genCode;
 }
 
 /* ------------------------------------------------------------------------ */

@@ -358,6 +358,7 @@ typedef struct kshare_t {
 	const struct _kString       *emptyString;
 	const struct _kArray        *emptyArray;
 	const struct _kParam        *nullParam;
+	const struct _kParam        *defParam;
 
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //
@@ -567,8 +568,8 @@ struct _kclass {
 #define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
 
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
-#define TY_iS_UNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
-#define CT_iS_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
+#define TY_is_UNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
+#define CT_is_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
 #define CT_setUNDEF(ct, B)     TFLAG_set(kflag_t, (ct)->cflag, kClass_UNDEF, B)
 
 //#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UNboxType))
@@ -803,7 +804,7 @@ struct _kString /* extends _Bytes */ {
 #define TY_Array                 CLASS_Array
 #define IS_Array(o)              (O_cid(o) == CLASS_Array)
 
-#define kArray_iS_UNboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
+#define kArray_is_UNboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
 
 typedef const struct _kArray kArray;
@@ -929,6 +930,14 @@ typedef KMETHODCC (*FmethodCallCC)(CTX, ksfp_t *, int, int, struct kopl_t*);
 
 struct _kMethod {
 	kObjectHeader     h;
+	union {
+		knh_Fmethod          fcall_1;
+		FmethodFastCall      fastcall_1;
+	};
+	union {/* body*/
+		struct kopl_t        *pc_start;
+		FmethodCallCC         callcc_1;
+	};
 	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
 	kshort_t delta;          kpack_t packid;
@@ -940,14 +949,6 @@ struct _kMethod {
 		const struct _kKonohaSpace  *lazyns;       // lazy compilation
 	};
 	const struct _kMethod           *proceedNUL;   // proceed
-	union {
-		knh_Fmethod          fcall_1;
-		FmethodFastCall      fastcall_1;
-	};
-	union {/* body*/
-		struct kopl_t        *pc_start;
-		FmethodCallCC         callcc_1;
-	};
 };
 
 /* ------------------------------------------------------------------------ */
@@ -1097,6 +1098,7 @@ struct _klib2 {
 
 	uintptr_t (*Ktrace)(CTX, struct klogconf_t *logconf, ...);
 	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
+	void (*KMethod_genCode)(CTX, kMethod *mtd, const struct _kBlock *bk);
 //	void (*KKonohaSpace_defineSyntax)(CTX, const struct _kKonohaSpace*, struct KDEFINE_SYNTAX *);
 
 };
@@ -1105,6 +1107,7 @@ struct _klib2 {
 #define K_TRUE            (_ctx->share->constTrue)
 #define K_FALSE           (_ctx->share->constFalse)
 #define K_NULLPARAM       (_ctx->share->nullParam)
+#define K_DEFPARAM        (_ctx->share->defParam)
 #define K_EMPTYARRAY      (_ctx->share->emptyArray)
 #define TS_EMPTY          (_ctx->share->emptyString)
 
@@ -1188,6 +1191,7 @@ struct _klib2 {
 #define new_kParam(R,S,P)        (KPI)->Knew_Param(_ctx, R, S, P)
 #define new_kMethod(F,C,M,P,FF)  (KPI)->Knew_Method(_ctx, F, C, M, P, FF)
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
+#define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 
 #define KCLASS(cid)                          S_text(CT(cid)->name)
 #define Konoha_getCT(NS, THIS, S, L, C)      (KPI)->KKonohaSpace_getCT(_ctx, NS, THIS, S, L, C)

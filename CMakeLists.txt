@@ -47,6 +47,7 @@ include_directories(${INCLUDE_DIRS})
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release" )
 endif()
+string(TOUPPER ${CMAKE_BUILD_TYPE} uppercase_CMAKE_BUILD_TYPE)
 
 option(USE_X86_32 off)
 set(KONOHA_CFLAGS "")
@@ -56,14 +57,14 @@ endif(USE_X86_32)
 
 SET(CMAKE_C_FLAGS         "-Wall ${KONOHA_CFLAGS}")
 SET(CMAKE_CXX_FLAGS       "-Wall ${KONOHA_CFLAGS}")
-SET(CMAKE_C_FLAGS_RELEASE   "-Wall -O2 -g")
-SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -g")
-SET(CMAKE_C_FLAGS_DEBUG     "-O0 -g3")
-SET(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
-SET(CMAKE_C_FLAGS_SMALL     "-Os -g0")
-SET(CMAKE_CXX_FLAGS_SMALL   "-Os -g0")
+SET(CMAKE_C_FLAGS_RELEASE      "-Wall -O2 -g")
+SET(CMAKE_C_FLAGS_DEBUG        "-O0 -g3")
+SET(CMAKE_C_FLAGS_COMPRESSED   "-Os -g0")
+SET(CMAKE_CXX_FLAGS_RELEASE    "${CMAKE_C_FLAGS_RELEASE}")
+SET(CMAKE_CXX_FLAGS_DEBUG      "${CMAKE_C_FLAGS_DEBUG}")
+SET(CMAKE_CXX_FLAGS_COMPRESSED "${CMAKE_C_FLAGS_COMPRESSED}")
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Small")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Compressed")
 	set(K_NODEBUG 1)
 endif()
 
@@ -89,8 +90,10 @@ set(VM
 
 set(PACKAGES
 	sugar
+	jit
 	konoha.string
 	konoha.float
+	konoha.llvm.util
 	konoha.llvm
 	konoha.pcre
 	konoha.io
@@ -197,6 +200,10 @@ macro(create_package_project _PKGNAME)
 	set(_PACKAGE_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 	set(_PACKAGE_STRING  ${CMAKE_PROJECT_NAME}-${_PACKAGE_VERSION})
 	set(_KONOHA_PACKAGE_DIR konoha2/package/${KONOHA_VERSION}/${PROJECT_NAME})
+	set(CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}
+		"${CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${PACKAGE_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}
+		"${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}} ${PACKAGE_CXX_FLAGS}")
 	set(_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
 			${CMAKE_CURRENT_SOURCE_DIR}/include  ${CMAKE_CURRENT_BINARY_DIR}
 			${KONOHA_INCLUDE_DIRS}
@@ -276,3 +283,14 @@ install(DIRECTORY include/ DESTINATION include
 		PATTERN ".svn" EXCLUDE
 		)
 
+MESSAGE(STATUS)
+MESSAGE(STATUS "---------------------------------------------------------------------------" )
+MESSAGE(STATUS "CMAKE_BUILD_TYPE = ${uppercase_CMAKE_BUILD_TYPE}")
+MESSAGE(STATUS "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+MESSAGE(STATUS "CMAKE_C_FLAGS   = ${CMAKE_C_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
+MESSAGE(STATUS "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
+MESSAGE(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+MESSAGE(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
+MESSAGE(STATUS "---------------------------------------------------------------------------" )
+MESSAGE(STATUS)

@@ -110,6 +110,21 @@ struct kRawPtr {
 	void *rawptr;
 };
 
+#define MOD_llvm 19/*TODO*/
+#define kllvmmod ((kllvmmod_t*)_ctx->mod[MOD_llvm])
+#define kmodllvm ((kmodllvm_t*)_ctx->modshare[MOD_llvm])
+#define CT_Value (kmodllvm)->cValue
+#define TY_Value (CT_Value)->cid
+
+typedef struct {
+	kmodshare_t h;
+	kclass_t *cValue;
+} kmodllvm_t;
+
+typedef struct {
+	kmodlocal_t h;
+} kllvmmod_t;
+
 namespace konoha {
 template <class T>
 inline T object_cast(kObject *po)
@@ -122,7 +137,7 @@ inline T object_cast(kObject *po)
 template <class T>
 inline void convert_array(std::vector<T> &vec, kArray *a)
 {
-	size_t size = a->bytesize;
+	size_t size = kArray_size(a);
 	for (size_t i=0; i < size; i++) {
 		T v = konoha::object_cast<T>(a->list[i]);
 		vec.push_back(v);
@@ -183,6 +198,13 @@ static void Type_init(CTX _UNUSED_, kObject *po, void *conf)
 static void Type_free(CTX _UNUSED_, kObject *po)
 {
 	konoha::SetRawPtr(po, NULL);
+}
+
+static inline kObject *new_CppObject(CTX, const kclass_t *ct, void *ptr)
+{
+	kObject *ret = new_kObject(ct, ptr);
+	konoha::SetRawPtr(ret, ptr);
+	return ret;
 }
 
 static inline kObject *new_ReturnCppObject(CTX, ksfp_t *sfp, void *ptr _RIX)
@@ -2468,14 +2490,16 @@ KMETHOD Method_setFunction(CTX, ksfp_t *sfp _RIX)
 //## @Native Array<Value> Function.getArguments();
 KMETHOD Function_getArguments(CTX, ksfp_t *sfp _RIX)
 {
-	ktype_t rtype = sfp[K_MTDIDX].mtdNC->pa->rtype;
-	kcid_t cid = CT_(rtype)->p1;
 	Function *func = konoha::object_cast<Function *>(sfp[0].p);
-	kArray *a = (kArray*) new_kObject(CT_(rtype), 0);
+	kcid_t cid = TY_Value;
+	/*FIXME Generics Array */
+	//ktype_t rtype = sfp[K_MTDIDX].mtdNC->pa->rtype;
+	//kcid_t cid = CT_(rtype)->p1;
+	kArray *a = new_(Array, 0);
 	for (Function::arg_iterator I = func->arg_begin(), E = func->arg_end();
 			I != E; ++I) {
 		Value *v = I;
-		kObject *o = new_kObject(CT_(cid)/*"Value"*/, WRAP(v));
+		kObject *o = new_CppObject(_ctx, CT_(cid)/*"Value"*/, WRAP(v));
 		kArray_add(a, o);
 	}
 	RETURN_(a);
@@ -2570,7 +2594,7 @@ KMETHOD DynamicLibrary_searchForAddressOfSymbol(CTX _UNUSED_, ksfp_t *sfp _RIX)
 #else
 	symAddr = sys::DynamicLibrary::SearchForAddressOfSymbol(fname);
 #endif
-	if (!symAddr) {
+	if (symAddr) {
 		ret = reinterpret_cast<kint_t>(symAddr);
 	}
 	RETURNi_(ret);
@@ -3565,6 +3589,21 @@ KMETHOD Instruction_setMetadata(CTX _UNUSED_, ksfp_t *sfp _RIX)
 	RETURNvoid_();
 }
 
+//FIXME TODO stupid down cast
+KMETHOD Object_toValue(CTX, ksfp_t *sfp _RIX)
+{
+	(void)_ctx;
+	RETURN_(sfp[0].o);
+}
+
+//FIXME TODO stupid down cast
+KMETHOD Object_toType(CTX, ksfp_t *sfp _RIX)
+{
+	(void)_ctx;
+	RETURN_(sfp[0].o);
+}
+
+
 static KDEFINE_INT_CONST IntIntrinsic[] = {
 	{"Pow"  , TY_Int, (int) Intrinsic::pow},
 	{"Sqrt" , TY_Int, (int) Intrinsic::sqrt},
@@ -3667,15 +3706,56 @@ static KDEFINE_INT_CONST IntAttributes[] = {
 //	kapi->loadClassIntConst(_ctx, cid, IntAttributes);
 //}
 
+static void kmodllvm_setup(CTX, struct kmodshare_t *def, int newctx)
+{
+	(void)_ctx;(void)def;(void)newctx;
+}
+
+static void kmodllvm_reftrace(CTX, struct kmodshare_t *baseh)
+{
+	(void)_ctx;(void)baseh;
+}
+
+static void kmodllvm_free(CTX, struct kmodshare_t *baseh)
+{
+	KNH_FREE(baseh, sizeof(kmodllvm_t));
+}
+
 #define _Public   kMethod_Public
 #define _Static   kMethod_Static
 #define _Const    kMethod_Const
 #define _Coercion kMethod_Coercion
+#define _Im       kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
 static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **args, kline_t pline)
 {
 	(void)argc;(void)args;
+	kmodllvm_t *base = (kmodllvm_t*)KNH_ZMALLOC(sizeof(kmodllvm_t));
+	base->h.name     = "llvm";
+	base->h.setup    = kmodllvm_setup;
+	base->h.reftrace = kmodllvm_reftrace;
+	base->h.free     = kmodllvm_free;
+	ksetModule(MOD_llvm, &base->h, pline);
+
+	static KDEFINE_CLASS ValueDef = {
+		"Value"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, sizeof(kRawPtr)/*cstruct_size*/,
+		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		0/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	base->cValue = kaddClassDef(NULL, &ValueDef, pline);
+
 	static const char *TypeDefName[] = {
 		"Type",
 		"IntegerType",
@@ -3687,7 +3767,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 	kclass_t *CT_TypeTBL[6];
 	kclass_t *CT_BasicBlock, *CT_IRBuilder;
 #define TY_BasicBlock  (CT_BasicBlock)->cid
-#define TY_IRBuilder   (CT_BasicBlock)->cid
+#define TY_IRBuilder   (CT_IRBuilder)->cid
 #define TY_Type         (CT_TypeTBL[0])->cid
 #define TY_IntegerType  (CT_TypeTBL[1])->cid
 #define TY_PointerType  (CT_TypeTBL[2])->cid
@@ -3852,23 +3932,6 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 #define TY_DynamicLibrary      (CT_InstTBL[18])->cid
 #define TY_Intrinsic           (CT_InstTBL[19])->cid
 
-	static KDEFINE_CLASS ValueDef = {
-		"Value"/*structname*/,
-		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
-		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
-		0/*init*/,
-		0/*reftrace*/,
-		0/*free*/,
-		0/*fnull*/,
-		0/*p*/, 0/*unbox*/,
-		0/*compareTo*/,
-		0/*getkey*/,
-		0/*hashCode*/,
-		0/*initdef*/
-	};
-	kclass_t *CT_Value = Konoha_addClassDef(NULL, &ValueDef, pline);
 	kclass_t *CT_PassTBL[4];
 	{
 		static const char *PassDefName[] = {
@@ -3894,7 +3957,6 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 
 #define TY_PassManager         (CT_PassManager)->cid
 #define TY_FunctionPassManager (CT_FunctionPassManager)->cid
-#define TY_Value               (CT_Value)->cid
 	/* TODO */
 #define TY_Array_Value    (TY_Array)
 #define TY_Array_Type     (TY_Array)
@@ -4072,9 +4134,9 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public, _F(Module_getOrInsertFunction), TY_Function, TY_Module, MN_("getOrInsertFunction"), 2, TY_String, FN_("name"),TY_FunctionType, FN_("fnTy"),
 		_Public, _F(Module_createExecutionEngine), TY_ExecutionEngine, TY_Module, MN_("createExecutionEngine"), 1, TY_Int, FN_("optLevel"),
 		_Public|_Static, _F(BasicBlock_create), TY_BasicBlock, TY_BasicBlock, MN_("create"), 2, TY_Function, FN_("parent"),TY_String, FN_("name"),
-		_Public|_Static, _F(FunctionType_get), TY_Type, TY_FunctionType, MN_("getType"), 3, TY_Type, FN_("retTy"),TY_Array_Type, FN_("args"),TY_Boolean, FN_("b"),
-		_Public|_Static, _F(ArrayType_get),    TY_Type, TY_ArrayType, MN_("getType"), 2, TY_Type, FN_("t"),TY_Int, FN_("elemSize"),
-		_Public|_Static, _F(StructType_get),   TY_Type, TY_StructType, MN_("getType"), 2, TY_Array_Type, FN_("args"),TY_Boolean, FN_("isPacked"),
+		_Public|_Static, _F(FunctionType_get), TY_FunctionType, TY_FunctionType, MN_("get"), 3, TY_Type, FN_("retTy"),TY_Array_Type, FN_("args"),TY_Boolean, FN_("b"),
+		_Public|_Static, _F(ArrayType_get),    TY_Type, TY_ArrayType, MN_("get"), 2, TY_Type, FN_("t"),TY_Int, FN_("elemSize"),
+		_Public|_Static, _F(StructType_get),   TY_Type, TY_StructType, MN_("get"), 2, TY_Array_Type, FN_("args"),TY_Boolean, FN_("isPacked"),
 		_Public|_Static, _F(StructType_create), TY_Type, TY_StructType, MN_("create"), 3, TY_Array_Type, FN_("args"),TY_String, FN_("name"),TY_Boolean, FN_("isPacked"),
 		_Public, _F(StructType_setBody), TY_void, TY_StructType, MN_("setBody"), 2, TY_Array_Type, FN_("args"),TY_Boolean, FN_("isPacked"),
 		_Public, _F(StructType_isOpaque), TY_Boolean, TY_StructType, MN_("isOpaque"), 0,
@@ -4108,7 +4170,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(ConstantPointerNull_get), TY_Constant, TY_ConstantPointerNull, MN_("getValue"), 1, TY_Type, FN_("type"),
 		_Public|_Static, _F(ConstantStruct_get),      TY_Constant, TY_ConstantStruct, MN_("getValue"), 2, TY_Type, FN_("type"),TY_Array_Constant, FN_("v"),
 		_Public|_Static, _F(DynamicLibrary_loadLibraryPermanently),   TY_Boolean, TY_DynamicLibrary, MN_("loadLibraryPermanently"), 1, TY_String, FN_("libname"),
-		_Public|_Static, _F(DynamicLibrary_searchForAddressOfSymbol), TY_Boolean, TY_DynamicLibrary, MN_("searchForAddressOfSymbol"), 1, TY_String, FN_("fname"),
+		_Public|_Static, _F(DynamicLibrary_searchForAddressOfSymbol), TY_Int, TY_DynamicLibrary, MN_("searchForAddressOfSymbol"), 1, TY_String, FN_("fname"),
 		_Public|_Static, _F(LLVM_createDomPrinterPass),     TY_Pass, TY_LLVM, MN_("createDomPrinterPass"), 0,
 		_Public|_Static, _F(LLVM_createDomOnlyPrinterPass), TY_Pass, TY_LLVM, MN_("createDomOnlyPrinterPass"), 0,
 		_Public|_Static, _F(LLVM_createDomViewerPass),      TY_Pass, TY_LLVM, MN_("createDomViewerPass"), 0,
@@ -4211,6 +4273,10 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(Intrinsic_getType), TY_Type, TY_Intrinsic, MN_("getType"), 2, TY_Int, FN_("id"),TY_Array_Type, FN_("args"),
 		_Public|_Static, _F(Intrinsic_getDeclaration), TY_Function, TY_Intrinsic, MN_("getDeclaration"), 3, TY_Module, FN_("m"),TY_Int, FN_("id"),TY_Array_Type, FN_("args"),
 		_Public|_Static, _F(LLVM_parseBitcodeFile), TY_Value, TY_LLVM, MN_("parseBitcodeFile"), 1, TY_String, FN_("bcfile"),
+		//FIXME
+		//_Public|_Const|_Im|_Coercion, _F(Float_toInt), TY_Int, TY_Float, MN_to(TY_Int), 0,
+		_Public|_Const|_Coercion|_Im, _F(Object_toValue), TY_Value, TY_Object, MN_to(TY_Value), 0,
+		_Public|_Const|_Coercion|_Im, _F(Object_toType),  TY_Type,  TY_Object, MN_to(TY_Type), 0,
 		DEND,
 	};
 	Konoha_loadMethodData(NULL, methoddata);

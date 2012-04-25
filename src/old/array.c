@@ -67,7 +67,7 @@ void kArray_grow(CTX, kArray *a, size_t newsize, size_t reqsize)
 	if(newsize < reqsize) newsize = reqsize;
 	if(newsize == 0) return;
 	if(capacity == 0) {
-		size_t wsize = (kArray_iS_UNboxData(a)) ? sizeof(kunbox_t) : sizeof(Object*);
+		size_t wsize = (kArray_is_UNboxData(a)) ? sizeof(kunbox_t) : sizeof(Object*);
 		a->dim = new_dim(_ctx, newsize, wsize);
 		DBG_ASSERT(a->list == NULL);
 	}
@@ -90,7 +90,7 @@ KNHAPI2(void) kArray_add_(CTX, kArray *a, kObject *value)
 KNHAPI2(void) kArray_remove_(CTX, kArray *a, size_t n)
 {
 	DBG_ASSERT(n < a->size);
-	if (kArray_iS_UNboxData(a)) {
+	if (kArray_is_UNboxData(a)) {
 		knh_memmove(a->nlist+n, a->nlist+(n+1), sizeof(kunbox_t) * (a->size - n - 1));
 	} else {
 		KNH_FINALv(_ctx, a->list[n]);
@@ -117,7 +117,7 @@ KNHAPI2(void) kArray_swap(CTX, kArray *a, size_t n, size_t m)
 
 void kArray_clear(CTX, kArray *a, size_t n)
 {
-	if(!kArray_iS_UNboxData(a)) {
+	if(!kArray_is_UNboxData(a)) {
 #ifdef K_USING_RCGC
 		size_t i;
 		for(i = n; i < a->size; i++) {

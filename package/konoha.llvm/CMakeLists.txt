@@ -5,11 +5,11 @@ project(llvm)
 set(PACKAGE_SOURCE_CODE llvm.cpp)
 set(PACKAGE_SCRIPT_CODE llvm_glue.k)
 
-set(LLVM_INTALL_DIR "" CACHE STRING "Install dir which llvm installed")
+set(LLVM_INSTALL_DIR "" CACHE STRING "Install dir which llvm installed")
 set(LLVM_CONFIG_BIN "llvm-config")
-if(LLVM_INTALL_DIR)
-set(LLVM_CONFIG_BIN "${LLVM_INTALL_DIR}/bin/${LLVM_CONFIG_BIN}")
-endif(LLVM_INTALL_DIR)
+if(LLVM_INSTALL_DIR)
+set(LLVM_CONFIG_BIN "${LLVM_INSTALL_DIR}/bin/${LLVM_CONFIG_BIN}")
+endif(LLVM_INSTALL_DIR)
 
 find_program(LLVM_CONFIG NAMES ${LLVM_CONFIG_BIN} DOC "llvm-config")
 if(LLVM_CONFIG)
@@ -22,6 +22,11 @@ execute_process(
 execute_process(
 		COMMAND ${LLVM_CONFIG} --cppflags
 		OUTPUT_VARIABLE LLVM_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+execute_process(
+		COMMAND ${LLVM_CONFIG} --includedir
+		OUTPUT_VARIABLE LLVM_INCLUDEDIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 execute_process(
@@ -45,7 +50,8 @@ execute_process(
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 
-set(CMAKE_CXX_FLAGS "${LLVM_CXXFLAGS} -Wno-variadic-macros ${CMAKE_CXX_FLAGS} -UNDEBUG")
+set(ORIG_CXX_FLAGS ${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}})
+set(PACKAGE_CXX_FLAGS "${LLVM_CXXFLAGS} -Wno-variadic-macros ${ORIG_CXX_FLAGS} -UNDEBUG")
 string(REPLACE " " ";" v ${LLVM_JIT_LIBS})
 link_directories(${LINK_DIRECTORIES} ${LLVM_LIBDIR})
 set(ExtraLibs ${ExtraLibs} ${v})
@@ -54,7 +60,9 @@ set(K_LLVM_VERSION ${LLVM_VERSION})
 string(REPLACE "." "0" K_LLVM_VERSION ${K_LLVM_VERSION})
 string(REPLACE "svn" "" K_LLVM_VERSION ${K_LLVM_VERSION})
 add_definitions(-DLLVM_VERSION=${K_LLVM_VERSION})
+include_directories(${LLVM_INCLUDEDIR})
 
+message(STATUS "${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
 if(${LLVM_VERSION} VERSION_LESS "2.8")
 message(FATAL ERROR
         "konoha.llvm package not support old version of llvm (<=llvm-2.8)")

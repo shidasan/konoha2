@@ -135,7 +135,7 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	kString *name = sfp[4].s;
 	kObject *value = sfp[5].o;
 	struct _kclass *ct = (struct _kclass*)kclass(cid, sfp[K_RTNIDX].uline);
-	if(!CT_iS_UNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
+	if(!CT_is_UNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "all fields are defined: %s", T_cid(ct->cid));
 		kraise(0);
 	}

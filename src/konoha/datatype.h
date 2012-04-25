@@ -230,7 +230,7 @@ static void Object_initdef(CTX, struct _kclass *ct, kline_t pline)
 	if(ct->cid == TY_Object) return;
 	DBG_P("new object initialization");
 	kclass_t *supct = kclass(ct->cid, pline);
-	if(CT_iS_UNDEF(supct)) {
+	if(CT_is_UNDEF(supct)) {
 		kreportf(CRIT_, pline, "%s's fields are not all set", T_cid(ct->cid));
 	}
 	size_t fsize = supct->fsize + ct->fsize;
@@ -453,7 +453,7 @@ static void Array_init(CTX, kObject *o, void *conf)
 static void Array_reftrace(CTX, kObject *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_iS_UNboxData(a)) {
+	if(!kArray_is_UNboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(kArray_size(a));
 		for(i = 0; i < kArray_size(a); i++) {
@@ -514,7 +514,7 @@ static void Array_insert(CTX, kArray *o, size_t n, kObject *v)
 //KNHAPI2(void) kArray_remove_(CTX, kArray *a, size_t n)
 //{
 //	DBG_ASSERT(n < a->size);
-//	if (kArray_iS_UNboxData(a)) {
+//	if (kArray_is_UNboxData(a)) {
 //		knh_memmove(a->nlist+n, a->nlist+(n+1), sizeof(kunbox_t) * (a->size - n - 1));
 //	} else {
 //		KNH_FINALv(_ctx, a->list[n]);
@@ -705,6 +705,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	KINITv(share->constTrue, new_(Boolean, 1));
 	KINITv(share->constFalse, new_(Boolean, 0));
 	KINITv(share->nullParam,  new_(Param, NULL));
+	KINITv(share->defParam,   new_kParam(CLASS_Object, 0, NULL));
 	KINITv(share->emptyString, new_(String, NULL));
 	KINITv(share->emptyArray, new_(Array, 0));
 	FILEID_("(konoha.c)");
@@ -752,6 +753,7 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	KREFTRACEv(share->emptyString);
 	KREFTRACEv(share->emptyArray);
 	KREFTRACEv(share->nullParam);
+	KREFTRACEv(share->defParam);
 
 	KREFTRACEv(share->fileidList);
 	KREFTRACEv(share->packList);

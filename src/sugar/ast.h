@@ -289,7 +289,8 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 				kToken_p(tk, ERR_, "'%s' must be syntax %s", kToken_s(tk), T_kw(rule->kw));
 				return -1;
 			}
-			optional = 0;
+			////XXX Why???
+			//optional = 0;
 			ti = next;
 			continue;
 		}
@@ -317,7 +318,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		}
 		WARN_Ignored(_ctx, tls, ti, e);
 	}
-	return e;
+	return ti;
 }
 
 

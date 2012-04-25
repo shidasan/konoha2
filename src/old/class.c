@@ -2001,7 +2001,7 @@ static ITRNEXT Array_nextN(CTX, ksfp_t *sfp _RIX)
 kIterator* new_ArrayIterator(CTX, kArray *a)
 {
 	kcid_t cid = O_p1(a);
-	knh_Fitrnext fnext = kArray_iS_UNboxData(a) ? Array_nextN : Array_nextO;
+	knh_Fitrnext fnext = kArray_is_UNboxData(a) ? Array_nextN : Array_nextO;
 	return new_IteratorG(_ctx, knh_class_P1(_ctx, CLASS_Iterator, cid), UPCAST(a), fnext);
 }
 
@@ -2013,14 +2013,14 @@ kbool_t knh_isArrayIterator(kIterator *itr)
 static TYPEMAP Array_Iterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
-	knh_Fitrnext fnext = kArray_iS_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
+	knh_Fitrnext fnext = kArray_is_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
 	RETURN_(new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext));
 }
 
 static TYPEMAP Array_MIterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
-	knh_Fitrnext fnext = kArray_iS_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
+	knh_Fitrnext fnext = kArray_is_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
 	RETURN_(new_IteratorIterator(_ctx, tmr0->scid, new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext)));
 }
 

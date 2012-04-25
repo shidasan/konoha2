@@ -16,7 +16,7 @@ void KONOHA_reftraceObject(CTX, kObject *o);  // called from MODGC
 void KONOHA_freeObjectField(CTX, struct _kObject *o);       // callled from MODGC
 
 void MODCODE_init(CTX, kcontext_t *ctx);
-void MODCODE_genCode(CTX, kMethod *mtd, const struct _kBlock *bk);
+//void MODCODE_genCode(CTX, kMethod *mtd, const struct _kBlock *bk);
 
 void MODSUGAR_init(CTX, kcontext_t *ctx);
 kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);

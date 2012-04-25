@@ -1195,8 +1195,8 @@ static void Array_initcopy(CTX, kObject *o, kObject *src)
 		a->size = a_src->size;
 		a->list = (kObject**)KNH_ZMALLOC(a_src->dim->capacity * a_src->dim->wsize);
 		knh_memcpy(a->list, a_src->list, a_src->dim->capacity * a_src->dim->wsize);
-		kArray_setUnboxData(a, kArray_iS_UNboxData(a_src));
-		if(!kArray_iS_UNboxData(a)) {
+		kArray_setUnboxData(a, kArray_is_UNboxData(a_src));
+		if(!kArray_is_UNboxData(a)) {
 			size_t i;
 			for(i = 0; i < a->size; i++) {
 				knh_Object_RCinc(a->list[i]);
@@ -1213,7 +1213,7 @@ static void Array_initcopy(CTX, kObject *o, kObject *src)
 static void Array_reftrace(CTX, kObject *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_iS_UNboxData(a)) {
+	if(!kArray_is_UNboxData(a)) {
 #ifdef K_USING_FASTREFS_
 		KNH_SETREF(_ctx, a->list, a->size);
 #else
@@ -1238,7 +1238,7 @@ static int Array_compareTo(kObject *o, kObject *o2)
 		kArray *a = (kArray*)o;
 		kArray *a2 = (kArray*)o2;
 		size_t i, asize = kArray_size(a), asize2 = kArray_size(a2);
-		if(kArray_iS_UNboxData(a)) {
+		if(kArray_is_UNboxData(a)) {
 			for(i = 0; i < asize; i++) {
 				if(!(i < asize2)) return -1;
 				if(a->nlist[i] == a2->nlist[i]) continue;
@@ -1336,7 +1336,7 @@ static void Array_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi
 	packspi->pack_beginarray(_ctx, pkr, a->size);
 	size_t i = 0;
 	kcid_t p1 = O_p1(a);
-	if (kArray_iS_UNboxData(a)) {
+	if (kArray_is_UNboxData(a)) {
 		for (i = 0; i < a->size; i++) {
 			if (i != 0)
 				packspi->pack_putc(_ctx, pkr, ',');
