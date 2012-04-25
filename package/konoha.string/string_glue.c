@@ -130,22 +130,54 @@ static const char _utf8len[] = {
 
 /* ------------------------------------------------------------------------ */
 
-/* static size_t knh_bytes_mlen(kbytes_t v) */
-/* { */
-/* #ifdef K_USING_UTF8 */
-/* 	size_t size = 0; */
-/* 	const unsigned char *s = v.utext; */
-/* 	const unsigned char *e = s + v.len; */
-/* 	while (s < e) { */
-/* 		size_t ulen = utf8len(s[0]); */
-/* 		size ++; */
-/* 		s += ulen; */
-/* 	} */
-/* 	return size; */
-/* #else */
-/* 	return v.len; */
-/* #endif */
-/* } */
+static size_t knh_mlen(CTX, unsigned char *s_text, size_t s_size)
+{
+#ifdef K_USING_UTF8
+	size_t size = 0;
+	const unsigned char *start = s_text;
+	const unsigned char *end = start + s_size;
+	while (start < end) {
+		size_t ulen = utf8len(start[0]);
+		size++;
+		start += ulen;
+	}
+	return size;
+#else
+	return s_size;
+#endif
+}
+
+static kString *knh_mofflen(CTX, kString *s, size_t moff, size_t mlen)
+{
+#ifdef K_USING_UTF8
+	if (0 <= (int)moff) {
+		const unsigned char *start = (unsigned char *)S_text(s);
+		const unsigned char *itr = start;
+		size_t i;
+		for(i = 0; i < moff; i++) {
+			itr += utf8len(itr[0]);
+		}
+		start = itr;
+		for(i = 0; i < mlen; i++) {
+			itr += utf8len(itr[0]);
+		}
+		size_t len = itr - start;
+		if (mlen == 1) {
+			s = new_kString((const char *)start, len, SPOL_POOL|_CHARSIZE(len));
+		}
+		else {
+			s = new_kString((const char *)start, len, _SUB(s));
+		}
+	}
+	else {
+		s = new_kString("", 0, 0);
+	}
+	return s;
+#else
+	KTODO(you must set K_USING_UTF8);
+//	return knh_bytes_subbytes(m, moff, mlen); /* if K_ENCODING is not set */
+#endif
+}
 
 /* static kbytes_t knh_bytes_mofflen(kbytes_t v, size_t moff, size_t mlen) */
 /* { */
@@ -170,12 +202,15 @@ static const char _utf8len[] = {
 
 /* ------------------------------------------------------------------------ */
 //## @Const method String String.concat(String rhs);
-//## @Const method String String.opADD(String rhs);
 
-static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
+static KMETHOD String_concat(CTX, ksfp_t *sfp _RIX)
 {
-	//kString *lhs = sfp[0].s, *rhs = sfp[1].s;
-	//RETURN_(StringBase_concat(_ctx, lhs, rhs));
+	kString *lhs = sfp[0].s, *rhs = sfp[1].s;
+	int spol = (S_isASCII(lhs) && S_isASCII(rhs)) ? SPOL_ASCII : SPOL_UTF8;
+	kString *s = new_kString(NULL, S_size(lhs)+S_size(rhs), spol|SPOL_NOCOPY);
+	memcpy(s->buf, S_text(lhs), S_size(lhs));
+	memcpy(s->buf+S_size(lhs), S_text(rhs), S_size(rhs));
+	RETURN_(s);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -234,7 +269,9 @@ static KMETHOD String_opEQ(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD String_getSize(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(S_size(sfp[0].s));
+	kString *s = sfp[0].s;
+	size_t size = (S_isASCII(s) ? S_size(s) : knh_mlen(_ctx, (unsigned char *)S_text(s), S_size(s)));
+	RETURNi_(size);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -270,11 +307,15 @@ static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
 {
 	if (IS_NULL(sfp[1].o)) RETURNi_(-1);
 	long loc = -1;
-	const char *base = S_text(sfp[0].s);
+	kString *s = sfp[0].s;
+	const char *base = S_text(s);
 	const char *arg = S_text(sfp[1].s);
 	char *p = strstr(base, arg);
 	if (p != NULL) {
 		loc = p - base;
+		if (!S_isASCII(s)) {
+			loc = knh_mlen(_ctx, (unsigned char *)base, (size_t)loc);
+		}
 	}
 	RETURNi_(loc);
 }
@@ -284,18 +325,22 @@ static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD String_lastIndexOf(CTX, ksfp_t *sfp _RIX)
 {
-	kString *base = (kString *)sfp[0].s;
 	if (IS_NULL(sfp[1].o)) RETURNi_(-1);
+	kString *base = (kString *)sfp[0].s;
 	kString *delim = (kString *)sfp[1].s;
-	kindex_t loc = S_size(base) - S_size(delim);
-	int len = S_size(delim);
 	const char *c_base = S_text(base);
 	const char *c_delim = S_text(delim);
+	kindex_t loc = S_size(base) - S_size(delim);
+	int len = S_size(delim);
 	if(S_size(delim) == 0) loc--;
 	for(; loc >= 0; loc--) {
 		if(c_base[loc] == c_delim[0]) {
 			if(strncmp(c_base + loc, c_delim, len) == 0) break;
 		}
+	}
+	if (loc >= 0 &&
+		!S_isASCII(base)) {
+		loc = knh_mlen(_ctx, (unsigned char *)c_base, (size_t)loc);
 	}
 	RETURNi_(loc);
 }
@@ -341,8 +386,15 @@ static KMETHOD String_opHAS(CTX, ksfp_t *sfp _RIX)
 static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s = (kString *)sfp[0].s;
-	size_t n = knh_array_index(_ctx, sfp, sfp[1].ivalue, S_size(sfp[0].s));
-	s = new_kString(S_text(s) + n, 1, SPOL_POOL|SPOL_ASCII);
+	if (S_isASCII(s)) {
+		size_t n = knh_array_index(_ctx, sfp, sfp[1].ivalue, S_size(s));
+		s = new_kString(S_text(s) + n, 1, SPOL_POOL|SPOL_ASCII);
+	}
+	else {
+		size_t mlen = knh_mlen(_ctx, (unsigned char *)S_text(s), S_size(s));
+		size_t moff = knh_array_index(_ctx, sfp, sfp[1].ivalue, mlen);
+		s = knh_mofflen(_ctx, s, moff, 1);
+	}
 	RETURN_(s);
 }
 
@@ -353,20 +405,32 @@ static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 {
 	kString *base = (kString *)sfp[0].s;
 	size_t length = (size_t)sfp[2].ivalue;
-	size_t offset = knh_array_index(_ctx, sfp, sfp[1].ivalue, S_size(base));
 	kString *ret = NULL;
-	if (S_size(base) < offset) {
-		ret = new_kString("", 0, 0);
+	if (S_isASCII(base)) {
+		size_t offset = knh_array_index(_ctx, sfp, sfp[1].ivalue, S_size(base));
+		if (S_size(base) < offset) {
+			ret = new_kString("", 0, 0);
+		}
+		else {
+			const char *new_text = S_text(base) + offset;
+			size_t new_size = S_size(base) - offset;
+			if (length != 0 &&
+				length < new_size) {
+					new_size = length;
+			}
+			ret = new_kString(new_text, new_size, _SUBCHAR(base));
+		}
 	}
 	else {
-		const char *new_text = S_text(base) + offset;
-		size_t new_size = S_size(base) - offset;
-		if (length != 0) {
-			if (length < new_size) {
-				new_size = length;
-			}
+		size_t mlen = knh_mlen(_ctx, (unsigned char *)S_text(base), S_size(base));
+		size_t moff = knh_array_index(_ctx, sfp, sfp[1].ivalue, mlen);
+		if (mlen < moff) {
+			ret = new_kString("", 0, 0);
 		}
-		ret = new_kString(new_text, new_size, _SUBCHAR(base));
+		else {
+			length = (int)length <= 0 ? (mlen - moff) : length;
+			ret = knh_mofflen(_ctx, base, moff, length);
+		}
 	}
 	RETURN_(ret);
 }
@@ -469,9 +533,12 @@ static KMETHOD String_toLower(CTX, ksfp_t *sfp _RIX)
 
 // --------------------------------------------------------------------------
 
+//#include "methods.h"
+
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Coercion kMethod_Coercion
+#define _Immutable kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
 static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
@@ -479,8 +546,8 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
 	intptr_t MethodData[] = {
-		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
-		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("concat"), 1, TY_String, FN_x,
+//		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
+		_Public|_Const, _F(String_concat),      TY_String,  TY_String, MN_("concat"), 1, TY_String, FN_x,
 //		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_x,
 //		_Public|_Const, _F(String_opUNTIL),     TY_String,  TY_String, MN_("opUNTIL"), 2, TY_Int, FN_x, TY_Int, FN_y,
 //		_Public|_Const, _F(String_opTO),        TY_String,  TY_String, MN_("opTO"),  2, TY_Int, FN_x, TY_Int, FN_y,
