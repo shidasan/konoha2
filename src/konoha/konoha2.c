@@ -203,6 +203,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 	if(IS_ROOTCTX(newctx)) {
 		MODCODE_init(_ctx, newctx);
 		MODSUGAR_init(_ctx, newctx);
+		MODLOGGER_init(_ctx, newctx);
 		kshare_init_methods(_ctx);
 		MODSUGAR_defMethods(_ctx);
 #ifdef WITH_ECLIPSE

@@ -78,7 +78,6 @@ static int test_kwb(CTX)
 
 static int test_logger(CTX)
 {
-	MODLOGGER_init(_ctx, _ctx);
 	int v2 = 3;
 	int v3 = -3;
 	int i;

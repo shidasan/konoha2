@@ -22,6 +22,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx);
 kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);
 kstatus_t MODSUGAR_eval(CTX, const char *script, kline_t uline);
 
+void MODLOGGER_init(CTX, kcontext_t *ctx);
 void MODSUGAR_defMethods(CTX);
 
 

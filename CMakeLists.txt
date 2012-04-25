@@ -75,6 +75,10 @@ set(GC
 	src/gc/gc.c
 )
 
+set(LOGGER
+	src/logger/logger.c
+)
+
 set(PARSER
 	src/sugar/sugar.c
 )
@@ -168,7 +172,7 @@ if(USE_CTEST)
 	endforeach(f ${test_files})
 endif(USE_CTEST)
 
-add_library(konoha2 SHARED ${RUNTIME} ${GC} ${PARSER} ${VM})
+add_library(konoha2 SHARED ${RUNTIME} ${GC} ${LOGGER} ${PARSER} ${VM})
 target_link_libraries(konoha2 ${ExtraLibs})
 set(ExtraLibs ${ExtraLibs} konoha2)
 
