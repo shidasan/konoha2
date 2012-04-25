@@ -1,14 +1,12 @@
-#define BEGIN_EXTERN_C \
-	extern "C" {
-
-#define END_EXTERN_C \
-	}
-
 #include <konoha2/konoha2.h>
 #include <konoha2/sugar.h>
 #include <unistd.h>
 #include <mpi.h>
 #define Int_to(T, a)               ((T)a.ivalue)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Abort(MPI_Comm comm, int errorcode);
@@ -1048,18 +1046,6 @@ static KMETHOD k_MPI_File_iwrite_at(CTX, ksfp_t *sfp _RIX)
 	MPI_Request* p5 = (MPI_Request*)sfp[5].p;
 	RETURNi_(MPI_File_iwrite_at(p0, p1, p2, p3, p4, p5));
 }
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_File_(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-//static KMETHOD k_MPI_File_(CTX, ksfp_t *sfp _RIX)
-//{
-//	MPI_File p0 = (MPI_File)sfp[0].p;
-//	void* p1 = (void*)sfp[1].p;
-//	int p2 = sfp[2].ivalue;
-//	MPI_Datatype p3 = sfp[3].ivalue;
-//	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-//	RETURNi_(MPI_File_(p0, p1, p2, p3, p4));
-//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
@@ -2295,22 +2281,22 @@ static KMETHOD k_MPI_Send_init(CTX, ksfp_t *sfp _RIX)
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int dest, int sendtag, void *recvbuf, int recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
-static KMETHOD k_MPI_Sendrecv(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	void* p5 = (void*)sfp[5].p;
-	int p6 = sfp[6].ivalue;
-	MPI_Datatype p7 = sfp[7].ivalue;
-	int p8 = sfp[8].ivalue;
-	int p9 = sfp[9].ivalue;
-	MPI_Comm p10 = sfp[10].ivalue;
-	MPI_Status* p11 = (MPI_Status*)sfp[11].p;
-	RETURNi_(MPI_Sendrecv(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
-}
+//static KMETHOD k_MPI_Sendrecv(CTX, ksfp_t *sfp _RIX)
+//{
+//	void* p0 = (void*)sfp[0].p;
+//	int p1 = sfp[1].ivalue;
+//	MPI_Datatype p2 = sfp[2].ivalue;
+//	int p3 = sfp[3].ivalue;
+//	int p4 = sfp[4].ivalue;
+//	void* p5 = (void*)sfp[5].p;
+//	int p6 = sfp[6].ivalue;
+//	MPI_Datatype p7 = sfp[7].ivalue;
+//	int p8 = sfp[8].ivalue;
+//	int p9 = sfp[9].ivalue;
+//	MPI_Comm p10 = sfp[10].ivalue;
+//	MPI_Status* p11 = (MPI_Status*)sfp[11].p;
+//	RETURNi_(MPI_Sendrecv(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
+//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype, int dest, int sendtag, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
@@ -2371,24 +2357,6 @@ static KMETHOD k_MPI_Startall(CTX, ksfp_t *sfp _RIX)
 	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
 	RETURNi_(MPI_Startall(p0, p1));
 }
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status);
-//static KMETHOD k_MPI_Status_f2c(CTX, ksfp_t *sfp _RIX)
-//{
-//	MPI_Fint* p0 = (MPI_Fint*)sfp[0].p;
-//	MPI_Status* p1 = (MPI_Status*)sfp[1].p;
-//	RETURNi_(MPI_Status_f2c(p0, p1));
-//}
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_Status_c2f(MPI_Status *c_status, MPI_Fint *f_status);
-//static KMETHOD k_MPI_Status_c2f(CTX, ksfp_t *sfp _RIX)
-//{
-//	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-//	MPI_Fint* p1 = (MPI_Fint*)sfp[1].p;
-//	RETURNi_(MPI_Status_c2f(p0, p1));
-//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Status_set_cancelled(MPI_Status *status, int flag);
@@ -2506,35 +2474,6 @@ static KMETHOD k_MPI_Type_create_darray(CTX, ksfp_t *sfp _RIX)
 	MPI_Datatype* p9 = (MPI_Datatype*)sfp[9].p;
 	RETURNi_(MPI_Type_create_darray(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9));
 }
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype);
-//static KMETHOD k_MPI_Type_create_f90_complex(CTX, ksfp_t *sfp _RIX)
-//{
-//	int p0 = sfp[0].ivalue;
-//	int p1 = sfp[1].ivalue;
-//	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-//	RETURNi_(MPI_Type_create_f90_complex(p0, p1, p2));
-//}
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype);
-//static KMETHOD k_MPI_Type_create_f90_integer(CTX, ksfp_t *sfp _RIX)
-//{
-//	int p0 = sfp[0].ivalue;
-//	MPI_Datatype* p1 = (MPI_Datatype*)sfp[1].p;
-//	RETURNi_(MPI_Type_create_f90_integer(p0, p1));
-//}
-
-///* ------------------------------------------------------------------------ */
-////## method int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype);
-//static KMETHOD k_MPI_Type_create_f90_real(CTX, ksfp_t *sfp _RIX)
-//{
-//	int p0 = sfp[0].ivalue;
-//	int p1 = sfp[1].ivalue;
-//	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-//	RETURNi_(MPI_Type_create_f90_real(p0, p1, p2));
-//}
 
 /* ------------------------------------------------------------------------ */
 //## method int MPI_Type_create_hindexed(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
@@ -3123,8 +3062,6 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 	} else {
 		DBG_P("process is not initialized for MPI: MPI functions are NOT available");
 	}
-	//knh_MPI_initArrayFuncData(_ctx);
-	//knh_MPI_initArrayPrintFunc(_ctx);
 
 	static KDEFINE_CLASS MPIDef = {
 		"MPI"/*structname*/,
@@ -3146,300 +3083,294 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 #define TY_MPI    (CT_MPI->cid)
 
 	intptr_t MethodData[] = {
-		_Public|_Static, _F(k_MPI_Abort), TY_Int, TY_MPI, MN_("MPI_Abort"), 2, TY_Int, MN_("comm"), TY_Int, MN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Accumulate), TY_Int, TY_MPI, MN_("MPI_Accumulate"), 9, TY_Array, MN_("origin_addr"), TY_Int, MN_("origin_count"), TY_Int, MN_("origin_datatype"), TY_Int, MN_("target_rank"), TY_Int, MN_("target_disp"), TY_Int, MN_("target_count"), TY_Int, MN_("target_datatype"), TY_Int, MN_("op"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Add_error_class), TY_Int, TY_MPI, MN_("MPI_Add_error_class"), 1, TY_Array, MN_("errorclass"), 
-		_Public|_Static, _F(k_MPI_Add_error_code), TY_Int, TY_MPI, MN_("MPI_Add_error_code"), 2, TY_Int, MN_("errorclass"), TY_Array, MN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Add_error_string), TY_Int, TY_MPI, MN_("MPI_Add_error_string"), 2, TY_Int, MN_("errorcode"), TY_Array, MN_("string"), 
-		_Public|_Static, _F(k_MPI_Address), TY_Int, TY_MPI, MN_("MPI_Address"), 2, TY_Array, MN_("location"), TY_Array, MN_("address"), 
-		_Public|_Static, _F(k_MPI_Allgather), TY_Int, TY_MPI, MN_("MPI_Allgather"), 7, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Allgatherv), TY_Int, TY_MPI, MN_("MPI_Allgatherv"), 8, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Array, MN_("recvcount"), TY_Array, MN_("displs"), TY_Int, MN_("recvtype"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alloc_mem), TY_Int, TY_MPI, MN_("MPI_Alloc_mem"), 3, TY_Int, MN_("size"), TY_Int, MN_("info"), TY_Array, MN_("baseptr"), 
-		_Public|_Static, _F(k_MPI_Allreduce), TY_Int, TY_MPI, MN_("MPI_Allreduce"), 6, TY_Array, MN_("sendbuf"), TY_Array, MN_("recvbuf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoall), TY_Int, TY_MPI, MN_("MPI_Alltoall"), 7, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoallv), TY_Int, TY_MPI, MN_("MPI_Alltoallv"), 9, TY_Array, MN_("sendbuf"), TY_Array, MN_("sendcounts"), TY_Array, MN_("sdispls"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Array, MN_("recvcounts"), TY_Array, MN_("rdispls"), TY_Int, MN_("recvtype"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoallw), TY_Int, TY_MPI, MN_("MPI_Alltoallw"), 9, TY_Array, MN_("sendbuf"), TY_Array, MN_("sendcounts"), TY_Array, MN_("sdispls"), TY_Array, MN_("sendtypes"), TY_Array, MN_("recvbuf"), TY_Array, MN_("recvcounts"), TY_Array, MN_("rdispls"), TY_Array, MN_("recvtypes"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Attr_delete), TY_Int, TY_MPI, MN_("MPI_Attr_delete"), 2, TY_Int, MN_("comm"), TY_Int, MN_("keyval"), 
-		_Public|_Static, _F(k_MPI_Attr_put), TY_Int, TY_MPI, MN_("MPI_Attr_put"), 3, TY_Int, MN_("comm"), TY_Int, MN_("keyval"), TY_Array, MN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Barrier), TY_Int, TY_MPI, MN_("MPI_Barrier"), 1, TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bcast), TY_Int, TY_MPI, MN_("MPI_Bcast"), 5, TY_Array, MN_("buffer"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bsend), TY_Int, TY_MPI, MN_("MPI_Bsend"), 6, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bsend_init), TY_Int, TY_MPI, MN_("MPI_Bsend_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Buffer_attach), TY_Int, TY_MPI, MN_("MPI_Buffer_attach"), 2, TY_Array, MN_("buf"), TY_Int, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Buffer_detach), TY_Int, TY_MPI, MN_("MPI_Buffer_detach"), 2, TY_Array, MN_("buf"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Cancel), TY_Int, TY_MPI, MN_("MPI_Cancel"), 1, TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Cart_coords), TY_Int, TY_MPI, MN_("MPI_Cart_coords"), 4, TY_Int, MN_("comm"), TY_Int, MN_("rank"), TY_Int, MN_("maxdims"), TY_Array, MN_("coords"), 
-		_Public|_Static, _F(k_MPI_Cart_create), TY_Int, TY_MPI, MN_("MPI_Cart_create"), 6, TY_Int, MN_("comm_old"), TY_Int, MN_("ndims"), TY_Array, MN_("dims"), TY_Array, MN_("periods"), TY_Int, MN_("reorder"), TY_Array, MN_("comm_cart"), 
-		_Public|_Static, _F(k_MPI_Cart_get), TY_Int, TY_MPI, MN_("MPI_Cart_get"), 5, TY_Int, MN_("comm"), TY_Int, MN_("maxdims"), TY_Array, MN_("dims"), TY_Array, MN_("periods"), TY_Array, MN_("coords"), 
-		_Public|_Static, _F(k_MPI_Cart_map), TY_Int, TY_MPI, MN_("MPI_Cart_map"), 5, TY_Int, MN_("comm"), TY_Int, MN_("ndims"), TY_Array, MN_("dims"), TY_Array, MN_("periods"), TY_Array, MN_("newrank"), 
-		_Public|_Static, _F(k_MPI_Cart_rank), TY_Int, TY_MPI, MN_("MPI_Cart_rank"), 3, TY_Int, MN_("comm"), TY_Array, MN_("coords"), TY_Array, MN_("rank"), 
-		_Public|_Static, _F(k_MPI_Cart_shift), TY_Int, TY_MPI, MN_("MPI_Cart_shift"), 5, TY_Int, MN_("comm"), TY_Int, MN_("direction"), TY_Int, MN_("disp"), TY_Array, MN_("rank_source"), TY_Array, MN_("rank_dest"), 
-		_Public|_Static, _F(k_MPI_Cart_sub), TY_Int, TY_MPI, MN_("MPI_Cart_sub"), 3, TY_Int, MN_("comm"), TY_Array, MN_("remain_dims"), TY_Array, MN_("comm_new"), 
-		_Public|_Static, _F(k_MPI_Cartdim_get), TY_Int, TY_MPI, MN_("MPI_Cartdim_get"), 2, TY_Int, MN_("comm"), TY_Array, MN_("ndims"), 
-		_Public|_Static, _F(k_MPI_Close_port), TY_Int, TY_MPI, MN_("MPI_Close_port"), 1, TY_Array, MN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Comm_accept), TY_Int, TY_MPI, MN_("MPI_Comm_accept"), 5, TY_Array, MN_("port_name"), TY_Int, MN_("info"), TY_Int, MN_("root"), TY_Int, MN_("comm"), TY_Array, MN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_f2c), TY_Int, TY_MPI, MN_("MPI_Comm_f2c"), 1, TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_c2f), TY_Int, TY_MPI, MN_("MPI_Comm_c2f"), 1, TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_File_f2c), TY_Object, TY_MPI, MN_("MPI_File_f2c"), 1, TY_Int, MN_("file"), 
-		_Public|_Static, _F(k_MPI_File_c2f), TY_Int, TY_MPI, MN_("MPI_File_c2f"), 1, TY_Object, MN_("file"), 
-		_Public|_Static, _F(k_MPI_Group_f2c), TY_Int, TY_MPI, MN_("MPI_Group_f2c"), 1, TY_Int, MN_("group"), 
-		_Public|_Static, _F(k_MPI_Group_c2f), TY_Int, TY_MPI, MN_("MPI_Group_c2f"), 1, TY_Int, MN_("group"), 
-		_Public|_Static, _F(k_MPI_Info_f2c), TY_Int, TY_MPI, MN_("MPI_Info_f2c"), 1, TY_Int, MN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_c2f), TY_Int, TY_MPI, MN_("MPI_Info_c2f"), 1, TY_Int, MN_("info"), 
-		_Public|_Static, _F(k_MPI_Op_f2c), TY_Int, TY_MPI, MN_("MPI_Op_f2c"), 1, TY_Int, MN_("op"), 
-		_Public|_Static, _F(k_MPI_Op_c2f), TY_Int, TY_MPI, MN_("MPI_Op_c2f"), 1, TY_Int, MN_("op"), 
-		_Public|_Static, _F(k_MPI_Request_f2c), TY_Int, TY_MPI, MN_("MPI_Request_f2c"), 1, TY_Int, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Request_c2f), TY_Int, TY_MPI, MN_("MPI_Request_c2f"), 1, TY_Int, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Type_f2c), TY_Int, TY_MPI, MN_("MPI_Type_f2c"), 1, TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_c2f), TY_Int, TY_MPI, MN_("MPI_Type_c2f"), 1, TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Win_f2c), TY_Int, TY_MPI, MN_("MPI_Win_f2c"), 1, TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_c2f), TY_Int, TY_MPI, MN_("MPI_Win_c2f"), 1, TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Comm_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_call_errhandler"), 2, TY_Int, MN_("comm"), TY_Int, MN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Comm_compare), TY_Int, TY_MPI, MN_("MPI_Comm_compare"), 3, TY_Int, MN_("comm1"), TY_Int, MN_("comm2"), TY_Array, MN_("result"), 
-		_Public|_Static, _F(k_MPI_Comm_connect), TY_Int, TY_MPI, MN_("MPI_Comm_connect"), 5, TY_Array, MN_("port_name"), TY_Int, MN_("info"), TY_Int, MN_("root"), TY_Int, MN_("comm"), TY_Array, MN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_create), TY_Int, TY_MPI, MN_("MPI_Comm_create"), 3, TY_Int, MN_("comm"), TY_Int, MN_("group"), TY_Array, MN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_create_errhandler"), 2, TY_Array, MN_("function"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_create_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_create_keyval"), 4, TY_Array, MN_("comm_copy_attr_fn"), TY_Array, MN_("comm_delete_attr_fn"), TY_Array, MN_("comm_keyval"), TY_Array, MN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Comm_delete_attr), TY_Int, TY_MPI, MN_("MPI_Comm_delete_attr"), 2, TY_Int, MN_("comm"), TY_Int, MN_("comm_keyval"), 
-		_Public|_Static, _F(k_MPI_Comm_disconnect), TY_Int, TY_MPI, MN_("MPI_Comm_disconnect"), 1, TY_Array, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_dup), TY_Int, TY_MPI, MN_("MPI_Comm_dup"), 2, TY_Int, MN_("comm"), TY_Array, MN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_free), TY_Int, TY_MPI, MN_("MPI_Comm_free"), 1, TY_Array, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_free_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_free_keyval"), 1, TY_Array, MN_("comm_keyval"), 
-		_Public|_Static, _F(k_MPI_Comm_get_attr), TY_Int, TY_MPI, MN_("MPI_Comm_get_attr"), 4, TY_Int, MN_("comm"), TY_Int, MN_("comm_keyval"), TY_Array, MN_("attribute_val"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Comm_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_get_errhandler"), 2, TY_Int, MN_("comm"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_get_name), TY_Int, TY_MPI, MN_("MPI_Comm_get_name"), 3, TY_Int, MN_("comm"), TY_Array, MN_("comm_name"), TY_Array, MN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Comm_get_parent), TY_Int, TY_MPI, MN_("MPI_Comm_get_parent"), 1, TY_Array, MN_("parent"), 
-		_Public|_Static, _F(k_MPI_Comm_group), TY_Int, TY_MPI, MN_("MPI_Comm_group"), 2, TY_Int, MN_("comm"), TY_Array, MN_("group"), 
-		_Public|_Static, _F(k_MPI_Comm_join), TY_Int, TY_MPI, MN_("MPI_Comm_join"), 2, TY_Int, MN_("fd"), TY_Array, MN_("intercomm"), 
-		_Public|_Static, _F(k_MPI_Comm_rank), TY_Int, TY_MPI, MN_("MPI_Comm_rank"), 2, TY_Int, MN_("comm"), TY_Array, MN_("rank"), 
-		_Public|_Static, _F(k_MPI_Comm_remote_group), TY_Int, TY_MPI, MN_("MPI_Comm_remote_group"), 2, TY_Int, MN_("comm"), TY_Array, MN_("group"), 
-		_Public|_Static, _F(k_MPI_Comm_remote_size), TY_Int, TY_MPI, MN_("MPI_Comm_remote_size"), 2, TY_Int, MN_("comm"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Comm_set_attr), TY_Int, TY_MPI, MN_("MPI_Comm_set_attr"), 3, TY_Int, MN_("comm"), TY_Int, MN_("comm_keyval"), TY_Array, MN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Comm_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_set_errhandler"), 2, TY_Int, MN_("comm"), TY_Int, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_set_name), TY_Int, TY_MPI, MN_("MPI_Comm_set_name"), 2, TY_Int, MN_("comm"), TY_Array, MN_("comm_name"), 
-		_Public|_Static, _F(k_MPI_Comm_size), TY_Int, TY_MPI, MN_("MPI_Comm_size"), 2, TY_Int, MN_("comm"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Comm_spawn), TY_Int, TY_MPI, MN_("MPI_Comm_spawn"), 8, TY_Array, MN_("command"), TY_Array, MN_("argv"), TY_Int, MN_("maxprocs"), TY_Int, MN_("info"), TY_Int, MN_("root"), TY_Int, MN_("comm"), TY_Array, MN_("intercomm"), TY_Array, MN_("array_of_errcodes"), 
-		_Public|_Static, _F(k_MPI_Comm_spawn_multiple), TY_Int, TY_MPI, MN_("MPI_Comm_spawn_multiple"), 9, TY_Int, MN_("count"), TY_Array, MN_("array_of_commands"), TY_Array, MN_("array_of_argv"), TY_Array, MN_("array_of_maxprocs"), TY_Array, MN_("array_of_info"), TY_Int, MN_("root"), TY_Int, MN_("comm"), TY_Array, MN_("intercomm"), TY_Array, MN_("array_of_errcodes"), 
-		_Public|_Static, _F(k_MPI_Comm_split), TY_Int, TY_MPI, MN_("MPI_Comm_split"), 4, TY_Int, MN_("comm"), TY_Int, MN_("color"), TY_Int, MN_("key"), TY_Array, MN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_test_inter), TY_Int, TY_MPI, MN_("MPI_Comm_test_inter"), 2, TY_Int, MN_("comm"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Dims_create), TY_Int, TY_MPI, MN_("MPI_Dims_create"), 3, TY_Int, MN_("nnodes"), TY_Int, MN_("ndims"), TY_Array, MN_("dims"), 
-		_Public|_Static, _F(k_MPI_Errhandler_create), TY_Int, TY_MPI, MN_("MPI_Errhandler_create"), 2, TY_Array, MN_("function"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_free), TY_Int, TY_MPI, MN_("MPI_Errhandler_free"), 1, TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_get), TY_Int, TY_MPI, MN_("MPI_Errhandler_get"), 2, TY_Int, MN_("comm"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_set), TY_Int, TY_MPI, MN_("MPI_Errhandler_set"), 2, TY_Int, MN_("comm"), TY_Int, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Error_class), TY_Int, TY_MPI, MN_("MPI_Error_class"), 2, TY_Int, MN_("errorcode"), TY_Array, MN_("errorclass"), 
-		_Public|_Static, _F(k_MPI_Error_string), TY_Int, TY_MPI, MN_("MPI_Error_string"), 3, TY_Int, MN_("errorcode"), TY_Array, MN_("string"), TY_Array, MN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Exscan), TY_Int, TY_MPI, MN_("MPI_Exscan"), 6, TY_Array, MN_("sendbuf"), TY_Array, MN_("recvbuf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_File_call_errhandler), TY_Int, TY_MPI, MN_("MPI_File_call_errhandler"), 2, TY_Object, MN_("fh"), TY_Int, MN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_File_close), TY_Int, TY_MPI, MN_("MPI_File_close"), 1, TY_Array, MN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_create_errhandler), TY_Int, TY_MPI, MN_("MPI_File_create_errhandler"), 2, TY_Array, MN_("function"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_delete), TY_Int, TY_MPI, MN_("MPI_File_delete"), 2, TY_Array, MN_("filename"), TY_Int, MN_("info"), 
-		_Public|_Static, _F(k_MPI_File_get_amode), TY_Int, TY_MPI, MN_("MPI_File_get_amode"), 2, TY_Object, MN_("fh"), TY_Array, MN_("amode"), 
-		_Public|_Static, _F(k_MPI_File_get_atomicity), TY_Int, TY_MPI, MN_("MPI_File_get_atomicity"), 2, TY_Object, MN_("fh"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_File_get_byte_offset), TY_Int, TY_MPI, MN_("MPI_File_get_byte_offset"), 3, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("disp"), 
-		_Public|_Static, _F(k_MPI_File_get_errhandler), TY_Int, TY_MPI, MN_("MPI_File_get_errhandler"), 2, TY_Object, MN_("file"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_get_group), TY_Int, TY_MPI, MN_("MPI_File_get_group"), 2, TY_Object, MN_("fh"), TY_Array, MN_("group"), 
-		_Public|_Static, _F(k_MPI_File_get_info), TY_Int, TY_MPI, MN_("MPI_File_get_info"), 2, TY_Object, MN_("fh"), TY_Array, MN_("info_used"), 
-		_Public|_Static, _F(k_MPI_File_get_position), TY_Int, TY_MPI, MN_("MPI_File_get_position"), 2, TY_Object, MN_("fh"), TY_Array, MN_("offset"), 
-		_Public|_Static, _F(k_MPI_File_get_position_shared), TY_Int, TY_MPI, MN_("MPI_File_get_position_shared"), 2, TY_Object, MN_("fh"), TY_Array, MN_("offset"), 
-		_Public|_Static, _F(k_MPI_File_get_size), TY_Int, TY_MPI, MN_("MPI_File_get_size"), 2, TY_Object, MN_("fh"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_File_get_type_extent), TY_Int, TY_MPI, MN_("MPI_File_get_type_extent"), 3, TY_Object, MN_("fh"), TY_Int, MN_("datatype"), TY_Array, MN_("extent"), 
-		_Public|_Static, _F(k_MPI_File_get_view), TY_Int, TY_MPI, MN_("MPI_File_get_view"), 5, TY_Object, MN_("fh"), TY_Array, MN_("disp"), TY_Array, MN_("etype"), TY_Array, MN_("filetype"), TY_Array, MN_("datarep"), 
-		_Public|_Static, _F(k_MPI_File_iread), TY_Int, TY_MPI, MN_("MPI_File_iread"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iread_at), TY_Int, TY_MPI, MN_("MPI_File_iread_at"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iread_shared), TY_Int, TY_MPI, MN_("MPI_File_iread_shared"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iwrite), TY_Int, TY_MPI, MN_("MPI_File_iwrite"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iwrite_at), TY_Int, TY_MPI, MN_("MPI_File_iwrite_at"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		//_Public|_Static, _F(k_MPI_File_), TY_Int, TY_MPI, MN_("MPI_File_"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_File_open), TY_Int, TY_MPI, MN_("MPI_File_open"), 5, TY_Int, MN_("comm"), TY_Array, MN_("filename"), TY_Int, MN_("amode"), TY_Int, MN_("info"), TY_Array, MN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_preallocate), TY_Int, TY_MPI, MN_("MPI_File_preallocate"), 2, TY_Object, MN_("fh"), TY_Int, MN_("size"), 
-		_Public|_Static, _F(k_MPI_File_read), TY_Int, TY_MPI, MN_("MPI_File_read"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_all), TY_Int, TY_MPI, MN_("MPI_File_read_all"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_all_begin"), 4, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_all_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at), TY_Int, TY_MPI, MN_("MPI_File_read_at"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all), TY_Int, TY_MPI, MN_("MPI_File_read_at_all"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_begin"), 5, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered), TY_Int, TY_MPI, MN_("MPI_File_read_ordered"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_begin"), 4, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_shared), TY_Int, TY_MPI, MN_("MPI_File_read_shared"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_seek), TY_Int, TY_MPI, MN_("MPI_File_seek"), 3, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Int, MN_("whence"), 
-		_Public|_Static, _F(k_MPI_File_seek_shared), TY_Int, TY_MPI, MN_("MPI_File_seek_shared"), 3, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Int, MN_("whence"), 
-		_Public|_Static, _F(k_MPI_File_set_atomicity), TY_Int, TY_MPI, MN_("MPI_File_set_atomicity"), 2, TY_Object, MN_("fh"), TY_Int, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_File_set_errhandler), TY_Int, TY_MPI, MN_("MPI_File_set_errhandler"), 2, TY_Object, MN_("file"), TY_Int, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_set_info), TY_Int, TY_MPI, MN_("MPI_File_set_info"), 2, TY_Object, MN_("fh"), TY_Int, MN_("info"), 
-		_Public|_Static, _F(k_MPI_File_set_size), TY_Int, TY_MPI, MN_("MPI_File_set_size"), 2, TY_Object, MN_("fh"), TY_Int, MN_("size"), 
-		_Public|_Static, _F(k_MPI_File_set_view), TY_Int, TY_MPI, MN_("MPI_File_set_view"), 6, TY_Object, MN_("fh"), TY_Int, MN_("disp"), TY_Int, MN_("etype"), TY_Int, MN_("filetype"), TY_Array, MN_("datarep"), TY_Int, MN_("info"), 
-		_Public|_Static, _F(k_MPI_File_sync), TY_Int, TY_MPI, MN_("MPI_File_sync"), 1, TY_Object, MN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_write), TY_Int, TY_MPI, MN_("MPI_File_write"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_all), TY_Int, TY_MPI, MN_("MPI_File_write_all"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_all_begin"), 4, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_all_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at), TY_Int, TY_MPI, MN_("MPI_File_write_at"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all), TY_Int, TY_MPI, MN_("MPI_File_write_at_all"), 6, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_begin"), 5, TY_Object, MN_("fh"), TY_Int, MN_("offset"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered), TY_Int, TY_MPI, MN_("MPI_File_write_ordered"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_begin"), 4, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_end"), 3, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_shared), TY_Int, TY_MPI, MN_("MPI_File_write_shared"), 5, TY_Object, MN_("fh"), TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Array, MN_("status"), 
+		_Public|_Static, _F(k_MPI_Abort), TY_Int, TY_MPI, MN_("MPI_Abort"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errorcode"), 
+		_Public|_Static, _F(k_MPI_Accumulate), TY_Int, TY_MPI, MN_("MPI_Accumulate"), 9, TY_Array, FN_("origin_addr"), TY_Int, FN_("origin_count"), TY_Int, FN_("origin_datatype"), TY_Int, FN_("target_rank"), TY_Int, FN_("target_disp"), TY_Int, FN_("target_count"), TY_Int, FN_("target_datatype"), TY_Int, FN_("op"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Add_error_class), TY_Int, TY_MPI, MN_("MPI_Add_error_class"), 1, TY_Array, FN_("errorclass"), 
+		_Public|_Static, _F(k_MPI_Add_error_code), TY_Int, TY_MPI, MN_("MPI_Add_error_code"), 2, TY_Int, FN_("errorclass"), TY_Array, FN_("errorcode"), 
+		_Public|_Static, _F(k_MPI_Add_error_string), TY_Int, TY_MPI, MN_("MPI_Add_error_string"), 2, TY_Int, FN_("errorcode"), TY_Array, FN_("string"), 
+		_Public|_Static, _F(k_MPI_Address), TY_Int, TY_MPI, MN_("MPI_Address"), 2, TY_Array, FN_("location"), TY_Array, FN_("address"), 
+		_Public|_Static, _F(k_MPI_Allgather), TY_Int, TY_MPI, MN_("MPI_Allgather"), 7, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Allgatherv), TY_Int, TY_MPI, MN_("MPI_Allgatherv"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcount"), TY_Array, FN_("displs"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Alloc_mem), TY_Int, TY_MPI, MN_("MPI_Alloc_mem"), 3, TY_Int, FN_("size"), TY_Int, FN_("info"), TY_Array, FN_("baseptr"), 
+		_Public|_Static, _F(k_MPI_Allreduce), TY_Int, TY_MPI, MN_("MPI_Allreduce"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Alltoall), TY_Int, TY_MPI, MN_("MPI_Alltoall"), 7, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Alltoallv), TY_Int, TY_MPI, MN_("MPI_Alltoallv"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("sdispls"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("rdispls"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Alltoallw), TY_Int, TY_MPI, MN_("MPI_Alltoallw"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("sdispls"), TY_Array, FN_("sendtypes"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("rdispls"), TY_Array, FN_("recvtypes"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Attr_delete), TY_Int, TY_MPI, MN_("MPI_Attr_delete"), 2, TY_Int, FN_("comm"), TY_Int, FN_("keyval"), 
+		_Public|_Static, _F(k_MPI_Attr_put), TY_Int, TY_MPI, MN_("MPI_Attr_put"), 3, TY_Int, FN_("comm"), TY_Int, FN_("keyval"), TY_Array, FN_("attribute_val"), 
+		_Public|_Static, _F(k_MPI_Barrier), TY_Int, TY_MPI, MN_("MPI_Barrier"), 1, TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Bcast), TY_Int, TY_MPI, MN_("MPI_Bcast"), 5, TY_Array, FN_("buffer"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Bsend), TY_Int, TY_MPI, MN_("MPI_Bsend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Bsend_init), TY_Int, TY_MPI, MN_("MPI_Bsend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Buffer_attach), TY_Int, TY_MPI, MN_("MPI_Buffer_attach"), 2, TY_Array, FN_("buf"), TY_Int, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Buffer_detach), TY_Int, TY_MPI, MN_("MPI_Buffer_detach"), 2, TY_Array, FN_("buf"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Cancel), TY_Int, TY_MPI, MN_("MPI_Cancel"), 1, TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Cart_coords), TY_Int, TY_MPI, MN_("MPI_Cart_coords"), 4, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Int, FN_("maxdims"), TY_Array, FN_("coords"), 
+		_Public|_Static, _F(k_MPI_Cart_create), TY_Int, TY_MPI, MN_("MPI_Cart_create"), 6, TY_Int, FN_("comm_old"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Int, FN_("reorder"), TY_Array, FN_("comm_cart"), 
+		_Public|_Static, _F(k_MPI_Cart_get), TY_Int, TY_MPI, MN_("MPI_Cart_get"), 5, TY_Int, FN_("comm"), TY_Int, FN_("maxdims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Array, FN_("coords"), 
+		_Public|_Static, _F(k_MPI_Cart_map), TY_Int, TY_MPI, MN_("MPI_Cart_map"), 5, TY_Int, FN_("comm"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Array, FN_("newrank"), 
+		_Public|_Static, _F(k_MPI_Cart_rank), TY_Int, TY_MPI, MN_("MPI_Cart_rank"), 3, TY_Int, FN_("comm"), TY_Array, FN_("coords"), TY_Array, FN_("rank"), 
+		_Public|_Static, _F(k_MPI_Cart_shift), TY_Int, TY_MPI, MN_("MPI_Cart_shift"), 5, TY_Int, FN_("comm"), TY_Int, FN_("direction"), TY_Int, FN_("disp"), TY_Array, FN_("rank_source"), TY_Array, FN_("rank_dest"), 
+		_Public|_Static, _F(k_MPI_Cart_sub), TY_Int, TY_MPI, MN_("MPI_Cart_sub"), 3, TY_Int, FN_("comm"), TY_Array, FN_("remain_dims"), TY_Array, FN_("comm_new"), 
+		_Public|_Static, _F(k_MPI_Cartdim_get), TY_Int, TY_MPI, MN_("MPI_Cartdim_get"), 2, TY_Int, FN_("comm"), TY_Array, FN_("ndims"), 
+		_Public|_Static, _F(k_MPI_Close_port), TY_Int, TY_MPI, MN_("MPI_Close_port"), 1, TY_Array, FN_("port_name"), 
+		_Public|_Static, _F(k_MPI_Comm_accept), TY_Int, TY_MPI, MN_("MPI_Comm_accept"), 5, TY_Array, FN_("port_name"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
+		_Public|_Static, _F(k_MPI_Comm_f2c), TY_Int, TY_MPI, MN_("MPI_Comm_f2c"), 1, TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Comm_c2f), TY_Int, TY_MPI, MN_("MPI_Comm_c2f"), 1, TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_File_f2c), TY_Object, TY_MPI, MN_("MPI_File_f2c"), 1, TY_Int, FN_("file"), 
+		_Public|_Static, _F(k_MPI_File_c2f), TY_Int, TY_MPI, MN_("MPI_File_c2f"), 1, TY_Object, FN_("file"), 
+		_Public|_Static, _F(k_MPI_Group_f2c), TY_Int, TY_MPI, MN_("MPI_Group_f2c"), 1, TY_Int, FN_("group"), 
+		_Public|_Static, _F(k_MPI_Group_c2f), TY_Int, TY_MPI, MN_("MPI_Group_c2f"), 1, TY_Int, FN_("group"), 
+		_Public|_Static, _F(k_MPI_Info_f2c), TY_Int, TY_MPI, MN_("MPI_Info_f2c"), 1, TY_Int, FN_("info"), 
+		_Public|_Static, _F(k_MPI_Info_c2f), TY_Int, TY_MPI, MN_("MPI_Info_c2f"), 1, TY_Int, FN_("info"), 
+		_Public|_Static, _F(k_MPI_Op_f2c), TY_Int, TY_MPI, MN_("MPI_Op_f2c"), 1, TY_Int, FN_("op"), 
+		_Public|_Static, _F(k_MPI_Op_c2f), TY_Int, TY_MPI, MN_("MPI_Op_c2f"), 1, TY_Int, FN_("op"), 
+		_Public|_Static, _F(k_MPI_Request_f2c), TY_Int, TY_MPI, MN_("MPI_Request_f2c"), 1, TY_Int, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Request_c2f), TY_Int, TY_MPI, MN_("MPI_Request_c2f"), 1, TY_Int, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Type_f2c), TY_Int, TY_MPI, MN_("MPI_Type_f2c"), 1, TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_Type_c2f), TY_Int, TY_MPI, MN_("MPI_Type_c2f"), 1, TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_Win_f2c), TY_Int, TY_MPI, MN_("MPI_Win_f2c"), 1, TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_c2f), TY_Int, TY_MPI, MN_("MPI_Win_c2f"), 1, TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Comm_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_call_errhandler"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errorcode"), 
+		_Public|_Static, _F(k_MPI_Comm_compare), TY_Int, TY_MPI, MN_("MPI_Comm_compare"), 3, TY_Int, FN_("comm1"), TY_Int, FN_("comm2"), TY_Array, FN_("result"), 
+		_Public|_Static, _F(k_MPI_Comm_connect), TY_Int, TY_MPI, MN_("MPI_Comm_connect"), 5, TY_Array, FN_("port_name"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
+		_Public|_Static, _F(k_MPI_Comm_create), TY_Int, TY_MPI, MN_("MPI_Comm_create"), 3, TY_Int, FN_("comm"), TY_Int, FN_("group"), TY_Array, FN_("newcomm"), 
+		_Public|_Static, _F(k_MPI_Comm_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Comm_create_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_create_keyval"), 4, TY_Array, FN_("comm_copy_attr_fn"), TY_Array, FN_("comm_delete_attr_fn"), TY_Array, FN_("comm_keyval"), TY_Array, FN_("extra_state"), 
+		_Public|_Static, _F(k_MPI_Comm_delete_attr), TY_Int, TY_MPI, MN_("MPI_Comm_delete_attr"), 2, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), 
+		_Public|_Static, _F(k_MPI_Comm_disconnect), TY_Int, TY_MPI, MN_("MPI_Comm_disconnect"), 1, TY_Array, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Comm_dup), TY_Int, TY_MPI, MN_("MPI_Comm_dup"), 2, TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
+		_Public|_Static, _F(k_MPI_Comm_free), TY_Int, TY_MPI, MN_("MPI_Comm_free"), 1, TY_Array, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Comm_free_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_free_keyval"), 1, TY_Array, FN_("comm_keyval"), 
+		_Public|_Static, _F(k_MPI_Comm_get_attr), TY_Int, TY_MPI, MN_("MPI_Comm_get_attr"), 4, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Comm_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_get_errhandler"), 2, TY_Int, FN_("comm"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Comm_get_name), TY_Int, TY_MPI, MN_("MPI_Comm_get_name"), 3, TY_Int, FN_("comm"), TY_Array, FN_("comm_name"), TY_Array, FN_("resultlen"), 
+		_Public|_Static, _F(k_MPI_Comm_get_parent), TY_Int, TY_MPI, MN_("MPI_Comm_get_parent"), 1, TY_Array, FN_("parent"), 
+		_Public|_Static, _F(k_MPI_Comm_group), TY_Int, TY_MPI, MN_("MPI_Comm_group"), 2, TY_Int, FN_("comm"), TY_Array, FN_("group"), 
+		_Public|_Static, _F(k_MPI_Comm_join), TY_Int, TY_MPI, MN_("MPI_Comm_join"), 2, TY_Int, FN_("fd"), TY_Array, FN_("intercomm"), 
+		_Public|_Static, _F(k_MPI_Comm_rank), TY_Int, TY_MPI, MN_("MPI_Comm_rank"), 2, TY_Int, FN_("comm"), TY_Array, FN_("rank"), 
+		_Public|_Static, _F(k_MPI_Comm_remote_group), TY_Int, TY_MPI, MN_("MPI_Comm_remote_group"), 2, TY_Int, FN_("comm"), TY_Array, FN_("group"), 
+		_Public|_Static, _F(k_MPI_Comm_remote_size), TY_Int, TY_MPI, MN_("MPI_Comm_remote_size"), 2, TY_Int, FN_("comm"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Comm_set_attr), TY_Int, TY_MPI, MN_("MPI_Comm_set_attr"), 3, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), TY_Array, FN_("attribute_val"), 
+		_Public|_Static, _F(k_MPI_Comm_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_set_errhandler"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Comm_set_name), TY_Int, TY_MPI, MN_("MPI_Comm_set_name"), 2, TY_Int, FN_("comm"), TY_Array, FN_("comm_name"), 
+		_Public|_Static, _F(k_MPI_Comm_size), TY_Int, TY_MPI, MN_("MPI_Comm_size"), 2, TY_Int, FN_("comm"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Comm_spawn), TY_Int, TY_MPI, MN_("MPI_Comm_spawn"), 8, TY_Array, FN_("command"), TY_Array, FN_("argv"), TY_Int, FN_("maxprocs"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("intercomm"), TY_Array, FN_("array_of_errcodes"), 
+		_Public|_Static, _F(k_MPI_Comm_spawn_multiple), TY_Int, TY_MPI, MN_("MPI_Comm_spawn_multiple"), 9, TY_Int, FN_("count"), TY_Array, FN_("array_of_commands"), TY_Array, FN_("array_of_argv"), TY_Array, FN_("array_of_maxprocs"), TY_Array, FN_("array_of_info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("intercomm"), TY_Array, FN_("array_of_errcodes"), 
+		_Public|_Static, _F(k_MPI_Comm_split), TY_Int, TY_MPI, MN_("MPI_Comm_split"), 4, TY_Int, FN_("comm"), TY_Int, FN_("color"), TY_Int, FN_("key"), TY_Array, FN_("newcomm"), 
+		_Public|_Static, _F(k_MPI_Comm_test_inter), TY_Int, TY_MPI, MN_("MPI_Comm_test_inter"), 2, TY_Int, FN_("comm"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Dims_create), TY_Int, TY_MPI, MN_("MPI_Dims_create"), 3, TY_Int, FN_("nnodes"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), 
+		_Public|_Static, _F(k_MPI_Errhandler_create), TY_Int, TY_MPI, MN_("MPI_Errhandler_create"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Errhandler_free), TY_Int, TY_MPI, MN_("MPI_Errhandler_free"), 1, TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Errhandler_get), TY_Int, TY_MPI, MN_("MPI_Errhandler_get"), 2, TY_Int, FN_("comm"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Errhandler_set), TY_Int, TY_MPI, MN_("MPI_Errhandler_set"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Error_class), TY_Int, TY_MPI, MN_("MPI_Error_class"), 2, TY_Int, FN_("errorcode"), TY_Array, FN_("errorclass"), 
+		_Public|_Static, _F(k_MPI_Error_string), TY_Int, TY_MPI, MN_("MPI_Error_string"), 3, TY_Int, FN_("errorcode"), TY_Array, FN_("string"), TY_Array, FN_("resultlen"), 
+		_Public|_Static, _F(k_MPI_Exscan), TY_Int, TY_MPI, MN_("MPI_Exscan"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_File_call_errhandler), TY_Int, TY_MPI, MN_("MPI_File_call_errhandler"), 2, TY_Object, FN_("fh"), TY_Int, FN_("errorcode"), 
+		_Public|_Static, _F(k_MPI_File_close), TY_Int, TY_MPI, MN_("MPI_File_close"), 1, TY_Array, FN_("fh"), 
+		_Public|_Static, _F(k_MPI_File_create_errhandler), TY_Int, TY_MPI, MN_("MPI_File_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_File_delete), TY_Int, TY_MPI, MN_("MPI_File_delete"), 2, TY_Array, FN_("filename"), TY_Int, FN_("info"), 
+		_Public|_Static, _F(k_MPI_File_get_amode), TY_Int, TY_MPI, MN_("MPI_File_get_amode"), 2, TY_Object, FN_("fh"), TY_Array, FN_("amode"), 
+		_Public|_Static, _F(k_MPI_File_get_atomicity), TY_Int, TY_MPI, MN_("MPI_File_get_atomicity"), 2, TY_Object, FN_("fh"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_File_get_byte_offset), TY_Int, TY_MPI, MN_("MPI_File_get_byte_offset"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("disp"), 
+		_Public|_Static, _F(k_MPI_File_get_errhandler), TY_Int, TY_MPI, MN_("MPI_File_get_errhandler"), 2, TY_Object, FN_("file"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_File_get_group), TY_Int, TY_MPI, MN_("MPI_File_get_group"), 2, TY_Object, FN_("fh"), TY_Array, FN_("group"), 
+		_Public|_Static, _F(k_MPI_File_get_info), TY_Int, TY_MPI, MN_("MPI_File_get_info"), 2, TY_Object, FN_("fh"), TY_Array, FN_("info_used"), 
+		_Public|_Static, _F(k_MPI_File_get_position), TY_Int, TY_MPI, MN_("MPI_File_get_position"), 2, TY_Object, FN_("fh"), TY_Array, FN_("offset"), 
+		_Public|_Static, _F(k_MPI_File_get_position_shared), TY_Int, TY_MPI, MN_("MPI_File_get_position_shared"), 2, TY_Object, FN_("fh"), TY_Array, FN_("offset"), 
+		_Public|_Static, _F(k_MPI_File_get_size), TY_Int, TY_MPI, MN_("MPI_File_get_size"), 2, TY_Object, FN_("fh"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_File_get_type_extent), TY_Int, TY_MPI, MN_("MPI_File_get_type_extent"), 3, TY_Object, FN_("fh"), TY_Int, FN_("datatype"), TY_Array, FN_("extent"), 
+		_Public|_Static, _F(k_MPI_File_get_view), TY_Int, TY_MPI, MN_("MPI_File_get_view"), 5, TY_Object, FN_("fh"), TY_Array, FN_("disp"), TY_Array, FN_("etype"), TY_Array, FN_("filetype"), TY_Array, FN_("datarep"), 
+		_Public|_Static, _F(k_MPI_File_iread), TY_Int, TY_MPI, MN_("MPI_File_iread"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_File_iread_at), TY_Int, TY_MPI, MN_("MPI_File_iread_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_File_iread_shared), TY_Int, TY_MPI, MN_("MPI_File_iread_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_File_iwrite), TY_Int, TY_MPI, MN_("MPI_File_iwrite"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_File_iwrite_at), TY_Int, TY_MPI, MN_("MPI_File_iwrite_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_File_open), TY_Int, TY_MPI, MN_("MPI_File_open"), 5, TY_Int, FN_("comm"), TY_Array, FN_("filename"), TY_Int, FN_("amode"), TY_Int, FN_("info"), TY_Array, FN_("fh"), 
+		_Public|_Static, _F(k_MPI_File_preallocate), TY_Int, TY_MPI, MN_("MPI_File_preallocate"), 2, TY_Object, FN_("fh"), TY_Int, FN_("size"), 
+		_Public|_Static, _F(k_MPI_File_read), TY_Int, TY_MPI, MN_("MPI_File_read"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_all), TY_Int, TY_MPI, MN_("MPI_File_read_all"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_all_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_read_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_at), TY_Int, TY_MPI, MN_("MPI_File_read_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_at_all), TY_Int, TY_MPI, MN_("MPI_File_read_at_all"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_begin"), 5, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_read_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_ordered), TY_Int, TY_MPI, MN_("MPI_File_read_ordered"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_read_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_read_shared), TY_Int, TY_MPI, MN_("MPI_File_read_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_seek), TY_Int, TY_MPI, MN_("MPI_File_seek"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Int, FN_("whence"), 
+		_Public|_Static, _F(k_MPI_File_seek_shared), TY_Int, TY_MPI, MN_("MPI_File_seek_shared"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Int, FN_("whence"), 
+		_Public|_Static, _F(k_MPI_File_set_atomicity), TY_Int, TY_MPI, MN_("MPI_File_set_atomicity"), 2, TY_Object, FN_("fh"), TY_Int, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_File_set_errhandler), TY_Int, TY_MPI, MN_("MPI_File_set_errhandler"), 2, TY_Object, FN_("file"), TY_Int, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_File_set_info), TY_Int, TY_MPI, MN_("MPI_File_set_info"), 2, TY_Object, FN_("fh"), TY_Int, FN_("info"), 
+		_Public|_Static, _F(k_MPI_File_set_size), TY_Int, TY_MPI, MN_("MPI_File_set_size"), 2, TY_Object, FN_("fh"), TY_Int, FN_("size"), 
+		_Public|_Static, _F(k_MPI_File_set_view), TY_Int, TY_MPI, MN_("MPI_File_set_view"), 6, TY_Object, FN_("fh"), TY_Int, FN_("disp"), TY_Int, FN_("etype"), TY_Int, FN_("filetype"), TY_Array, FN_("datarep"), TY_Int, FN_("info"), 
+		_Public|_Static, _F(k_MPI_File_sync), TY_Int, TY_MPI, MN_("MPI_File_sync"), 1, TY_Object, FN_("fh"), 
+		_Public|_Static, _F(k_MPI_File_write), TY_Int, TY_MPI, MN_("MPI_File_write"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_all), TY_Int, TY_MPI, MN_("MPI_File_write_all"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_all_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_write_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_at), TY_Int, TY_MPI, MN_("MPI_File_write_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_at_all), TY_Int, TY_MPI, MN_("MPI_File_write_at_all"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_begin"), 5, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_write_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_ordered), TY_Int, TY_MPI, MN_("MPI_File_write_ordered"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_File_write_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_File_write_shared), TY_Int, TY_MPI, MN_("MPI_File_write_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
 		_Public|_Static, _F(k_MPI_Finalize), TY_Int, TY_MPI, MN_("MPI_Finalize"), 0, 
-		_Public|_Static, _F(k_MPI_Finalized), TY_Int, TY_MPI, MN_("MPI_Finalized"), 1, TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Free_mem), TY_Int, TY_MPI, MN_("MPI_Free_mem"), 1, TY_Array, MN_("base"), 
-		_Public|_Static, _F(k_MPI_Gather), TY_Int, TY_MPI, MN_("MPI_Gather"), 8, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Gatherv), TY_Int, TY_MPI, MN_("MPI_Gatherv"), 9, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Array, MN_("recvcounts"), TY_Array, MN_("displs"), TY_Int, MN_("recvtype"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Get_address), TY_Int, TY_MPI, MN_("MPI_Get_address"), 2, TY_Array, MN_("location"), TY_Array, MN_("address"), 
-		_Public|_Static, _F(k_MPI_Get_count), TY_Int, TY_MPI, MN_("MPI_Get_count"), 3, TY_Array, MN_("status"), TY_Int, MN_("datatype"), TY_Array, MN_("count"), 
-		_Public|_Static, _F(k_MPI_Get_elements), TY_Int, TY_MPI, MN_("MPI_Get_elements"), 3, TY_Array, MN_("status"), TY_Int, MN_("datatype"), TY_Array, MN_("count"), 
-		_Public|_Static, _F(k_MPI_Get_processor_name), TY_Int, TY_MPI, MN_("MPI_Get_processor_name"), 2, TY_Array, MN_("name"), TY_Array, MN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Get_version), TY_Int, TY_MPI, MN_("MPI_Get_version"), 2, TY_Array, MN_("version"), TY_Array, MN_("subversion"), 
-		_Public|_Static, _F(k_MPI_Graph_create), TY_Int, TY_MPI, MN_("MPI_Graph_create"), 6, TY_Int, MN_("comm_old"), TY_Int, MN_("nnodes"), TY_Array, MN_("index"), TY_Array, MN_("edges"), TY_Int, MN_("reorder"), TY_Array, MN_("comm_graph"), 
-		_Public|_Static, _F(k_MPI_Graph_get), TY_Int, TY_MPI, MN_("MPI_Graph_get"), 5, TY_Int, MN_("comm"), TY_Int, MN_("maxindex"), TY_Int, MN_("maxedges"), TY_Array, MN_("index"), TY_Array, MN_("edges"), 
-		_Public|_Static, _F(k_MPI_Graph_map), TY_Int, TY_MPI, MN_("MPI_Graph_map"), 5, TY_Int, MN_("comm"), TY_Int, MN_("nnodes"), TY_Array, MN_("index"), TY_Array, MN_("edges"), TY_Array, MN_("newrank"), 
-		_Public|_Static, _F(k_MPI_Graph_neighbors), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors"), 4, TY_Int, MN_("comm"), TY_Int, MN_("rank"), TY_Int, MN_("maxneighbors"), TY_Array, MN_("neighbors"), 
-		_Public|_Static, _F(k_MPI_Graph_neighbors_count), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors_count"), 3, TY_Int, MN_("comm"), TY_Int, MN_("rank"), TY_Array, MN_("nneighbors"), 
-		_Public|_Static, _F(k_MPI_Graphdims_get), TY_Int, TY_MPI, MN_("MPI_Graphdims_get"), 3, TY_Int, MN_("comm"), TY_Array, MN_("nnodes"), TY_Array, MN_("nedges"), 
-		_Public|_Static, _F(k_MPI_Grequest_complete), TY_Int, TY_MPI, MN_("MPI_Grequest_complete"), 1, TY_Int, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Grequest_start), TY_Int, TY_MPI, MN_("MPI_Grequest_start"), 5, TY_Array, MN_("query_fn"), TY_Array, MN_("free_fn"), TY_Array, MN_("cancel_fn"), TY_Array, MN_("extra_state"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Group_compare), TY_Int, TY_MPI, MN_("MPI_Group_compare"), 3, TY_Int, MN_("group1"), TY_Int, MN_("group2"), TY_Array, MN_("result"), 
-		_Public|_Static, _F(k_MPI_Group_difference), TY_Int, TY_MPI, MN_("MPI_Group_difference"), 3, TY_Int, MN_("group1"), TY_Int, MN_("group2"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_excl), TY_Int, TY_MPI, MN_("MPI_Group_excl"), 4, TY_Int, MN_("group"), TY_Int, MN_("n"), TY_Array, MN_("ranks"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_free), TY_Int, TY_MPI, MN_("MPI_Group_free"), 1, TY_Array, MN_("group"), 
-		_Public|_Static, _F(k_MPI_Group_incl), TY_Int, TY_MPI, MN_("MPI_Group_incl"), 4, TY_Int, MN_("group"), TY_Int, MN_("n"), TY_Array, MN_("ranks"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_intersection), TY_Int, TY_MPI, MN_("MPI_Group_intersection"), 3, TY_Int, MN_("group1"), TY_Int, MN_("group2"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_range_excl), TY_Int, TY_MPI, MN_("MPI_Group_range_excl"), 4, TY_Int, MN_("group"), TY_Int, MN_("n"), TY_Array, MN_("ranges"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_range_incl), TY_Int, TY_MPI, MN_("MPI_Group_range_incl"), 4, TY_Int, MN_("group"), TY_Int, MN_("n"), TY_Array, MN_("ranges"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_rank), TY_Int, TY_MPI, MN_("MPI_Group_rank"), 2, TY_Int, MN_("group"), TY_Array, MN_("rank"), 
-		_Public|_Static, _F(k_MPI_Group_size), TY_Int, TY_MPI, MN_("MPI_Group_size"), 2, TY_Int, MN_("group"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Group_translate_ranks), TY_Int, TY_MPI, MN_("MPI_Group_translate_ranks"), 5, TY_Int, MN_("group1"), TY_Int, MN_("n"), TY_Array, MN_("ranks1"), TY_Int, MN_("group2"), TY_Array, MN_("ranks2"), 
-		_Public|_Static, _F(k_MPI_Group_union), TY_Int, TY_MPI, MN_("MPI_Group_union"), 3, TY_Int, MN_("group1"), TY_Int, MN_("group2"), TY_Array, MN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Ibsend), TY_Int, TY_MPI, MN_("MPI_Ibsend"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Info_create), TY_Int, TY_MPI, MN_("MPI_Info_create"), 1, TY_Array, MN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_delete), TY_Int, TY_MPI, MN_("MPI_Info_delete"), 2, TY_Int, MN_("info"), TY_Array, MN_("key"), 
-		_Public|_Static, _F(k_MPI_Info_dup), TY_Int, TY_MPI, MN_("MPI_Info_dup"), 2, TY_Int, MN_("info"), TY_Array, MN_("newinfo"), 
-		_Public|_Static, _F(k_MPI_Info_free), TY_Int, TY_MPI, MN_("MPI_Info_free"), 1, TY_Array, MN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_get), TY_Int, TY_MPI, MN_("MPI_Info_get"), 5, TY_Int, MN_("info"), TY_Array, MN_("key"), TY_Int, MN_("valuelen"), TY_Array, MN_("value"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Info_get_nkeys), TY_Int, TY_MPI, MN_("MPI_Info_get_nkeys"), 2, TY_Int, MN_("info"), TY_Array, MN_("nkeys"), 
-		_Public|_Static, _F(k_MPI_Info_get_nthkey), TY_Int, TY_MPI, MN_("MPI_Info_get_nthkey"), 3, TY_Int, MN_("info"), TY_Int, MN_("n"), TY_Array, MN_("key"), 
-		_Public|_Static, _F(k_MPI_Info_get_valuelen), TY_Int, TY_MPI, MN_("MPI_Info_get_valuelen"), 4, TY_Int, MN_("info"), TY_Array, MN_("key"), TY_Array, MN_("valuelen"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Info_set), TY_Int, TY_MPI, MN_("MPI_Info_set"), 3, TY_Int, MN_("info"), TY_Array, MN_("key"), TY_Array, MN_("value"), 
-		_Public|_Static, _F(k_MPI_Init), TY_Int, TY_MPI, MN_("MPI_Init"), 2, TY_Array, MN_("argc"), TY_Array, MN_("argv"), 
-		_Public|_Static, _F(k_MPI_Init_thread), TY_Int, TY_MPI, MN_("MPI_Init_thread"), 4, TY_Array, MN_("argc"), TY_Array, MN_("argv"), TY_Int, MN_("required"), TY_Array, MN_("provided"), 
-		_Public|_Static, _F(k_MPI_Initialized), TY_Int, TY_MPI, MN_("MPI_Initialized"), 1, TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Intercomm_create), TY_Int, TY_MPI, MN_("MPI_Intercomm_create"), 6, TY_Int, MN_("local_comm"), TY_Int, MN_("local_leader"), TY_Int, MN_("peer_comm"), TY_Int, MN_("remote_leader"), TY_Int, MN_("tag"), TY_Array, MN_("newintercomm"), 
-		_Public|_Static, _F(k_MPI_Iprobe), TY_Int, TY_MPI, MN_("MPI_Iprobe"), 5, TY_Int, MN_("source"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("flag"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Irecv), TY_Int, TY_MPI, MN_("MPI_Irecv"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("source"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Irsend), TY_Int, TY_MPI, MN_("MPI_Irsend"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Is_thread_main), TY_Int, TY_MPI, MN_("MPI_Is_thread_main"), 1, TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Isend), TY_Int, TY_MPI, MN_("MPI_Isend"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Issend), TY_Int, TY_MPI, MN_("MPI_Issend"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Keyval_create), TY_Int, TY_MPI, MN_("MPI_Keyval_create"), 4, TY_Array, MN_("copy_fn"), TY_Array, MN_("delete_fn"), TY_Array, MN_("keyval"), TY_Array, MN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Keyval_free), TY_Int, TY_MPI, MN_("MPI_Keyval_free"), 1, TY_Array, MN_("keyval"), 
-		_Public|_Static, _F(k_MPI_Lookup_name), TY_Int, TY_MPI, MN_("MPI_Lookup_name"), 3, TY_Array, MN_("service_name"), TY_Int, MN_("info"), TY_Array, MN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Op_create), TY_Int, TY_MPI, MN_("MPI_Op_create"), 3, TY_Array, MN_("function"), TY_Int, MN_("commute"), TY_Array, MN_("op"), 
-		_Public|_Static, _F(k_MPI_Op_free), TY_Int, TY_MPI, MN_("MPI_Op_free"), 1, TY_Array, MN_("op"), 
-		_Public|_Static, _F(k_MPI_Open_port), TY_Int, TY_MPI, MN_("MPI_Open_port"), 2, TY_Int, MN_("info"), TY_Array, MN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Pack), TY_Int, TY_MPI, MN_("MPI_Pack"), 7, TY_Array, MN_("inbuf"), TY_Int, MN_("incount"), TY_Int, MN_("datatype"), TY_Array, MN_("outbuf"), TY_Int, MN_("outsize"), TY_Array, MN_("position"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Pack_external), TY_Int, TY_MPI, MN_("MPI_Pack_external"), 7, TY_Array, MN_("datarep"), TY_Array, MN_("inbuf"), TY_Int, MN_("incount"), TY_Int, MN_("datatype"), TY_Array, MN_("outbuf"), TY_Int, MN_("outsize"), TY_Array, MN_("position"), 
-		_Public|_Static, _F(k_MPI_Pack_external_size), TY_Int, TY_MPI, MN_("MPI_Pack_external_size"), 4, TY_Array, MN_("datarep"), TY_Int, MN_("incount"), TY_Int, MN_("datatype"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Pack_size), TY_Int, TY_MPI, MN_("MPI_Pack_size"), 4, TY_Int, MN_("incount"), TY_Int, MN_("datatype"), TY_Int, MN_("comm"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Probe), TY_Int, TY_MPI, MN_("MPI_Probe"), 4, TY_Int, MN_("source"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Publish_name), TY_Int, TY_MPI, MN_("MPI_Publish_name"), 3, TY_Array, MN_("service_name"), TY_Int, MN_("info"), TY_Array, MN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Query_thread), TY_Int, TY_MPI, MN_("MPI_Query_thread"), 1, TY_Array, MN_("provided"), 
-		_Public|_Static, _F(k_MPI_Recv), TY_Int, TY_MPI, MN_("MPI_Recv"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("source"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Recv_init), TY_Int, TY_MPI, MN_("MPI_Recv_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("source"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Reduce), TY_Int, TY_MPI, MN_("MPI_Reduce"), 7, TY_Array, MN_("sendbuf"), TY_Array, MN_("recvbuf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Reduce_local), TY_Int, TY_MPI, MN_("MPI_Reduce_local"), 5, TY_Array, MN_("inbuf"), TY_Array, MN_("inoutbuf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), 
-		_Public|_Static, _F(k_MPI_Reduce_scatter), TY_Int, TY_MPI, MN_("MPI_Reduce_scatter"), 6, TY_Array, MN_("sendbuf"), TY_Array, MN_("recvbuf"), TY_Array, MN_("recvcounts"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Register_datarep), TY_Int, TY_MPI, MN_("MPI_Register_datarep"), 5, TY_Array, MN_("datarep"), TY_Array, MN_("read_conversion_fn"), TY_Array, MN_("write_conversion_fn"), TY_Array, MN_("dtype_file_extent_fn"), TY_Array, MN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Request_free), TY_Int, TY_MPI, MN_("MPI_Request_free"), 1, TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Request_get_status), TY_Int, TY_MPI, MN_("MPI_Request_get_status"), 3, TY_Int, MN_("request"), TY_Array, MN_("flag"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Rsend), TY_Int, TY_MPI, MN_("MPI_Rsend"), 6, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Rsend_init), TY_Int, TY_MPI, MN_("MPI_Rsend_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Scan), TY_Int, TY_MPI, MN_("MPI_Scan"), 6, TY_Array, MN_("sendbuf"), TY_Array, MN_("recvbuf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("op"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Scatter), TY_Int, TY_MPI, MN_("MPI_Scatter"), 8, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Scatterv), TY_Int, TY_MPI, MN_("MPI_Scatterv"), 9, TY_Array, MN_("sendbuf"), TY_Array, MN_("sendcounts"), TY_Array, MN_("displs"), TY_Int, MN_("sendtype"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("root"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Send), TY_Int, TY_MPI, MN_("MPI_Send"), 6, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Send_init), TY_Int, TY_MPI, MN_("MPI_Send_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Sendrecv), TY_Int, TY_MPI, MN_("MPI_Sendrecv"), 12, TY_Array, MN_("sendbuf"), TY_Int, MN_("sendcount"), TY_Int, MN_("sendtype"), TY_Int, MN_("dest"), TY_Int, MN_("sendtag"), TY_Array, MN_("recvbuf"), TY_Int, MN_("recvcount"), TY_Int, MN_("recvtype"), TY_Int, MN_("source"), TY_Int, MN_("recvtag"), TY_Int, MN_("comm"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Sendrecv_replace), TY_Int, TY_MPI, MN_("MPI_Sendrecv_replace"), 9, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("sendtag"), TY_Int, MN_("source"), TY_Int, MN_("recvtag"), TY_Int, MN_("comm"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Ssend), TY_Int, TY_MPI, MN_("MPI_Ssend"), 6, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Ssend_init), TY_Int, TY_MPI, MN_("MPI_Ssend_init"), 7, TY_Array, MN_("buf"), TY_Int, MN_("count"), TY_Int, MN_("datatype"), TY_Int, MN_("dest"), TY_Int, MN_("tag"), TY_Int, MN_("comm"), TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Start), TY_Int, TY_MPI, MN_("MPI_Start"), 1, TY_Array, MN_("request"), 
-		_Public|_Static, _F(k_MPI_Startall), TY_Int, TY_MPI, MN_("MPI_Startall"), 2, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), 
-		//_Public|_Static, _F(k_MPI_Status_f2c), TY_Int, TY_MPI, MN_("MPI_Status_f2c"), 2, TY_Array, MN_("f_status"), TY_Array, MN_("c_status"), 
-		//_Public|_Static, _F(k_MPI_Status_c2f), TY_Int, TY_MPI, MN_("MPI_Status_c2f"), 2, TY_Array, MN_("c_status"), TY_Array, MN_("f_status"), 
-		_Public|_Static, _F(k_MPI_Status_set_cancelled), TY_Int, TY_MPI, MN_("MPI_Status_set_cancelled"), 2, TY_Array, MN_("status"), TY_Int, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Status_set_elements), TY_Int, TY_MPI, MN_("MPI_Status_set_elements"), 3, TY_Array, MN_("status"), TY_Int, MN_("datatype"), TY_Int, MN_("count"), 
-		_Public|_Static, _F(k_MPI_Test), TY_Int, TY_MPI, MN_("MPI_Test"), 3, TY_Array, MN_("request"), TY_Array, MN_("flag"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Test_cancelled), TY_Int, TY_MPI, MN_("MPI_Test_cancelled"), 2, TY_Array, MN_("status"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Testall), TY_Int, TY_MPI, MN_("MPI_Testall"), 4, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("flag"), TY_Array, MN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Testany), TY_Int, TY_MPI, MN_("MPI_Testany"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("index"), TY_Array, MN_("flag"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Testsome), TY_Int, TY_MPI, MN_("MPI_Testsome"), 5, TY_Int, MN_("incount"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("outcount"), TY_Array, MN_("array_of_indices"), TY_Array, MN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Topo_test), TY_Int, TY_MPI, MN_("MPI_Topo_test"), 2, TY_Int, MN_("comm"), TY_Array, MN_("top_type"), 
-		_Public|_Static, _F(k_MPI_Type_commit), TY_Int, TY_MPI, MN_("MPI_Type_commit"), 1, TY_Array, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_contiguous), TY_Int, TY_MPI, MN_("MPI_Type_contiguous"), 3, TY_Int, MN_("count"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_darray), TY_Int, TY_MPI, MN_("MPI_Type_create_darray"), 10, TY_Int, MN_("size"), TY_Int, MN_("rank"), TY_Int, MN_("ndims"), TY_Array, MN_("array_of_gsizes"), TY_Array, MN_("array_of_distribs"), TY_Array, MN_("array_of_dargs"), TY_Array, MN_("array_of_psizes"), TY_Int, MN_("order"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		//_Public|_Static, _F(k_MPI_Type_create_f90_complex), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_complex"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
-		//_Public|_Static, _F(k_MPI_Type_create_f90_integer), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_integer"), 2, TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
-		//_Public|_Static, _F(k_MPI_Type_create_f90_real), TY_Int, TY_MPI, MN_("MPI_Type_create_f90_real"), 3, TY_Int, MN_("p"), TY_Int, MN_("r"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_create_hindexed"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_hvector), TY_Int, TY_MPI, MN_("MPI_Type_create_hvector"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Int, MN_("stride"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_indexed_block), TY_Int, TY_MPI, MN_("MPI_Type_create_indexed_block"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_keyval), TY_Int, TY_MPI, MN_("MPI_Type_create_keyval"), 4, TY_Array, MN_("type_copy_attr_fn"), TY_Array, MN_("type_delete_attr_fn"), TY_Array, MN_("type_keyval"), TY_Array, MN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Type_create_resized), TY_Int, TY_MPI, MN_("MPI_Type_create_resized"), 4, TY_Int, MN_("oldtype"), TY_Int, MN_("lb"), TY_Int, MN_("extent"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_struct), TY_Int, TY_MPI, MN_("MPI_Type_create_struct"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Array, MN_("array_of_types"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_subarray), TY_Int, TY_MPI, MN_("MPI_Type_create_subarray"), 7, TY_Int, MN_("ndims"), TY_Array, MN_("array_of_sizes"), TY_Array, MN_("array_of_subsizes"), TY_Array, MN_("array_of_starts"), TY_Int, MN_("order"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_delete_attr), TY_Int, TY_MPI, MN_("MPI_Type_delete_attr"), 2, TY_Int, MN_("type"), TY_Int, MN_("type_keyval"), 
-		_Public|_Static, _F(k_MPI_Type_dup), TY_Int, TY_MPI, MN_("MPI_Type_dup"), 2, TY_Int, MN_("type"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_extent), TY_Int, TY_MPI, MN_("MPI_Type_extent"), 2, TY_Int, MN_("datatype"), TY_Array, MN_("extent"), 
-		_Public|_Static, _F(k_MPI_Type_free), TY_Int, TY_MPI, MN_("MPI_Type_free"), 1, TY_Array, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_free_keyval), TY_Int, TY_MPI, MN_("MPI_Type_free_keyval"), 1, TY_Array, MN_("type_keyval"), 
-		_Public|_Static, _F(k_MPI_Type_get_attr), TY_Int, TY_MPI, MN_("MPI_Type_get_attr"), 4, TY_Int, MN_("type"), TY_Int, MN_("type_keyval"), TY_Array, MN_("attribute_val"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Type_get_contents), TY_Int, TY_MPI, MN_("MPI_Type_get_contents"), 7, TY_Int, MN_("datatype"), TY_Int, MN_("max_integers"), TY_Int, MN_("max_addresses"), TY_Int, MN_("max_datatypes"), TY_Array, MN_("array_of_integers"), TY_Array, MN_("array_of_addresses"), TY_Array, MN_("array_of_datatypes"), 
-		_Public|_Static, _F(k_MPI_Type_get_envelope), TY_Int, TY_MPI, MN_("MPI_Type_get_envelope"), 5, TY_Int, MN_("datatype"), TY_Array, MN_("num_integers"), TY_Array, MN_("num_addresses"), TY_Array, MN_("num_datatypes"), TY_Array, MN_("combiner"), 
-		_Public|_Static, _F(k_MPI_Type_get_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_extent"), 3, TY_Int, MN_("datatype"), TY_Array, MN_("lb"), TY_Array, MN_("extent"), 
-		_Public|_Static, _F(k_MPI_Type_get_name), TY_Int, TY_MPI, MN_("MPI_Type_get_name"), 3, TY_Int, MN_("type"), TY_Array, MN_("type_name"), TY_Array, MN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Type_get_true_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_true_extent"), 3, TY_Int, MN_("datatype"), TY_Array, MN_("true_lb"), TY_Array, MN_("true_extent"), 
-		_Public|_Static, _F(k_MPI_Type_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_hindexed"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_hvector), TY_Int, TY_MPI, MN_("MPI_Type_hvector"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Int, MN_("stride"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_indexed), TY_Int, TY_MPI, MN_("MPI_Type_indexed"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_lb), TY_Int, TY_MPI, MN_("MPI_Type_lb"), 2, TY_Int, MN_("datatype"), TY_Array, MN_("displacement"), 
-		_Public|_Static, _F(k_MPI_Type_match_size), TY_Int, TY_MPI, MN_("MPI_Type_match_size"), 3, TY_Int, MN_("typeclass"), TY_Int, MN_("size"), TY_Array, MN_("type"), 
-		_Public|_Static, _F(k_MPI_Type_set_attr), TY_Int, TY_MPI, MN_("MPI_Type_set_attr"), 3, TY_Int, MN_("type"), TY_Int, MN_("type_keyval"), TY_Array, MN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Type_set_name), TY_Int, TY_MPI, MN_("MPI_Type_set_name"), 2, TY_Int, MN_("type"), TY_Array, MN_("type_name"), 
-		_Public|_Static, _F(k_MPI_Type_size), TY_Int, TY_MPI, MN_("MPI_Type_size"), 2, TY_Int, MN_("datatype"), TY_Array, MN_("size"), 
-		_Public|_Static, _F(k_MPI_Type_struct), TY_Int, TY_MPI, MN_("MPI_Type_struct"), 5, TY_Int, MN_("count"), TY_Array, MN_("array_of_blocklengths"), TY_Array, MN_("array_of_displacements"), TY_Array, MN_("array_of_types"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_ub), TY_Int, TY_MPI, MN_("MPI_Type_ub"), 2, TY_Int, MN_("datatype"), TY_Array, MN_("displacement"), 
-		_Public|_Static, _F(k_MPI_Type_vector), TY_Int, TY_MPI, MN_("MPI_Type_vector"), 5, TY_Int, MN_("count"), TY_Int, MN_("blocklength"), TY_Int, MN_("stride"), TY_Int, MN_("oldtype"), TY_Array, MN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Unpack), TY_Int, TY_MPI, MN_("MPI_Unpack"), 7, TY_Array, MN_("inbuf"), TY_Int, MN_("insize"), TY_Array, MN_("position"), TY_Array, MN_("outbuf"), TY_Int, MN_("outcount"), TY_Int, MN_("datatype"), TY_Int, MN_("comm"), 
-		_Public|_Static, _F(k_MPI_Unpack_external), TY_Int, TY_MPI, MN_("MPI_Unpack_external"), 7, TY_Array, MN_("datarep"), TY_Array, MN_("inbuf"), TY_Int, MN_("insize"), TY_Array, MN_("position"), TY_Array, MN_("outbuf"), TY_Int, MN_("outcount"), TY_Int, MN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Unpublish_name), TY_Int, TY_MPI, MN_("MPI_Unpublish_name"), 3, TY_Array, MN_("service_name"), TY_Int, MN_("info"), TY_Array, MN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Wait), TY_Int, TY_MPI, MN_("MPI_Wait"), 2, TY_Array, MN_("request"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Waitall), TY_Int, TY_MPI, MN_("MPI_Waitall"), 3, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Waitany), TY_Int, TY_MPI, MN_("MPI_Waitany"), 4, TY_Int, MN_("count"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("index"), TY_Array, MN_("status"), 
-		_Public|_Static, _F(k_MPI_Waitsome), TY_Int, TY_MPI, MN_("MPI_Waitsome"), 5, TY_Int, MN_("incount"), TY_Array, MN_("array_of_requests"), TY_Array, MN_("outcount"), TY_Array, MN_("array_of_indices"), TY_Array, MN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Win_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_call_errhandler"), 2, TY_Int, MN_("win"), TY_Int, MN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Win_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_create_errhandler"), 2, TY_Array, MN_("function"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_create_keyval), TY_Int, TY_MPI, MN_("MPI_Win_create_keyval"), 4, TY_Array, MN_("win_copy_attr_fn"), TY_Array, MN_("win_delete_attr_fn"), TY_Array, MN_("win_keyval"), TY_Array, MN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Win_delete_attr), TY_Int, TY_MPI, MN_("MPI_Win_delete_attr"), 2, TY_Int, MN_("win"), TY_Int, MN_("win_keyval"), 
-		_Public|_Static, _F(k_MPI_Win_fence), TY_Int, TY_MPI, MN_("MPI_Win_fence"), 2, TY_Int, MN_("assert"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_free), TY_Int, TY_MPI, MN_("MPI_Win_free"), 1, TY_Array, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_free_keyval), TY_Int, TY_MPI, MN_("MPI_Win_free_keyval"), 1, TY_Array, MN_("win_keyval"), 
-		_Public|_Static, _F(k_MPI_Win_get_attr), TY_Int, TY_MPI, MN_("MPI_Win_get_attr"), 4, TY_Int, MN_("win"), TY_Int, MN_("win_keyval"), TY_Array, MN_("attribute_val"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Win_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_get_errhandler"), 2, TY_Int, MN_("win"), TY_Array, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_get_name), TY_Int, TY_MPI, MN_("MPI_Win_get_name"), 3, TY_Int, MN_("win"), TY_Array, MN_("win_name"), TY_Array, MN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Win_lock), TY_Int, TY_MPI, MN_("MPI_Win_lock"), 4, TY_Int, MN_("lock_type"), TY_Int, MN_("rank"), TY_Int, MN_("assert"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_post), TY_Int, TY_MPI, MN_("MPI_Win_post"), 3, TY_Int, MN_("group"), TY_Int, MN_("assert"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_set_attr), TY_Int, TY_MPI, MN_("MPI_Win_set_attr"), 3, TY_Int, MN_("win"), TY_Int, MN_("win_keyval"), TY_Array, MN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Win_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_set_errhandler"), 2, TY_Int, MN_("win"), TY_Int, MN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_set_name), TY_Int, TY_MPI, MN_("MPI_Win_set_name"), 2, TY_Int, MN_("win"), TY_Array, MN_("win_name"), 
-		_Public|_Static, _F(k_MPI_Win_start), TY_Int, TY_MPI, MN_("MPI_Win_start"), 3, TY_Int, MN_("group"), TY_Int, MN_("assert"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_test), TY_Int, TY_MPI, MN_("MPI_Win_test"), 2, TY_Int, MN_("win"), TY_Array, MN_("flag"), 
-		_Public|_Static, _F(k_MPI_Win_unlock), TY_Int, TY_MPI, MN_("MPI_Win_unlock"), 2, TY_Int, MN_("rank"), TY_Int, MN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_wait), TY_Int, TY_MPI, MN_("MPI_Win_wait"), 1, TY_Int, MN_("win"), 
+		_Public|_Static, _F(k_MPI_Finalized), TY_Int, TY_MPI, MN_("MPI_Finalized"), 1, TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Free_mem), TY_Int, TY_MPI, MN_("MPI_Free_mem"), 1, TY_Array, FN_("base"), 
+		_Public|_Static, _F(k_MPI_Gather), TY_Int, TY_MPI, MN_("MPI_Gather"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Gatherv), TY_Int, TY_MPI, MN_("MPI_Gatherv"), 9, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("displs"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Get_address), TY_Int, TY_MPI, MN_("MPI_Get_address"), 2, TY_Array, FN_("location"), TY_Array, FN_("address"), 
+		_Public|_Static, _F(k_MPI_Get_count), TY_Int, TY_MPI, MN_("MPI_Get_count"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Array, FN_("count"), 
+		_Public|_Static, _F(k_MPI_Get_elements), TY_Int, TY_MPI, MN_("MPI_Get_elements"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Array, FN_("count"), 
+		_Public|_Static, _F(k_MPI_Get_processor_name), TY_Int, TY_MPI, MN_("MPI_Get_processor_name"), 2, TY_Array, FN_("name"), TY_Array, FN_("resultlen"), 
+		_Public|_Static, _F(k_MPI_Get_version), TY_Int, TY_MPI, MN_("MPI_Get_version"), 2, TY_Array, FN_("version"), TY_Array, FN_("subversion"), 
+		_Public|_Static, _F(k_MPI_Graph_create), TY_Int, TY_MPI, MN_("MPI_Graph_create"), 6, TY_Int, FN_("comm_old"), TY_Int, FN_("nnodes"), TY_Array, FN_("index"), TY_Array, FN_("edges"), TY_Int, FN_("reorder"), TY_Array, FN_("comm_graph"), 
+		_Public|_Static, _F(k_MPI_Graph_get), TY_Int, TY_MPI, MN_("MPI_Graph_get"), 5, TY_Int, FN_("comm"), TY_Int, FN_("maxindex"), TY_Int, FN_("maxedges"), TY_Array, FN_("index"), TY_Array, FN_("edges"), 
+		_Public|_Static, _F(k_MPI_Graph_map), TY_Int, TY_MPI, MN_("MPI_Graph_map"), 5, TY_Int, FN_("comm"), TY_Int, FN_("nnodes"), TY_Array, FN_("index"), TY_Array, FN_("edges"), TY_Array, FN_("newrank"), 
+		_Public|_Static, _F(k_MPI_Graph_neighbors), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors"), 4, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Int, FN_("maxneighbors"), TY_Array, FN_("neighbors"), 
+		_Public|_Static, _F(k_MPI_Graph_neighbors_count), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors_count"), 3, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Array, FN_("nneighbors"), 
+		_Public|_Static, _F(k_MPI_Graphdims_get), TY_Int, TY_MPI, MN_("MPI_Graphdims_get"), 3, TY_Int, FN_("comm"), TY_Array, FN_("nnodes"), TY_Array, FN_("nedges"), 
+		_Public|_Static, _F(k_MPI_Grequest_complete), TY_Int, TY_MPI, MN_("MPI_Grequest_complete"), 1, TY_Int, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Grequest_start), TY_Int, TY_MPI, MN_("MPI_Grequest_start"), 5, TY_Array, FN_("query_fn"), TY_Array, FN_("free_fn"), TY_Array, FN_("cancel_fn"), TY_Array, FN_("extra_state"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Group_compare), TY_Int, TY_MPI, MN_("MPI_Group_compare"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("result"), 
+		_Public|_Static, _F(k_MPI_Group_difference), TY_Int, TY_MPI, MN_("MPI_Group_difference"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_excl), TY_Int, TY_MPI, MN_("MPI_Group_excl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranks"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_free), TY_Int, TY_MPI, MN_("MPI_Group_free"), 1, TY_Array, FN_("group"), 
+		_Public|_Static, _F(k_MPI_Group_incl), TY_Int, TY_MPI, MN_("MPI_Group_incl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranks"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_intersection), TY_Int, TY_MPI, MN_("MPI_Group_intersection"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_range_excl), TY_Int, TY_MPI, MN_("MPI_Group_range_excl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranges"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_range_incl), TY_Int, TY_MPI, MN_("MPI_Group_range_incl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranges"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Group_rank), TY_Int, TY_MPI, MN_("MPI_Group_rank"), 2, TY_Int, FN_("group"), TY_Array, FN_("rank"), 
+		_Public|_Static, _F(k_MPI_Group_size), TY_Int, TY_MPI, MN_("MPI_Group_size"), 2, TY_Int, FN_("group"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Group_translate_ranks), TY_Int, TY_MPI, MN_("MPI_Group_translate_ranks"), 5, TY_Int, FN_("group1"), TY_Int, FN_("n"), TY_Array, FN_("ranks1"), TY_Int, FN_("group2"), TY_Array, FN_("ranks2"), 
+		_Public|_Static, _F(k_MPI_Group_union), TY_Int, TY_MPI, MN_("MPI_Group_union"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
+		_Public|_Static, _F(k_MPI_Ibsend), TY_Int, TY_MPI, MN_("MPI_Ibsend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Info_create), TY_Int, TY_MPI, MN_("MPI_Info_create"), 1, TY_Array, FN_("info"), 
+		_Public|_Static, _F(k_MPI_Info_delete), TY_Int, TY_MPI, MN_("MPI_Info_delete"), 2, TY_Int, FN_("info"), TY_Array, FN_("key"), 
+		_Public|_Static, _F(k_MPI_Info_dup), TY_Int, TY_MPI, MN_("MPI_Info_dup"), 2, TY_Int, FN_("info"), TY_Array, FN_("newinfo"), 
+		_Public|_Static, _F(k_MPI_Info_free), TY_Int, TY_MPI, MN_("MPI_Info_free"), 1, TY_Array, FN_("info"), 
+		_Public|_Static, _F(k_MPI_Info_get), TY_Int, TY_MPI, MN_("MPI_Info_get"), 5, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Int, FN_("valuelen"), TY_Array, FN_("value"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Info_get_nkeys), TY_Int, TY_MPI, MN_("MPI_Info_get_nkeys"), 2, TY_Int, FN_("info"), TY_Array, FN_("nkeys"), 
+		_Public|_Static, _F(k_MPI_Info_get_nthkey), TY_Int, TY_MPI, MN_("MPI_Info_get_nthkey"), 3, TY_Int, FN_("info"), TY_Int, FN_("n"), TY_Array, FN_("key"), 
+		_Public|_Static, _F(k_MPI_Info_get_valuelen), TY_Int, TY_MPI, MN_("MPI_Info_get_valuelen"), 4, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Array, FN_("valuelen"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Info_set), TY_Int, TY_MPI, MN_("MPI_Info_set"), 3, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Array, FN_("value"), 
+		_Public|_Static, _F(k_MPI_Init), TY_Int, TY_MPI, MN_("MPI_Init"), 2, TY_Array, FN_("argc"), TY_Array, FN_("argv"), 
+		_Public|_Static, _F(k_MPI_Init_thread), TY_Int, TY_MPI, MN_("MPI_Init_thread"), 4, TY_Array, FN_("argc"), TY_Array, FN_("argv"), TY_Int, FN_("required"), TY_Array, FN_("provided"), 
+		_Public|_Static, _F(k_MPI_Initialized), TY_Int, TY_MPI, MN_("MPI_Initialized"), 1, TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Intercomm_create), TY_Int, TY_MPI, MN_("MPI_Intercomm_create"), 6, TY_Int, FN_("local_comm"), TY_Int, FN_("local_leader"), TY_Int, FN_("peer_comm"), TY_Int, FN_("remote_leader"), TY_Int, FN_("tag"), TY_Array, FN_("newintercomm"), 
+		_Public|_Static, _F(k_MPI_Iprobe), TY_Int, TY_MPI, MN_("MPI_Iprobe"), 5, TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Irecv), TY_Int, TY_MPI, MN_("MPI_Irecv"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Irsend), TY_Int, TY_MPI, MN_("MPI_Irsend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Is_thread_main), TY_Int, TY_MPI, MN_("MPI_Is_thread_main"), 1, TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Isend), TY_Int, TY_MPI, MN_("MPI_Isend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Issend), TY_Int, TY_MPI, MN_("MPI_Issend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Keyval_create), TY_Int, TY_MPI, MN_("MPI_Keyval_create"), 4, TY_Array, FN_("copy_fn"), TY_Array, FN_("delete_fn"), TY_Array, FN_("keyval"), TY_Array, FN_("extra_state"), 
+		_Public|_Static, _F(k_MPI_Keyval_free), TY_Int, TY_MPI, MN_("MPI_Keyval_free"), 1, TY_Array, FN_("keyval"), 
+		_Public|_Static, _F(k_MPI_Lookup_name), TY_Int, TY_MPI, MN_("MPI_Lookup_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
+		_Public|_Static, _F(k_MPI_Op_create), TY_Int, TY_MPI, MN_("MPI_Op_create"), 3, TY_Array, FN_("function"), TY_Int, FN_("commute"), TY_Array, FN_("op"), 
+		_Public|_Static, _F(k_MPI_Op_free), TY_Int, TY_MPI, MN_("MPI_Op_free"), 1, TY_Array, FN_("op"), 
+		_Public|_Static, _F(k_MPI_Open_port), TY_Int, TY_MPI, MN_("MPI_Open_port"), 2, TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
+		_Public|_Static, _F(k_MPI_Pack), TY_Int, TY_MPI, MN_("MPI_Pack"), 7, TY_Array, FN_("inbuf"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("outbuf"), TY_Int, FN_("outsize"), TY_Array, FN_("position"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Pack_external), TY_Int, TY_MPI, MN_("MPI_Pack_external"), 7, TY_Array, FN_("datarep"), TY_Array, FN_("inbuf"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("outbuf"), TY_Int, FN_("outsize"), TY_Array, FN_("position"), 
+		_Public|_Static, _F(k_MPI_Pack_external_size), TY_Int, TY_MPI, MN_("MPI_Pack_external_size"), 4, TY_Array, FN_("datarep"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Pack_size), TY_Int, TY_MPI, MN_("MPI_Pack_size"), 4, TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Int, FN_("comm"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Probe), TY_Int, TY_MPI, MN_("MPI_Probe"), 4, TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Publish_name), TY_Int, TY_MPI, MN_("MPI_Publish_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
+		_Public|_Static, _F(k_MPI_Query_thread), TY_Int, TY_MPI, MN_("MPI_Query_thread"), 1, TY_Array, FN_("provided"), 
+		_Public|_Static, _F(k_MPI_Recv), TY_Int, TY_MPI, MN_("MPI_Recv"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Recv_init), TY_Int, TY_MPI, MN_("MPI_Recv_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Reduce), TY_Int, TY_MPI, MN_("MPI_Reduce"), 7, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Reduce_local), TY_Int, TY_MPI, MN_("MPI_Reduce_local"), 5, TY_Array, FN_("inbuf"), TY_Array, FN_("inoutbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), 
+		_Public|_Static, _F(k_MPI_Reduce_scatter), TY_Int, TY_MPI, MN_("MPI_Reduce_scatter"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Register_datarep), TY_Int, TY_MPI, MN_("MPI_Register_datarep"), 5, TY_Array, FN_("datarep"), TY_Array, FN_("read_conversion_fn"), TY_Array, FN_("write_conversion_fn"), TY_Array, FN_("dtype_file_extent_fn"), TY_Array, FN_("extra_state"), 
+		_Public|_Static, _F(k_MPI_Request_free), TY_Int, TY_MPI, MN_("MPI_Request_free"), 1, TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Request_get_status), TY_Int, TY_MPI, MN_("MPI_Request_get_status"), 3, TY_Int, FN_("request"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Rsend), TY_Int, TY_MPI, MN_("MPI_Rsend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Rsend_init), TY_Int, TY_MPI, MN_("MPI_Rsend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Scan), TY_Int, TY_MPI, MN_("MPI_Scan"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Scatter), TY_Int, TY_MPI, MN_("MPI_Scatter"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Scatterv), TY_Int, TY_MPI, MN_("MPI_Scatterv"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("displs"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Send), TY_Int, TY_MPI, MN_("MPI_Send"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Send_init), TY_Int, TY_MPI, MN_("MPI_Send_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		//_Public|_Static, _F(k_MPI_Sendrecv), TY_Int, TY_MPI, MN_("MPI_Sendrecv"), 12, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Int, FN_("dest"), TY_Int, FN_("sendtag"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("source"), TY_Int, FN_("recvtag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Sendrecv_replace), TY_Int, TY_MPI, MN_("MPI_Sendrecv_replace"), 9, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("sendtag"), TY_Int, FN_("source"), TY_Int, FN_("recvtag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Ssend), TY_Int, TY_MPI, MN_("MPI_Ssend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Ssend_init), TY_Int, TY_MPI, MN_("MPI_Ssend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Start), TY_Int, TY_MPI, MN_("MPI_Start"), 1, TY_Array, FN_("request"), 
+		_Public|_Static, _F(k_MPI_Startall), TY_Int, TY_MPI, MN_("MPI_Startall"), 2, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), 
+		_Public|_Static, _F(k_MPI_Status_set_cancelled), TY_Int, TY_MPI, MN_("MPI_Status_set_cancelled"), 2, TY_Array, FN_("status"), TY_Int, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Status_set_elements), TY_Int, TY_MPI, MN_("MPI_Status_set_elements"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Int, FN_("count"), 
+		_Public|_Static, _F(k_MPI_Test), TY_Int, TY_MPI, MN_("MPI_Test"), 3, TY_Array, FN_("request"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Test_cancelled), TY_Int, TY_MPI, MN_("MPI_Test_cancelled"), 2, TY_Array, FN_("status"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Testall), TY_Int, TY_MPI, MN_("MPI_Testall"), 4, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("flag"), TY_Array, FN_("array_of_statuses"), 
+		_Public|_Static, _F(k_MPI_Testany), TY_Int, TY_MPI, MN_("MPI_Testany"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("index"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Testsome), TY_Int, TY_MPI, MN_("MPI_Testsome"), 5, TY_Int, FN_("incount"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("outcount"), TY_Array, FN_("array_of_indices"), TY_Array, FN_("array_of_statuses"), 
+		_Public|_Static, _F(k_MPI_Topo_test), TY_Int, TY_MPI, MN_("MPI_Topo_test"), 2, TY_Int, FN_("comm"), TY_Array, FN_("top_type"), 
+		_Public|_Static, _F(k_MPI_Type_commit), TY_Int, TY_MPI, MN_("MPI_Type_commit"), 1, TY_Array, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_Type_contiguous), TY_Int, TY_MPI, MN_("MPI_Type_contiguous"), 3, TY_Int, FN_("count"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_darray), TY_Int, TY_MPI, MN_("MPI_Type_create_darray"), 10, TY_Int, FN_("size"), TY_Int, FN_("rank"), TY_Int, FN_("ndims"), TY_Array, FN_("array_of_gsizes"), TY_Array, FN_("array_of_distribs"), TY_Array, FN_("array_of_dargs"), TY_Array, FN_("array_of_psizes"), TY_Int, FN_("order"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_create_hindexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_hvector), TY_Int, TY_MPI, MN_("MPI_Type_create_hvector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_indexed_block), TY_Int, TY_MPI, MN_("MPI_Type_create_indexed_block"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_keyval), TY_Int, TY_MPI, MN_("MPI_Type_create_keyval"), 4, TY_Array, FN_("type_copy_attr_fn"), TY_Array, FN_("type_delete_attr_fn"), TY_Array, FN_("type_keyval"), TY_Array, FN_("extra_state"), 
+		_Public|_Static, _F(k_MPI_Type_create_resized), TY_Int, TY_MPI, MN_("MPI_Type_create_resized"), 4, TY_Int, FN_("oldtype"), TY_Int, FN_("lb"), TY_Int, FN_("extent"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_struct), TY_Int, TY_MPI, MN_("MPI_Type_create_struct"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Array, FN_("array_of_types"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_create_subarray), TY_Int, TY_MPI, MN_("MPI_Type_create_subarray"), 7, TY_Int, FN_("ndims"), TY_Array, FN_("array_of_sizes"), TY_Array, FN_("array_of_subsizes"), TY_Array, FN_("array_of_starts"), TY_Int, FN_("order"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_delete_attr), TY_Int, TY_MPI, MN_("MPI_Type_delete_attr"), 2, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), 
+		_Public|_Static, _F(k_MPI_Type_dup), TY_Int, TY_MPI, MN_("MPI_Type_dup"), 2, TY_Int, FN_("type"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_extent), TY_Int, TY_MPI, MN_("MPI_Type_extent"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("extent"), 
+		_Public|_Static, _F(k_MPI_Type_free), TY_Int, TY_MPI, MN_("MPI_Type_free"), 1, TY_Array, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_Type_free_keyval), TY_Int, TY_MPI, MN_("MPI_Type_free_keyval"), 1, TY_Array, FN_("type_keyval"), 
+		_Public|_Static, _F(k_MPI_Type_get_attr), TY_Int, TY_MPI, MN_("MPI_Type_get_attr"), 4, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Type_get_contents), TY_Int, TY_MPI, MN_("MPI_Type_get_contents"), 7, TY_Int, FN_("datatype"), TY_Int, FN_("max_integers"), TY_Int, FN_("max_addresses"), TY_Int, FN_("max_datatypes"), TY_Array, FN_("array_of_integers"), TY_Array, FN_("array_of_addresses"), TY_Array, FN_("array_of_datatypes"), 
+		_Public|_Static, _F(k_MPI_Type_get_envelope), TY_Int, TY_MPI, MN_("MPI_Type_get_envelope"), 5, TY_Int, FN_("datatype"), TY_Array, FN_("num_integers"), TY_Array, FN_("num_addresses"), TY_Array, FN_("num_datatypes"), TY_Array, FN_("combiner"), 
+		_Public|_Static, _F(k_MPI_Type_get_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_extent"), 3, TY_Int, FN_("datatype"), TY_Array, FN_("lb"), TY_Array, FN_("extent"), 
+		_Public|_Static, _F(k_MPI_Type_get_name), TY_Int, TY_MPI, MN_("MPI_Type_get_name"), 3, TY_Int, FN_("type"), TY_Array, FN_("type_name"), TY_Array, FN_("resultlen"), 
+		_Public|_Static, _F(k_MPI_Type_get_true_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_true_extent"), 3, TY_Int, FN_("datatype"), TY_Array, FN_("true_lb"), TY_Array, FN_("true_extent"), 
+		_Public|_Static, _F(k_MPI_Type_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_hindexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_hvector), TY_Int, TY_MPI, MN_("MPI_Type_hvector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_indexed), TY_Int, TY_MPI, MN_("MPI_Type_indexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_lb), TY_Int, TY_MPI, MN_("MPI_Type_lb"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("displacement"), 
+		_Public|_Static, _F(k_MPI_Type_match_size), TY_Int, TY_MPI, MN_("MPI_Type_match_size"), 3, TY_Int, FN_("typeclass"), TY_Int, FN_("size"), TY_Array, FN_("type"), 
+		_Public|_Static, _F(k_MPI_Type_set_attr), TY_Int, TY_MPI, MN_("MPI_Type_set_attr"), 3, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), TY_Array, FN_("attribute_val"), 
+		_Public|_Static, _F(k_MPI_Type_set_name), TY_Int, TY_MPI, MN_("MPI_Type_set_name"), 2, TY_Int, FN_("type"), TY_Array, FN_("type_name"), 
+		_Public|_Static, _F(k_MPI_Type_size), TY_Int, TY_MPI, MN_("MPI_Type_size"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("size"), 
+		_Public|_Static, _F(k_MPI_Type_struct), TY_Int, TY_MPI, MN_("MPI_Type_struct"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Array, FN_("array_of_types"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Type_ub), TY_Int, TY_MPI, MN_("MPI_Type_ub"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("displacement"), 
+		_Public|_Static, _F(k_MPI_Type_vector), TY_Int, TY_MPI, MN_("MPI_Type_vector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
+		_Public|_Static, _F(k_MPI_Unpack), TY_Int, TY_MPI, MN_("MPI_Unpack"), 7, TY_Array, FN_("inbuf"), TY_Int, FN_("insize"), TY_Array, FN_("position"), TY_Array, FN_("outbuf"), TY_Int, FN_("outcount"), TY_Int, FN_("datatype"), TY_Int, FN_("comm"), 
+		_Public|_Static, _F(k_MPI_Unpack_external), TY_Int, TY_MPI, MN_("MPI_Unpack_external"), 7, TY_Array, FN_("datarep"), TY_Array, FN_("inbuf"), TY_Int, FN_("insize"), TY_Array, FN_("position"), TY_Array, FN_("outbuf"), TY_Int, FN_("outcount"), TY_Int, FN_("datatype"), 
+		_Public|_Static, _F(k_MPI_Unpublish_name), TY_Int, TY_MPI, MN_("MPI_Unpublish_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
+		_Public|_Static, _F(k_MPI_Wait), TY_Int, TY_MPI, MN_("MPI_Wait"), 2, TY_Array, FN_("request"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Waitall), TY_Int, TY_MPI, MN_("MPI_Waitall"), 3, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("array_of_statuses"), 
+		_Public|_Static, _F(k_MPI_Waitany), TY_Int, TY_MPI, MN_("MPI_Waitany"), 4, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("index"), TY_Array, FN_("status"), 
+		_Public|_Static, _F(k_MPI_Waitsome), TY_Int, TY_MPI, MN_("MPI_Waitsome"), 5, TY_Int, FN_("incount"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("outcount"), TY_Array, FN_("array_of_indices"), TY_Array, FN_("array_of_statuses"), 
+		_Public|_Static, _F(k_MPI_Win_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_call_errhandler"), 2, TY_Int, FN_("win"), TY_Int, FN_("errorcode"), 
+		_Public|_Static, _F(k_MPI_Win_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Win_create_keyval), TY_Int, TY_MPI, MN_("MPI_Win_create_keyval"), 4, TY_Array, FN_("win_copy_attr_fn"), TY_Array, FN_("win_delete_attr_fn"), TY_Array, FN_("win_keyval"), TY_Array, FN_("extra_state"), 
+		_Public|_Static, _F(k_MPI_Win_delete_attr), TY_Int, TY_MPI, MN_("MPI_Win_delete_attr"), 2, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), 
+		_Public|_Static, _F(k_MPI_Win_fence), TY_Int, TY_MPI, MN_("MPI_Win_fence"), 2, TY_Int, FN_("assert"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_free), TY_Int, TY_MPI, MN_("MPI_Win_free"), 1, TY_Array, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_free_keyval), TY_Int, TY_MPI, MN_("MPI_Win_free_keyval"), 1, TY_Array, FN_("win_keyval"), 
+		_Public|_Static, _F(k_MPI_Win_get_attr), TY_Int, TY_MPI, MN_("MPI_Win_get_attr"), 4, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Win_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_get_errhandler"), 2, TY_Int, FN_("win"), TY_Array, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Win_get_name), TY_Int, TY_MPI, MN_("MPI_Win_get_name"), 3, TY_Int, FN_("win"), TY_Array, FN_("win_name"), TY_Array, FN_("resultlen"), 
+		_Public|_Static, _F(k_MPI_Win_lock), TY_Int, TY_MPI, MN_("MPI_Win_lock"), 4, TY_Int, FN_("lock_type"), TY_Int, FN_("rank"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_post), TY_Int, TY_MPI, MN_("MPI_Win_post"), 3, TY_Int, FN_("group"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_set_attr), TY_Int, TY_MPI, MN_("MPI_Win_set_attr"), 3, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), TY_Array, FN_("attribute_val"), 
+		_Public|_Static, _F(k_MPI_Win_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_set_errhandler"), 2, TY_Int, FN_("win"), TY_Int, FN_("errhandler"), 
+		_Public|_Static, _F(k_MPI_Win_set_name), TY_Int, TY_MPI, MN_("MPI_Win_set_name"), 2, TY_Int, FN_("win"), TY_Array, FN_("win_name"), 
+		_Public|_Static, _F(k_MPI_Win_start), TY_Int, TY_MPI, MN_("MPI_Win_start"), 3, TY_Int, FN_("group"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_test), TY_Int, TY_MPI, MN_("MPI_Win_test"), 2, TY_Int, FN_("win"), TY_Array, FN_("flag"), 
+		_Public|_Static, _F(k_MPI_Win_unlock), TY_Int, TY_MPI, MN_("MPI_Win_unlock"), 2, TY_Int, FN_("rank"), TY_Int, FN_("win"), 
+		_Public|_Static, _F(k_MPI_Win_wait), TY_Int, TY_MPI, MN_("MPI_Win_wait"), 1, TY_Int, FN_("win"), 
 
 		DEND,
 	};
@@ -3475,6 +3406,6 @@ KDEFINE_PACKAGE* mpi_init(void)
 }
 
 #ifdef __cplusplus
-END_EXTERN_C
+}
 #endif
 
