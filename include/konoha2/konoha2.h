@@ -838,7 +838,7 @@ struct _kArray {
 #define CFLAG_Param              kClass_Final
 #define OFLAG_Param              MAGICFLAG(0)
 #define TY_Param                 CLASS_Param
-#define IS_Param(o)              (O_cid(o) == CLASS_Param)
+#define IS_Param(o)              (O_bcid(o) == CLASS_Param)
 
 typedef struct kparam_t {
 	ktype_t    ty;  ksymbol_t  fn;
