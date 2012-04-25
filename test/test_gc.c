@@ -44,7 +44,7 @@ void test_gc(CTX)
 {
 #define CT_Dummy ct
     int i, j;
-    kclass_t *ct = kaddClassDef(NULL, &DummyDef, 0);
+    kclass_t *ct = Konoha_addClassDef(NULL, &DummyDef, 0);
     /* small size */
     for (i = 0; i < 10; ++i) {
         for (j = 0; j < 100; ++j) {

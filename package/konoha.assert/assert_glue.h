@@ -50,7 +50,7 @@
 //		_Static|_Public, _F(KonohaSpace_assert), TY_Int, TY_KonohaSpace, MN_("assert"), 1, TY_Boolean, FN_cond,
 //		DEND,
 //	};
-//	kloadMethodData(ks, MethodData);
+//	Konoha_loadMethodData(ks, MethodData);
 //	return true;
 //}
 //

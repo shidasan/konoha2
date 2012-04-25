@@ -42,6 +42,6 @@ void ksampleshare_init(CTX, kcontext_t *ctx)
 	mod->h.setup    = ksampleshare_setup;
 	mod->h.reftrace = ksampleshare_reftrace;
 	mod->h.free     = ksampleshare_free;
-	ksetModule(MOD_SAMPLE, (kmodshare_t*)mod, 0);
+	Konoha_setModule(MOD_SAMPLE, (kmodshare_t*)mod, 0);
 }
 

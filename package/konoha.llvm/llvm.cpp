@@ -3702,7 +3702,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		TypeDef.free = Type_free;
 		for (int i = 0; i < 6; i++) {
 			TypeDef.structname = TypeDefName[i];
-			CT_TypeTBL[i] = kaddClassDef(NULL, &TypeDef, 0);
+			CT_TypeTBL[i] = Konoha_addClassDef(NULL, &TypeDef, 0);
 		}
 	}
 	static KDEFINE_CLASS BasicBlockDef = {
@@ -3721,7 +3721,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	CT_BasicBlock = kaddClassDef(NULL, &BasicBlockDef, pline);
+	CT_BasicBlock = Konoha_addClassDef(NULL, &BasicBlockDef, pline);
 
 	static KDEFINE_CLASS IRBuilderDef = {
 		"IRBuilder"/*structname*/,
@@ -3739,7 +3739,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	CT_IRBuilder = kaddClassDef(NULL, &IRBuilderDef, pline);
+	CT_IRBuilder = Konoha_addClassDef(NULL, &IRBuilderDef, pline);
 #if LLVM_VERSION >= 300
 	static KDEFINE_CLASS PassManagerBuilderDef = {
 		"PassManagerBuilder"/*structname*/,
@@ -3757,7 +3757,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_PassManagerBuilder = kaddClassDef(NULL, &PassManagerBuilderDef, pline);
+	kclass_t *CT_PassManagerBuilder = Konoha_addClassDef(NULL, &PassManagerBuilderDef, pline);
 #define TY_PassManagerBuilder         (CT_PassManagerBuilder)->cid
 #endif
 	static KDEFINE_CLASS PassManagerDef = {
@@ -3792,8 +3792,8 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_PassManager = kaddClassDef(NULL, &PassManagerDef, pline);
-	kclass_t *CT_FunctionPassManager = kaddClassDef(NULL, &FunctionPassManagerDef, pline);
+	kclass_t *CT_PassManager = Konoha_addClassDef(NULL, &PassManagerDef, pline);
+	kclass_t *CT_FunctionPassManager = Konoha_addClassDef(NULL, &FunctionPassManagerDef, pline);
 	kclass_t *CT_InstTBL[20];
 	{
 		static const char *InstDefName[] = {
@@ -3828,7 +3828,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		//InstDef.free = Inst_free;
 		for (unsigned int i = 0; i < ARRAY_SIZE(InstDefName); i++) {
 			InstDef.structname = InstDefName[i];
-			CT_InstTBL[i] = kaddClassDef(NULL, &InstDef, pline);
+			CT_InstTBL[i] = Konoha_addClassDef(NULL, &InstDef, pline);
 		}
 	}
 #define TY_Instruction         (CT_InstTBL[ 0])->cid
@@ -3868,7 +3868,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_Value = kaddClassDef(NULL, &ValueDef, pline);
+	kclass_t *CT_Value = Konoha_addClassDef(NULL, &ValueDef, pline);
 	kclass_t *CT_PassTBL[4];
 	{
 		static const char *PassDefName[] = {
@@ -3884,7 +3884,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		//InstDef.free = Inst_free;
 		for (int i = 0; i < 4; i++) {
 			PassDef.structname = PassDefName[i];
-			CT_PassTBL[i] = kaddClassDef(NULL, &PassDef, pline);
+			CT_PassTBL[i] = Konoha_addClassDef(NULL, &PassDef, pline);
 		}
 	}
 #define TY_Pass          (CT_PassTBL[0])->cid
@@ -4213,10 +4213,10 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(LLVM_parseBitcodeFile), TY_Value, TY_LLVM, MN_("parseBitcodeFile"), 1, TY_String, FN_("bcfile"),
 		DEND,
 	};
-	kloadMethodData(NULL, methoddata);
-	kloadConstData(ks, IntAttributes, 0);
-	kloadConstData(ks, IntIntrinsic, 0);
-	kloadConstData(ks, IntGlobalVariable, 0);
+	Konoha_loadMethodData(NULL, methoddata);
+	Konoha_loadConstData(ks, IntAttributes, 0);
+	Konoha_loadConstData(ks, IntIntrinsic, 0);
+	Konoha_loadConstData(ks, IntGlobalVariable, 0);
 
 	return true;
 }

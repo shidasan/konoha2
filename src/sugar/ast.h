@@ -88,15 +88,16 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	if(tk->tt == TK_SYMBOL) {
 		Token_resolved(_ctx, ks, tk);
 	}
-	if(tk->tt == TK_USYMBOL) {
+	else if(tk->tt == TK_USYMBOL) {
 		if(!Token_resolved(_ctx, ks, tk)) {
-			kcid_t ty = kKonohaSpace_getcid(ks, S_text(tk->text), S_size(tk->text), TY_unknown);
-			if(ty != TY_unknown) {
-				tk->kw = KW_TYPE; tk->ty = ty;
+			kclass_t *ct = Konoha_getCT(ks, NULL/*FIXME*/, S_text(tk->text), S_size(tk->text), TY_unknown);
+			if(ct != NULL) {
+				tk->kw = KW_TYPE;
+				tk->ty = ct->cid;
 			}
 		}
 	}
-	if(tk->tt == TK_OPERATOR) {
+	else if(tk->tt == TK_OPERATOR) {
 		if(!Token_resolved(_ctx, ks, tk)) {
 			SUGAR_P(ERR_, tk->uline, tk->lpos, "operator '%s' is undefined", kToken_s(tk));
 			return e;
@@ -147,7 +148,7 @@ static int makeTree(CTX, kKonohaSpace *ks, kArray *tls, ktoken_t tt, int s, int 
 			return i;
 		}
 		if(tk->tt == TK_INDENT && closech != '}') continue;  // remove INDENT;
-		appendKeyword(_ctx, ks, tls, i, e, tkp->sub);
+		i = appendKeyword(_ctx, ks, tls, i, e, tkp->sub);
 	}
 	/* syntax error */ {
 		SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);

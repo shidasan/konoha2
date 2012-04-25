@@ -304,7 +304,7 @@ static KMETHOD String_toLower(CTX, ksfp_t *sfp _RIX)
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Coercion kMethod_Coercion
-#define _Immutable kMethod_Immutable
+#define _Im kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
 static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
@@ -316,22 +316,22 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 //		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_s,
 //		_Public|_Const, _F(String_opUNTIL),     TY_String,  TY_String, MN_("opUNTIL"), 2, TY_Int, FN_s, TY_Int, FN_n,
 //		_Public|_Const, _F(String_opTO),        TY_String,  TY_String, MN_("opTO"),  2, TY_Int, FN_x, TY_Int, FN_y,
-		_Public|_Const, _F(String_opEQ),        TY_Boolean, TY_String, MN_("opEQ"),  1, TY_String, FN_s,
-		_Public|_Const, _F(String_opEQ),        TY_Boolean, TY_String, MN_("equals"),  1, TY_String, FN_s,
-		_Public|_Const, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_s,
-		_Public|_Const, _F(String_trim),        TY_String, TY_String, MN_("trim"), 0,
-		_Public|_Const, _F(String_get),         TY_String, TY_String, MN_("get"), 1, TY_Int, FN_n,
-		_Public|_Const, _F(String_startsWith),  TY_Boolean, TY_String, MN_("startsWith"), 1, TY_String, FN_s,
-		_Public|_Const, _F(String_endsWith),    TY_Boolean, TY_String, MN_("endsWith"),   1, TY_String, FN_s,
-		_Public|_Const, _F(String_getSize),     TY_Int, TY_String, MN_("getSize"), 0,
-		_Public|_Const, _F(String_indexOf),     TY_Int, TY_String, MN_("indexOf"), 1, TY_String, FN_n,
-		_Public|_Const, _F(String_lastIndexOf), TY_Int, TY_String, MN_("lastIndexOf"), 1, TY_String, FN_n,
-		_Public|_Const, _F(String_toUpper),     TY_String, TY_String, MN_("toUpper"), 0,
-		_Public|_Const, _F(String_toLower),     TY_String, TY_String, MN_("toLower"), 0,
-		_Public|_Const, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_n, TY_Int, FN_n,
+		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("opEQ"),  1, TY_String, FN_s,
+		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("equals"),  1, TY_String, FN_s,
+		_Public|_Const|_Im, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_s,
+		_Public|_Const|_Im, _F(String_trim),        TY_String, TY_String, MN_("trim"), 0,
+		_Public|_Const|_Im, _F(String_get),         TY_String, TY_String, MN_("get"), 1, TY_Int, FN_n,
+		_Public|_Const|_Im, _F(String_startsWith),  TY_Boolean, TY_String, MN_("startsWith"), 1, TY_String, FN_s,
+		_Public|_Const|_Im, _F(String_endsWith),    TY_Boolean, TY_String, MN_("endsWith"),   1, TY_String, FN_s,
+		_Public|_Const|_Im, _F(String_getSize),     TY_Int, TY_String, MN_("getSize"), 0,
+		_Public|_Const|_Im, _F(String_indexOf),     TY_Int, TY_String, MN_("indexOf"), 1, TY_String, FN_n,
+		_Public|_Const|_Im, _F(String_lastIndexOf), TY_Int, TY_String, MN_("lastIndexOf"), 1, TY_String, FN_n,
+		_Public|_Const|_Im, _F(String_toUpper),     TY_String, TY_String, MN_("toUpper"), 0,
+		_Public|_Const|_Im, _F(String_toLower),     TY_String, TY_String, MN_("toLower"), 0,
+		_Public|_Const|_Im, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_n, TY_Int, FN_n,
 		DEND,
 	};
-	kloadMethodData(NULL, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	return true;
 }
 

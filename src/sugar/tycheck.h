@@ -372,6 +372,7 @@ static kObject *KonohaSpace_getSymbolValueNULL(CTX, kKonohaSpace *ks, const char
 static KMETHOD ExprTyCheck_USYMBOL(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	DBG_P("USYMBOL...");
 	kToken *tk = expr->tk;
 	kuname_t ukey = kuname(S_text(tk->text), S_size(tk->text), 0, FN_NONAME);
 	if(ukey != FN_NONAME) {

@@ -90,126 +90,6 @@ static KDEFINE_CLASS KonohaSpaceDef = {
 	.free = KonohaSpace_free,
 };
 
-static int comprKeyVal(const void *a, const void *b)
-{
-	int akey = FN_UNBOX(((kvs_t*)a)->key);
-	int bkey = FN_UNBOX(((kvs_t*)b)->key);
-	return akey - bkey;
-}
-
-static kvs_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey)
-{
-	size_t min = 0, max = KARRAYSIZE(ks->cl.bytesize, kvs);
-	while(min < max) {
-		size_t p = (max + min) / 2;
-		ksymbol_t key = FN_UNBOX(ks->cl.kvs[p].key);
-		if(key == ukey) return ks->cl.kvs + p;
-		if(key < ukey) {
-			min = p + 1;
-		}
-		else {
-			max = p;
-		}
-	}
-	return NULL;
-}
-
-static kbool_t checkConflictedConst(CTX, kKonohaSpace *ks, kvs_t *kvs, kline_t pline)
-{
-	ksymbol_t ukey = FN_UNBOX(kvs->key);
-	kvs_t* ksval = KonohaSpace_getConstNULL(_ctx, ks, ukey);
-	if(ksval != NULL) {
-		if(kvs->ty == ksval->ty && kvs->uval == ksval->uval) {
-			return true;  // same value
-		}
-		kreportf(WARN_, pline, "conflict name: %s", T_UN(ukey));
-		return true;
-	}
-	return false;
-}
-
-static void KonohaSpace_mergeConstData(CTX, struct _kKonohaSpace *ks, kvs_t *kvs, size_t nitems, kline_t pline)
-{
-	size_t i, s = KARRAYSIZE(ks->cl.bytesize, kvs);
-	if(s == 0) {
-		KARRAY_INIT(&ks->cl, (nitems + 8) * sizeof(kvs_t));
-		memcpy(ks->cl.kvs, kvs, nitems * sizeof(kvs_t));
-	}
-	else {
-		kwb_t wb;
-		kwb_init(&(ctxsugar->cwb), &wb);
-		for(i = 0; i < nitems; i++) {
-			if(kvs[i].ty == TY_TYPE) continue;  // class table
-			if(checkConflictedConst(_ctx, ks, kvs+i, pline)) continue;
-			kwb_write(&wb, (const char*)(kvs+i), sizeof(kvs_t));
-		}
-		kvs = (kvs_t*)kwb_top(&wb, 0);
-		nitems = kwb_bytesize(&wb)/sizeof(kvs_t);
-		if(nitems > 0) {
-			KARRAY_RESIZE(&ks->cl, (s + nitems + 8) * sizeof(kvs_t));
-			memcpy(ks->cl.kvs + s, kvs, nitems * sizeof(kvs_t));
-		}
-		kwb_free(&wb);
-	}
-	ks->cl.bytesize = (s + nitems) * sizeof(kvs_t);
-	qsort(ks->cl.kvs, s + nitems, sizeof(kvs_t), comprKeyVal);
-}
-
-static void KonohaSpace_importClassName(CTX, kKonohaSpace *ks, kpack_t packdom, kline_t pline)
-{
-	kvs_t kv;
-	kwb_t wb;
-	kwb_init(&(_ctx->stack->cwb), &wb);
-	size_t i, size = KARRAYSIZE(_ctx->share->ca.bytesize, uintptr);
-	for(i = 0; i < size; i++) {
-		kclass_t *ct = CT_(i);
-		if(ct->packdom == packdom) {
-			kv.key = ct->nameid;
-			kv.ty  = TY_TYPE;
-			kv.uval = (uintptr_t)ct;
-		}
-		kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
-	}
-	size_t nitems = kwb_bytesize(&wb) / sizeof(kvs_t);
-	if(nitems > 0) {
-		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, (kvs_t*)kwb_top(&wb, 0), nitems, pline);
-	}
-	kwb_free(&wb);
-}
-
-static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kline_t pline)
-{
-	INIT_GCSTACK();
-	kvs_t kv;
-	kwb_t wb;
-	kwb_init(&(_ctx->stack->cwb), &wb);
-	while(d[0] != NULL) {
-		DBG_P("key='%s'", d[0]);
-		kv.key = kuname(d[0], strlen(d[0]), SPOL_TEXT|SPOL_ASCII, _NEWID) | FN_BOXED;
-		kv.ty  = (ktype_t)(uintptr_t)d[1];
-		if(kv.ty == TY_TEXT) {
-			kv.ty = TY_String;
-			kv.sval = new_kString(d[2], strlen(d[2]), SPOL_TEXT);
-			PUSH_GCSTACK(kv.oval);
-		}
-		else if(TY_isUnbox(kv.ty)) {
-			kv.key = FN_UNBOX(kv.key);
-			kv.uval = (uintptr_t)d[2];
-		}
-		else {
-			kv.oval = (kObject*)d[2];
-		}
-		kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
-		d += 3;
-	}
-	size_t nitems = kwb_bytesize(&wb) / sizeof(kvs_t);
-	if(nitems > 0) {
-		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, (kvs_t*)kwb_top(&wb, 0), nitems, pline);
-	}
-	kwb_free(&wb);
-	RESET_GCSTACK();
-}
-
 static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int isnew)
 {
 	kKonohaSpace *ks = ks0;
@@ -302,19 +182,152 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
 }
 
+// USymbolTable
+
+static int comprKeyVal(const void *a, const void *b)
+{
+	int akey = FN_UNBOX(((kvs_t*)a)->key);
+	int bkey = FN_UNBOX(((kvs_t*)b)->key);
+	return akey - bkey;
+}
+
+static kvs_t* KonohaSpace_getConstNULL(CTX, kKonohaSpace *ks, ksymbol_t ukey)
+{
+	size_t min = 0, max = KARRAYSIZE(ks->cl.bytesize, kvs);
+	while(min < max) {
+		size_t p = (max + min) / 2;
+		ksymbol_t key = FN_UNBOX(ks->cl.kvs[p].key);
+		if(key == ukey) return ks->cl.kvs + p;
+		if(key < ukey) {
+			min = p + 1;
+		}
+		else {
+			max = p;
+		}
+	}
+	return NULL;
+}
+
+static kbool_t checkConflictedConst(CTX, kKonohaSpace *ks, kvs_t *kvs, kline_t pline)
+{
+	ksymbol_t ukey = kvs->key;
+	kvs_t* ksval = KonohaSpace_getConstNULL(_ctx, ks, ukey);
+	if(ksval != NULL) {
+		if(kvs->ty == ksval->ty && kvs->uval == ksval->uval) {
+			return true;  // same value
+		}
+		kreportf(WARN_, pline, "conflicted name: %s", T_UN(FN_UNBOX(ukey)));
+		return true;
+	}
+	return false;
+}
+
+static void KonohaSpace_mergeConstData(CTX, struct _kKonohaSpace *ks, kvs_t *kvs, size_t nitems, kline_t pline)
+{
+	size_t i, s = KARRAYSIZE(ks->cl.bytesize, kvs);
+	if(s == 0) {
+		KARRAY_INIT(&ks->cl, (nitems + 8) * sizeof(kvs_t));
+		memcpy(ks->cl.kvs, kvs, nitems * sizeof(kvs_t));
+	}
+	else {
+		kwb_t wb;
+		kwb_init(&(ctxsugar->cwb), &wb);
+		for(i = 0; i < nitems; i++) {
+			if(checkConflictedConst(_ctx, ks, kvs+i, pline)) continue;
+			kwb_write(&wb, (const char*)(kvs+i), sizeof(kvs_t));
+		}
+		kvs = (kvs_t*)kwb_top(&wb, 0);
+		nitems = kwb_bytesize(&wb)/sizeof(kvs_t);
+		if(nitems > 0) {
+			KARRAY_RESIZE(&ks->cl, (s + nitems + 8) * sizeof(kvs_t));
+			memcpy(ks->cl.kvs + s, kvs, nitems * sizeof(kvs_t));
+		}
+		kwb_free(&wb);
+	}
+	ks->cl.bytesize = (s + nitems) * sizeof(kvs_t);
+	qsort(ks->cl.kvs, s + nitems, sizeof(kvs_t), comprKeyVal);
+}
+
+static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kline_t pline)
+{
+	INIT_GCSTACK();
+	kvs_t kv;
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	while(d[0] != NULL) {
+		DBG_P("key='%s'", d[0]);
+		kv.key = kuname(d[0], strlen(d[0]), SPOL_TEXT|SPOL_ASCII, _NEWID) | FN_BOXED;
+		kv.ty  = (ktype_t)(uintptr_t)d[1];
+		if(kv.ty == TY_TEXT) {
+			kv.ty = TY_String;
+			kv.sval = new_kString(d[2], strlen(d[2]), SPOL_TEXT);
+			PUSH_GCSTACK(kv.oval);
+		}
+		else if(TY_isUnbox(kv.ty) || kv.ty == TY_TYPE) {
+			kv.key = FN_UNBOX(kv.key);
+			kv.uval = (uintptr_t)d[2];
+		}
+		else {
+			kv.oval = (kObject*)d[2];
+		}
+		kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
+		d += 3;
+	}
+	size_t nitems = kwb_bytesize(&wb) / sizeof(kvs_t);
+	if(nitems > 0) {
+		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, (kvs_t*)kwb_top(&wb, 0), nitems, pline);
+	}
+	kwb_free(&wb);
+	RESET_GCSTACK();
+}
+
+static void KonohaSpace_importClassName(CTX, kKonohaSpace *ks, kpack_t packid, kline_t pline)
+{
+	kvs_t kv;
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	size_t i, size = KARRAYSIZE(_ctx->share->ca.bytesize, uintptr);
+	for(i = 0; i < size; i++) {
+		kclass_t *ct = CT_(i);
+		if(CT_isPrivate(ct)) continue;
+		if(ct->packid == packid) {
+			DBG_P("importing packid=%s.%s, %s..", T_PN(ct->packid), T_UN(ct->nameid), T_PN(packid));
+			kv.key = ct->nameid;
+			kv.ty  = TY_TYPE;
+			kv.uval = (uintptr_t)ct;
+		}
+		kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
+	}
+	size_t nitems = kwb_bytesize(&wb) / sizeof(kvs_t);
+	if(nitems > 0) {
+		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, (kvs_t*)kwb_top(&wb, 0), nitems, pline);
+	}
+	kwb_free(&wb);
+}
+
 // KonohaSpace
 
-static kcid_t KonohaSpace_getcid(CTX, kKonohaSpace *ks, const char *name, size_t len, kcid_t def)
+static kclass_t *KonohaSpace_getCT(CTX, kKonohaSpace *ks, kclass_t *thisct/*NULL*/, const char *name, size_t len, kcid_t def)
 {
+	kclass_t *ct = NULL;
 	ksymbol_t un = kuname(name, len, 0, FN_NONAME);
-	uintptr_t hcode = longid(PN_konoha, un);
-	kclass_t *ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
-	//FIXME
-	if (!ct) {
-		hcode = longid(PN_sugar, un);
+	if(un != FN_NONAME) {
+		uintptr_t hcode = longid(PN_konoha, un);
 		ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+		if(ct == NULL) {
+			kvs_t *kvs = KonohaSpace_getConstNULL(_ctx, ks, un);
+			DBG_P("kvs=%s, %p", name, kvs);
+			if(kvs != NULL && kvs->ty == TY_TYPE) {
+				return (kclass_t*)kvs->uval;
+			}
+		}
 	}
-	return (ct != NULL) ? ct->cid : def;
+//	//FIXME
+//	if (!ct) {
+//		hcode = longid(PN_sugar, un);
+//		ct = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, hcode, 0);
+//	}
+	return (ct != NULL) ? ct : ((def >= 0) ? NULL : CT_(def));
 }
 
 static void KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd)

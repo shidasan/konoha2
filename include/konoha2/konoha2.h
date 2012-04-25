@@ -560,7 +560,7 @@ struct _kclass {
 //#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
 //#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
 //#define T_isImmutable(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Immutable))
-//#define T_isPrivate(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Private))
+#define CT_isPrivate(ct)      (TFLAG_is(kflag_t,(ct)->cflag, kClass_Private))
 //#define T_isFinal(t)        (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Final))
 
 #define TY_isSingleton(T)     (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_Singleton))
@@ -1024,6 +1024,8 @@ struct _kSystem {
 // klib2
 
 struct _kKonohaSpace;
+struct klogconf_t;
+
 typedef const struct _klib2  klib2_t;
 struct _klib2 {
 	void* (*Kmalloc)(CTX, size_t);
@@ -1084,7 +1086,7 @@ struct _klib2 {
 	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
 	kclass_t* (*KaddClassDef)(CTX, kString *, KDEFINE_CLASS *, kline_t);
 
-	kcid_t  (*KKonohaSpace_getcid)(CTX, const struct _kKonohaSpace *, const char *, size_t, kcid_t def);
+	kclass_t*  (*KKonohaSpace_getCT)(CTX, const struct _kKonohaSpace *, kclass_t *, const char *, size_t, kcid_t def);
 	void    (*KloadMethodData)(CTX, const struct _kKonohaSpace *, intptr_t *d);
 	void    (*KloadConstData)(CTX, const struct _kKonohaSpace *, const char **d, kline_t);
 
@@ -1187,13 +1189,12 @@ struct _klib2 {
 #define new_kMethod(F,C,M,P,FF)  (KPI)->Knew_Method(_ctx, F, C, M, P, FF)
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 
-#define KCLASS(cid)              S_text(CT(cid)->name)
-#define kKonohaSpace_getcid(NS, S, L, C)  (KPI)->KKonohaSpace_getcid(_ctx, NS, S, L, C)
-#define ksetModule(N,D,P)        (KPI)->KsetModule(_ctx, N, D, P)
-#define kaddClassDef(NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, NAME, DEF, UL)
-#define kloadMethodData(NS, DEF)   (KPI)->KloadMethodData(_ctx, NS, DEF)
-
-#define kloadConstData(KS, DEF, UL)    (KPI)->KloadConstData(_ctx, KS, (const char**)&(DEF), UL)
+#define KCLASS(cid)                          S_text(CT(cid)->name)
+#define Konoha_getCT(NS, THIS, S, L, C)      (KPI)->KKonohaSpace_getCT(_ctx, NS, THIS, S, L, C)
+#define Konoha_setModule(N,D,P)              (KPI)->KsetModule(_ctx, N, D, P)
+#define Konoha_addClassDef(NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, NAME, DEF, UL)
+#define Konoha_loadMethodData(NS, DEF)       (KPI)->KloadMethodData(_ctx, NS, DEF)
+#define Konoha_loadConstData(KS, DEF, UL)    (KPI)->KloadConstData(_ctx, KS, (const char**)&(DEF), UL)
 
 typedef struct {
 	const char *key;
@@ -1212,6 +1213,12 @@ typedef struct {
 	uintptr_t ty;
 	kfloat_t value;
 } KDEFINE_FLOAT_CONST;
+
+typedef struct {
+	const char *key;
+	uintptr_t ty;
+	kclass_t *ct;
+} KDEFINE_CLASS_CONST;
 
 
 #define CRIT_  0

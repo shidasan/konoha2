@@ -863,9 +863,9 @@ static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args,
 	base->h.setup    = kioshare_setup;
 	base->h.reftrace = kioshare_reftrace;
 	base->h.free     = kioshare_free;
-	ksetModule(MOD_IO, &base->h, pline);
-	base->cInputStream  = kaddClassDef(NULL, &InputStreamDef, pline);
-	base->cOutputStream = kaddClassDef(NULL, &OutputStreamDef, pline);
+	Konoha_setModule(MOD_IO, &base->h, pline);
+	base->cInputStream  = Konoha_addClassDef(NULL, &InputStreamDef, pline);
+	base->cOutputStream = Konoha_addClassDef(NULL, &OutputStreamDef, pline);
 
 	int FN_x = FN_("x");
 	int FN_path = FN_("path");
@@ -886,7 +886,7 @@ static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args,
 		_Public, _F(OutputStream_close),     TY_void,         TY_OutputStream, MN_("close"), 0,
 		DEND,
 	};
-	kloadMethodData(NULL, MethodData);
+	Konoha_loadMethodData(NULL, MethodData);
 	return true;
 }
 

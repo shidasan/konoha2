@@ -482,7 +482,7 @@ kcid_t knh_Term_cid(CTX, kTerm *tk, ktype_t reqt)
 				(tk)->cid = CLASS_Exception;
 				return CLASS_Exception;
 			}
-			cid = knh_KonohaSpace_getcid(_ctx, ns, TK_tobytes(tk));
+			cid = knh_KonohaSpace_getCT(_ctx, ns, TK_tobytes(tk));
 			break;
 		}
 		case TT_TYPEOF: {

@@ -496,7 +496,7 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 //		_Public, _F(System_socketpair), TY_Int, TY_System, MN_("socketpair"),
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 			{"PF_LOCAL",TY_Int, PF_LOCAL},
 			{"PF_UNIX", TY_Int, PF_UNIX},
@@ -553,7 +553,7 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 			{"SHUT_RDWR", TY_Int, SHUT_RDWR},
 			{}
 	};
-	kloadConstData(ks, IntData, pline);
+	Konoha_loadConstData(ks, IntData, pline);
 	return true;
 }
 

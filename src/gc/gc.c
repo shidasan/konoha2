@@ -84,7 +84,7 @@ void MODGC_init2(CTX, kcontext_t *ctx)
 	base->h.free     = kmodgc_free;
 //
 //	klib2_t *l = ctx->lib2;
-//	l->KKonohaSpace_getcid   = KonohaSpace_getcid;
+//	l->KKonohaSpace_getCT   = KonohaSpace_getCT;
 //	l->KloadMethodData = KonohaSpace_loadMethodData;
 //	l->KloadConstData  = KonohaSpace_loadConstData;
 //	l->Kraise = Kraise;

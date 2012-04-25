@@ -149,7 +149,7 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	base->h.setup    = kmodfloat_setup;
 	base->h.reftrace = kmodfloat_reftrace;
 	base->h.free     = kmodfloat_free;
-	ksetModule(MOD_float, &base->h, pline);
+	Konoha_setModule(MOD_float, &base->h, pline);
 
 	KDEFINE_CLASS FloatDef = {
 		STRUCTNAME(Float),
@@ -159,7 +159,7 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 		.init = Float_init,
 		.p     = Float_p,
 	};
-	base->cFloat = kaddClassDef(NULL, &FloatDef, pline);
+	base->cFloat = Konoha_addClassDef(NULL, &FloatDef, pline);
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im, _F(Float_opADD), TY_Float, TY_Float, MN_("opADD"), 1, TY_Float, FN_x,
@@ -178,12 +178,12 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 		_Public|_Const|_Im, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	KDEFINE_FLOAT_CONST FloatData[] = {
 		{"FLOAT_EPSILON", TY_Float, DBL_EPSILON},
 		{}
 	};
-	kloadConstData(ks, FloatData, pline);
+	Konoha_loadConstData(ks, FloatData, pline);
 	return true;
 }
 

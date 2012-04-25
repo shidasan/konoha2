@@ -1959,9 +1959,9 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 	base->h.reftrace = kmodcode_reftrace;
 	base->h.free     = kmodcode_free;
 
-	ksetModule(MOD_code, &base->h, 0);
-	base->cBasicBlock = kaddClassDef(NULL, &BasicBlockDef, 0);
-	base->cKonohaCode = kaddClassDef(NULL, &KonohaCodeDef, 0);
+	Konoha_setModule(MOD_code, &base->h, 0);
+	base->cBasicBlock = Konoha_addClassDef(NULL, &BasicBlockDef, 0);
+	base->cKonohaCode = Konoha_addClassDef(NULL, &KonohaCodeDef, 0);
 	kmodcode_setup(_ctx, &base->h, 0/*lazy*/);
 	{
 		INIT_GCSTACK();

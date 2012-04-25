@@ -165,7 +165,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 //	base->h.setup    = kmodfloat_setup;
 //	base->h.reftrace = kmodfloat_reftrace;
 //	base->h.free     = kmodfloat_free;
-//	ksetModule(MOD_float, &base->h, pline);
+//	Konoha_setModule(MOD_float, &base->h, pline);
 
 	KDEFINE_CLASS PyObjectDef = {
 		STRUCTNAME(PyObject),
@@ -177,7 +177,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		.free = PyObject_free,
 		.p    = PyObject_p,
 	};
-	kclass_t *cPython = kaddClassDef(NULL, &PyObjectDef, pline);
+	kclass_t *cPython = Konoha_addClassDef(NULL, &PyObjectDef, pline);
 	int TY_PyObject = cPython->cid;
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toBoolean), TY_Boolean, TY_PyObject, MN_to(TY_Boolean), 0,
@@ -191,14 +191,14 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Im, _F(PyObject_), TY_PyObject, TY_PyObject, 0, 1, TY_PyObject, 0,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	if(IS_defineFloat()) {
 		intptr_t MethodData[] = {
 			_Public|_Const|_Im|_Coercion, _F(PyObject_toFloat), TY_Float, TY_PyObject, MN_to(TY_Float), 0,
 			_Public|_Const|_Im|_Coercion, _F(Float_toPyObject), TY_PyObject, TY_Float, MN_to(TY_PyObject), 0,
 			DEND,
 		};
-		kloadMethodData(ks, MethodData);
+		Konoha_loadMethodData(ks, MethodData);
 	}
 	return true;
 }

@@ -2335,15 +2335,15 @@ kclass_t *knh_KonohaSpace_getLinkClassTBLNULL(CTX, kKonohaSpace *ns, kbytes_t pa
 		return ClassTBL(CLASS_Converter);
 	}
 	kbytes_t scheme = knh_bytes_head(path, ':');
-	kcid_t cid = TY_unknown; /* = knh_KonohaSpace_getcid(_ctx, ns, scheme);*/
+	kcid_t cid = TY_unknown; /* = knh_KonohaSpace_getCT(_ctx, ns, scheme);*/
 	if(islower(scheme.buf[0]) && scheme.len < 81) {
 		char buf[128] = {0}; // zero clear
 		knh_memcpy(buf, scheme.text, scheme.len);
 		buf[scheme.len] = ':';
-		cid = knh_KonohaSpace_getcid(_ctx, ns, B(buf));
+		cid = knh_KonohaSpace_getCT(_ctx, ns, B(buf));
 	}
 	if(cid == TY_unknown) {
-		cid = knh_KonohaSpace_getcid(_ctx, ns, scheme);
+		cid = knh_KonohaSpace_getCT(_ctx, ns, scheme);
 	}
 	if(cid != TY_unknown) {
 		kMethod *mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, MN_opLINK);
@@ -2562,7 +2562,7 @@ static KMETHOD Method_opLINK(CTX, ksfp_t *sfp _RIX)
 	if(loc != -1) {
 		kbytes_t cpath = knh_bytes_first(bpath, loc);
 		kbytes_t mpath = knh_bytes_last(bpath, loc+1);
-		kcid_t cid = knh_KonohaSpace_getcid(_ctx, ns, cpath);
+		kcid_t cid = knh_KonohaSpace_getCT(_ctx, ns, cpath);
 		kmethodn_t mn = knh_getmn(_ctx, mpath, MN_NONAME);
 		if(cid != TY_unknown && mn != MN_NONAME) {
 			mtd = knh_KonohaSpace_getMethodNULL(_ctx, ns, cid, mn);

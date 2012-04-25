@@ -225,7 +225,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->h.free     = kmodsugar_free;
 
 	struct _klib2* l = (struct _klib2*)ctx->lib2;
-	l->KKonohaSpace_getcid   = KonohaSpace_getcid;
+	l->KKonohaSpace_getCT   = KonohaSpace_getCT;
 	l->KloadMethodData = KonohaSpace_loadMethodData;
 	l->KloadConstData  = KonohaSpace_loadConstData;
 
@@ -234,13 +234,13 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->packageList, new_(Array, 8));
 	base->packageMapNO = kmap_init(0);
 
-	ksetModule(MOD_sugar, (kmodshare_t*)base, 0);
-	base->cKonohaSpace = kaddClassDef(NULL, &KonohaSpaceDef, 0);
-	base->cToken = kaddClassDef(NULL, &TokenDef, 0);
-	base->cExpr  = kaddClassDef(NULL, &ExprDef, 0);
-	base->cStmt  = kaddClassDef(NULL, &StmtDef, 0);
-	base->cBlock = kaddClassDef(NULL, &BlockDef, 0);
-	base->cGamma = kaddClassDef(NULL, &GammaDef, 0);
+	Konoha_setModule(MOD_sugar, (kmodshare_t*)base, 0);
+	base->cKonohaSpace = Konoha_addClassDef(NULL, &KonohaSpaceDef, 0);
+	base->cToken = Konoha_addClassDef(NULL, &TokenDef, 0);
+	base->cExpr  = Konoha_addClassDef(NULL, &ExprDef, 0);
+	base->cStmt  = Konoha_addClassDef(NULL, &StmtDef, 0);
+	base->cBlock = Konoha_addClassDef(NULL, &BlockDef, 0);
+	base->cGamma = Konoha_addClassDef(NULL, &GammaDef, 0);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	knull(base->cToken);
@@ -527,6 +527,14 @@ static kline_t scriptfileid(CTX, char *pathbuf, size_t bufsiz, const char *pname
 	return 0;
 }
 
+static kKonohaSpace* new_KonohaSpace(CTX, kpack_t packdom, kpack_t packid)
+{
+	struct _kKonohaSpace *ks = new_W(KonohaSpace, kmodsugar->rootks);
+	ks->packid = packid;
+	ks->packdom = packid;
+	return (kKonohaSpace*)ks;
+}
+
 static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 {
 	char fbuf[256];
@@ -535,7 +543,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 	kpackage_t *pack = NULL;
 	if(fp != NULL) {
 		INIT_GCSTACK();
-		kKonohaSpace *ks = new_(KonohaSpace, kmodsugar->rootks);
+		kKonohaSpace *ks = new_KonohaSpace(_ctx, packid, packid);
 		PUSH_GCSTACK(ks);
 		kline_t uline = uline_init(_ctx, path, strlen(path), 1, 1);
 		KDEFINE_PACKAGE *packdef = KonohaSpace_openGlueHandler(_ctx, ks, fbuf, sizeof(fbuf), T_PN(packid), pline);
@@ -598,6 +606,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kpack_t packid, 
 	kpackage_t *pack = getPackageNULL(_ctx, packid, pline);
 	if(pack != NULL) {
 		res = 1;
+		DBG_P("merging.. packid=%p,%d", ks, packid);
 		KonohaSpace_merge(_ctx, ks, pack->ks, pline);
 		if(pack->packdef->initKonohaSpace != NULL) {
 			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
@@ -662,13 +671,13 @@ void MODSUGAR_defMethods(CTX)
 //		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(NULL, MethodData);
+	Konoha_loadMethodData(NULL, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 		{"INT_MAX", TY_Int, KINT_MAX},
 		{"INT_MIN", TY_Int, KINT_MIN},
 		{}
 	};
-	kloadConstData(kmodsugar->rootks, IntData, 0);
+	Konoha_loadConstData(kmodsugar->rootks, IntData, 0);
 }
 
 #ifdef __cplusplus

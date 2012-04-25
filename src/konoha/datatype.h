@@ -121,6 +121,7 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 		DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
 		if(ct->simbody == NULL) {
 			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
+			newct->cflag |= kClass_Private;
 			newct->cstruct_size *= 2;
 			KINITv(newct->cparam, ct->cparam);
 			KINITv(newct->methods, ct->methods);
@@ -818,7 +819,7 @@ static void kshare_init_methods(CTX)
 		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(NULL, MethodData);
+	Konoha_loadMethodData(NULL, MethodData);
 }
 
 #ifdef __cplusplus

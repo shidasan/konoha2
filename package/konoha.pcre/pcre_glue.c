@@ -691,7 +691,7 @@
 //	base->h.setup    = kregexshare_setup;
 //	base->h.reftrace = kregexshare_reftrace;
 //	base->h.free     = kregexshare_free;
-//	ksetModule(MOD_REGEX, &base->h, pline);
+//	Konoha_setModule(MOD_REGEX, &base->h, pline);
 //
 //	KDEFINE_CLASS RegexDef = {
 //		STRUCTNAME(Regex),
@@ -701,7 +701,7 @@
 //		.p    = Regex_p,
 //		.packid = ks->packid,
 //	};
-//	base->cRegex = kaddClassDef(NULL, &RegexDef, pline);
+//	base->cRegex = Konoha_addClassDef(NULL, &RegexDef, pline);
 //
 //	int FN_x = FN_("x");
 //	int FN_y = FN_("y");
@@ -711,7 +711,7 @@
 //		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
 //		DEND,
 //	};
-//	kloadMethodData(ks, MethodData);
+//	Konoha_loadMethodData(ks, MethodData);
 //	return true;
 //}
 //

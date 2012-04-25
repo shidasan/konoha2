@@ -26,7 +26,7 @@ static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 		{_KVi(SIGHUP)},
 		{_KVi(SIGINT)},
@@ -34,7 +34,7 @@ static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 		{_KVi(SIGKILL)},
 		{}
 	};
-	kloadConstData(kmodsugar->rootks, IntData, 0);
+	Konoha_loadConstData(kmodsugar->rootks, IntData, 0);
 	return true;
 }
 

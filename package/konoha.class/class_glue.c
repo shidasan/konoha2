@@ -99,7 +99,9 @@ static intptr_t CT_indexOfClassField(kclass_t *ct, ksymbol_t fn)
 // int KonohaSpace.getCid(String name, int defval)
 static KMETHOD KonohaSpace_getCid(CTX, ksfp_t *sfp _RIX)
 {
-	RETURNi_(kKonohaSpace_getcid(sfp[0].ks, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue));
+	kclass_t *ct = Konoha_getCT(sfp[0].ks, NULL/*fixme*/, S_text(sfp[1].s), S_size(sfp[1].s), (kcid_t)sfp[2].ivalue);
+	kint_t cid = ct != NULL ? ct->cid : sfp[2].ivalue;
+	RETURNi_(cid);
 }
 
 // int KonohaSpace.defineClass(int flag, String name, int supcid, int fieldsize);
@@ -120,7 +122,7 @@ static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 		kreportf(ERR_, sfp[K_RTNIDX].uline, "%s is @Final", T_cid(cdef.supcid));
 		kraise(0);
 	}
-	kclass_t *c = kaddClassDef(sfp[2].s, &cdef, sfp[K_RTNIDX].uline);
+	kclass_t *c = Konoha_addClassDef(sfp[2].s, &cdef, sfp[K_RTNIDX].uline);
 	RETURNi_(c->cid);
 }
 
@@ -173,7 +175,7 @@ static	kbool_t class_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		_Public, _F(KonohaSpace_defineClassField), TY_Int, TY_KonohaSpace, MN_("defineClassField"), 5, TY_Int, FN_cid, TY_Int, FN_flag, TY_Int, FN_("type"), TY_String, FN_name, TY_Object, FN_defval,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	return true;
 }
 

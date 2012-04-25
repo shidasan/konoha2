@@ -46,9 +46,9 @@ kclass_t *ct_dummy;
 
 void init_test(CTX)
 {
-    ct_dummybase = (kclass_t *) kaddClassDef(&DummyBaseDef);
+    ct_dummybase = (kclass_t *) Konoha_addClassDef(&DummyBaseDef);
     DummyDef.supcid = ct_dummybase->cid;
-    ct_dummy = (kclass_t *) kaddClassDef(&DummyDef);
+    ct_dummy = (kclass_t *) Konoha_addClassDef(&DummyDef);
     const char *MethodData[] = {
         DF_(0L), DF_(DummyBase_f), DT_(Int), DF_("DummyBase"), "f", DF_(0),
         DF_(0), DF_(DummyBase_g), DT_(Int), DF_("DummyBase"), "g", DF_(0),

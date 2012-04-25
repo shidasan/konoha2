@@ -132,7 +132,7 @@ static	kbool_t i_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, 
 		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	return true;
 }
 

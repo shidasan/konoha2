@@ -51,7 +51,7 @@ kKonohaSpace* new_KonohaSpace(CTX, kKonohaSpace *parent)
 	return ns;
 }
 
-kcid_t knh_KonohaSpace_getcid(CTX, kKonohaSpace *ns, kbytes_t sname)
+kcid_t knh_KonohaSpace_getCT(CTX, kKonohaSpace *ns, kbytes_t sname)
 {
 	DBG_ASSERT(IS_KonohaSpace(ns));
 	if(knh_bytes_equals(sname, STEXT("Script"))) {
@@ -128,7 +128,7 @@ ktype_t knh_KonohaSpace_gettype(CTX, kKonohaSpace *ns, kbytes_t name)
 			return TY_var;
 		}
 	}
-	return knh_KonohaSpace_getcid(_ctx, ns, name);
+	return knh_KonohaSpace_getCT(_ctx, ns, name);
 }
 
 ktype_t kKonohaSpaceagcid(CTX, kKonohaSpace *o, kcid_t cid, kbytes_t tag)
@@ -136,7 +136,7 @@ ktype_t kKonohaSpaceagcid(CTX, kKonohaSpace *o, kcid_t cid, kbytes_t tag)
 	CWB_t cwbbuf, *cwb = CWB_open(_ctx, &cwbbuf);
 	kcid_t bcid = ClassTBL(cid)->bcid;
 	knh_printf(_ctx, cwb->w, "%C:%B", bcid, tag);
-	cid = knh_KonohaSpace_getcid(_ctx, o, CWB_tobytes(cwb));
+	cid = knh_KonohaSpace_getCT(_ctx, o, CWB_tobytes(cwb));
 	CWB_close(_ctx, cwb);
 	return cid;
 }

@@ -50,7 +50,7 @@ static void loadData(CTX, kKonohaSpace *ns, const char *dname, Object *value)
 		kString *name = new_T(dname + (loc+1));
 		kcid_t cid = CLASS_Tdynamic;
 		if(loc != -1) {
-			cid = knh_KonohaSpace_getcid(_ctx, ns, knh_bytes_first(n, loc));
+			cid = knh_KonohaSpace_getCT(_ctx, ns, knh_bytes_first(n, loc));
 			if(cid == TY_unknown) {
 				KNH_LOG("unknown class constant: %s", dname);
 				cid = CLASS_Tdynamic;
@@ -172,7 +172,7 @@ static kParam *knh_loadScriptParam(CTX, const kloaddata_t **d, uintptr_t uflag, 
 	return pa;
 }
 
-#define _CID(d)  (d < _MAX) ? (kcid_t)(d) : knh_KonohaSpace_getcid(_ctx, K_GMANS, kloaddata_tobytes(d))
+#define _CID(d)  (d < _MAX) ? (kcid_t)(d) : knh_KonohaSpace_getCT(_ctx, K_GMANS, kloaddata_tobytes(d))
 #define _EXPTID(d)  (d < _MAX) ? (kevent_t)(d) : knh_geteid(_ctx, kloaddata_tobytes(d))
 
 static void knh_loadSystemData(CTX, const kloaddata_t *data, kParam **buf)

@@ -276,7 +276,7 @@ static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 		_Public|_Const, _F(Rope_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
 		DEND,
 	};
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	KSET_CLASSFUNC(CT_String, unbox, String2, pline);
 	KSET_CLASSFUNC(CT_String, free, String2, pline);
 	KSET_CLASSFUNC(CT_String, reftrace, String2, pline);
