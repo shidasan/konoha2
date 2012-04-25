@@ -31,13 +31,15 @@
 #ifndef STRING_GLUE_H_
 #define STRING_GLUE_H_
 
+#define SPOL_sub(s0) (S_isASCII(s0)? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
+
 //#define _SUB(s0) (S_isASCII(s0) ? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
 //#define _SUBCHAR(s0) (S_isASCII(s0) ? SPOL_ASCII : 0)
 //#define _CHARSIZE(len) (len==1 ? SPOL_ASCII : SPOL_UTF8)
 
 /* ************************************************************************ */
 
-#define USE_STRINGLIB
+
 #include <konoha2/klib.h>
 
 /* ------------------------------------------------------------------------ */
@@ -58,38 +60,30 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 	return s_size;
 #endif
 }
-
-//static kString *knh_mofflen(CTX, kString *s, size_t moff, size_t mlen)
-//{
-//#ifdef K_USING_UTF8
-//	if (0 <= (int)moff) {
-//		const unsigned char *start = (unsigned char *)S_text(s);
-//		const unsigned char *itr = start;
-//		size_t i;
-//		for(i = 0; i < moff; i++) {
-//			itr += utf8len(itr[0]);
-//		}
-//		start = itr;
-//		for(i = 0; i < mlen; i++) {
-//			itr += utf8len(itr[0]);
-//		}
-//		size_t len = itr - start;
-//		if (mlen == 1) {
-//			s = new_kString((const char *)start, len, SPOL_POOL|_CHARSIZE(len));
-//		}
-//		else {
-//			s = new_kString((const char *)start, len, _SUB(s));
-//		}
-//	}
-//	else {
-//		s = new_kString("", 0, 0);
-//	}
-//	return s;
-//#else
-//	KTODO(you must set K_USING_UTF8);
-////	return knh_bytes_subbytes(m, moff, mlen); /* if K_ENCODING is not set */
-//#endif
-//}
+// the function below must not use for ASCII string
+static kString *knh_msubstring(CTX, kString *s, size_t moff, size_t mlen)
+{
+#ifdef K_USING_UTF8
+	const unsigned char *start = (unsigned char *)S_text(s);
+	const unsigned char *itr = start;
+	size_t i;
+	for(i = 0; i < moff; i++) {
+		itr += utf8len(itr[0]);
+	}
+	start = itr;
+	for(i = 0; i < mlen; i++) {
+		itr += utf8len(itr[0]);
+	}
+	size_t len = itr - start;
+	if (mlen == 1) {
+		s = new_kString((const char *)start, len, SPOL_POOL|SPOL_UTF8);
+	}
+	else {
+		s = new_kString((const char *)start, len, SPOL_POOL);
+	}
+#endif
+	return s;
+}
 
 /* ------------------------------------------------------------------------ */
 //## @Const method Boolean String.equals(String s);
@@ -204,7 +198,7 @@ static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	if(S_size(sfp[0].s) > len) {
-		ret = new_kString(s, len, _SUB(sfp[0].s));
+		ret = new_kString(s, len, SPOL_sub(sfp[0].s));
 	}
 	else {
 		ret = (kString *)sfp[0].s;
@@ -233,7 +227,7 @@ static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 	else { // FIXME NOW DEFINITELY IMMIDEATELY
 		size_t mlen = text_mlen(S_text(s), S_size(s));
 		size_t moff = check_index(_ctx, sfp[1].ivalue, mlen, sfp[K_RTNIDX].uline);
-//		s = knh_mofflen(_ctx, s, moff, 1); // TODO:
+		s = knh_msubstring(_ctx, s, moff, 1); // TODO:
 	}
 	RETURN_(s);
 }
@@ -260,7 +254,7 @@ static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 		size_t mlen = text_mlen(S_text(s0), S_size(s0));
 		size_t moff = check_index(_ctx, offset,  mlen, sfp[K_RTNIDX].uline);
 		length = (mlen - moff);
-//		ret = knh_mofflen(_ctx, s0, moff, length); // TODO!!
+		ret = knh_msubstring(_ctx, s0, moff, length); // TODO!!
 	}
 	RETURN_(ret);
 }
@@ -300,7 +294,7 @@ static KMETHOD String_toUpper(CTX, ksfp_t *sfp _RIX)
 //## @Const method String String.toLower()
 static KMETHOD String_toLower(CTX, ksfp_t *sfp _RIX)
 {
-	TODO_ASSERT();
+	TODO_ASSERT(1);
 }
 
 // --------------------------------------------------------------------------

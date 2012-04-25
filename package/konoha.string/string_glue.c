@@ -27,6 +27,8 @@
 
 /* ************************************************************************ */
 
+#define USE_STRINGLIB 1
+
 #include <konoha2/konoha2.h>
 #include <konoha2/sugar.h>
 
