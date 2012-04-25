@@ -72,7 +72,7 @@ static kbool_t util_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 		DEND,
 	};
 #undef TY_O
-	kloadMethodData(ks, MethodData);
+	Konoha_loadMethodData(ks, MethodData);
 	return true;
 }
 

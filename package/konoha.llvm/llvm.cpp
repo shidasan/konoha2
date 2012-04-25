@@ -3736,7 +3736,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 	base->h.setup    = kmodllvm_setup;
 	base->h.reftrace = kmodllvm_reftrace;
 	base->h.free     = kmodllvm_free;
-	ksetModule(MOD_llvm, &base->h, pline);
+	Konoha_setModule(MOD_llvm, &base->h, pline);
 
 	static KDEFINE_CLASS ValueDef = {
 		"Value"/*structname*/,
@@ -3754,7 +3754,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	base->cValue = kaddClassDef(NULL, &ValueDef, pline);
+	base->cValue = Konoha_addClassDef(NULL, &ValueDef, pline);
 
 	static const char *TypeDefName[] = {
 		"Type",
