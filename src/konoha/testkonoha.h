@@ -74,6 +74,7 @@ static int test_kwb(CTX)
 	KNH_FREE(buf, sizeof(karray_t));
 	return 0;
 }
+
 #include "konoha2/logger.h"
 
 static int test_logger(CTX)

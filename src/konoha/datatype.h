@@ -429,6 +429,35 @@ static kString* new_Stringf(CTX, int spol, const char *fmt, ...)
 	return s;
 }
 
+// Bytes
+
+//#include <iconv.h>
+//#define K_BYTES_BUFSIZE 256
+//static kBytes* conv(CTX, const char* from, const char* to, const char *text, size_t len, kwb_t *wb)
+//{
+//	iconv_t c;
+//	size_t olen = K_BYTES_BUFSIZE - 1;
+//	char tmp[K_BYTES_BUFSIZE] = {'\0'};
+//	kBytes *bytes;
+//	char *tmpp = tmp;
+//
+//	bytes = (kBytes*)malloc(sizeof(kBytes));
+//	c = iconv_open(from, to);
+//	if (c == (iconv_t)(-1)) {
+//		perror("ERROR: iconv open");
+//		return NULL;
+//	}
+//	olen = iconv(c, (char**)&text, &len, &tmpp, &olen);
+//	if (olen == (size_t)-1) {
+//		perror("ERROR: iconv");
+//		return NULL;
+//	}
+//	iconv_close(c);
+//	strncpy(bytes->text, tmp, K_BYTES_BUFSIZE);
+//	return bytes;
+//}
+//#undef K_BYTES_BUFSIZE
+
 // Array
 
 struct _kAbstractArray {
@@ -670,6 +699,7 @@ static void kshare_initklib2(struct _klib2 *l)
 	l->Knew_Object = new_Object;
 	l->Knew_String   = new_String;
 	l->Knew_Stringf  = new_Stringf;
+	//l->Kconv  = conv;
 	l->KArray_add    = Array_add;
 	l->KArray_insert = Array_insert;
 	l->KArray_clear  = Array_clear;

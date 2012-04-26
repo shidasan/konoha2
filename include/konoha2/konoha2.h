@@ -313,6 +313,7 @@ struct _kObject;
 #define MOD_code     2
 #define MOD_sugar    3
 #define MOD_float   11
+#define MOD_bytes   12
 
 struct kmodlocal_t;
 typedef struct kmodlocal_t {
@@ -763,6 +764,10 @@ struct _kBytes {
 	COMMON_BYTEARRAY;
 };
 
+typedef struct {
+	COMMON_BYTEARRAY;
+} kbytes_t;
+
 //typedef struct {
 //	size_t       len;
 //	union {
@@ -1075,6 +1080,7 @@ struct _klib2 {
 	kString* (*Knew_String)(CTX, const char *, size_t, int);
 	kString* (*Knew_Stringf)(CTX, int, const char *, ...);
 	kString* (*KString)(CTX, int, kString *, kString *);
+	//kString* (*Kconv)(CTX, const char*, const char*, const char*, size_t, kwb_t*);
 
 	void (*KArray_add)(CTX, kArray *, kObject *);
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
@@ -1182,6 +1188,7 @@ struct _klib2 {
 
 #define new_kString(T,S,P)        (KPI)->Knew_String(_ctx, T, S, P)
 #define new_kStringf(P, FMT, ...) (KPI)->Knew_Stringf(_ctx, P, FMT, ## __VA_ARGS__)
+//#define convert(FROM,TO,T,L,WB)   (KPI)->Kconv(_ctx, FROM, TO, T, L, WB)
 
 #define kArray_size(A)            (((A)->bytesize)/sizeof(void*))
 #define kArray_add(A, V)          (KPI)->KArray_add(_ctx, A, UPCAST(V))
