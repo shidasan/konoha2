@@ -9,13 +9,36 @@
 #define BYTES_GLUE_H_
 #include <iconv.h>
 
-#define kbytesmod        ((kbytesmod_t*)_ctx->mod[MOD_bytes])
-#define kmodbytes        ((kmodbytes_t*)_ctx->modshare[MOD_bytes])
-#define IS_defineBytes() (_ctx->modshare[MOD_bytes] != NULL)
-#define CT_Bytes         kmodbytes->cBytes
-#define TY_Bytes         kmodbytes->cBytes->cid
+/* ------------------------------------------------------------------------ */
+/* [util] */
+
+static const char *getSystemEncoding(void)
+{
+	//TODO!! check LC_CTYPE compatibility with iconv
+	char *enc = getenv("LC_CTYPE");
+	if(enc != NULL) {
+		return enc;
+	}
+#if defined(K_USING_WINDOWS_)
+	static char codepage[64];
+	knh_snprintf(codepage, sizeof(codepage), "CP%d", (int)GetACP());
+	return codepage;
+#else
+	return "UTF-8";
+#endif
+}
+
+/* ------------------------------------------------------------------------ */
+/* [class defs] */
+#define ctxiconv        ((ctxiconv_t*)_ctx->mod[MOD_iconv])
+#define kmodiconv        ((kmodiconv_t*)_ctx->modshare[MOD_iconv])
+#define IS_defineBytes() (_ctx->modshare[MOD_iconv] != NULL)
+#define CT_Bytes         kmodiconv->cBytes
+#define TY_Bytes         kmodiconv->cBytes->cid
 
 #define IS_Bytes(O)      ((O)->h.ct == CT_Bytes)
+
+#define BYTES_BUFSIZE 256
 
 typedef struct {
     kmodshare_t h;
@@ -23,35 +46,89 @@ typedef struct {
     void* (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
     const char* fmt;
     const char* locale;
-} kmodbytes_t;
+} kmodiconv_t;
 
 typedef struct {
     kmodlocal_t h;
-} kbytesmod_t;
+} ctxiconv_t;
 
 // Int
 static void Bytes_init(CTX, kObject *o, void *conf)
 {
-	//struct _kNumber *n = (struct _kNumber*)o;  // kFloat has the same structure
-	//n->ndata = (uintptr_t)conf;  // conf is unboxed data
+	struct _kBytes *ba = (struct _kBytes*)o;
+	ba->byteptr = NULL;
+	ba->bytesize = (size_t)conf;
+	if(ba->bytesize > 0) {
+		ba->byteptr = (const char *)KNH_ZMALLOC(ba->bytesize);
+	}
 }
+
+static void Bytes_free(CTX, kObject *o)
+{
+	struct _kBytes *ba = (struct _kBytes*)o;
+	if (ba->byteptr != NULL) {
+		KNH_FREE(ba->buf, ba->bytesize);
+		ba->byteptr = NULL;
+		ba->bytesize = 0;
+	}
+}
+
+//TODO!! yoan
+//static void Bytes_p(CTX, kOutputStream *w, kObject *o, int level)
+//{
+//	kBytes *ba = (kBytes*)o;
+//	if(IS_FMTs(level)) {
+//		knh_printf(_ctx, w, "byte[%d]", BA_size(ba));
+//	}
+//	else if(IS_FMTdump(level)) {
+//		size_t i, j, n;
+//		char buf[40];
+//		for(j = 0; j * 16 < ba->bu.len; j++) {
+//			knh_snprintf(buf, sizeof(buf), "%08x", (int)(j*16));
+//			knh_write(_ctx, w, B(buf));
+//			for(i = 0; i < 16; i++) {
+//				n = j * 16 + i;
+//				if(n < ba->bu.len) {
+//					knh_snprintf(buf, sizeof(buf), " %2x", (int)ba->bu.utext[n]);
+//					knh_write(_ctx, w, B(buf));
+//				}
+//				else {
+//					knh_write(_ctx, w, STEXT("   "));
+//				}
+//			}
+//			knh_write(_ctx, w, STEXT("    "));
+//			for(i = 0; i < 16; i++) {
+//				n = j * 16 + i;
+//				if(n < ba->bu.len && isprint(ba->bu.utext[n])) {
+//					knh_snprintf(buf, sizeof(buf), "%c", (int)ba->bu.utext[n]);
+//					knh_write(_ctx, w, B(buf));
+//				}
+//				else {
+//					knh_write(_ctx, w, STEXT(" "));
+//				}
+//			}
+//			knh_write_EOL(_ctx, w);
+//		}
+//	}
+//}
+
 
 static void Bytes_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 	//kwb_printf(wb, "%f", sfp[pos].fvalue);
 }
 
-static void kmodbytes_setup(CTX, struct kmodshare_t *def, int newctx)
+static void kmodiconv_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 }
 
-static void kmodbytes_reftrace(CTX, struct kmodshare_t *baseh)
+static void kmodiconv_reftrace(CTX, struct kmodshare_t *baseh)
 {
 }
 
-static void kmodbytes_free(CTX, struct kmodshare_t *baseh)
+static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodbytes_t));
+	KNH_FREE(baseh, sizeof(kmodiconv_t));
 }
 
 static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
@@ -79,32 +156,6 @@ static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline);
 
 /* ------------------------------------------------------------------------ */
 
-#define K_BYTES_BUFSIZE 256
-
-static inline kbytes_t _S_tobytes(CTX, kString *s)
-{
-	kbytes_t b;
-	b.text = S_text(s);
-	b.bytesize  = S_size(s);
-	return b;
-}
-#define S_tobytes(s) _S_tobytes(_ctx, s)
-#define S_totext(s) (s->text)
-//#define S_size(s) (s->bytesize)
-
-static kBytes* new_Bytes(CTX, const char *text, size_t len)
-{
-	kclass_t *ct = CT_Bytes;
-	struct _kBytes *b = NULL; //knh_PtrMap_getS(_ctx, ct->constPoolMapNULL, text, len);
-	if(b != NULL) return b;
-	b = (struct _kBytes*)new_kObject(ct, NULL);
-	b->text = text;
-	b->bytesize = len;
-	return b;
-}
-
-/* ------------------------------------------------------------------------ */
-
 //## @Const method Bytes String.toBytes();
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
@@ -121,29 +172,29 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_kString(S_totext(dst), S_size(dst), SPOL_ASCII));
 }
 
+
 //## @Const method Bytes Bytes.encode(String fmt);
 static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 {
-	kBytes* src = sfp[0].ba;
+	kBytes* ba = sfp[0].ba;
 	kString* to = sfp[1].s;
 	iconv_t c;
 	size_t len, olen;
-	char ret[K_BYTES_BUFSIZE] = {'\0'};
+	char ret[BYTES_BUFSIZE] = {'\0'};
 	char *r = ret;
-	len = olen = src->bytesize+1;
-
+	len = olen = ba->bytesize + 1;
 	c = iconv_open("UTF-8", to);
 	if (c == (iconv_t)(-1)) {
 		perror("ERROR: iconv open");
 		return NULL;
 	}
-	olen = iconv(c, &S_totext(src), &len, &r, &olen);
+//	olen = iconv(c, &S_totext(ba), &len, &r, &olen);
 	if (olen == (size_t)-1) {
 		perror("ERROR: iconv");
 		return NULL;
 	}
 	iconv_close(c);
-	RETURN_(new_Bytes(_ctx, ret, src->bytesize));
+	RETURN_(Bytes_init(_ctx, ret, ba->bytesize));
 }
 
 //## @Const method String Bytes.decode(String fmt);
@@ -154,7 +205,7 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 	//fprintf(stderr, "(decode)from: %s, text: %s, size: %lu\n", S_totext(from), S_totext(src), src->bytesize);
 	iconv_t c;
 	size_t len, olen;
-	char ret[K_BYTES_BUFSIZE] = {'\0'};
+	char ret[BYTES_BUFSIZE] = {'\0'};
 	char *r = ret;
 	len = olen = src->bytesize+1;
 
@@ -163,14 +214,12 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 		perror("ERROR: iconv open");
 		return NULL;
 	}
-	olen = iconv(c, &S_totext(src), &len, &r, &olen);
+//	olen = iconv(c, &S_totext(src), &len, &r, &olen);
 	if (olen == (size_t)-1) {
 		perror("ERROR: iconv");
 		return NULL;
 	}
 	iconv_close(c);
-	//fprintf(stderr, "(decode)ret: %s\n", ret);
-
 	RETURN_(new_kString(ret, src->bytesize, SPOL_ASCII));
 }
 
@@ -207,12 +256,12 @@ static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 {
-	kmodbytes_t *base = (kmodbytes_t*)KNH_ZMALLOC(sizeof(kmodbytes_t));
+	kmodiconv_t *base = (kmodiconv_t*)KNH_ZMALLOC(sizeof(kmodiconv_t));
 	base->h.name     = "bytes";
-	base->h.setup    = kmodbytes_setup;
-	base->h.reftrace = kmodbytes_reftrace;
-	base->h.free     = kmodbytes_free;
-	Konoha_setModule(MOD_bytes, &base->h, pline);
+	base->h.setup    = kmodiconv_setup;
+	base->h.reftrace = kmodiconv_reftrace;
+	base->h.free     = kmodiconv_free;
+	Konoha_setModule(MOD_iconv, &base->h, pline);
 
 	KDEFINE_CLASS BytesDef = {
 		STRUCTNAME(Bytes),
@@ -223,14 +272,14 @@ static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 		.p       = Bytes_p,
 	};
 	base->cBytes = Konoha_addClassDef(NULL, &BytesDef, pline);
-	int FN_x = FN_("x");
+	int FN_encoding = FN_("encoding");
 	intptr_t methoddata[] = {
 		//_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_to(TY_Bytes),  0,
 		//_Public|_Const|_Im, _F(Bytes_toString), TY_String, TY_Bytes,  MN_to(TY_String), 0,
 		_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_("toBytes"),   0,
 		_Public|_Const|_Im, _F(Bytes_toString), TY_String, TY_Bytes,  MN_("toString"),  0,
-		_Public|_Const,     _F(Bytes_encode),   TY_Bytes,  TY_Bytes,  MN_("encode"),    1, TY_String, FN_x,
-		_Public|_Const,     _F(Bytes_decode),   TY_String, TY_Bytes,  MN_("decode"),    1, TY_String, FN_x,
+		_Public|_Const,     _F(Bytes_encode),   TY_Bytes,  TY_Bytes,  MN_("encode"),    1, TY_String, FN_encoding,
+		_Public|_Const,     _F(Bytes_decode),   TY_String, TY_Bytes,  MN_("decode"),    1, TY_String, FN_encoding,
 		DEND,
 	};
 	Konoha_loadMethodData(NULL, methoddata);
