@@ -33,12 +33,24 @@
 
 #define SPOL_sub(s0) (S_isASCII(s0)? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
 
+#define kObject_Local_all \
+	(kObject_Local1 &  \
+	 kObject_Local2 &  \
+	 kObject_Local3 &  \
+	 kObject_Local4 &  \
+	 kObject_Local5 &  \
+	 kObject_Local6)
+#define LOCAL_FLAG(o) ((o)->h.magicflag & kObject_Local_all)
+#define CLEAR_LOCAL_FLAG(o) ((o)->h.magicflag = (o)->h.magicflag & ~kObject_Local_all;)
+#define COPY_LOCAL_FLAG(dist, src)									\
+	(CLEAR_LOCAL_FLAG(dist)											\
+	 (dist)->h.magicflag = (dist)->h.magicflag | LOCAL_FLAG(src);)
+
 //#define _SUB(s0) (S_isASCII(s0) ? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
 //#define _SUBCHAR(s0) (S_isASCII(s0) ? SPOL_ASCII : 0)
 //#define _CHARSIZE(len) (len==1 ? SPOL_ASCII : SPOL_UTF8)
 
 /* ************************************************************************ */
-
 
 #include <konoha2/klib.h>
 
@@ -60,6 +72,7 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 	return s_size;
 #endif
 }
+
 // the function below must not use for ASCII string
 static kString *knh_msubstring(CTX, kString *s, size_t moff, size_t mlen)
 {
@@ -75,12 +88,7 @@ static kString *knh_msubstring(CTX, kString *s, size_t moff, size_t mlen)
 		itr += utf8len(itr[0]);
 	}
 	size_t len = itr - start;
-	if (mlen == 1) {
-		s = new_kString((const char *)start, len, SPOL_POOL|SPOL_UTF8);
-	}
-	else {
-		s = new_kString((const char *)start, len, SPOL_POOL);
-	}
+	s = new_kString((const char *)start, len, SPOL_POOL|SPOL_UTF8);
 #endif
 	return s;
 }
@@ -187,9 +195,11 @@ static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
 	const char *s = S_text(sfp[0].s);
 	int len = S_size(sfp[0].s);
 	kString *ret = NULL;
+	fprintf(stderr, "%s\n", s);
 	while(isspace(s[0])) {
 		s++;
 		len--;
+		fprintf(stderr, "%s\n", s);
 	}
 	if(len != 0) {
 		while(isspace(s[len-1])) {
@@ -201,7 +211,7 @@ static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
 		ret = new_kString(s, len, SPOL_sub(sfp[0].s));
 	}
 	else {
-		ret = (kString *)sfp[0].s;
+		ret = sfp[0].s;
 	}
 	RETURN_(ret);
 }
@@ -221,13 +231,13 @@ static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s = sfp[0].s;
 	if (S_isASCII(s)) {
-		size_t n = check_index(_ctx, sfp[1].ivalue, S_size(s), sfp[K_RTNIDX].uline);//		size_t n = check_index(_ctx, sfp[1].ivalue sfp[1].ivalue, S_size(s));
+		size_t n = check_index(_ctx, sfp[1].ivalue, S_size(s), sfp[K_RTNIDX].uline);
 		s = new_kString(S_text(s) + n, 1, SPOL_POOL|SPOL_ASCII);
 	}
 	else { // FIXME NOW DEFINITELY IMMIDEATELY
 		size_t mlen = text_mlen(S_text(s), S_size(s));
 		size_t moff = check_index(_ctx, sfp[1].ivalue, mlen, sfp[K_RTNIDX].uline);
-		s = knh_msubstring(_ctx, s, moff, 1); // TODO:
+		s = knh_msubstring(_ctx, s, sfp[1].ivalue, 1); // TODO:
 	}
 	RETURN_(s);
 }
@@ -248,13 +258,16 @@ static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 		if (length != 0 && length < new_size) {
 			new_size = length;
 		}
-		ret = new_kString(new_text, new_size, SPOL_ASCII); // FIXME SPOL
+		ret = new_kString(new_text, new_size, SPOL_ASCII|SPOL_POOL); // FIXME SPOL
 	}
 	else {
 		size_t mlen = text_mlen(S_text(s0), S_size(s0));
 		size_t moff = check_index(_ctx, offset,  mlen, sfp[K_RTNIDX].uline);
-		length = (mlen - moff);
-		ret = knh_msubstring(_ctx, s0, moff, length); // TODO!!
+		size_t new_size = mlen - moff;
+		if (length != 0 && length < new_size) {
+			new_size = length;
+		}
+		ret = knh_msubstring(_ctx, s0, moff, new_size); // TODO!!
 	}
 	RETURN_(ret);
 }
@@ -291,10 +304,32 @@ static KMETHOD String_toUpper(CTX, ksfp_t *sfp _RIX)
 
 /* ------------------------------------------------------------------------ */
 
+static kString* S_tolower(CTX, kString *s0, size_t start)
+{
+	size_t i, size = S_size(s0);
+	kString *s = new_kString(NULL, size, SPOL_sub(s0)|SPOL_NOCOPY);
+	memcpy(s->buf, s0->buf, size);
+	for(i = start; i < size; i++) {
+		int ch = s->buf[i];
+		if('A' <= ch && ch <= 'Z') {
+			s->buf[i] = tolower(ch);
+		}
+	}
+	return s;
+}
+
 //## @Const method String String.toLower()
 static KMETHOD String_toLower(CTX, ksfp_t *sfp _RIX)
 {
-	TODO_ASSERT(1);
+	kString *s0 = sfp[0].s;
+	size_t i, size = S_size(s0);
+	for(i = 0; i < size; i++) {
+		int ch = s0->buf[i];
+		if('A' <= ch && ch <= 'Z') {
+			RETURN_(S_tolower(_ctx, s0, i));
+		}
+	}
+	RETURN_(s0);
 }
 
 // --------------------------------------------------------------------------
@@ -312,10 +347,6 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	int FN_s = FN_("s");
 	int FN_n = FN_("n");
 	intptr_t MethodData[] = {
-//		_Public|_Const, _F(String_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_s,
-//		_Public|_Const, _F(String_opSUB),       TY_String,  TY_String, MN_("opSUB"), 1, TY_String, FN_s,
-//		_Public|_Const, _F(String_opUNTIL),     TY_String,  TY_String, MN_("opUNTIL"), 2, TY_Int, FN_s, TY_Int, FN_n,
-//		_Public|_Const, _F(String_opTO),        TY_String,  TY_String, MN_("opTO"),  2, TY_Int, FN_x, TY_Int, FN_y,
 		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("opEQ"),  1, TY_String, FN_s,
 		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("equals"),  1, TY_String, FN_s,
 		_Public|_Const|_Im, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_s,
