@@ -1,7 +1,7 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
 #include<konoha2/float.h>
-#include<python2.6/Python.h>
+#include<python2.7/Python.h>
 
 typedef const struct _kPyObject kPyObject;
 struct _kPyObject {
