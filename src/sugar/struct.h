@@ -295,8 +295,8 @@ static void KonohaSpace_importClassName(CTX, kKonohaSpace *ks, kpack_t packid, k
 			kv.key = ct->nameid;
 			kv.ty  = TY_TYPE;
 			kv.uval = (uintptr_t)ct;
+			kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
 		}
-		kwb_write(&wb, (const char*)(&kv), sizeof(kvs_t));
 	}
 	size_t nitems = kwb_bytesize(&wb) / sizeof(kvs_t);
 	if(nitems > 0) {

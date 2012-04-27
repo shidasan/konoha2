@@ -98,7 +98,6 @@ set(PACKAGES
 	konoha.pcre
 	konoha.io
 	konoha.while
-	konoha.bytes
 	konoha.class
 	konoha.assignment
 	konoha.i
