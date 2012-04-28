@@ -273,9 +273,9 @@ static void Array_init(CTX, kObject *o, void *conf)
 	if(a->a.bytemax > 0) {
 		KARRAY_INIT(&a->a, a->a.bytemax);
 	}
-//	if(TY_isUnbox(O_p0(a))) {
-//		kArray_setUnboxData(a, 1);
-//	}
+	if(TY_isUnbox(O_p0(a))) {
+		kArray_setUnboxData(a, 1);
+	}
 }
 
 static void Array_reftrace(CTX, kObject *o)
@@ -595,7 +595,41 @@ static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam
 	((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 	return ct->searchSimilarClassNULL;
 }
-
+static kString* CT_shortName(CTX, kclass_t *ct)
+{
+	if(ct->shortNameNULL == NULL) {
+		if(ct->cparam == K_NULLPARAM) {
+			KINITv(((struct _kclass*)ct)->shortNameNULL, S_UN(ct->nameid));
+		}
+		else {
+			size_t i;
+			kString *s;
+			for(i=0; i < ct->cparam->psize; i++) {
+				CT_shortName(_ctx, CT_(ct->cparam->p[i].ty));
+			}
+			kwb_t wb;
+			Kwb_init(&(_ctx->stack->cwb), &wb);
+			s = S_UN(ct->nameid);
+			kwb_write(&wb, S_text(s), S_size(s));
+			kwb_putc(&wb, '[');
+			for(i=0; i < ct->cparam->psize; i++) {
+				if(i>0)	kwb_putc(&wb, ',');
+				s = CT_shortName(_ctx, CT_(ct->cparam->p[i].ty));
+				kwb_write(&wb, S_text(s), S_size(s));
+			}
+			if(ct->cparam->rtype != TY_void) {
+				if(i>0)	kwb_putc(&wb, '-', '>');
+				s = CT_shortName(_ctx, CT_(ct->cparam->rtype));
+				kwb_write(&wb, S_text(s), S_size(s));
+			}
+			kwb_putc(&wb, ']');
+			const char *text = Kwb_top(_ctx, &wb, 1);
+			KINITv(((struct _kclass*)ct)->shortNameNULL, new_String(_ctx, text, kwb_bytesize(&wb), SPOL_ASCII));
+			kwb_free(&wb);
+		}
+	}
+	return ct->shortNameNULL;
+}
 static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
 {
 	uintptr_t lname = longid(ct->packdom, ct->nameid);
@@ -750,6 +784,7 @@ static void KCLASSTABLE_initklib2(struct _klib2 *l)
 	l->Knew_Method   = new_Method;
 	l->KaddClassDef  = addClassDef;
 	l->Knull = CT_null;
+	l->KCT_shortName = CT_shortName;
 	l->KCT_Generics = CT_Generics;
 }
 
@@ -802,9 +837,10 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	for(i = 0; i < size; i++) {
 		kclass_t *ct = cts[i];
 		{
-			BEGIN_REFTRACE(3);
+			BEGIN_REFTRACE(4);
 			KREFTRACEv(ct->cparam);
 			KREFTRACEv(ct->methods);
+			KREFTRACEn(ct->shortNameNULL);
 			KREFTRACEn(ct->nulvalNUL);
 			END_REFTRACE();
 		}

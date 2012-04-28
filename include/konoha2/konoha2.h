@@ -495,6 +495,7 @@ struct _kclass {
 
 	const struct _kParam     *cparam;
 	const struct _kArray     *methods;
+	const struct _kString    *shortNameNULL;
 	union {   // default value
 		const struct _kObject  *nulvalNUL;
 		struct _kObject        *WnulvalNUL;
@@ -1055,6 +1056,7 @@ struct _klib2 {
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 
 	kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
+	kString*   (*KCT_shortName)(CTX, kclass_t *ct);
 	kclass_t*  (*KCT_Generics)(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p);
 
 	kObject* (*Knew_Object)(CTX, kclass_t *, void *);

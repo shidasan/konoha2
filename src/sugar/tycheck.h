@@ -769,24 +769,11 @@ static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 	kbool_t r = 1;
 	VAR_StmtTyCheck(stmt, syn, gma);
 	if((r = Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
-//		kExpr *exprCond = kStmt_expr(stmt, KW_EXPR, NULL);
 		kBlock *bkThen = kStmt_block(stmt, KW_block, K_NULLBLOCK);
 		kBlock *bkElse = kStmt_block(stmt, KW_else, K_NULLBLOCK);
-//		if(exprCond->build == TEXPR_NCONST) {
-//			if(exprCond->ndata) {
-//				r = Block_tyCheckAll(_ctx, bkThen, gma);
-//				Stmt_toBlockStmt(_ctx, stmt, bkThen);
-//			}
-//			else {
-//				r = Block_tyCheckAll(_ctx, bkElse, gma);
-//				Stmt_toBlockStmt(_ctx, stmt, bkElse);
-//			}
-//		}
-//		else {
-			r = Block_tyCheckAll(_ctx, bkThen, gma);
-			r = r & Block_tyCheckAll(_ctx, bkElse, gma);
-			kStmt_typed(stmt, IF);
-//		}
+		r = Block_tyCheckAll(_ctx, bkThen, gma);
+		r = r & Block_tyCheckAll(_ctx, bkElse, gma);
+		kStmt_typed(stmt, IF);
 	}
 	RETURNb_(r);
 }

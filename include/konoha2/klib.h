@@ -88,10 +88,11 @@ static inline kString* S_UN_(CTX, kuname_t un)
 
 #define S_CT(X)   S_CT_(_ctx, X)
 #define T_CT(X)   S_text(S_CT_(_ctx, X))
+#define CT_isGenerics(ct)  (ct->cparam != K_NULLPARAM)
 
 static inline kString* S_CT_(CTX, kclass_t *ct)
 {
-	return S_UN(ct->nameid);
+	return _ctx->lib2->KCT_shortName(_ctx, ct);
 }
 
 #define S_cid(X)  S_ty_(_ctx, X)
@@ -102,7 +103,7 @@ static inline kString* S_CT_(CTX, kclass_t *ct)
 static inline kString* S_ty_(CTX, ktype_t ty)
 {
 	DBG_ASSERT(ty < KARRAYSIZE(_ctx->share->ca.bytemax, intptr));
-	return S_UN_(_ctx, CT_(ty)->nameid);
+	return S_CT_(_ctx, CT_(ty));
 }
 
 #define S_fn(fn)   S_fn_(_ctx, fn)
