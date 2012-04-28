@@ -47,10 +47,10 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 	gma->genv = oldone;
 	kArray_clear(newone->lvarlst, newone->lvarlst_top);
 	if(newone->l.allocsize > 0) {
-		KNH_FREE(newone->l.vars, newone->l.allocsize);
+		KFREE(newone->l.vars, newone->l.allocsize);
 	}
 	if(newone->f.allocsize > 0) {
-		KNH_FREE(newone->f.vars, newone->f.allocsize);
+		KFREE(newone->f.vars, newone->f.allocsize);
 	}
 	return newone;
 }
@@ -650,10 +650,10 @@ static int addGammaStack(CTX, gstack_t *s, ktype_t ty, ksymbol_t fn)
 	if(!(s->varsize < s->capacity)) {
 		s->capacity *= 2;
 		size_t asize = sizeof(gammastack_t) * s->capacity;
-		gammastack_t *v = (gammastack_t*)KNH_MALLOC(asize);
+		gammastack_t *v = (gammastack_t*)KMALLOC(asize);
 		memcpy(v, s->vars, asize/2);
 		if(s->allocsize > 0) {
-			KNH_FREE(s->vars, s->allocsize);
+			KFREE(s->vars, s->allocsize);
 		}
 		s->vars = v;
 		s->allocsize = asize;
@@ -1212,7 +1212,7 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	kjmpbuf_t lbuf = {};
 	int i, jmpresult;
 	if(base->evaljmpbuf == NULL) {
-		base->evaljmpbuf = (kjmpbuf_t*)KNH_ZMALLOC(sizeof(kjmpbuf_t), 1);
+		base->evaljmpbuf = (kjmpbuf_t*)KCALLOC(sizeof(kjmpbuf_t), 1);
 	}
 	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
 	if((jmpresult = ksetjmp(*base->evaljmpbuf)) == 0) {

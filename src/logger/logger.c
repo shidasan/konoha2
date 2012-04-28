@@ -160,13 +160,13 @@ static void ctxlogger_reftrace(CTX, struct kmodlocal_t *baseh)
 static void ctxlogger_free(CTX, struct kmodlocal_t *baseh)
 {
 	ctxlogger_t *base = (ctxlogger_t*)baseh;
-	KNH_FREE(base, sizeof(ctxlogger_t));
+	KFREE(base, sizeof(ctxlogger_t));
 }
 
 static void kmodlogger_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(newctx) {
-		ctxlogger_t *base = (ctxlogger_t*)KNH_ZMALLOC(sizeof(ctxlogger_t), 1);
+		ctxlogger_t *base = (ctxlogger_t*)KCALLOC(sizeof(ctxlogger_t), 1);
 		base->h.reftrace = ctxlogger_reftrace;
 		base->h.free     = ctxlogger_free;
 		_ctx->modlocal[MOD_logger] = (kmodlocal_t*)base;

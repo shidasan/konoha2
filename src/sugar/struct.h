@@ -72,7 +72,7 @@ static void KonohaSpace_reftrace(CTX, kObject *o)
 
 static void syntax_free(CTX, void *p)
 {
-	KNH_FREE(p, sizeof(ksyntax_t));
+	KFREE(p, sizeof(ksyntax_t));
 }
 
 static void KonohaSpace_free(CTX, kObject *o)
@@ -117,7 +117,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 		}
 		kmape_t *e = kmap_newentry(ks0->syntaxMapNN, hcode);
 		kmap_add(ks0->syntaxMapNN, e);
-		struct _ksyntax *syn = (struct _ksyntax*)KNH_ZMALLOC(sizeof(ksyntax_t), 1);
+		struct _ksyntax *syn = (struct _ksyntax*)KCALLOC(sizeof(ksyntax_t), 1);
 		e->uvalue = (uintptr_t)syn;
 		if(parent != NULL) {  // TODO: RCGC
 			memcpy(syn, parent, sizeof(ksyntax_t));

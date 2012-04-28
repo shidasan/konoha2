@@ -59,7 +59,7 @@ static void Bytes_init(CTX, kObject *o, void *conf)
 	ba->byteptr = NULL;
 	ba->bytesize = (size_t)conf;
 	if(ba->bytesize > 0) {
-		ba->byteptr = (const char *)KNH_ZMALLOC(ba->bytesize);
+		ba->byteptr = (const char *)KCALLOC(ba->bytesize);
 	}
 }
 
@@ -67,7 +67,7 @@ static void Bytes_free(CTX, kObject *o)
 {
 	struct _kBytes *ba = (struct _kBytes*)o;
 	if (ba->byteptr != NULL) {
-		KNH_FREE(ba->buf, ba->bytesize);
+		KFREE(ba->buf, ba->bytesize);
 		ba->byteptr = NULL;
 		ba->bytesize = 0;
 	}
@@ -128,7 +128,7 @@ static void kmodiconv_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodiconv_t));
+	KFREE(baseh, sizeof(kmodiconv_t));
 }
 
 static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
@@ -256,7 +256,7 @@ static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 {
-	kmodiconv_t *base = (kmodiconv_t*)KNH_ZMALLOC(sizeof(kmodiconv_t));
+	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t));
 	base->h.name     = "bytes";
 	base->h.setup    = kmodiconv_setup;
 	base->h.reftrace = kmodiconv_reftrace;

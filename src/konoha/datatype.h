@@ -107,7 +107,7 @@ static void String_free(CTX, kObject *o)
 {
 	kString *s = (kString*)o;
 	if(S_isMallocText(s)) {
-		KNH_FREE(s->buf, S_size(s) + 1);
+		KFREE(s->buf, S_size(s) + 1);
 	}
 }
 
@@ -173,7 +173,7 @@ static kString* new_String(CTX, const char *text, size_t len, int spol)
 	else {
 		s = (struct _kString*)new_Object(_ctx, ct, NULL);
 		s->bytesize = len;
-		s->buf = (char*)KNH_MALLOC(len+1);
+		s->buf = (char*)KMALLOC(len+1);
 		S_setTextSgm(s, 0);
 		S_setMallocText(s, 1);
 		if(text != NULL) {
@@ -482,7 +482,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
 	}
 	share->ca.bytesize += sizeof(struct _kclass*);
-	struct _kclass *ct = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t), 1);
+	struct _kclass *ct = (struct _kclass*)KCALLOC(sizeof(kclass_t), 1);
 	share->ca.cts[newid] = (kclass_t*)ct;
 	if(bct != NULL) {
 		DBG_ASSERT(s == NULL);
@@ -736,7 +736,7 @@ static void kshare_initklib2(struct _klib2 *l)
 
 static void kshare_init(CTX, kcontext_t *ctx)
 {
-	kshare_t *share = (kshare_t*)KNH_ZMALLOC(sizeof(kshare_t), 1);
+	kshare_t *share = (kshare_t*)KCALLOC(sizeof(kshare_t), 1);
 	ctx->share = share;
 	kshare_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
@@ -813,9 +813,9 @@ static void kshare_freeCT(CTX)
 	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
 	for(i = 0; i < size; i++) {
 		if(cts[i]->fallocsize > 0) {
-			KNH_FREE(cts[i]->fields, cts[i]->fallocsize);
+			KFREE(cts[i]->fields, cts[i]->fallocsize);
 		}
-		KNH_FREE(cts[i], sizeof(kclass_t));
+		KFREE(cts[i], sizeof(kclass_t));
 	}
 }
 
@@ -829,7 +829,7 @@ static void kshare_free(CTX, kcontext_t *ctx)
 	kmap_free(share->unameMapNN, NULL);
 	kshare_freeCT(_ctx);
 	KARRAY_FREE(&share->ca);
-	KNH_FREE(share, sizeof(kshare_t));
+	KFREE(share, sizeof(kshare_t));
 }
 
 /* operator */

@@ -104,7 +104,7 @@ static StringBase *LinerString_new(CTX, StringBase *base,
 	LinerString *s = (LinerString *) base;
 	StringBase_setFlag(base, MASK_LINER);
 	s->base.length = len;
-	s->text = (char *) KNH_MALLOC(len+1);
+	s->text = (char *) KMALLOC(len+1);
 	memcpy(s->text, text, len);
 	s->text[len] = '\0';
 	return base;
@@ -144,7 +144,7 @@ static void String2_free(CTX, kObject *o)
 {
 	StringBase *base = (StringBase*) o;
 	if (S_isMallocText(base)) {
-		KNH_FREE(((LinerString *)base)->text, S_len(base)+1);
+		KFREE(((LinerString *)base)->text, S_len(base)+1);
 	}
 }
 
@@ -173,7 +173,7 @@ static void write_text(StringBase *base, char *dest, int size)
 static LinerString *RopeString_flatten(CTX, RopeString *rope)
 {
 	size_t length = S_len((StringBase *) rope);
-	char *dest = (char *) KNH_MALLOC(length+1);
+	char *dest = (char *) KMALLOC(length+1);
 	size_t len = S_len(rope->left);
 	write_text(rope->left,  dest, len);
 	write_text(rope->right, dest+len, length - len);

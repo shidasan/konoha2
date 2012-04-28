@@ -79,7 +79,7 @@ static kcontext_t* new_hcontext(CTX0)
 	}
 	else {
 		KNH_ASSERT_CTX0(_ctx0);
-		ctx = (kcontext_t*)KNH_MALLOC(_ctx0, sizeof(kcontext_t));
+		ctx = (kcontext_t*)KMALLOC(_ctx0, sizeof(kcontext_t));
 		knh_bzero(_ctx, sizeof(kcontext_t));
 	}
 	ctx->flag = 0;
@@ -189,20 +189,20 @@ static kObject** CommonContext_reftrace(CTX, kcontext_t *ctxo)
 
 static void CommonContext_free(CTX, kcontext_t *ctxo)
 {
-	KNH_FREE(_ctx, ctxo->stack, sizeof(ksfp_t) * ctxo->stacksize);
+	KFREE(_ctx, ctxo->stack, sizeof(ksfp_t) * ctxo->stacksize);
 	ctxo->stack = NULL;
 	ctxo->esp = NULL;
 	ctxo->stack_uplimit = NULL;
 	ctxo->stacksize = 0;
-	KNH_FREE(_ctx, ctxo->mtdcache,  K_MTDCACHE_SIZE * sizeof(knh_mtdcache_t));
-	KNH_FREE(_ctx, ctxo->tmrcache, K_TMAPCACHE_SIZE * sizeof(knh_tmrcache_t));
+	KFREE(_ctx, ctxo->mtdcache,  K_MTDCACHE_SIZE * sizeof(knh_mtdcache_t));
+	KFREE(_ctx, ctxo->tmrcache, K_TMAPCACHE_SIZE * sizeof(knh_tmrcache_t));
 	ctxo->mtdcache  = NULL;
 	ctxo->tmrcache = NULL;
 	knh_mutex_free(_ctxo, ctxo->ctxlock);
 	ctxo->ctxlock = NULL;
 	ctxo->bufa = NULL;
 	if(_ctx->sighandlers != NULL) {
-		KNH_FREE(_ctx, ctx->sighandlers, sizeof(kFunc*) * K_SIGNAL_MAX);
+		KFREE(_ctx, ctx->sighandlers, sizeof(kFunc*) * K_SIGNAL_MAX);
 		ctxo->sighandlers = NULL;
 	}
 }
@@ -216,7 +216,7 @@ static void CommonContext_free(CTX, kcontext_t *ctxo)
 void knh_EventTBL_expand(CTX)
 {
 	size_t s = ctx->share->sizeEventTBL, max = ctx->share->capacityEventTBL * 2;
-	knh_EventTBL_t *newt = (knh_EventTBL_t*)KNH_ZMALLOC(SIZEOF_TEXPT(max));
+	knh_EventTBL_t *newt = (knh_EventTBL_t*)KCALLOC(SIZEOF_TEXPT(max));
 	knh_bzero(newt, SIZEOF_TEXPT(max));
 	knh_memcpy(newt, ctx->share->EventTBL, SIZEOF_TEXPT(s));
 	((kshare_t*)ctx->share)->EventTBL = newt;
@@ -239,12 +239,12 @@ static kcontext_t* new_RootContext(void)
 	initServiceSPI((knh_ServiceSPI_t*)ctx->spi);
 
 	kmemshare_init(_ctx);
-	share->ClassTBL = (kclass_t**)KNH_MALLOC((CTX)ctx, sizeof(struct _kclass*)*(K_CLASSTABLE_INIT));
+	share->ClassTBL = (kclass_t**)KMALLOC((CTX)ctx, sizeof(struct _kclass*)*(K_CLASSTABLE_INIT));
 	knh_bzero(share->ClassTBL, sizeof(struct _kclass*)*(K_CLASSTABLE_INIT));
 	share->sizeClassTBL = 0;
 	share->capacityClassTBL  = K_CLASSTABLE_INIT;
 
-	share->EventTBL = (knh_EventTBL_t*)KNH_ZMALLOC(SIZEOF_TEXPT(K_EVENTTBL_INIT));
+	share->EventTBL = (knh_EventTBL_t*)KCALLOC(SIZEOF_TEXPT(K_EVENTTBL_INIT));
 	knh_bzero((void*)share->EventTBL, SIZEOF_TEXPT(K_EVENTTBL_INIT));
 	share->sizeEventTBL = 0;
 	share->capacityEventTBL  = K_EVENTTBL_INIT;
@@ -281,7 +281,7 @@ static kcontext_t* new_RootContext(void)
 		(a)->dim = &dimINIT;
 		KINITv(share->emptyArray, a);
 	}
-	share->tString = (kString**)KNH_ZMALLOC(SIZEOF_TSTRING);
+	share->tString = (kString**)KCALLOC(SIZEOF_TSTRING);
 	knh_bzero(share->tString, SIZEOF_TSTRING);
 	knh_loadScriptSystemString(_ctx);
 	KINITv(share->cwdPath, new_CurrentPath(_ctx));
@@ -533,9 +533,9 @@ static void share_free(CTX, kshare_t *share)
 	size_t i;
 	/* CompilerAPI */
 	share->compilerAPI = NULL;
-	KNH_FREE(_ctx, (void*)share->EventTBL, SIZEOF_TEXPT(_ctx->share->capacityEventTBL));
+	KFREE(_ctx, (void*)share->EventTBL, SIZEOF_TEXPT(_ctx->share->capacityEventTBL));
 	share->EventTBL = NULL;
-	KNH_FREE(_ctx, share->tString, SIZEOF_TSTRING);
+	KFREE(_ctx, share->tString, SIZEOF_TSTRING);
 	share->tString = NULL;
 	for(i = 0; i < share->sizeClassTBL; i++) {
 		kclass_t *ct = varClassTBL(i);
@@ -551,19 +551,19 @@ static void share_free(CTX, kshare_t *share)
 		kclass_t *supTBL = ClassTBL(ct->supcid);
 		if (ct->cdef != supTBL ->cdef && ct->cdef->asize > 0) {
 			DBG_P("freeing ClassDef cid=%d %s", i, ct->cdef->name);
-			KNH_FREE(_ctx, (void*)ct->cdef, ct->cdef->asize);
+			KFREE(_ctx, (void*)ct->cdef, ct->cdef->asize);
 		}
 	}
 	/* freeing ClassTBL->fields and ClassTBL */
 	for(i = 0; i < share->sizeClassTBL; i++) {
 		kclass_t *ct = varClassTBL(i);
 		if(ct->fcapacity > 0) {
-			KNH_FREE(_ctx, ct->fields, sizeof(kfieldinfo_t) * ct->fcapacity);
+			KFREE(_ctx, ct->fields, sizeof(kfieldinfo_t) * ct->fcapacity);
 			ct->fields = NULL;
 		}
-		KNH_FREE(_ctx, ct, sizeof(kclass_t));
+		KFREE(_ctx, ct, sizeof(kclass_t));
 	}
-	KNH_FREE(_ctx, (void*)share->ClassTBL, sizeof(struct _kclass*)*(share->capacityClassTBL));
+	KFREE(_ctx, (void*)share->ClassTBL, sizeof(struct _kclass*)*(share->capacityClassTBL));
 	share->ClassTBL = NULL;
 
 	if(_ctx->stat->usedMemorySize != 0) {
@@ -625,7 +625,7 @@ void knh_Context_free(CTX, kcontext_t* ctxo)
 	else {
 		kmemlocal_free(_ctx);
 		knh_bzero((void*)ctxo, sizeof(kcontext_t));
-		KNH_FREE(_ctx, (void*)ctxo, sizeof(kcontext_t));
+		KFREE(_ctx, (void*)ctxo, sizeof(kcontext_t));
 	}
 }
 

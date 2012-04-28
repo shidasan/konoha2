@@ -3718,7 +3718,7 @@ static void kmodllvm_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kmodllvm_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodllvm_t));
+	KFREE(baseh, sizeof(kmodllvm_t));
 }
 
 #define _Public   kMethod_Public
@@ -3731,7 +3731,7 @@ static void kmodllvm_free(CTX, struct kmodshare_t *baseh)
 static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **args, kline_t pline)
 {
 	(void)argc;(void)args;
-	kmodllvm_t *base = (kmodllvm_t*)KNH_ZMALLOC(sizeof(kmodllvm_t));
+	kmodllvm_t *base = (kmodllvm_t*)KCALLOC(sizeof(kmodllvm_t));
 	base->h.name     = "llvm";
 	base->h.setup    = kmodllvm_setup;
 	base->h.reftrace = kmodllvm_reftrace;

@@ -91,7 +91,7 @@ static const char *new_cwbtext(CTX, CWB_t *cwb, size_t *lenref)
 {
 	const char *p = CWB_totext(_ctx, cwb);
 	size_t len = knh_strlen(p) + 1;
-	char *newtext = (char*) KNH_ZMALLOC(len);
+	char *newtext = (char*) KCALLOC(len);
 	knh_memcpy(newtext, p, len);
 	lenref[0] = len;
 	return (const char*)newtext;
@@ -178,7 +178,7 @@ static kbool_t io2_readFILE(CTX, kio_t *io2)
 {
 	if(io2->bufsiz == 0) {
 		io2->bufsiz = K_PAGESIZE;
-		io2->buffer = KNH_ZMALLOC(io2->bufsiz);
+		io2->buffer = KCALLOC(io2->bufsiz);
 	}
 	size_t size = fread(io2->buffer, 1, io2->bufsiz, io2->fp);
 	if(size == 0) {
@@ -223,12 +223,12 @@ static void io2_closeFILE(CTX, kio_t *io2)
 
 kio_t* new_FILE(CTX, FILE *fp, size_t bufsiz)
 {
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+	kio_t *io2 = KCALLOC(sizeof(kio_t));
 	io2->fp  = fp;
 	io2->isRunning = 1;
 	io2->bufsiz = bufsiz;
 	if(bufsiz > 0) {
-		io2->buffer = KNH_ZMALLOC(bufsiz);
+		io2->buffer = KCALLOC(bufsiz);
 	}
 	io2->top  = 0;
 	io2->tail = 0;
@@ -246,7 +246,7 @@ static kbool_t io2_blockread(CTX, kio_t *io2)
 {
 	if(io2->bufsiz == 0) {
 		io2->bufsiz = K_PAGESIZE;
-		io2->buffer = KNH_ZMALLOC(io2->bufsiz);
+		io2->buffer = KCALLOC(io2->bufsiz);
 	}
 	int fd = io2->fd;
 	ssize_t size = read(fd, io2->buffer, io2->bufsiz);
@@ -332,14 +332,14 @@ static void io2_closeFD_stdio(CTX, kio_t *io2)
 
 static kio_t* new_io2_(CTX, int fd, size_t bufsiz, void (*_close)(CTX, struct kio_t *))
 {
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+	kio_t *io2 = KCALLOC(sizeof(kio_t));
 	io2->handler  = NULL;
 	io2->handler2 = NULL;
 	io2->fd = fd;
 	io2->isRunning = 1;
 	io2->bufsiz = bufsiz;
 	if(bufsiz > 0) {
-		io2->buffer = KNH_ZMALLOC(bufsiz);
+		io2->buffer = KCALLOC(bufsiz);
 	}
 	io2->top  = 0;
 	io2->tail = 0;
@@ -365,12 +365,12 @@ kio_t* new_io2_stdio(CTX, int fd, size_t bufsiz)
 
 kio_t* new_io2ReadBuffer(CTX, const char *buf, size_t bufsiz)
 {
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+	kio_t *io2 = KCALLOC(sizeof(kio_t));
 	io2->handler  = NULL;
 	io2->handler2 = NULL;
 	io2->fd = -1;
 	io2->isRunning = 0;
-	io2->buffer = KNH_ZMALLOC(bufsiz);
+	io2->buffer = KCALLOC(bufsiz);
 	knh_memcpy(io2->buffer, buf, bufsiz);
 	io2->bufsiz = bufsiz;
 	io2->top  = 0;
@@ -401,7 +401,7 @@ static void io2_closeBytes(CTX, kio_t *io2)
 
 kio_t* new_io2WriteBuffer(CTX, kBytes *ba)
 {
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+	kio_t *io2 = KCALLOC(sizeof(kio_t));
 	io2->baNC  = ba;
 	io2->isRunning = 1;
 	io2->buffer = NULL;
@@ -435,14 +435,14 @@ void io2_free(CTX, kio_t *io2)
 		io2->_close(_ctx, io2);
 	}
 	if(io2->bufsiz > 0) {
-		KNH_FREE(_ctx, io2->buffer, io2->bufsiz);
+		KFREE(_ctx, io2->buffer, io2->bufsiz);
 		io2->bufsiz = 0;
 		io2->buffer = NULL;
 		io2->top = 0;
 		io2->tail = 0;
 	}
 	if(io2 != io2_null()) {
-		KNH_FREE(_ctx, io2, sizeof(kio_t));
+		KFREE(_ctx, io2, sizeof(kio_t));
 	}
 }
 

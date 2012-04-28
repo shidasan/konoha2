@@ -1125,9 +1125,9 @@ struct _klib2 {
 
 #define KPI                     (_ctx->lib2)
 
-#define KNH_MALLOC(size)          (KPI)->Kmalloc(_ctx, size)
-#define KNH_ZMALLOC(size, item)   (KPI)->Kzmalloc(_ctx, ((size) * (item)))
-#define KNH_FREE(p, size)         (KPI)->Kfree(_ctx, p, size)
+#define KMALLOC(size)          (KPI)->Kmalloc(_ctx, size)
+#define KCALLOC(size, item)    (KPI)->Kzmalloc(_ctx, ((size) * (item)))
+#define KFREE(p, size)         (KPI)->Kfree(_ctx, p, size)
 
 #define KARRAY_INIT(VAR, init)           (KPI)->Karray_init(_ctx, VAR, (init))
 #define KARRAY_RESIZE(VAR, newsize)      (KPI)->Karray_resize(_ctx, VAR, (newsize))

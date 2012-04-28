@@ -88,7 +88,7 @@
 //
 //static void kregexshare_free(CTX, struct kmodshare_t *baseh)
 //{
-//	KNH_FREE(baseh, sizeof(kregexshare_t));
+//	KFREE(baseh, sizeof(kregexshare_t));
 //}
 //
 ///* ------------------------------------------------------------------------ */
@@ -264,7 +264,7 @@
 //
 //static kregex_t* pcre_regmalloc(CTX, kString* s)
 //{
-//	PCRE_regex_t *preg = (PCRE_regex_t*) KNH_MALLOC(sizeof(PCRE_regex_t));
+//	PCRE_regex_t *preg = (PCRE_regex_t*) KMALLOC(sizeof(PCRE_regex_t));
 //	return (kregex_t *) preg;
 //}
 //
@@ -272,7 +272,7 @@
 //{
 //	PCRE_regex_t *preg = (PCRE_regex_t*)reg;
 //	_pcre_free(preg->re);
-//	KNH_FREE(preg, sizeof(PCRE_regex_t));
+//	KFREE(preg, sizeof(PCRE_regex_t));
 //}
 //
 //static int pcre_nmatchsize(CTX, kregex_t *reg)
@@ -686,7 +686,7 @@
 //
 //static kbool_t regex_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 //{
-//	kregexshare_t *base = (kregexshare_t*)KNH_ZMALLOC(sizeof(kregexshare_t));
+//	kregexshare_t *base = (kregexshare_t*)KCALLOC(sizeof(kregexshare_t));
 //	base->h.name     = "regex";
 //	base->h.setup    = kregexshare_setup;
 //	base->h.reftrace = kregexshare_reftrace;

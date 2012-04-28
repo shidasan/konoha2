@@ -49,13 +49,13 @@ int verbose_gc = 0;
 //static void klocalgc_free(CTX, struct kmodlocal_t *baseh)
 //{
 ////	klocalgc_t *base = (klocalgc_t*)baseh;
-////	KNH_FREE(base, sizeof(klocalgc_t));
+////	KFREE(base, sizeof(klocalgc_t));
 //}
 
 static void kmodgc_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 //	if(_ctx->mod[MOD_gc] == NULL) {
-//		klocalgc_t *base = (klocalgc_t*)KNH_ZMALLOC(sizeof(klocalgc_t));
+//		klocalgc_t *base = (klocalgc_t*)KCALLOC(sizeof(klocalgc_t));
 //		base->h.reftrace = klocalgc_reftrace;
 //		base->h.free     = klocalgc_free;
 //		_ctx->mod[MOD_gc] = (kmodlocal_t*)base;
@@ -68,7 +68,7 @@ static void kmodgc_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kmodgc_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodshare_t));
+	KFREE(baseh, sizeof(kmodshare_t));
 }
 
 typedef struct kmodgc_t {
@@ -77,7 +77,7 @@ typedef struct kmodgc_t {
 
 void MODGC_init2(CTX, kcontext_t *ctx)
 {
-	kmodgc_t *base = (kmodgc_t*)KNH_ZMALLOC(sizeof(kmodgc_t), 1);
+	kmodgc_t *base = (kmodgc_t*)KCALLOC(sizeof(kmodgc_t), 1);
 	base->h.name     = "bmgc";
 	base->h.setup    = kmodgc_setup;
 	base->h.reftrace = kmodgc_reftrace;

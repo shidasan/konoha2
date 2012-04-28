@@ -71,7 +71,7 @@ static int test_kwb(CTX)
 	assert(i == kwb_bytesize(&wb));
 	kwb_free(&wb);
 	KARRAY_FREE(buf);
-	KNH_FREE(buf, sizeof(karray_t));
+	KFREE(buf, sizeof(karray_t));
 	return 0;
 }
 

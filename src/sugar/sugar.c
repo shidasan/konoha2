@@ -158,13 +158,13 @@ static void ctxsugar_free(CTX, struct kmodlocal_t *baseh)
 {
 	ctxsugar_t *base = (ctxsugar_t*)baseh;
 	KARRAY_FREE(&base->cwb);
-	KNH_FREE(base, sizeof(ctxsugar_t));
+	KFREE(base, sizeof(ctxsugar_t));
 }
 
 static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(!newctx && _ctx->modlocal[MOD_sugar] == NULL) {
-		ctxsugar_t *base = (ctxsugar_t*)KNH_ZMALLOC(sizeof(ctxsugar_t), 1);
+		ctxsugar_t *base = (ctxsugar_t*)KCALLOC(sizeof(ctxsugar_t), 1);
 		base->h.reftrace = ctxsugar_reftrace;
 		base->h.free     = ctxsugar_free;
 		KINITv(base->tokens, new_(TokenArray, K_PAGESIZE/sizeof(void*)));
@@ -190,7 +190,7 @@ static void pack_reftrace(CTX, kmape_t *p)
 
 static void pack_free(CTX, void *p)
 {
-	KNH_FREE(p, sizeof(kpackage_t));
+	KFREE(p, sizeof(kpackage_t));
 }
 
 static void kmodsugar_reftrace(CTX, struct kmodshare_t *baseh)
@@ -213,12 +213,12 @@ static void kmodsugar_free(CTX, struct kmodshare_t *baseh)
 	kmodsugar_t *base = (kmodsugar_t*)baseh;
 	kmap_free(base->keywordMapNN, NULL);
 	kmap_free(base->packageMapNO, pack_free);
-	KNH_FREE(baseh, sizeof(kmodsugar_t));
+	KFREE(baseh, sizeof(kmodsugar_t));
 }
 
 void MODSUGAR_init(CTX, kcontext_t *ctx)
 {
-	kmodsugar_t *base = (kmodsugar_t*)KNH_ZMALLOC(sizeof(kmodsugar_t), 1);
+	kmodsugar_t *base = (kmodsugar_t*)KCALLOC(sizeof(kmodsugar_t), 1);
 	base->h.name     = "sugar";
 	base->h.setup    = kmodsugar_setup;
 	base->h.reftrace = kmodsugar_reftrace;
@@ -555,7 +555,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 			if(packdef->initPackage != NULL) {
 				packdef->setupPackage(_ctx, ks, pline);
 			}
-			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t), 1);
+			pack = (kpackage_t*)KCALLOC(sizeof(kpackage_t), 1);
 			pack->packid = packid;
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;

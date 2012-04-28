@@ -102,9 +102,9 @@ static void knh_endContext(CTX)
 static void kstack_init(CTX, kcontext_t *ctx, size_t stacksize)
 {
 	size_t i;
-	kstack_t *base = (kstack_t*)KNH_ZMALLOC(sizeof(kstack_t), 1);
+	kstack_t *base = (kstack_t*)KCALLOC(sizeof(kstack_t), 1);
 	base->stacksize = stacksize;
-	base->stack = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t), stacksize);
+	base->stack = (ksfp_t*)KCALLOC(sizeof(ksfp_t), stacksize);
 	assert(stacksize>64);
 	base->stack_uplimit = base->stack + (stacksize - 64);
 	for(i = 0; i < stacksize; i++) {
@@ -133,12 +133,12 @@ static void kstack_reftrace(CTX, kcontext_t *ctx)
 static void kstack_free(CTX, kcontext_t *ctx)
 {
 	if(_ctx->stack->evaljmpbuf != NULL) {
-		KNH_FREE(_ctx->stack->evaljmpbuf, sizeof(kjmpbuf_t));
+		KFREE(_ctx->stack->evaljmpbuf, sizeof(kjmpbuf_t));
 	}
 	KARRAY_FREE(&_ctx->stack->cwb);
 	KARRAY_FREE(&_ctx->stack->ref);
-	KNH_FREE(_ctx->stack->stack, sizeof(ksfp_t) * ctx->stack->stacksize);
-	KNH_FREE(_ctx->stack, sizeof(kstack_t));
+	KFREE(_ctx->stack->stack, sizeof(ksfp_t) * ctx->stack->stacksize);
+	KFREE(_ctx->stack, sizeof(kstack_t));
 }
 
 static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
@@ -185,12 +185,12 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		kshare_init(_ctx, newctx);
 	}
 	else {   // others take ctx as its parent
-		newctx = (kcontext_t*)KNH_ZMALLOC(sizeof(kcontext_t), 1);
+		newctx = (kcontext_t*)KCALLOC(sizeof(kcontext_t), 1);
 		newctx->lib2 = _ctx->lib2;
 		newctx->memshare = _ctx->memshare;
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
-		newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*), MOD_MAX);
+		newctx->modlocal = (kmodlocal_t**)KCALLOC(sizeof(kmodlocal_t*), MOD_MAX);
 		MODLOGGER_init(_ctx, newctx);
 	}
 	//MODGC_init(_ctx, newctx);
@@ -263,8 +263,8 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 		free(klib2/*, sizeof(klib2_t) + sizeof(kcontext_t)*/);
 	}
 	else {
-		KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
-		KNH_FREE(ctx, sizeof(kcontext_t));
+		KFREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
+		KFREE(ctx, sizeof(kcontext_t));
 	}
 }
 

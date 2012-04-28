@@ -464,7 +464,7 @@ kString* new_String2(CTX, kcid_t cid, const char *text, size_t len, int policy)
 	}
 	else {
 		s->str.len = len;
-		s->str.ubuf = (kchar_t*)KNH_ZMALLOC(KNH_SIZE(len+1));
+		s->str.ubuf = (kchar_t*)KCALLOC(KNH_SIZE(len+1));
 		knh_memcpy(s->str.ubuf, text, len);
 		s->str.ubuf[len] = '\0';
 		s->hashCode = 0;
@@ -806,7 +806,7 @@ typedef struct {
 
 static kregex_t* pcre_regmalloc(CTX, kString* s)
 {
-	PCRE_regex_t *preg = (PCRE_regex_t*) KNH_MALLOC(_ctx,sizeof(PCRE_regex_t));
+	PCRE_regex_t *preg = (PCRE_regex_t*) KMALLOC(_ctx,sizeof(PCRE_regex_t));
 	return (kregex_t *) preg;
 }
 
@@ -814,7 +814,7 @@ static void pcre_regfree(CTX, kregex_t *reg)
 {
 	PCRE_regex_t *preg = (PCRE_regex_t*)reg;
 	_pcre_free(preg->re);
-	KNH_FREE(_ctx, preg, sizeof(PCRE_regex_t));
+	KFREE(_ctx, preg, sizeof(PCRE_regex_t));
 }
 
 static int pcre_nmatchsize(CTX, kregex_t *reg)
@@ -957,7 +957,7 @@ typedef struct {
 
 static kregex_t* re2_regex_malloc(CTX, kString* s)
 {
-	RE2_regex_t *reg = (RE2_regex_t*)KNH_ZMALLOC(sizeof(RE2_regex_t));
+	RE2_regex_t *reg = (RE2_regex_t*)KCALLOC(sizeof(RE2_regex_t));
 	reg->r = NULL;
 	return (kregex_t*)reg;
 }
@@ -969,7 +969,7 @@ static void re2_regex_regfree(CTX, kregex_t *reg)
 		re2::RE2 *r = static_cast<re2::RE2*>(re->r);
 		delete r;
 	}
-	KNH_FREE(_ctx, reg, sizeof(RE2_regex_t));
+	KFREE(_ctx, reg, sizeof(RE2_regex_t));
 }
 
 static size_t re2_regex_regerror(int res, kregex_t *reg, char *ebuf, size_t ebufsize)
@@ -1142,7 +1142,7 @@ typedef struct {
 
 static kregex_t* onig_regex_malloc(CTX, kString *s)
 {
-	ONIG_regex_t *r = (ONIG_regex_t*)KNH_ZMALLOC(sizeof(ONIG_regex_t));
+	ONIG_regex_t *r = (ONIG_regex_t*)KCALLOC(sizeof(ONIG_regex_t));
 	r->einfo = NULL;
 	r->reg = NULL;
 	return (kregex_t*) r;
@@ -1241,7 +1241,7 @@ static void onig_regex_regfree(CTX, kregex_t *reg)
 	ONIG_regex_t *oreg = (ONIG_regex_t*)reg;
 	OnigRegex r = oreg->reg;
 	_onig_free(r);
-	KNH_FREE(_ctx, oreg, sizeof(ONIG_regex_t));
+	KFREE(_ctx, oreg, sizeof(ONIG_regex_t));
 }
 
 static const knh_RegexSPI_t REGEX_ONIG = {

@@ -60,7 +60,7 @@ size_t k_goodsize2(size_t ss, size_t wsize)
 
 const kdim_t *new_dim(CTX, size_t capacity, size_t wsize)
 {
-	kdim_t *dim = (kdim_t*)KNH_ZMALLOC(sizeof(kdim_t));
+	kdim_t *dim = (kdim_t*)KCALLOC(sizeof(kdim_t));
 	dim->capacity = capacity;
 	dim->wsize = wsize;
 	dim->dim = 1;
@@ -72,8 +72,8 @@ void knh_dimfree(CTX, void *p, const kdim_t *dim)
 {
 	size_t size = dim->capacity * dim->wsize;
 	if(size > 0) {
-		KNH_FREE(_ctx, p, size);
-		KNH_FREE(_ctx, (void*)dim, sizeof(kdim_t));
+		KFREE(_ctx, p, size);
+		KFREE(_ctx, (void*)dim, sizeof(kdim_t));
 	}
 }
 
@@ -102,7 +102,7 @@ void knh_Bytes_expands(CTX, kBytes *ba, size_t newsize)
 {
 	if(ba->dim->capacity == 0) {
 		newsize = k_goodsize(newsize);
-		ba->bu.ubuf = (kchar_t*)KNH_ZMALLOC(newsize);
+		ba->bu.ubuf = (kchar_t*)KCALLOC(newsize);
 		ba->dim = new_dim(_ctx, newsize, 1);
 	}
 	else {
@@ -119,7 +119,7 @@ void knh_Bytes_dispose(CTX, kBytes *ba)
 {
 	if(ba->dim->capacity > 0) {
 		//DBG_P("dispose %p %p size=%ld,%ld", ba, ba->bu.ubuf, ba->bu.len, ba->dim->capacity);
-		KNH_FREE(_ctx, ba->bu.ubuf, ba->dim->capacity);
+		KFREE(_ctx, ba->bu.ubuf, ba->dim->capacity);
 		ba->bu.ubuf = NULL;
 		ba->bu.len = 0;
 		((kdim_t*)ba->dim)->capacity = 0;

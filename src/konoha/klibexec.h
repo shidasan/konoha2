@@ -10,13 +10,13 @@ static void karray_init(CTX, karray_t *m, size_t bytemax)
 {
 	m->bytesize = 0;
 	m->bytemax  = bytemax;
-	m->bytebuf = (char*)KNH_ZMALLOC(bytemax, 1);
+	m->bytebuf = (char*)KCALLOC(bytemax, 1);
 }
 
 static void karray_resize(CTX, karray_t *m, size_t newsize)
 {
 	size_t oldsize = m->bytemax;
-	char *newbody = (char*)KNH_MALLOC(newsize);
+	char *newbody = (char*)KMALLOC(newsize);
 	if(oldsize < newsize) {
 		memcpy(newbody, m->bytebuf, oldsize);
 		bzero(newbody + oldsize, newsize - oldsize);
@@ -24,7 +24,7 @@ static void karray_resize(CTX, karray_t *m, size_t newsize)
 	else {
 		memcpy(newbody, m->bytebuf, newsize);
 	}
-	KNH_FREE(m->bytebuf, oldsize);
+	KFREE(m->bytebuf, oldsize);
 	m->bytebuf = newbody;
 	m->bytemax = newsize;
 }
@@ -44,7 +44,7 @@ static void karray_expand(CTX, karray_t *m, size_t minsize)
 static void karray_free(CTX, karray_t *m)
 {
 	if(m->bytemax > 0) {
-		KNH_FREE(m->bytebuf, m->bytemax);
+		KFREE(m->bytebuf, m->bytemax);
 		m->bytebuf = NULL;
 		m->bytesize = 0;
 		m->bytemax  = 0;
@@ -146,14 +146,14 @@ static void kmap_makeFreeList(kmap_t *kmap, size_t s, size_t e)
 static void kmap_rehash(CTX, kmap_t *kmap)
 {
 	size_t i, newhmax = kmap->hmax * 2 + 1;
-	kmape_t **newhentry = (kmape_t**)KNH_ZMALLOC(newhmax, sizeof(kmape_t*));
+	kmape_t **newhentry = (kmape_t**)KCALLOC(newhmax, sizeof(kmape_t*));
 	for(i = 0; i < kmap->arenasize / 2; i++) {
 		kmape_t *e = kmap->arena + i;
 		kuint_t ni = e->hcode % newhmax;
 		e->next = newhentry[ni];
 		newhentry[ni] = e;
 	}
-	KNH_FREE(kmap->hentry, kmap->hmax * sizeof(kmape_t*));
+	KFREE(kmap->hentry, kmap->hmax * sizeof(kmape_t*));
 	kmap->hentry = newhentry;
 	kmap->hmax = newhmax;
 }
@@ -177,11 +177,11 @@ static kmape_t *Kmap_newentry(CTX, kmap_t *kmap, kuint_t hcode)
 		size_t oarenasize = kmap->arenasize;
 		char *oarena = (char*)kmap->arena;
 		kmap->arenasize *= 2;
-		kmap->arena = KNH_MALLOC(kmap->arenasize * sizeof(kmape_t));
+		kmap->arena = KMALLOC(kmap->arenasize * sizeof(kmape_t));
 		memcpy(kmap->arena, oarena, kmap->arenasize * sizeof(kmape_t));
 		kmap_shiftptr(kmap, (char*)kmap->arena - oarena);
 		kmap_makeFreeList(kmap, oarenasize, kmap->arenasize);
-		KNH_FREE(oarena, oarenasize * sizeof(kmape_t));
+		KFREE(oarena, oarenasize * sizeof(kmape_t));
 		kmap_rehash(_ctx, kmap);
 	}
 	e = kmap->unused;
@@ -194,12 +194,12 @@ static kmape_t *Kmap_newentry(CTX, kmap_t *kmap, kuint_t hcode)
 
 static kmap_t *Kmap_init(CTX, size_t init)
 {
-	kmap_t *kmap = (kmap_t*)KNH_ZMALLOC(sizeof(kmap_t), 1);
+	kmap_t *kmap = (kmap_t*)KCALLOC(sizeof(kmap_t), 1);
 	if(init < HMAP_INIT) init = HMAP_INIT;
 	kmap->arenasize = (init * 3) / 4;
-	kmap->arena = (kmape_t*)KNH_MALLOC(kmap->arenasize * sizeof(kmape_t));
+	kmap->arena = (kmape_t*)KMALLOC(kmap->arenasize * sizeof(kmape_t));
 	kmap_makeFreeList(kmap, 0, kmap->arenasize);
-	kmap->hentry = (kmape_t**)KNH_ZMALLOC(init, sizeof(kmape_t*));
+	kmap->hentry = (kmape_t**)KCALLOC(init, sizeof(kmape_t*));
 	kmap->hmax = init;
 	kmap->size = 0;
 	return (kmap_t*)kmap;
@@ -229,9 +229,9 @@ static void Kmap_free(CTX, kmap_t *kmap, void (*f)(CTX, void *))
 			}
 		}
 	}
-	KNH_FREE(kmap->arena, sizeof(kmape_t)*(kmap->arenasize));
-	KNH_FREE(kmap->hentry, sizeof(kmape_t*)*(kmap->hmax));
-	KNH_FREE(kmap, sizeof(kmap_t));
+	KFREE(kmap->arena, sizeof(kmape_t)*(kmap->arenasize));
+	KFREE(kmap->hentry, sizeof(kmape_t*)*(kmap->hmax));
+	KFREE(kmap, sizeof(kmap_t));
 }
 
 static kmape_t *Kmap_getentry(kmap_t* kmap, kuint_t hcode)
@@ -437,10 +437,10 @@ static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 
 static karray_t *new_karray(CTX, size_t bytesize, size_t bytemax)
 {
-	karray_t *m = (karray_t*)KNH_ZMALLOC(sizeof(karray_t), 1);
+	karray_t *m = (karray_t*)KCALLOC(sizeof(karray_t), 1);
 	DBG_ASSERT(bytesize <= bytemax);
 	if(bytemax > 0) {
-		m->bytebuf = (char*)KNH_ZMALLOC(bytemax, 1);
+		m->bytebuf = (char*)KCALLOC(bytemax, 1);
 		m->bytesize = bytesize;
 		m->bytemax = bytemax;
 	}
@@ -465,8 +465,8 @@ void KONOHA_freeObjectField(CTX, struct _kObject *o)
 	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
 		karray_t *p = o->h.kvproto;
-		KNH_FREE(p->bytebuf, p->bytemax);
-		KNH_FREE(p, sizeof(karray_t));
+		KFREE(p->bytebuf, p->bytemax);
+		KFREE(p, sizeof(karray_t));
 		o->h.kvproto = kvproto_null();
 	}
 	ct->free(_ctx, o);
@@ -503,7 +503,7 @@ static void kvproto_rehash(CTX, karray_t *p)
 {
 	size_t i, pmax = (p->bytemax) / sizeof(kvs_t);
 	size_t newpmax = pmax * 2, newpsize = newpmax - KVPROTO_DELTA;
-	kvs_t *newkvs = (kvs_t*)KNH_ZMALLOC(sizeof(kvs_t), newpmax);
+	kvs_t *newkvs = (kvs_t*)KCALLOC(sizeof(kvs_t), newpmax);
 	for(i = 0; i < pmax; i++) {
 		kvs_t *d = p->kvs + i;
 		if(d->key != 0) {
@@ -519,7 +519,7 @@ static void kvproto_rehash(CTX, karray_t *p)
 	if(newpmax > 32) {
 		DBG_P("newpmax=%d, %d bytes", newpmax, newpmax * sizeof(kvs_t));
 	}
-	KNH_FREE(p->kvs, sizeof(kvs_t) * pmax);
+	KFREE(p->kvs, sizeof(kvs_t) * pmax);
 	p->kvs = newkvs;
 	p->bytemax = newpmax * sizeof(kvs_t) ;
 	p->bytesize = newpsize * sizeof(kvs_t);

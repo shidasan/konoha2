@@ -596,7 +596,7 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 	W(kBasicBlock, bbRET);
 	kcode->fileid = ctxcode->uline; //TODO
 	kcode->codesize = BasicBlock_size(_ctx, bb, 0) * sizeof(kopl_t);
-	kcode->code = (kopl_t*)KNH_ZMALLOC(kcode->codesize, 1);
+	kcode->code = (kopl_t*)KCALLOC(kcode->codesize, 1);
 	WbbRET->code = kcode->code; // dummy
 	{
 		kopl_t *op = BasicBlock_copy(_ctx, kcode->code, Wbb, prev);
@@ -1867,7 +1867,7 @@ static void KonohaCode_reftrace(CTX, kObject *o)
 static void KonohaCode_free(CTX, kObject *o)
 {
 	kKonohaCode *b = (kKonohaCode*)o;
-	KNH_FREE(b->code, b->codesize);
+	KFREE(b->code, b->codesize);
 }
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
@@ -1906,14 +1906,14 @@ static void ctxcode_reftrace(CTX, struct kmodlocal_t *baseh)
 static void ctxcode_free(CTX, struct kmodlocal_t *baseh)
 {
 	ctxcode_t *base = (ctxcode_t*)baseh;
-	KNH_FREE(base, sizeof(ctxcode_t));
+	KFREE(base, sizeof(ctxcode_t));
 }
 
 static void kmodcode_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(!newctx) { // lazy setup
 		assert(_ctx->modlocal[MOD_code] == NULL);
-		ctxcode_t *base = (ctxcode_t*)KNH_ZMALLOC(sizeof(ctxcode_t), 1);
+		ctxcode_t *base = (ctxcode_t*)KCALLOC(sizeof(ctxcode_t), 1);
 		base->h.reftrace = ctxcode_reftrace;
 		base->h.free     = ctxcode_free;
 		KINITv(base->insts, new_(Array, K_PAGESIZE/sizeof(void*)));
@@ -1934,12 +1934,12 @@ static void kmodcode_reftrace(CTX, struct kmodshare_t *baseh)
 static void kmodcode_free(CTX, struct kmodshare_t *baseh)
 {
 //	kmodcode_t *base = (kmodcode_t*)baseh;
-	KNH_FREE(baseh, sizeof(kmodcode_t));
+	KFREE(baseh, sizeof(kmodcode_t));
 }
 
 void MODCODE_init(CTX, kcontext_t *ctx)
 {
-	kmodcode_t *base = (kmodcode_t*)KNH_ZMALLOC(sizeof(kmodcode_t), 1);
+	kmodcode_t *base = (kmodcode_t*)KCALLOC(sizeof(kmodcode_t), 1);
 	opcode_check();
 	base->h.name     = "minivm";
 	base->h.setup    = kmodcode_setup;

@@ -96,7 +96,7 @@ kTerm *knh_Stmt_done(CTX, kStmtExpr *stmt)
 		for(i = 0; i < b->size; i++) {
 			KNH_FINALv(_ctx, stmt->terms[i]);
 		}
-		KNH_FREE(_ctx, stmt->terms, sizeof(kTerm*) * b->capacity);
+		KFREE(_ctx, stmt->terms, sizeof(kTerm*) * b->capacity);
 		stmt->terms = NULL;
 		b->capacity = 0;
 		b->size = 0;

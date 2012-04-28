@@ -213,7 +213,7 @@ static void kioshare_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kioshare_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kioshare_t));
+	KFREE(baseh, sizeof(kioshare_t));
 }
 
 /* ------------------------------------------------------------------------ */
@@ -302,7 +302,7 @@ static void io2_closeFILE(CTX, kio_t *io2)
 
 static kio_t* new_FILE(CTX, FILE *fp, size_t bufsiz)
 {
-	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+	kio_t *io2 = KCALLOC(sizeof(kio_t));
 	io2->fp  = fp;
 	io2->isRunning = 1;
 	if(bufsiz > 0) {
@@ -407,7 +407,7 @@ static kio_t* new_FILE(CTX, FILE *fp, size_t bufsiz)
 //
 //static kio_t* new_io2_(CTX, int fd, size_t bufsiz, void (*_close)(CTX, struct kio_t *))
 //{
-//	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+//	kio_t *io2 = KCALLOC(sizeof(kio_t));
 //	io2->handler  = NULL;
 //	io2->handler2 = NULL;
 //	io2->fd = fd;
@@ -439,7 +439,7 @@ static kio_t* new_FILE(CTX, FILE *fp, size_t bufsiz)
 //
 //static kio_t* new_io2ReadBuffer(CTX, const char *buf, size_t bufsiz)
 //{
-//	kio_t *io2 = KNH_ZMALLOC(sizeof(kio_t));
+//	kio_t *io2 = KCALLOC(sizeof(kio_t));
 //	io2->handler  = NULL;
 //	io2->handler2 = NULL;
 //	io2->fd = -1;
@@ -489,7 +489,7 @@ static void io2_free(CTX, kio_t *io2)
 		io2->tail = 0;
 	}
 	if(io2 != io2_null()) {
-		KNH_FREE(io2, sizeof(kio_t));
+		KFREE(io2, sizeof(kio_t));
 	}
 }
 
@@ -858,7 +858,7 @@ static KMETHOD OutputStream_close(CTX, ksfp_t *sfp _RIX)
 
 static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	kioshare_t *base = (kioshare_t*)KNH_ZMALLOC(sizeof(kioshare_t));
+	kioshare_t *base = (kioshare_t*)KCALLOC(sizeof(kioshare_t));
 	base->h.name     = "io";
 	base->h.setup    = kioshare_setup;
 	base->h.reftrace = kioshare_reftrace;

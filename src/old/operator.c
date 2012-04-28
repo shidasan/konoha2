@@ -687,7 +687,7 @@ static KMETHOD Bytes_new(CTX, ksfp_t *sfp _RIX)
 	kBytes *ba = sfp[0].ba;
 	size_t init = sfp[1].ivalue <= K_FASTMALLOC_SIZE ? K_FASTMALLOC_SIZE : k_goodsize(Int_to(size_t, sfp[1]));
 	DBG_ASSERT(ba->dim->capacity == 0);
-	ba->bu.ubuf = (kchar_t*)KNH_ZMALLOC(init);
+	ba->bu.ubuf = (kchar_t*)KCALLOC(init);
 	knh_bzero(ba->bu.ubuf, init);
 	ba->dim = new_dim(_ctx, init, 1);
 	ba->bu.len = 0;
@@ -2664,7 +2664,7 @@ static kBytes *new_BytesRANGE(CTX, kBytes *ba, size_t s, size_t e)
 		size_t capacity = newsize;
 		if(newsize > 0) {
 			if(capacity < 256) capacity = 256;
-			newa->bu.ubuf = (kchar_t*)KNH_ZMALLOC(capacity);
+			newa->bu.ubuf = (kchar_t*)KCALLOC(capacity);
 			knh_bzero(newa->bu.ubuf, capacity);
 			knh_memcpy(newa->bu.ubuf, ba->bu.utext + s, newsize);
 		}

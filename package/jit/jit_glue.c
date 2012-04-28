@@ -24,7 +24,7 @@
 //
 //static void kmodjit_free(CTX, struct kmodshare_t *baseh)
 //{
-//	KNH_FREE(baseh, sizeof(kmodjit_t));
+//	KFREE(baseh, sizeof(kmodjit_t));
 //}
 //
 //
@@ -41,7 +41,7 @@
 //static kbool_t jit_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 //{
 //	KSET_KLIB2(Method_genCode, pline);
-//	kmodjit_t *base  = (kmodjit_t*)KNH_ZMALLOC(sizeof(kmodjit_t));
+//	kmodjit_t *base  = (kmodjit_t*)KCALLOC(sizeof(kmodjit_t));
 //	base->h.name     = "jit";
 //	base->h.setup    = kmodjit_setup;
 //	base->h.reftrace = kmodjit_reftrace;

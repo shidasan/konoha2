@@ -86,7 +86,7 @@ static void kmap_makeFreeList(knh_kmap_t *kmap, size_t s, size_t e)
 static void kmap_rehash(CTX, knh_kmap_t *kmap)
 {
 	size_t i, newhmax = kmap->hmax * 2 + 1;
-	knh_kmape_t **newhentry = (knh_kmape_t**)KNH_ZMALLOC(newhmax * sizeof(knh_kmape_t*));
+	knh_kmape_t **newhentry = (knh_kmape_t**)KCALLOC(newhmax * sizeof(knh_kmape_t*));
 	knh_bzero(newhentry, newhmax * sizeof(knh_kmape_t*));
 	for(i = 0; i < kmap->arenasize / 2; i++) {
 		knh_kmape_t *e = kmap->arena + i;
@@ -94,7 +94,7 @@ static void kmap_rehash(CTX, knh_kmap_t *kmap)
 		e->next = newhentry[ni];
 		newhentry[ni] = e;
 	}
-	KNH_FREE(_ctx, kmap->hentry, kmap->hmax * sizeof(knh_kmape_t*));
+	KFREE(_ctx, kmap->hentry, kmap->hmax * sizeof(knh_kmape_t*));
 	kmap->hentry = newhentry;
 	kmap->hmax = newhmax;
 }
@@ -145,13 +145,13 @@ static void kmap_unuse(knh_kmap_t *kmap, knh_kmape_t *e)
 
 static kmapptr_t *kmap_init(CTX, size_t init, const char *path, struct kDictMap *opt)
 {
-	knh_kmap_t *kmap = (knh_kmap_t*)KNH_ZMALLOC(sizeof(knh_kmap_t));
+	knh_kmap_t *kmap = (knh_kmap_t*)KCALLOC(sizeof(knh_kmap_t));
 	knh_bzero(kmap, sizeof(knh_kmap_t));
 	if(init < K_HASH_INITSIZE) init = K_HASH_INITSIZE;
 	kmap->arenasize = (init * 3) / 4;
-	kmap->arena = (knh_kmape_t*)KNH_ZMALLOC(kmap->arenasize * sizeof(knh_kmape_t));
+	kmap->arena = (knh_kmape_t*)KCALLOC(kmap->arenasize * sizeof(knh_kmape_t));
 	kmap_makeFreeList(kmap, 0, kmap->arenasize);
-	kmap->hentry = (knh_kmape_t**)KNH_ZMALLOC(init * sizeof(knh_kmape_t*));
+	kmap->hentry = (knh_kmape_t**)KCALLOC(init * sizeof(knh_kmape_t*));
 	knh_bzero(kmap->hentry, init * sizeof(knh_kmape_t*));
 	kmap->hmax = init;
 	kmap->size = 0;
@@ -212,9 +212,9 @@ static void kmapNN_reftrace(CTX, kmapptr_t *m)
 static void kmap_free(CTX, kmapptr_t *m)
 {
 	knh_kmap_t *kmap = (knh_kmap_t*)m;
-	KNH_FREE(_ctx, kmap->arena, sizeof(knh_kmape_t)*(kmap->arenasize));
-	KNH_FREE(_ctx, kmap->hentry, sizeof(knh_kmape_t*)*(kmap->hmax));
-	KNH_FREE(_ctx, kmap, sizeof(knh_kmap_t));
+	KFREE(_ctx, kmap->arena, sizeof(knh_kmape_t)*(kmap->arenasize));
+	KFREE(_ctx, kmap->hentry, sizeof(knh_kmape_t*)*(kmap->hmax));
+	KFREE(_ctx, kmap, sizeof(knh_kmap_t));
 }
 
 static knh_kmape_t *kmap_getentry(knh_kmap_t* kmap, kuint_t hcode)
@@ -960,7 +960,7 @@ static int dentry_strcmp(const void *p, const void *p2)
 
 static kmapptr_t *dmap_init(CTX, size_t init, const char *path, struct kDictMap *opt)
 {
-	knh_dmap_t *dmap = (knh_dmap_t*)KNH_ZMALLOC(sizeof(knh_dmap_t));
+	knh_dmap_t *dmap = (knh_dmap_t*)KCALLOC(sizeof(knh_dmap_t));
 	if(init < K_HASH_INITSIZE) init = 4;
 	dmap->dentry = (knh_dentry_t*)KNH_REALLOC(_ctx, NULL, NULL, 0, init, sizeof(knh_dentry_t));
 	dmap->capacity = init;
@@ -989,8 +989,8 @@ static void dmap_free(CTX, kmapptr_t *m)
 {
 	knh_dmap_t *dmap = knh_map_dmap(m);
 	//DBG_P("DBGNAME=%s", dmap->DBGNAME);
-	KNH_FREE(_ctx, dmap->dentry, sizeof(knh_dentry_t)*dmap->capacity);
-	KNH_FREE(_ctx, dmap, sizeof(knh_dmap_t));
+	KFREE(_ctx, dmap->dentry, sizeof(knh_dentry_t)*dmap->capacity);
+	KFREE(_ctx, dmap, sizeof(knh_dmap_t));
 }
 
 static size_t dmap_size(CTX, kmapptr_t* m)

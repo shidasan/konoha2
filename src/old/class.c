@@ -629,12 +629,12 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, kclass_t *bct, kParam *pa)
 		if(TY_isUnbox(p->type)) ct->fcapacity += 1;
 	})
 	ct->fsize = ct->fcapacity;
-	ct->fields = (kfieldinfo_t*)KNH_ZMALLOC(sizeof(kfieldinfo_t) * ct->fcapacity);
+	ct->fields = (kfieldinfo_t*)KCALLOC(sizeof(kfieldinfo_t) * ct->fcapacity);
 	if(ct->fcapacity <= K_SMALLOBJECT_FIELDSIZE) {
 		tpl->fields = &(tpl->smallobject);
 	}
 	else {
-		tpl->fields = (kObject**)KNH_ZMALLOC(sizeof(kObject*) * ct->fcapacity);
+		tpl->fields = (kObject**)KCALLOC(sizeof(kObject*) * ct->fcapacity);
 	}
 	knh_bzero(tpl->fields, sizeof(kObject*) * ct->fcapacity);
 	for(i = 0; i < pa->psize; i++) {
@@ -850,7 +850,7 @@ void knh_Param_add(CTX, kParam *pa, kparam_t p)
 		pa->p2 = p;
 	}
 	else if(size == 3) {
-		kparam_t *params = (kparam_t*)KNH_ZMALLOC(K_FASTMALLOC_SIZE);
+		kparam_t *params = (kparam_t*)KCALLOC(K_FASTMALLOC_SIZE);
 		params[0] = pa->p0;
 		params[1] = pa->p1;
 		params[2] = pa->p2;

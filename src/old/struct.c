@@ -62,8 +62,8 @@ extern "C" {
 #ifdef K_USING_BMGC
 #define knh_bodyfree(_ctx, p, C)
 #else
-#define knh_bodymalloc(_ctx, C)   (knh_##C##EX_t*)KNH_ZMALLOC(sizeof(knh_##C##EX_t))
-#define knh_bodyfree(_ctx, p, C)  KNH_FREE(_ctx, p, sizeof(knh_##C##EX_t))
+#define knh_bodymalloc(_ctx, C)   (knh_##C##EX_t*)KCALLOC(sizeof(knh_##C##EX_t))
+#define knh_bodyfree(_ctx, p, C)  KFREE(_ctx, p, sizeof(knh_##C##EX_t))
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -218,7 +218,7 @@ static void ObjectField_init(CTX, kObject *o)
 	if(ct->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
-			v = (Object**)KNH_ZMALLOC(ct->fsize * sizeof(kObject*));
+			v = (Object**)KCALLOC(ct->fsize * sizeof(kObject*));
 		}
 		of->fields = v;
 		knh_memcpy(v, ct->protoNULL->fields, ct->fsize * sizeof(kObject*));
@@ -241,7 +241,7 @@ static void CppObject_init(CTX, kObject *o)
 	kclass_t *ct = O_ct(o);
 	o->rawptr = NULL;
 	if(ct->fsize > 0) {
-		o->kfields = (Object**)KNH_ZMALLOC(ct->fsize * sizeof(kObject*));
+		o->kfields = (Object**)KCALLOC(ct->fsize * sizeof(kObject*));
 		knh_memcpy(o->kfields, ct->protoNULL->fields, ct->fsize * sizeof(kObject*));
 #ifdef K_USING_RCGC
 		size_t i;
@@ -264,7 +264,7 @@ static void ObjectField_initcopy(CTX, kObject *o, kObject *src)
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
-			v = (Object**)KNH_ZMALLOC(t->fsize * sizeof(kObject*));
+			v = (Object**)KCALLOC(t->fsize * sizeof(kObject*));
 		}
 		of->fields = v;
 		knh_memcpy(v, src->rawptr, t->fsize * sizeof(kObject*));
@@ -312,7 +312,7 @@ static void ObjectField_free(CTX, kObject *o)
 	kObject *of = (kObject*)o;
 	kclass_t *ct = O_ct(o);
 	if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
-		KNH_FREE(_ctx, of->fields, ct->fsize * sizeof(kObject*));
+		KFREE(_ctx, of->fields, ct->fsize * sizeof(kObject*));
 	}
 	DBG_(of->fields = NULL);
 }
@@ -321,7 +321,7 @@ static void CppObject_free(CTX, kObject *o)
 {
 	kclass_t *ct = O_ct(o);
 	if(ct->fsize > 0) {
-		KNH_FREE(_ctx, o->kfields, ct->fsize * sizeof(kObject*));
+		KFREE(_ctx, o->kfields, ct->fsize * sizeof(kObject*));
 		o->kfields = NULL;
 	}
 	if(o->rawptr != NULL) {
@@ -451,7 +451,7 @@ static void ObjectFieldN_init(CTX, kObject *o)
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
-			v = (Object**)KNH_ZMALLOC(t->fsize * sizeof(kObject*));
+			v = (Object**)KCALLOC(t->fsize * sizeof(kObject*));
 		}
 		of->fields = v;
 		knh_memcpy(v, t->protoNULL->fields, t->fsize * sizeof(kObject*));
@@ -468,7 +468,7 @@ static void ObjectFieldN_initcopy(CTX, kObject *o, kObject *src)
 	if(ct->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(ct->fsize > K_SMALLOBJECT_FIELDSIZE) {
-			v = (Object**)KNH_ZMALLOC(ct->fsize * sizeof(kObject*));
+			v = (Object**)KCALLOC(ct->fsize * sizeof(kObject*));
 		}
 		of->fields = v;
 		knh_memcpy(v, src->rawptr, ct->fsize * sizeof(kObject*));
@@ -851,7 +851,7 @@ static void String_free(CTX, kObject *o)
 	}
 #endif
 	if(!String_isTextSgm(s)) {
-		KNH_FREE(_ctx, s->str.ubuf, KNH_SIZE(S_size(s) + 1));
+		KFREE(_ctx, s->str.ubuf, KNH_SIZE(S_size(s) + 1));
 	}
 }
 
@@ -927,7 +927,7 @@ static const kdim_t* dim_copy(CTX, const kdim_t *dim_src)
 		return dim_src;
 	}
 	else {
-		kdim_t *dim = (kdim_t*)KNH_ZMALLOC(sizeof(kdim_t));
+		kdim_t *dim = (kdim_t*)KCALLOC(sizeof(kdim_t));
 		/* copy dim_src to dim. @imasahiro */
 		dim->capacity = dim_src->capacity;
 		dim->wsize    = dim_src->wsize;
@@ -945,7 +945,7 @@ static void Bytes_initcopy(CTX, kObject *o, kObject *src)
 	kBytes *ba = (kBytes*)o, *ba_src = (kBytes*)src;
 	if(ba_src->dim->capacity > 0) {
 		ba->bu.len = ba_src->bu.len;
-		ba->bu.ubuf = (kchar_t*)KNH_ZMALLOC(ba_src->dim->capacity);
+		ba->bu.ubuf = (kchar_t*)KCALLOC(ba_src->dim->capacity);
 		knh_memcpy(ba->bu.ubuf, ba_src->bu.ubuf, ba_src->dim->capacity);
 	}
 	else {
@@ -1083,7 +1083,7 @@ static void Tuple_init(CTX, kObject *o)
 	if(t->fsize > 0) {
 		Object **v = &(of->smallobject);
 		if(t->fsize > K_SMALLOBJECT_FIELDSIZE) {
-			v = (Object**)KNH_ZMALLOC(t->fsize * sizeof(kObject*));
+			v = (Object**)KCALLOC(t->fsize * sizeof(kObject*));
 		}
 		of->fields = v;
 		knh_memcpy(v, t->defnull->fields, t->fsize * sizeof(kObject*));
@@ -1193,7 +1193,7 @@ static void Array_initcopy(CTX, kObject *o, kObject *src)
 	a->api = a_src->api;
 	if(a_src->dim->capacity > 0) {
 		a->size = a_src->size;
-		a->list = (kObject**)KNH_ZMALLOC(a_src->dim->capacity * a_src->dim->wsize);
+		a->list = (kObject**)KCALLOC(a_src->dim->capacity * a_src->dim->wsize);
 		knh_memcpy(a->list, a_src->list, a_src->dim->capacity * a_src->dim->wsize);
 		kArray_setUnboxData(a, kArray_isUnboxData(a_src));
 		if(!kArray_isUnboxData(a)) {
@@ -1627,7 +1627,7 @@ static void Param_free(CTX, kObject *o)
 {
 	kParam *pa = (kParam*)o;
 	if(pa->psize + pa->rsize > 3) {
-		KNH_FREE(_ctx, pa->params, pa->capacity * sizeof(kparam_t));
+		KFREE(_ctx, pa->params, pa->capacity * sizeof(kparam_t));
 	}
 }
 
@@ -1700,7 +1700,7 @@ static void BODY_free(CTX, kObject *o)
 #ifndef K_USING_BMGC
 	kclass_t *ct = O_ct(o);
 	DBG_ASSERT(ct->cdef->struct_size > 0);
-	KNH_FREE(_ctx, o->rawptr, ct->cdef->struct_size);
+	KFREE(_ctx, o->rawptr, ct->cdef->struct_size);
 #endif
 }
 
@@ -1843,7 +1843,7 @@ static void Func_free(CTX, kObject *o)
 //	kFunc *cc = (kFunc*)o;
 //	if(Func_isStoredEnv(cc)) {
 //		size_t stacksize = (cc)->hstacksize[-1];
-//		KNH_FREE(_ctx, (cc)->envsfp, (sizeof(ksfp_t) * stacksize) + sizeof(size_t));
+//		KFREE(_ctx, (cc)->envsfp, (sizeof(ksfp_t) * stacksize) + sizeof(size_t));
 //		(cc)->envsfp = NULL;
 //		Func_setStoredEnv(cc, 0);
 //	}
@@ -1870,7 +1870,7 @@ static void Thunk_newenv(CTX, kThunk *thk, size_t envsize)
 {
 	size_t i;
 	thk->envsize = envsize;
-	thk->envsfp = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t) * envsize);
+	thk->envsfp = (ksfp_t*)KCALLOC(sizeof(ksfp_t) * envsize);
 	for(i = 0; i < envsize; i++) {
 		KINITv((thk)->envsfp[i].o, K_NULL);
 		(thk)->envsfp[i].ndata = 0;
@@ -1908,7 +1908,7 @@ static void Thunk_reftrace(CTX, kObject *o)
 static void Thunk_free(CTX, kObject *o)
 {
 	kThunk *thunk = (kThunk*)o;
-	KNH_FREE(_ctx, thunk->envsfp, sizeof(ksfp_t) * thunk->envsize);
+	KFREE(_ctx, thunk->envsfp, sizeof(ksfp_t) * thunk->envsize);
 	thunk->envsfp = NULL;
 	thunk->envsize = 0;
 }
@@ -2277,7 +2277,7 @@ static void Path_free(CTX, kObject *o)
 {
 	kPath *pth = (kPath*)o;
 	if(pth->asize > 0) {
-		KNH_FREE(_ctx, (void*)pth->ospath, pth->asize);
+		KFREE(_ctx, (void*)pth->ospath, pth->asize);
 		pth->ospath = NULL;
 		pth->asize = 0;
 	}
@@ -2834,7 +2834,7 @@ static void StmtExpr_free(CTX, kObject *o)
 	kStmtExpr *stmt = (kStmtExpr*)o;
 	knh_StmtEX_t *b = DP((kStmtExpr*)o);
 	if(stmt->terms != NULL) {
-		KNH_FREE(_ctx, stmt->terms, sizeof(kTerm*) * b->capacity);
+		KFREE(_ctx, stmt->terms, sizeof(kTerm*) * b->capacity);
 		stmt->terms = NULL;
 	}
 	knh_bodyfree(_ctx, b, Stmt);
@@ -2938,7 +2938,7 @@ static void GammaBuilder_free(CTX, kObject *o)
 {
 	knh_GammaBuilderEX_t *b = DP((kGammaBuilder*)o);
 	if(b->gcapacity) {
-		KNH_FREE(_ctx, b->gf, b->gcapacity * sizeof(knh_gamma2_t));
+		KFREE(_ctx, b->gf, b->gcapacity * sizeof(knh_gamma2_t));
 	}
 	knh_bodyfree(_ctx, b, GammaBuilder);
 }
@@ -2982,7 +2982,7 @@ static void BasicBlock_free(CTX, kObject *o)
 {
 	kBasicBlock *bb = (kBasicBlock*)o;
 	if(DP(bb)->capacity > 0) {
-		KNH_FREE(_ctx, DP(bb)->opbuf, DP(bb)->capacity * sizeof(kopl_t));
+		KFREE(_ctx, DP(bb)->opbuf, DP(bb)->capacity * sizeof(kopl_t));
 	}
 	knh_bodyfree(_ctx, DP(bb), BasicBlock);
 }
@@ -3024,7 +3024,7 @@ static void KonohaCode_reftrace(CTX, kObject *o)
 static void KonohaCode_free(CTX, kObject *o)
 {
 	kKonohaCode *b = (kKonohaCode*)o;
-	KNH_FREE(_ctx, b->code, b->codesize);
+	KFREE(_ctx, b->code, b->codesize);
 }
 
 static void KonohaCode_p(CTX, kOutputStream *w, kObject *o, int level)

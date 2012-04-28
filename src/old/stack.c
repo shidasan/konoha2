@@ -45,11 +45,11 @@ ksfp_t* knh_stack_initexpand(CTX, ksfp_t *sfp, size_t n)
 		DBG_ASSERT(_ctxo->stacksize == 0);
 		s = 0;
 		ctxo->stacksize = n;
-		ctxo->stack = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t) * ctxo->stacksize);
+		ctxo->stack = (ksfp_t*)KCALLOC(sizeof(ksfp_t) * ctxo->stacksize);
 		ctxo->esp = ctxo->stack;
-		ctxo->mtdcache = (knh_mtdcache_t*)KNH_ZMALLOC(K_MTDCACHE_SIZE * sizeof(knh_mtdcache_t));
+		ctxo->mtdcache = (knh_mtdcache_t*)KCALLOC(K_MTDCACHE_SIZE * sizeof(knh_mtdcache_t));
 		knh_bzero(_ctxo->mtdcache, K_MTDCACHE_SIZE * sizeof(knh_mtdcache_t));
-		ctxo->tmrcache = (knh_tmrcache_t*)KNH_ZMALLOC(K_TMAPCACHE_SIZE * sizeof(knh_tmrcache_t));
+		ctxo->tmrcache = (knh_tmrcache_t*)KCALLOC(K_TMAPCACHE_SIZE * sizeof(knh_tmrcache_t));
 		knh_bzero(_ctxo->tmrcache, K_TMAPCACHE_SIZE * sizeof(knh_tmrcache_t));
 		KINITv(_ctxo->bufa, new_Bytes(_ctx, "cwbbuf", K_PAGESIZE * 4));
 		KINITv(_ctxo->bufw, new_BytesOutputStream(_ctx, ctxo->bufa));
@@ -66,7 +66,7 @@ ksfp_t* knh_stack_initexpand(CTX, ksfp_t *sfp, size_t n)
 		KNH_TODO("stack rewriting");
 #endif
 		// Don't use realloc
-		ctxo->stack = (ksfp_t*)KNH_ZMALLOC(newsize*sizeof(ksfp_t));
+		ctxo->stack = (ksfp_t*)KCALLOC(newsize*sizeof(ksfp_t));
 		knh_memcpy(_ctxo->stack, oldstack, size*sizeof(ksfp_t));
 		KNH_MEMINFO(_ctx, "realloc ctx->stack oldsize=%d, newsize=%d, oldblock=(%p,%p) newblock=(%p,%p)",
 			(int)size, (int)newsize, oldstack, oldstack+size, ctxo->stack, ctxo->stack+newsize);
@@ -90,7 +90,7 @@ ksfp_t* knh_stack_initexpand(CTX, ksfp_t *sfp, size_t n)
 		}
 		ctxo->stacksize = newsize;
 		ctxo->esp = ctxo->stack + espidx;
-		KNH_FREE(_ctx, oldstack, size*sizeof(ksfp_t));
+		KFREE(_ctx, oldstack, size*sizeof(ksfp_t));
 		s = size;
 	}
 #endif

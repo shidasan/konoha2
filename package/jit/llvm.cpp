@@ -69,10 +69,10 @@ struct vstack {
 
 static vstack_t *ValueStack_new(CTX, size_t n)
 {
-	vstack_t *stack = (vstack_t*) KNH_ZMALLOC(sizeof(vstack_t));
+	vstack_t *stack = (vstack_t*) KCALLOC(sizeof(vstack_t));
 	stack->capacity = n;
 	stack->size  = 0;
-	stack->vals = (Value **)(KNH_MALLOC(sizeof(Value*) * n));
+	stack->vals = (Value **)(KMALLOC(sizeof(Value*) * n));
 	return stack;
 }
 
@@ -83,10 +83,10 @@ static void ValueStack_resize(CTX, vstack_t *stack, size_t n)
 		size_t capacity = stack->capacity;
 		stack->capacity = capacity * 2;
 		fprintf(stderr, "%p, n=%lu, cap=%lu\n", (void*) stack->vals, n, capacity);
-		stack->vals = (Value **)(KNH_MALLOC(sizeof(Value*) * stack->capacity));
+		stack->vals = (Value **)(KMALLOC(sizeof(Value*) * stack->capacity));
 		memcpy(stack->vals, vals, sizeof(Value*) * capacity);
 		bzero(stack->vals+capacity, sizeof(Value*) * capacity);
-		KNH_FREE(vals, sizeof(Value*) * capacity);
+		KFREE(vals, sizeof(Value*) * capacity);
 	}
 }
 
@@ -136,7 +136,7 @@ static void ValueStack_clear(vstack_t *stack)
 static void ValueStack_free(CTX, vstack_t *stack)
 {
 	size_t capacity = stack->capacity;
-	KNH_FREE(stack->vals, capacity * sizeof(Value*));
+	KFREE(stack->vals, capacity * sizeof(Value*));
 }
 
 uintptr_t jitcache_hash(kMethod *mtd)
@@ -1364,14 +1364,14 @@ static void kmodjit_free(CTX, struct kmodshare_t *baseh)
 	kmap_free(modshare->jitcache, NULL);
 	//delete modshare->global_module;
 	//delete modshare->global_ee;
-	KNH_FREE(baseh, sizeof(kmodjit_t));
+	KFREE(baseh, sizeof(kmodjit_t));
 }
 
 static kbool_t kmodjit_init(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	(void)ks;(void)argc;(void)args;(void)pline;
 	InitializeNativeTarget();
-	kmodjit_t *base = (kmodjit_t*)KNH_ZMALLOC(sizeof(*base));
+	kmodjit_t *base = (kmodjit_t*)KCALLOC(sizeof(*base));
 	base->h.name     = "llvmjit";
 	base->h.setup    = kmodjit_setup;
 	base->h.reftrace = kmodjit_reftrace;

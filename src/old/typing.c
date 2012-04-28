@@ -1687,7 +1687,7 @@ static void ObjectField_expand(CTX, kObject *of, size_t oldsize, size_t newsize)
 		}
 	}
 	else if(oldsize != 0 && oldsize < K_SMALLOBJECT_FIELDSIZE) {
-		kObject** newf = (kObject**)KNH_ZMALLOC(newsize*sizeof(Object*));
+		kObject** newf = (kObject**)KCALLOC(newsize*sizeof(Object*));
 		knh_memcpy(newf, oldf, oldsize*sizeof(Object*));
 		knh_bzero(newf+oldsize, (newsize-oldsize)*sizeof(Object*));
 		of->fields = newf;
@@ -4522,7 +4522,7 @@ static void ClassTBL_newField(CTX, kclass_t *ct)
 	);
 	if(fsize > 0) {
 		size_t fi = 0;
-		ct->fields = (kfieldinfo_t*)KNH_ZMALLOC(fsize * sizeof(kfieldinfo_t));
+		ct->fields = (kfieldinfo_t*)KCALLOC(fsize * sizeof(kfieldinfo_t));
 		ct->fcapacity = fsize;
 		ct->fsize = fsize;
 		for(i = 0; i < gsize; i++) {
@@ -4547,13 +4547,13 @@ static kObject** ObjectField_new(CTX, kObject *o)
 	kclass_t *ct = O_ct(o);
 	if(ct->bcid == CLASS_CppObject) {
 		kObject *p = (kObject*)o;
-		p->kfields = (kObject**)KNH_ZMALLOC(sizeof(kObject*) * ct->fsize);
+		p->kfields = (kObject**)KCALLOC(sizeof(kObject*) * ct->fsize);
 		return p->kfields;
 	}
 	else {
 		o->fields = &(o->smallobject);
 		if(!(ct->fsize < K_SMALLOBJECT_FIELDSIZE)) {
-			o->fields = (kObject**)KNH_ZMALLOC(sizeof(kObject*) * ct->fsize);
+			o->fields = (kObject**)KCALLOC(sizeof(kObject*) * ct->fsize);
 		}
 		return o->fields;
 	}

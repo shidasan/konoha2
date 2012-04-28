@@ -741,7 +741,7 @@ static void knh_loadNativeClass(CTX, const char *cname, kclass_t *ct)
 		knh_snprintf(fname, sizeof(fname), "def%s", cname);
 		knh_Fclassdef classdef = (knh_Fclassdef)knh_dlsym(_ctx, ns->gluehdr, fname, cname, 0/*isTest*/);
 		if(classdef != NULL) {
-			kclass_t *cdefbuf = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t));
+			kclass_t *cdefbuf = (struct _kclass*)KCALLOC(sizeof(kclass_t));
 			knh_memcpy(cdefbuf, knh_getDefaultClassDef(), sizeof(kclass_t));
 			LANG_LOG("loading glue func: %s", fname);
 			classdef(_ctx, ct->cid, cdefbuf);

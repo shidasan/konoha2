@@ -349,7 +349,7 @@ void knh_mutex_free(CTX, kmutex_t *m)
 
 knh_cond_t *kthread_cond_init(CTX)
 {
-	pthread_cond_t *c = (pthread_cond_t *)KNH_ZMALLOC(sizeof(pthread_cond_t));
+	pthread_cond_t *c = (pthread_cond_t *)KCALLOC(sizeof(pthread_cond_t));
 	pthread_cond_init(c, NULL);
 	return (knh_cond_t *)c;
 }
@@ -375,7 +375,7 @@ int kthread_cond_broadcast(knh_cond_t *cond)
 
 knh_cond_t *kthread_cond_init(CTX)
 {
-	knh_cond_t *c = (knh_cond_t *)KNH_ZMALLOC(sizeof(knh_cond_t));
+	knh_cond_t *c = (knh_cond_t *)KCALLOC(sizeof(knh_cond_t));
 	// Create an auto-reset event.
 	c->events_[E_SIGNAL] = CreateEvent(NULL,  // no secfileidty
 			FALSE, // auto-reset event

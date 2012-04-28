@@ -32,7 +32,7 @@ static void kmodfloat_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kmodfloat_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodfloat_t));
+	KFREE(baseh, sizeof(kmodfloat_t));
 }
 
 static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
@@ -144,7 +144,7 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 
 static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 {
-	kmodfloat_t *base = (kmodfloat_t*)KNH_ZMALLOC(sizeof(kmodfloat_t), 1);
+	kmodfloat_t *base = (kmodfloat_t*)KCALLOC(sizeof(kmodfloat_t), 1);
 	base->h.name     = "float";
 	base->h.setup    = kmodfloat_setup;
 	base->h.reftrace = kmodfloat_reftrace;
