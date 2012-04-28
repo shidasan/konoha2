@@ -362,7 +362,7 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_n, TY_Int, FN_n,
 		DEND,
 	};
-	Konoha_loadMethodData(ks, MethodData);
+	kKonohaSpace_loadMethodData(ks, MethodData);
 	return true;
 }
 

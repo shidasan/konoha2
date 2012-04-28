@@ -596,7 +596,7 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 	W(kBasicBlock, bbRET);
 	kcode->fileid = ctxcode->uline; //TODO
 	kcode->codesize = BasicBlock_size(_ctx, bb, 0) * sizeof(kopl_t);
-	kcode->code = (kopl_t*)KNH_ZMALLOC(kcode->codesize);
+	kcode->code = (kopl_t*)KNH_ZMALLOC(kcode->codesize, 1);
 	WbbRET->code = kcode->code; // dummy
 	{
 		kopl_t *op = BasicBlock_copy(_ctx, kcode->code, Wbb, prev);
@@ -1799,7 +1799,7 @@ static void _THCODE(CTX, kopl_t *pc, void **codeaddr)
 #endif
 }
 
-static void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
+static void Method_genCode(CTX, kMethod *mtd, kBlock *bk)
 {
 	DBG_P("START CODE GENERATION..");
 	if(ctxcode == NULL) {
@@ -1826,7 +1826,7 @@ static void MODCODE_genCode(CTX, kMethod *mtd, kBlock *bk)
 /* ------------------------------------------------------------------------ */
 /* [datatype] */
 
-#define PACKSUGAR    .packid = 1, .packdom = 1
+//#define PACKSUGAR    .packid = 1, .packdom = 1
 
 static void BasicBlock_init(CTX, kObject *o, void *conf)
 {
@@ -1846,12 +1846,6 @@ static void BasicBlock_free(CTX, kObject *o)
 	struct _kBasicBlock *bb = (struct _kBasicBlock*)o;
 	KARRAY_FREE(&bb->op);
 }
-
-static KDEFINE_CLASS BasicBlockDef = {
-	STRUCTNAME(BasicBlock), PACKSUGAR,
-	.init = BasicBlock_init,
-	.free = BasicBlock_free,
-};
 
 static void KonohaCode_init(CTX, kObject *o, void *conf)
 {
@@ -1875,13 +1869,6 @@ static void KonohaCode_free(CTX, kObject *o)
 	kKonohaCode *b = (kKonohaCode*)o;
 	KNH_FREE(b->code, b->codesize);
 }
-
-static KDEFINE_CLASS KonohaCodeDef = {
-	STRUCTNAME(KonohaCode), PACKSUGAR,
-	.init = KonohaCode_init,
-	.reftrace = KonohaCode_reftrace,
-	.free = KonohaCode_free,
-};
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
@@ -1926,7 +1913,7 @@ static void kmodcode_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(!newctx) { // lazy setup
 		assert(_ctx->modlocal[MOD_code] == NULL);
-		ctxcode_t *base = (ctxcode_t*)KNH_ZMALLOC(sizeof(ctxcode_t));
+		ctxcode_t *base = (ctxcode_t*)KNH_ZMALLOC(sizeof(ctxcode_t), 1);
 		base->h.reftrace = ctxcode_reftrace;
 		base->h.free     = ctxcode_free;
 		KINITv(base->insts, new_(Array, K_PAGESIZE/sizeof(void*)));
@@ -1952,16 +1939,29 @@ static void kmodcode_free(CTX, struct kmodshare_t *baseh)
 
 void MODCODE_init(CTX, kcontext_t *ctx)
 {
-	kmodcode_t *base = (kmodcode_t*)KNH_ZMALLOC(sizeof(kmodcode_t));
+	kmodcode_t *base = (kmodcode_t*)KNH_ZMALLOC(sizeof(kmodcode_t), 1);
 	opcode_check();
 	base->h.name     = "minivm";
 	base->h.setup    = kmodcode_setup;
 	base->h.reftrace = kmodcode_reftrace;
 	base->h.free     = kmodcode_free;
-
 	Konoha_setModule(MOD_code, &base->h, 0);
-	base->cBasicBlock = Konoha_addClassDef(NULL, &BasicBlockDef, 0);
-	base->cKonohaCode = Konoha_addClassDef(NULL, &KonohaCodeDef, 0);
+
+	KDEFINE_CLASS defBasicBlock = {
+		STRUCTNAME(BasicBlock),
+		.init = BasicBlock_init,
+		.free = BasicBlock_free,
+	};
+
+	KDEFINE_CLASS defKonohaCode = {
+		STRUCTNAME(KonohaCode),
+		.init = KonohaCode_init,
+		.reftrace = KonohaCode_reftrace,
+		.free = KonohaCode_free,
+	};
+
+	base->cBasicBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBasicBlock, 0);
+	base->cKonohaCode = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defKonohaCode, 0);
 	kmodcode_setup(_ctx, &base->h, 0/*lazy*/);
 	{
 		INIT_GCSTACK();
@@ -1985,7 +1985,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 	}
 	struct _klib2 *l = (struct _klib2*)_ctx->lib2;
 	l->KMethod_setFunc = Method_setFunc;
-	l->KMethod_genCode = MODCODE_genCode;
+	l->KMethod_genCode = Method_genCode;
 }
 
 /* ------------------------------------------------------------------------ */

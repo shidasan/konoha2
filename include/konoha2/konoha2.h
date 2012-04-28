@@ -261,7 +261,7 @@ typedef kushort_t       kmethodn_t;
 #define TY_unknown         ((kcid_t)-2)
 
 #define CT_(t)              (_ctx->share->ca.cts[t])
-#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UNboxType)
+#define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UnboxType)
 
 #define FN_NONAME          ((ksymbol_t)-1)
 #define FN_NEWID           ((ksymbol_t)-2)
@@ -473,17 +473,15 @@ struct _kclass;
 		kbool_t (*issubtype)(CTX, const struct _kclass*, const struct _kclass*);\
 		const struct _kclass* (*realtype)(CTX, const struct _kclass*, const struct _kclass*)
 
-//struct kString* (*getkey)(CTX, const struct _kObject*);
-//kuint_t (*hashCode)(CTX, const struct _kObject*);
-
 typedef struct KDEFINE_CLASS {
 	const char *structname;
 	kcid_t     cid;         kflag_t    cflag;
 	kcid_t     bcid;        kcid_t     supcid;
+	ktype_t    rtype;       kushort_t  psize;
+	struct kparam_t   *cparams;
 	size_t     cstruct_size;
 	kfield_t   *fields;
 	kushort_t  fsize;       kushort_t fallocsize;
-	kpack_t     packid;     kpack_t packdom;
 	KCLASSSPI;
 } KDEFINE_CLASS;
 
@@ -501,25 +499,25 @@ typedef const struct _kclass kclass_t;
 struct _kclass {
 	KCLASSSPI;
 	kpack_t   packid;       kpack_t   packdom;
-	kcid_t   cid;          kflag_t  cflag;
-	kcid_t   bcid;         kcid_t   supcid;
-	ktype_t  p1;           ktype_t  p2;
+	kcid_t   cid;           kflag_t  cflag;
+	kcid_t   bcid;          kcid_t   supcid;
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
 	kushort_t  fsize;         kushort_t fallocsize;
 	const char               *DBG_NAME;
-
 	kuname_t                  nameid;
 	kushort_t                 optvalue;
+
 	const struct _kParam     *cparam;
 	const struct _kArray     *methods;
-	union {
+	union {   // default value
 		const struct _kObject  *nulvalNUL;
 		struct _kObject        *WnulvalNUL;
 	};
 	struct kmap_t            *constPoolMapNO;
-	kclass_t                 *simbody;
+	kclass_t                 *searchSimilarClassNULL;
+	kclass_t                 *searchSuperMethodClassNULL;
 } ;
 
 /* ----------------------------------------------------------------------- */
@@ -538,7 +536,7 @@ struct _kclass {
 #define CLASS_Param             ((kcid_t)7)
 #define CLASS_Method            ((kcid_t)8)
 #define CLASS_System            ((kcid_t)9)
-#define CLASS_Tdynamic          ((kcid_t)10)
+#define CLASS_T0                ((kcid_t)10)    /* ParamType*/
 
 #define CT_Object               CT_(CLASS_Object)
 #define CT_Boolean              CT_(CLASS_Boolean)
@@ -548,13 +546,24 @@ struct _kclass {
 #define CT_Param                CT_(CLASS_Param)
 #define CT_Method               CT_(CLASS_Method)
 
+#define CT_StringArray          CT_Array
+#define kStringArray            kArray
+#define CT_MethodArray          CT_Array
+#define kMethodArray            kArray
+#define CT_TokenArray           CT_Array
+#define kTokenArray             kArray
+#define CT_ExprArray            CT_Array
+#define kExprArray              kArray
+#define CT_StmtArray            CT_Array
+#define kStmtArray              kArray
+
 #define kClass_Ref              ((kflag_t)(1<<0))
 #define kClass_Prototype        ((kflag_t)(1<<1))
 #define kClass_Immutable        ((kflag_t)(1<<2))
 #define kClass_Private          ((kflag_t)(1<<4))
 #define kClass_Final            ((kflag_t)(1<<5))
 #define kClass_Singleton        ((kflag_t)(1<<6))
-#define kClass_UNboxType        ((kflag_t)(1<<7))
+#define kClass_UnboxType        ((kflag_t)(1<<7))
 #define kClass_Interface        ((kflag_t)(1<<8))
 #define kClass_TypeVar          ((kflag_t)(1<<9))
 #define kClass_UNDEF            ((kflag_t)(1<<10))
@@ -569,11 +578,11 @@ struct _kclass {
 #define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
 
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
-#define TY_is_UNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
-#define CT_is_UNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
+#define TY_isUNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
+#define CT_isUNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
 #define CT_setUNDEF(ct, B)     TFLAG_set(kflag_t, (ct)->cflag, kClass_UNDEF, B)
 
-//#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UNboxType))
+//#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UnboxType))
 //#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
 //#define T_isTypeVar(t)      (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_TypeVar))
 
@@ -607,7 +616,7 @@ struct _kclass {
 //## @TypeVariable class Tvar  Tvoid;
 
 #define OFLAG_Tvoid              MAGICFLAG(0)
-#define CFLAG_Tvoid              kClass_TypeVar|kClass_UNboxType|kClass_Singleton|kClass_Final
+#define CFLAG_Tvoid              kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final
 #define TY_void                  CLASS_Tvoid
 #define OFLAG_Tvar               MAGICFLAG(0)
 #define CFLAG_Tvar               CFLAG_Tvoid
@@ -663,17 +672,16 @@ typedef struct kvs_t {
 	};
 } kvs_t;
 
-#define O_cid(o)            (((o)->h.ct)->cid)
-#define O_bcid(o)           (((o)->h.ct)->bcid)
 #define O_ct(o)             ((o)->h.ct)
-#define O_unbox(o)          ((o)->h.ct->unbox(_ctx, o))
-#define O_p1(o)             (((o)->h.ct)->p1)
-#define O_p2(o)             (((o)->h.ct)->p2)
+#define O_cid(o)            (O_ct(o)->cid)
+#define O_bcid(o)           (O_ct(o)->bcid)
+#define O_unbox(o)          (O_ct(o)->unbox(_ctx, o))
+#define O_p0(o)             (O_ct(o)->cparam->p[0].ty)
 
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Boolean Object;
 
-#define CFLAG_Boolean              kClass_Immutable|kClass_UNboxType|kClass_Final
+#define CFLAG_Boolean              kClass_Immutable|kClass_UnboxType|kClass_Final
 #define OFLAG_Boolean              MAGICFLAG(0)
 #define TY_Boolean                 CLASS_Boolean
 #define IS_Boolean(o)              (O_cid(o) == CLASS_Boolean)
@@ -709,7 +717,7 @@ struct _kBoolean /* extends kNumber */ {
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Int Number;
 
-#define CFLAG_Int              kClass_Immutable|kClass_UNboxType|kClass_Final
+#define CFLAG_Int              kClass_Immutable|kClass_UnboxType|kClass_Final
 #define OFLAG_Int              MAGICFLAG(0)
 #define TY_Int                 CLASS_Int
 #define IS_Int(o)              (O_cid(o) == CLASS_Int)
@@ -800,7 +808,7 @@ struct _kString /* extends _Bytes */ {
 #define TY_Array                 CLASS_Array
 #define IS_Array(o)              (O_cid(o) == CLASS_Array)
 
-#define kArray_is_UNboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
+#define kArray_isUnboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
 
 typedef const struct _kArray kArray;
@@ -964,18 +972,22 @@ struct _kSystem {
 /* ------------------------------------------------------------------------ */
 //## class Tdynamic Object;
 
-#define CFLAG_Tdynamic              kClass_Final
-#define OFLAG_Tdynamic              MAGICFLAG(0)
-#define TY_dynamic                  CLASS_Tdynamic
-#define CLASS_RawPtr                CLASS_Tdynamic
-#define T_RawPtr                    CLASS_Tdynamic
-
-//typedef struct kObject {
-//	kObjectHeader h;
-//	void         *rawptr;
-//	kArray       *gcbuf;
-//	void         (*rawfree)(void *);
-//} kObject ;
+#define CFLAG_T0                    kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final
+#define TY_T0                       CLASS_T0
+#define TY_0                        CLASS_T0
+//
+//#define CFLAG_Tdynamic              kClass_Final
+//#define OFLAG_Tdynamic              MAGICFLAG(0)
+//#define TY_dynamic                  CLASS_Tdynamic
+//#define CLASS_RawPtr                CLASS_Tdynamic
+//#define T_RawPtr                    CLASS_Tdynamic
+//
+////typedef struct kObject {
+////	kObjectHeader h;
+////	void         *rawptr;
+////	kArray       *gcbuf;
+////	void         (*rawfree)(void *);
+////} kObject ;
 
 //#define new_ReturnRawPtr(_ctx, sfp, p)  new_ReturnCppObject(_ctx, sfp, p, NULL)
 
@@ -1076,27 +1088,27 @@ struct _klib2 {
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
 	void (*KArray_clear)(CTX, kArray *, size_t);
 
-	kParam * (*Knew_Param)(CTX, ktype_t, int, kparam_t *);
-	kMethod * (*Knew_Method)(CTX, uintptr_t, kcid_t, kmethodn_t, kParam*, knh_Fmethod);
-	void (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
+	kParam *   (*Knew_Param)(CTX, ktype_t, int, kparam_t *);
+	kMethod *  (*Knew_Method)(CTX, uintptr_t, kcid_t, kmethodn_t, kParam*, knh_Fmethod);
+	void       (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
+	void       (*KMethod_genCode)(CTX, kMethod*, const struct _kBlock *bk);
 
-	kbool_t (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
-	kclass_t* (*KaddClassDef)(CTX, kString *, KDEFINE_CLASS *, kline_t);
+	kbool_t    (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
+	kclass_t*  (*KaddClassDef)(CTX, kpack_t, kpack_t, kString *, KDEFINE_CLASS *, kline_t);
 
-	kclass_t*  (*KKonohaSpace_getCT)(CTX, const struct _kKonohaSpace *, kclass_t *, const char *, size_t, kcid_t def);
-	void    (*KloadMethodData)(CTX, const struct _kKonohaSpace *, intptr_t *d);
-	void    (*KloadConstData)(CTX, const struct _kKonohaSpace *, const char **d, kline_t);
+	kclass_t*  (*KS_getCT)(CTX, const struct _kKonohaSpace *, kclass_t *, const char *, size_t, kcid_t def);
+	void       (*KS_loadMethodData)(CTX, const struct _kKonohaSpace *, intptr_t *d);
+	void       (*KS_loadConstData)(CTX, const struct _kKonohaSpace *, const char **d, kline_t);
+	kMethod*   (*KS_getMethodNULL)(CTX, const struct _kKonohaSpace *ks, kcid_t cid, kmethodn_t mn);
+	kMethod*   (*KS_getGetterMethodNULL)(CTX, const struct _kKonohaSpace *, ktype_t cid, ksymbol_t sym);
 
-	void  (*KCodeGen)(CTX, kMethod *, const struct _kBlock *);
-	void (*Kreport)(CTX, int level, const char *msg);
-	void (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
-	void (*Kraise)(CTX, int isContinue);     // module
+	void       (*KCodeGen)(CTX, kMethod *, const struct _kBlock *);
+	void       (*Kreport)(CTX, int level, const char *msg);
+	void       (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
+	void       (*Kraise)(CTX, int isContinue);     // module
 
-	uintptr_t (*Ktrace)(CTX, struct klogconf_t *logconf, ...);
-	void (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
-	void (*KMethod_genCode)(CTX, kMethod *mtd, const struct _kBlock *bk);
-//	void (*KKonohaSpace_defineSyntax)(CTX, const struct _kKonohaSpace*, struct KDEFINE_SYNTAX *);
-
+	uintptr_t  (*Ktrace)(CTX, struct klogconf_t *logconf, ...);
+	void       (*Kp)(const char *file, const char *func, int line, const char *fmt, ...) __PRINT_FMT(4, 5);
 };
 
 #define K_NULL            (_ctx->share->constNull)
@@ -1113,14 +1125,14 @@ struct _klib2 {
 
 #define KPI                     (_ctx->lib2)
 
-#define KNH_MALLOC(size)       (KPI)->Kmalloc(_ctx, size)
-#define KNH_ZMALLOC(size)      (KPI)->Kzmalloc(_ctx, size)
-#define KNH_FREE(p, size)      (KPI)->Kfree(_ctx, p, size)
+#define KNH_MALLOC(size)          (KPI)->Kmalloc(_ctx, size)
+#define KNH_ZMALLOC(size, item)   (KPI)->Kzmalloc(_ctx, ((size) * (item)))
+#define KNH_FREE(p, size)         (KPI)->Kfree(_ctx, p, size)
 
-#define KARRAY_INIT(VAR, init)      (KPI)->Karray_init(_ctx, VAR, (init))
+#define KARRAY_INIT(VAR, init)           (KPI)->Karray_init(_ctx, VAR, (init))
 #define KARRAY_RESIZE(VAR, newsize)      (KPI)->Karray_resize(_ctx, VAR, (newsize))
-#define KARRAY_EXPAND(VAR, min)     (KPI)->Karray_expand(_ctx, VAR, (min))
-#define KARRAY_FREE(VAR)            (KPI)->Karray_free(_ctx, VAR)
+#define KARRAY_EXPAND(VAR, min)          (KPI)->Karray_expand(_ctx, VAR, (min))
+#define KARRAY_FREE(VAR)                 (KPI)->Karray_free(_ctx, VAR)
 
 #define kwb_init(M,W)            (KPI)->Kwb_init(M,W)
 #define kwb_write(W,B,S)         (KPI)->Kwb_write(_ctx,W,B,S)
@@ -1190,11 +1202,12 @@ struct _klib2 {
 #define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 
 #define KCLASS(cid)                          S_text(CT(cid)->name)
-#define Konoha_getCT(NS, THIS, S, L, C)      (KPI)->KKonohaSpace_getCT(_ctx, NS, THIS, S, L, C)
 #define Konoha_setModule(N,D,P)              (KPI)->KsetModule(_ctx, N, D, P)
-#define Konoha_addClassDef(NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, NAME, DEF, UL)
-#define Konoha_loadMethodData(NS, DEF)       (KPI)->KloadMethodData(_ctx, NS, DEF)
-#define Konoha_loadConstData(KS, DEF, UL)    (KPI)->KloadConstData(_ctx, KS, (const char**)&(DEF), UL)
+#define Konoha_addClassDef(PAC, DOM, NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, PAC, DOM, NAME, DEF, UL)
+#define kKonohaSpace_getCT(NS, THIS, S, L, C)      (KPI)->KS_getCT(_ctx, NS, THIS, S, L, C)
+#define kKonohaSpace_loadMethodData(NS, DEF)       (KPI)->KS_loadMethodData(_ctx, NS, DEF)
+#define kKonohaSpace_loadConstData(KS, DEF, UL)    (KPI)->KS_loadConstData(_ctx, KS, (const char**)&(DEF), UL)
+#define kKonohaSpace_getMethodNULL(KS, CID, MN)    (KPI)->KS_getMethodNULL(_ctx, KS, CID, MN)
 
 typedef struct {
 	const char *key;
@@ -1213,12 +1226,6 @@ typedef struct {
 	uintptr_t ty;
 	kfloat_t value;
 } KDEFINE_FLOAT_CONST;
-
-typedef struct {
-	const char *key;
-	uintptr_t ty;
-	kclass_t *ct;
-} KDEFINE_CLASS_CONST;
 
 
 #define CRIT_  0

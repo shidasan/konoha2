@@ -164,13 +164,13 @@ static void ctxsugar_free(CTX, struct kmodlocal_t *baseh)
 static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(!newctx && _ctx->modlocal[MOD_sugar] == NULL) {
-		ctxsugar_t *base = (ctxsugar_t*)KNH_ZMALLOC(sizeof(ctxsugar_t));
+		ctxsugar_t *base = (ctxsugar_t*)KNH_ZMALLOC(sizeof(ctxsugar_t), 1);
 		base->h.reftrace = ctxsugar_reftrace;
 		base->h.free     = ctxsugar_free;
-		KINITv(base->tokens, new_(Array, K_PAGESIZE/sizeof(void*)));
-		KINITv(base->errors, new_(Array, 8));
-		KINITv(base->lvarlst, new_(Array, K_PAGESIZE/sizeof(void*)));
-		KINITv(base->definedMethods, new_(Array, 8));
+		KINITv(base->tokens, new_(TokenArray, K_PAGESIZE/sizeof(void*)));
+		KINITv(base->errors, new_(StringArray, 8));
+		KINITv(base->lvarlst, new_(ExprArray, K_PAGESIZE/sizeof(void*)));
+		KINITv(base->definedMethods, new_(MethodArray, 8));
 
 		KINITv(base->gma, new_(Gamma, NULL));
 		KINITv(base->singleBlock, new_(Block, NULL));
@@ -218,16 +218,17 @@ static void kmodsugar_free(CTX, struct kmodshare_t *baseh)
 
 void MODSUGAR_init(CTX, kcontext_t *ctx)
 {
-	kmodsugar_t *base = (kmodsugar_t*)KNH_ZMALLOC(sizeof(kmodsugar_t));
+	kmodsugar_t *base = (kmodsugar_t*)KNH_ZMALLOC(sizeof(kmodsugar_t), 1);
 	base->h.name     = "sugar";
 	base->h.setup    = kmodsugar_setup;
 	base->h.reftrace = kmodsugar_reftrace;
 	base->h.free     = kmodsugar_free;
 
 	struct _klib2* l = (struct _klib2*)ctx->lib2;
-	l->KKonohaSpace_getCT   = KonohaSpace_getCT;
-	l->KloadMethodData = KonohaSpace_loadMethodData;
-	l->KloadConstData  = KonohaSpace_loadConstData;
+	l->KS_getCT   = KonohaSpace_getCT;
+	l->KS_loadMethodData = KonohaSpace_loadMethodData;
+	l->KS_loadConstData  = KonohaSpace_loadConstData;
+	l->KS_getMethodNULL  = KonohaSpace_getMethodNULL;
 
 	KINITv(base->keywordList, new_(Array, 32));
 	base->keywordMapNN = kmap_init(0);
@@ -235,12 +236,12 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->packageMapNO = kmap_init(0);
 
 	Konoha_setModule(MOD_sugar, (kmodshare_t*)base, 0);
-	base->cKonohaSpace = Konoha_addClassDef(NULL, &KonohaSpaceDef, 0);
-	base->cToken = Konoha_addClassDef(NULL, &TokenDef, 0);
-	base->cExpr  = Konoha_addClassDef(NULL, &ExprDef, 0);
-	base->cStmt  = Konoha_addClassDef(NULL, &StmtDef, 0);
-	base->cBlock = Konoha_addClassDef(NULL, &BlockDef, 0);
-	base->cGamma = Konoha_addClassDef(NULL, &GammaDef, 0);
+	base->cKonohaSpace = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &KonohaSpaceDef, 0);
+	base->cToken = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &TokenDef, 0);
+	base->cExpr  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &ExprDef, 0);
+	base->cStmt  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &StmtDef, 0);
+	base->cBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &BlockDef, 0);
+	base->cGamma = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &GammaDef, 0);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	knull(base->cToken);
@@ -554,7 +555,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 			if(packdef->initPackage != NULL) {
 				packdef->setupPackage(_ctx, ks, pline);
 			}
-			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t));
+			pack = (kpackage_t*)KNH_ZMALLOC(sizeof(kpackage_t), 1);
 			pack->packid = packid;
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
@@ -589,13 +590,11 @@ static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline
 	if(target->cl.bytesize > 0) {
 		KonohaSpace_mergeConstData(_ctx, (struct _kKonohaSpace*)ks, target->cl.kvs, target->cl.bytesize/sizeof(kvs_t), pline);
 	}
-	if(target->methodsNULL != NULL) {
-		size_t i;
-		for(i = 0; i < kArray_size(target->methodsNULL); i++) {
-			kMethod *mtd = target->methodsNULL->methods[i];
-			if(kMethod_isPublic(mtd) && mtd->packid == target->packid) {
-				kArray_add(ks->methodsNULL, mtd);
-			}
+	size_t i;
+	for(i = 0; i < kArray_size(target->methods); i++) {
+		kMethod *mtd = target->methods->methods[i];
+		if(kMethod_isPublic(mtd) && mtd->packid == target->packid) {
+			kArray_add(ks->methods, mtd);
 		}
 	}
 }
@@ -671,13 +670,13 @@ void MODSUGAR_defMethods(CTX)
 //		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, MethodData);
+	kKonohaSpace_loadMethodData(NULL, MethodData);
 	KDEFINE_INT_CONST IntData[] = {
 		{"INT_MAX", TY_Int, KINT_MAX},
 		{"INT_MIN", TY_Int, KINT_MIN},
 		{}
 	};
-	Konoha_loadConstData(kmodsugar->rootks, IntData, 0);
+	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
 }
 
 #ifdef __cplusplus

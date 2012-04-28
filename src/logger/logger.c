@@ -136,7 +136,7 @@ static uintptr_t Ktrace_p(CTX, klogconf_t *logconf, va_list ap)
 	}
 	p[0] = '}'; p++;
 	p[0] = '\0';
-	fprintf(stderr, "%s\n", buf);
+	fprintf(stderr, "konoha: %s\n", buf);
 	return 0;// FIXME reference to log
 }
 
@@ -166,7 +166,7 @@ static void ctxlogger_free(CTX, struct kmodlocal_t *baseh)
 static void kmodlogger_setup(CTX, struct kmodshare_t *def, int newctx)
 {
 	if(newctx) {
-		ctxlogger_t *base = (ctxlogger_t*)KNH_ZMALLOC(sizeof(ctxlogger_t));
+		ctxlogger_t *base = (ctxlogger_t*)KNH_ZMALLOC(sizeof(ctxlogger_t), 1);
 		base->h.reftrace = ctxlogger_reftrace;
 		base->h.free     = ctxlogger_free;
 		_ctx->modlocal[MOD_logger] = (kmodlocal_t*)base;
@@ -180,12 +180,12 @@ static void kmodlogger_reftrace(CTX, struct kmodshare_t *baseh)
 
 static void kmodlogger_free(CTX, struct kmodshare_t *baseh)
 {
-	KNH_FREE(baseh, sizeof(kmodshare_t));
+	free(baseh/*, sizeof(kmodshare_t)*/);
 }
 
 void MODLOGGER_init(CTX, kcontext_t *ctx)
 {
-	kmodlogger_t *base = (kmodlogger_t*)KNH_ZMALLOC(sizeof(kmodlogger_t));
+	kmodlogger_t *base = (kmodlogger_t*)calloc(sizeof(kmodlogger_t), 1);
 	base->h.name     = "verbose";
 	base->h.setup    = kmodlogger_setup;
 	base->h.reftrace = kmodlogger_reftrace;

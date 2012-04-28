@@ -46,34 +46,34 @@ extern "C" {
 
 #define IS_ROOTCTX(o)  (_ctx == (CTX_t)o)
 
-static void MODLOG_init(CTX, kcontext_t *ctx)
-{
-#ifdef K_USING_LOGPOOL
-	logpool_syslog_param pa = {8, 1024};
-	ctx->logger = (struct klogger_t *) ltrace_open((ltrace_t*)_ctx->parent->logger, &pa);
-	if(_ctx == NULL) {
-		const char *ptrace = getenv("DEOS_TRACE");
-		if(ptrace == NULL) {
-			ptrace = "$(setenv DEOS_TRACE )";
-		}
-		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
-				LOG_s("parent", ptrace), LOG_u("ppid", getppid()));
-	}
-	else {
-		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
-				LOG_s("parent", _ctx->trace));
-	}
-#else
-	ctx->logger = NULL;
-#endif
-}
-
-static void MODLOG_free(CTX, kcontext_t *ctx)
-{
-#ifdef K_USING_LOGPOOL
-	ltrace_close((ltrace_t*)_ctx->logger);
-#endif
-}
+//static void MODLOG_init(CTX, kcontext_t *ctx)
+//{
+//#ifdef K_USING_LOGPOOL
+//	logpool_syslog_param pa = {8, 1024};
+//	ctx->logger = (struct klogger_t *) ltrace_open((ltrace_t*)_ctx->parent->logger, &pa);
+//	if(_ctx == NULL) {
+//		const char *ptrace = getenv("DEOS_TRACE");
+//		if(ptrace == NULL) {
+//			ptrace = "$(setenv DEOS_TRACE )";
+//		}
+//		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
+//				LOG_s("parent", ptrace), LOG_u("ppid", getppid()));
+//	}
+//	else {
+//		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
+//				LOG_s("parent", _ctx->trace));
+//	}
+//#else
+//	ctx->logger = NULL;
+//#endif
+//}
+//
+//static void MODLOG_free(CTX, kcontext_t *ctx)
+//{
+//#ifdef K_USING_LOGPOOL
+//	ltrace_close((ltrace_t*)_ctx->logger);
+//#endif
+//}
 
 // -------------------------------------------------------------------------
 // util stack
@@ -102,9 +102,9 @@ static void knh_endContext(CTX)
 static void kstack_init(CTX, kcontext_t *ctx, size_t stacksize)
 {
 	size_t i;
-	kstack_t *base = (kstack_t*)KNH_ZMALLOC(sizeof(kstack_t));
+	kstack_t *base = (kstack_t*)KNH_ZMALLOC(sizeof(kstack_t), 1);
 	base->stacksize = stacksize;
-	base->stack = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t)*stacksize);
+	base->stack = (ksfp_t*)KNH_ZMALLOC(sizeof(ksfp_t), stacksize);
 	assert(stacksize>64);
 	base->stack_uplimit = base->stack + (stacksize - 64);
 	for(i = 0; i < stacksize; i++) {
@@ -180,18 +180,18 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->modshare = (kmodshare_t**)calloc(sizeof(kmodshare_t*), MOD_MAX);
 		newctx->modlocal = (kmodlocal_t**)calloc(sizeof(kmodlocal_t*), MOD_MAX);
 
-		MODLOG_init(_ctx, newctx);
+		MODLOGGER_init(_ctx, newctx);
 		MODGCSHARE_init(_ctx, newctx);
 		kshare_init(_ctx, newctx);
 	}
 	else {   // others take ctx as its parent
-		newctx = (kcontext_t*)KNH_ZMALLOC(sizeof(kcontext_t));
+		newctx = (kcontext_t*)KNH_ZMALLOC(sizeof(kcontext_t), 1);
 		newctx->lib2 = _ctx->lib2;
 		newctx->memshare = _ctx->memshare;
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
-		newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*) * MOD_MAX);
-		MODLOG_init(_ctx, newctx);
+		newctx->modlocal = (kmodlocal_t**)KNH_ZMALLOC(sizeof(kmodlocal_t*), MOD_MAX);
+		MODLOGGER_init(_ctx, newctx);
 	}
 	//MODGC_init(_ctx, newctx);
 	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
@@ -203,12 +203,9 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 	if(IS_ROOTCTX(newctx)) {
 		MODCODE_init(_ctx, newctx);
 		MODSUGAR_init(_ctx, newctx);
-		MODLOGGER_init(_ctx, newctx);
 		kshare_init_methods(_ctx);
 		MODSUGAR_defMethods(_ctx);
-#ifdef WITH_ECLIPSE
-		KX_init(_ctx);
-#endif
+		//KX_init(_ctx);
 	}
 	return newctx;
 }
@@ -244,7 +241,7 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 	size_t i;
 	for(i = 0; i < MOD_MAX; i++) {
 		kmodlocal_t *p = ctx->modlocal[i];
-		if(p != NULL && p->reftrace != NULL) {
+		if(p != NULL && p->free != NULL) {
 			p->free(_ctx, p);
 		}
 	}
@@ -257,17 +254,15 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 				p->free(_ctx, p);
 			}
 		}
-		free(_ctx->modlocal);
-		free(_ctx->modshare);
 		MODGCSHARE_gc_destroy(_ctx, ctx);
 		kshare_free(_ctx, ctx);
 		MODGCSHARE_free(_ctx, ctx);
 		MODGC_free(_ctx, ctx);
-		MODLOG_free(_ctx, ctx);
+		free(_ctx->modlocal);
+		free(_ctx->modshare);
 		free(klib2/*, sizeof(klib2_t) + sizeof(kcontext_t)*/);
 	}
 	else {
-		MODLOG_free(_ctx, ctx);
 		KNH_FREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 		KNH_FREE(ctx, sizeof(kcontext_t));
 	}

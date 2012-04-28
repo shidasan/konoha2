@@ -77,7 +77,7 @@ typedef struct kmodgc_t {
 
 void MODGC_init2(CTX, kcontext_t *ctx)
 {
-	kmodgc_t *base = (kmodgc_t*)KNH_ZMALLOC(sizeof(kmodgc_t));
+	kmodgc_t *base = (kmodgc_t*)KNH_ZMALLOC(sizeof(kmodgc_t), 1);
 	base->h.name     = "bmgc";
 	base->h.setup    = kmodgc_setup;
 	base->h.reftrace = kmodgc_reftrace;

@@ -90,7 +90,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	}
 	else if(tk->tt == TK_USYMBOL) {
 		if(!Token_resolved(_ctx, ks, tk)) {
-			kclass_t *ct = Konoha_getCT(ks, NULL/*FIXME*/, S_text(tk->text), S_size(tk->text), TY_unknown);
+			kclass_t *ct = kKonohaSpace_getCT(ks, NULL/*FIXME*/, S_text(tk->text), S_size(tk->text), TY_unknown);
 			if(ct != NULL) {
 				tk->kw = KW_TYPE;
 				tk->ty = ct->cid;
@@ -116,7 +116,7 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
 {
 	if(tk->tt == TK_CODE) {
 		INIT_GCSTACK();
-		kArray *a = new_(Array, 0);
+		kArray *a = new_(TokenArray, 0);
 		PUSH_GCSTACK(a);
 		ktokenize(_ctx, S_text(tk->text), tk->uline,a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
@@ -134,7 +134,7 @@ static int makeTree(CTX, kKonohaSpace *ks, kArray *tls, ktoken_t tt, int s, int 
 	struct _kToken *tkp = new_W(Token, 0);
 	kArray_add(tlsdst, tkp);
 	tkp->tt = tt; tkp->kw = tt; tkp->uline = tk->uline; tkp->topch = tk->topch; tkp->lpos = closech;
-	KSETv(tkp->sub, new_(Array, 0));
+	KSETv(tkp->sub, new_(TokenArray, 0));
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
 		//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
@@ -715,7 +715,7 @@ static KMETHOD ParseStmt_toks(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ParseStmt(stmt, syn, name, tls, s, e);
 	if(s < e) {
-		kArray *a = new_(Array, (intptr_t)(e - s));
+		kArray *a = new_(TokenArray, (intptr_t)(e - s));
 		while(s < e) {
 			kArray_add(a, tls->toks[s]);
 			s++;

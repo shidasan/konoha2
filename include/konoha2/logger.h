@@ -27,8 +27,8 @@
 #define LOGPOL_DATAFAULT       (1<<10) /* invalid data */
 #define LOGPOL_UKNOWNFAULT     (1<<11) /* faults that aren't belong above */
 
-#define LOGPOL_INIT         (1<<8) /* DONT USE THIS */
-#define LOGPOL_CFUNC        (1<<9) /* DONT USE THIS */
+#define LOGPOL_INIT         (1<<12) /* DONT USE THIS */
+#define LOGPOL_CFUNC        (1<<13) /* DONT USE THIS */
 
 typedef struct klogconf_t {
 	int policy;

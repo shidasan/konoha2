@@ -5,196 +5,9 @@
  *      Author: kimio
  */
 
-
-// ----------------------
-// class table
-
-static kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
-{
-	kshare_t *share = _ctx->share;
-	if(cid < (share->ca.bytesize/sizeof(struct _kclass*))) {
-		return share->ca.cts[cid];
-	}
-	kreportf(CRIT_, pline, "invalid cid=%d", (int)cid);
-	return share->ca.cts[0];
-}
-
-static void DEFAULT_init(CTX, kObject *o, void *conf)
-{
-}
-
-static void DEFAULT_free(CTX, kObject *o)
-{
-	(void)_ctx;(void)o;
-}
-
-static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
-{
-	kwb_printf(wb, "&%p(:%s)", sfp[pos].o, T_cid(O_cid(sfp[pos].o)));
-}
-
-static uintptr_t DEFAULT_unbox(CTX, kObject *o)
-{
-	return 0;
-}
-
-static kbool_t DEFAULT_issubtype(CTX, kclass_t* c, kclass_t *t)
-{
-	return 0;
-}
-
-static kclass_t* DEFAULT_realtype(CTX, kclass_t* c, kclass_t *self)
-{
-	return c;
-}
-
-static kObject* DEFAULT_fnull(CTX, kclass_t *ct)
-{
-	DBG_ASSERT(ct->nulvalNUL != NULL);
-	return ct->nulvalNUL;
-}
-
-static kObject* DEFAULT_fnullinit(CTX, kclass_t *ct)
-{
-	assert(ct->nulvalNUL == NULL);
-	DBG_P("creating new nulval for %s", T_CT(ct));
-	KINITv(((struct _kclass*)ct)->nulvalNUL, new_kObject(ct, 0));
-	kObject_setNullObject(ct->nulvalNUL, 1);
-	((struct _kclass*)ct)->fnull = DEFAULT_fnull;
-	return ct->nulvalNUL;
-}
-
-static kObject *CT_null(CTX, kclass_t *ct)
-{
-	return ct->fnull(_ctx, ct);
-}
-
-static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
-{
-	kshare_t *share = _ctx->share;
-	kcid_t newid = share->ca.bytesize / sizeof(struct _kclass*);
-	if(share->ca.bytesize == share->ca.bytemax) {
-		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
-	}
-	share->ca.bytesize += sizeof(struct _kclass*);
-	struct _kclass *ct = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t));
-	share->ca.cts[newid] = (kclass_t*)ct;
-	if(bct != NULL) {
-		memcpy(ct, bct, offsetof(kclass_t, cparam));
-		ct->cid = newid;
-		if(ct->fnull == DEFAULT_fnull) ct->fnull =  DEFAULT_fnullinit;
-	}
-	else {
-		DBG_ASSERT(s != NULL);
-		ct->packid  = s->packid;
-		ct->packdom = s->packdom;
-		ct->cflag   = s->cflag;
-		ct->cid     = newid;
-		ct->bcid    = newid;
-		ct->supcid  = (s->supcid == 0) ? CLASS_Object : s->supcid;
-		ct->fields = s->fields;
-		ct->fsize  = s->fsize;
-		ct->fallocsize = s->fallocsize;
-		ct->cstruct_size = size64(s->cstruct_size);
-		ct->DBG_NAME = (s->structname != NULL) ? s->structname : "N/A";
-		// function
-		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
-		ct->reftrace = s->reftrace;
-		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
-		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
-		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
-		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
-		ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
-		ct->issubtype = (s->issubtype != NULL) ? s->issubtype : DEFAULT_issubtype;
-		ct->initdef = s->initdef;
-	}
-	if(ct->initdef != NULL) {
-		ct->initdef(_ctx, ct, pline);
-	}
-	return ct;
-}
-
-static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
-{
-	kclass_t *bct = ct;
-	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
-		DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
-		if(ct->simbody == NULL) {
-			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
-			newct->cflag |= kClass_Private;
-			newct->cstruct_size *= 2;
-			KINITv(newct->cparam, ct->cparam);
-			KINITv(newct->methods, ct->methods);
-			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
-		}
-		ct = ct->simbody;
-	}
-	return ct;
-}
-
-//static kclass_t *CT_T(CTX, kclass_t *ct, kushort_t optvalue)
-//{
-//	kclass_t *bct = ct;
-//	while(ct->optvalue != optvalue) {
-//		if(ct->simbody == NULL) {
-//			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
-//			newct->optvalue = optvalue;
-//			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
-//		}
-//		ct = ct->simbody;
-//	}
-//	return ct;
-//}
-
-//static kclass_t *CT_P(CTX, kclass_t *ct, ktype_t p1, ktype_t p2)
-//{
-//	kclass_t *bct = ct;
-//	while(ct->p1 != p1 && ct->p2_optvalue != p2) {
-//		if(ct->simbody == NULL) {
-//			kclass_t *newct = new_CT(_ctx, bct, NULL, NOPLINE);
-//			((struct _kclass*)ct)->simbody = (kclass_t*)newct;
-//		}
-//		ct = ct->simbody;
-//	}
-//	return ct;
-//}
-
-static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
-{
-	uintptr_t lname = longid(ct->packdom, ct->nameid);
-	kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_PN(ct->packdom), T_PN(ct->packid), T_UN(ct->nameid));
-	kclass_t *ct2 = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
-	if(ct2 == NULL) {
-		map_addu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)ct);
-	}
-	if(ct->methods == NULL) {
-		KINITv(ct->methods, new_(Array, 0));
-	}
-	if(ct->cparam == NULL) {
-		KINITv(ct->cparam, K_NULLPARAM);
-	}
-}
-
 // -------------------------------------------------------------------------
 
-#define TYPENAME(C) \
-	.structname = #C,\
-	.cid = CLASS_T##C,\
-	.cflag = CFLAG_T##C\
-
-#define CLASSNAME(C) \
-	.structname = #C,\
-	.cid = CLASS_##C,\
-	.cflag = CFLAG_##C,\
-	.cstruct_size = sizeof(k##C)\
-
-static KDEFINE_CLASS TvoidDef = {
-	TYPENAME(void),
-};
-
-static KDEFINE_CLASS TvarDef = {
-	TYPENAME(var),
-};
+static kObject* DEFAULT_fnull(CTX, kclass_t *ct);
 
 static void Object_init(CTX, kObject *o, void *conf)
 {
@@ -230,7 +43,7 @@ static void Object_initdef(CTX, struct _kclass *ct, kline_t pline)
 	if(ct->cid == TY_Object) return;
 	DBG_P("new object initialization");
 	kclass_t *supct = kclass(ct->cid, pline);
-	if(CT_is_UNDEF(supct)) {
+	if(CT_isUNDEF(supct)) {
 		kreportf(CRIT_, pline, "%s's fields are not all set", T_cid(ct->cid));
 	}
 	size_t fsize = supct->fsize + ct->fsize;
@@ -241,13 +54,6 @@ static void Object_initdef(CTX, struct _kclass *ct, kline_t pline)
 	}
 	ct->fnull = DEFAULT_fnull;
 }
-
-static KDEFINE_CLASS ObjectDef = {
-	CLASSNAME(Object),
-	.init = Object_init,
-	.reftrace = Object_reftrace,
-	.initdef = Object_initdef,
-};
 
 static kObject *new_Object(CTX, kclass_t *ct, void *conf)
 {
@@ -283,26 +89,10 @@ static kObject* Boolean_fnull(CTX, kclass_t *ct)
 	return (kObject*)K_FALSE;
 }
 
-static KDEFINE_CLASS BooleanDef = {
-	CLASSNAME(Boolean),
-	.init = Number_init,
-	.unbox = Number_unbox,
-	.p    = Boolean_p,
-	.fnull = Boolean_fnull,
-};
-
-
 static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 	kwb_printf(wb, KINT_FMT, sfp[pos].ivalue);
 }
-
-static KDEFINE_CLASS IntDef = {
-	CLASSNAME(Int),
-	.init  = Number_init,
-	.unbox = Number_unbox,
-	.p     = Int_p,
-};
 
 // String
 static void String_init(CTX, kObject *o, void *conf)
@@ -342,13 +132,6 @@ static uintptr_t String_unbox(CTX, kObject *o)
 //	return knh_bytes_strcmp(S_tobytes((kString*)o) ,S_tobytes((kString*)o2));
 //}
 
-static KDEFINE_CLASS StringDef = {
-	CLASSNAME(String),
-	.init = String_init,
-	.free = String_free,
-	.p    = String_p,
-	.unbox = String_unbox
-};
 
 static void String_checkASCII(CTX, kString *s)
 {
@@ -474,15 +257,15 @@ static void Array_init(CTX, kObject *o, void *conf)
 	if(a->a.bytemax > 0) {
 		KARRAY_INIT(&a->a, a->a.bytemax);
 	}
-	if(TY_isUnbox(O_p1(a))) {
-		kArray_setUnboxData(a, 1);
-	}
+//	if(TY_isUnbox(O_p0(a))) {
+//		kArray_setUnboxData(a, 1);
+//	}
 }
 
 static void Array_reftrace(CTX, kObject *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_is_UNboxData(a)) {
+	if(!kArray_isUnboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(kArray_size(a));
 		for(i = 0; i < kArray_size(a); i++) {
@@ -498,13 +281,6 @@ static void Array_free(CTX, kObject *o)
 	KARRAY_FREE(&a->a);
 }
 
-static KDEFINE_CLASS ArrayDef = {
-	CLASSNAME(Array),
-	.init = Array_init,
-	.reftrace = Array_reftrace,
-	.free = Array_free,
-};
-
 static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
 {
 	if(!((min * sizeof(void*)) < a->a.bytemax)) {
@@ -513,7 +289,7 @@ static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
 	}
 }
 
-#define Array_setsize(A, N)  ((struct _kArray*)A)->size = N
+//#define Array_setsize(A, N)  ((struct _kArray*)A)->size = N
 
 static void Array_add(CTX, kArray *o, kObject *value)
 {
@@ -543,7 +319,7 @@ static void Array_insert(CTX, kArray *o, size_t n, kObject *v)
 //KNHAPI2(void) kArray_remove_(CTX, kArray *a, size_t n)
 //{
 //	DBG_ASSERT(n < a->size);
-//	if (kArray_is_UNboxData(a)) {
+//	if (kArray_isUnboxData(a)) {
 //		knh_memmove(a->nlist+n, a->nlist+(n+1), sizeof(kunbox_t) * (a->size - n - 1));
 //	} else {
 //		KNH_FINALv(_ctx, a->list[n]);
@@ -565,17 +341,14 @@ static void Array_clear(CTX, kArray *o, size_t n)
 // ---------------
 // Param
 
+static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body);
+
 static void Param_init(CTX, kObject *o, void *conf)
 {
 	struct _kParam *pa = (struct _kParam*)o;
 	pa->psize = 0;
 	pa->rtype = TY_void;
 }
-
-static KDEFINE_CLASS ParamDef = {
-	CLASSNAME(Param),
-	.init = Param_init,
-};
 
 static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 {
@@ -615,12 +388,6 @@ static void Method_reftrace(CTX, kObject *o)
 	END_REFTRACE();
 }
 
-static KDEFINE_CLASS MethodDef = {
-	CLASSNAME(Method),
-	.init = Method_init,
-	.reftrace = Method_reftrace,
-};
-
 static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, kParam *paN, knh_Fmethod func)
 {
 	struct _kMethod* mtd = new_W(Method, paN);
@@ -636,35 +403,308 @@ static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, kPara
 
 #define CT_System               CT_(CLASS_System)
 
-static KDEFINE_CLASS SystemDef = {
-	CLASSNAME(System),
-	.init = DEFAULT_init,
-};
+// ---------------
+
+static kclass_t *T_realtype(CTX, kclass_t *ct, kclass_t *self)
+{
+	DBG_ASSERT(ct->optvalue < self->cparam->psize);
+	kclass_t *pct = CT_(self->cparam->p[ct->optvalue].ty);
+	return pct->realtype(_ctx, pct, self);
+}
 
 // ---------------
 
-static KDEFINE_CLASS TdynamicDef = {
-	TYPENAME(dynamic),
-	.init = DEFAULT_init,
-};
+static kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
+{
+	kshare_t *share = _ctx->share;
+	if(cid < (share->ca.bytesize/sizeof(struct _kclass*))) {
+		return share->ca.cts[cid];
+	}
+	kreportf(CRIT_, pline, "invalid cid=%d", (int)cid);
+	return share->ca.cts[0];
+}
 
+static void DEFAULT_init(CTX, kObject *o, void *conf)
+{
+}
 
-// ---------------
+static void DEFAULT_free(CTX, kObject *o)
+{
+	(void)_ctx;(void)o;
+}
 
-static KDEFINE_CLASS *DATATYPES[] = {
-	&TvoidDef,
-	&TvarDef,
-	&ObjectDef,
-	&BooleanDef,
-	&IntDef,
-	&StringDef,
-	&ArrayDef,
-	&ParamDef,
-	&MethodDef,
-	&SystemDef,
-	&TdynamicDef,
-	NULL,
-};
+static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	kwb_printf(wb, "&%p(:%s)", sfp[pos].o, T_cid(O_cid(sfp[pos].o)));
+}
+
+static uintptr_t DEFAULT_unbox(CTX, kObject *o)
+{
+	return 0;
+}
+
+static kbool_t DEFAULT_issubtype(CTX, kclass_t* c, kclass_t *t)
+{
+	return 0;
+}
+
+static kclass_t* DEFAULT_realtype(CTX, kclass_t* c, kclass_t *self)
+{
+	return c;
+}
+
+static kObject* DEFAULT_fnull(CTX, kclass_t *ct)
+{
+	DBG_ASSERT(ct->nulvalNUL != NULL);
+	return ct->nulvalNUL;
+}
+
+static kObject* DEFAULT_fnullinit(CTX, kclass_t *ct)
+{
+	assert(ct->nulvalNUL == NULL);
+	DBG_P("creating new nulval for %s", T_CT(ct));
+	KINITv(((struct _kclass*)ct)->nulvalNUL, new_kObject(ct, 0));
+	kObject_setNullObject(ct->nulvalNUL, 1);
+	((struct _kclass*)ct)->fnull = DEFAULT_fnull;
+	return ct->nulvalNUL;
+}
+
+static kObject *CT_null(CTX, kclass_t *ct)
+{
+	return ct->fnull(_ctx, ct);
+}
+
+static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
+{
+	kshare_t *share = _ctx->share;
+	kcid_t newid = share->ca.bytesize / sizeof(struct _kclass*);
+	if(share->ca.bytesize == share->ca.bytemax) {
+		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
+	}
+	share->ca.bytesize += sizeof(struct _kclass*);
+	struct _kclass *ct = (struct _kclass*)KNH_ZMALLOC(sizeof(kclass_t), 1);
+	share->ca.cts[newid] = (kclass_t*)ct;
+	if(bct != NULL) {
+		DBG_ASSERT(s == NULL);
+		memcpy(ct, bct, offsetof(kclass_t, cparam));
+		ct->cid = newid;
+		if(ct->fnull == DEFAULT_fnull) ct->fnull =  DEFAULT_fnullinit;
+	}
+	else {
+		DBG_ASSERT(s != NULL);
+		ct->cflag   = s->cflag;
+		ct->cid     = newid;
+		ct->bcid    = newid;
+		ct->supcid  = (s->supcid == 0) ? CLASS_Object : s->supcid;
+		ct->fields = s->fields;
+		ct->fsize  = s->fsize;
+		ct->fallocsize = s->fallocsize;
+		ct->cstruct_size = size64(s->cstruct_size);
+		DBG_ASSERT(ct->cstruct_size <= 128);
+		ct->DBG_NAME = (s->structname != NULL) ? s->structname : "N/A";
+		if(s->cparams != NULL) {
+			DBG_P("params");
+		}
+		// function
+		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
+		ct->reftrace = s->reftrace;
+		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
+		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
+		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
+		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
+		ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
+		ct->issubtype = (s->issubtype != NULL) ? s->issubtype : DEFAULT_issubtype;
+		ct->initdef = s->initdef;
+	}
+	if(ct->initdef != NULL) {
+		ct->initdef(_ctx, ct, pline);
+	}
+	return ct;
+}
+
+static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
+{
+	kclass_t *bct = ct;
+	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
+		DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
+		if(ct->searchSimilarClassNULL == NULL) {
+			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
+			newct->cflag |= kClass_Private;
+			newct->cstruct_size *= 2;
+			KINITv(newct->cparam, ct->cparam);
+			KINITv(newct->methods, ct->methods);
+			((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
+		}
+		ct = ct->searchSimilarClassNULL;
+	}
+	return ct;
+}
+
+static kbool_t CParam_equals(kParam *cpa, int psize, kparam_t *p)
+{
+	int i;
+	for(i = 0; i < psize; i++) {
+		if(cpa->p[i].ty != p[i].ty) return false;
+	}
+	return true;
+}
+
+static kParam *new_CParam(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p)
+{
+	int i;
+	for( i = 0; i < psize; i++) {
+		p[i].fn = ct->cparam->p[i].fn;
+	}
+	return new_kParam(rtype, psize, p);
+}
+
+static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p)
+{
+	kclass_t *ct0 = ct;
+	while(ct != NULL) {
+		kParam *cpa = ct->cparam;
+		if(cpa->psize ==  psize && cpa->rtype == rtype && CParam_equals(cpa, psize, p)) {
+			return ct;
+		}
+		if(ct->searchSimilarClassNULL == NULL) break;
+		ct = ct->searchSimilarClassNULL;
+	}
+	struct _kclass *newct = new_CT(_ctx, ct, NULL, NOPLINE);
+	KINITv(newct->cparam, new_CParam(_ctx, ct, rtype, psize, p));
+	KINITv(newct->methods, K_EMPTYARRAY);
+	if(newct->searchSuperMethodClassNULL == NULL) {
+		newct->searchSuperMethodClassNULL = ct0;
+	}
+	((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
+	return ct->searchSimilarClassNULL;
+}
+
+static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
+{
+	uintptr_t lname = longid(ct->packdom, ct->nameid);
+	kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_PN(ct->packdom), T_PN(ct->packid), T_UN(ct->nameid));
+	kclass_t *ct2 = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
+	if(ct2 == NULL) {
+		map_addu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)ct);
+	}
+	if(ct->methods == NULL) {
+		KINITv(ct->methods, K_EMPTYARRAY);
+		if(ct->cid > CLASS_Object) {
+			ct->searchSuperMethodClassNULL = CT_(ct->supcid);
+		}
+	}
+	if(ct->cparam == NULL) {
+		KINITv(ct->cparam, K_NULLPARAM);
+	}
+}
+
+static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
+{
+	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
+	ct->packid  = packid;
+	ct->packdom = packdom;
+	if(name == NULL) {
+		const char *n = cdef->structname;
+		assert(n != NULL); // structname must be set;
+		ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
+	}
+	else {
+		ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
+	}
+	CT_setName(_ctx, ct, pline);
+	return (kclass_t*)ct;
+}
+
+#define TYPENAME(C) \
+	.structname = #C,\
+	.cid = CLASS_T##C,\
+	.cflag = CFLAG_T##C\
+
+#define CLASSNAME(C) \
+	.structname = #C,\
+	.cid = CLASS_##C,\
+	.cflag = CFLAG_##C,\
+	.cstruct_size = sizeof(k##C)\
+
+static void loadInitStructData(CTX)
+{
+	KDEFINE_CLASS defTvoid = {
+		TYPENAME(void),
+	};
+	KDEFINE_CLASS defTvar = {
+		TYPENAME(var),
+	};
+	KDEFINE_CLASS defObject = {
+		CLASSNAME(Object),
+		.init = Object_init,
+		.reftrace = Object_reftrace,
+		.initdef = Object_initdef,
+	};
+	KDEFINE_CLASS defBoolean = {
+		CLASSNAME(Boolean),
+		.init = Number_init,
+		.unbox = Number_unbox,
+		.p    = Boolean_p,
+		.fnull = Boolean_fnull,
+	};
+	KDEFINE_CLASS defInt = {
+		CLASSNAME(Int),
+		.init  = Number_init,
+		.unbox = Number_unbox,
+		.p     = Int_p,
+	};
+	KDEFINE_CLASS defString = {
+		CLASSNAME(String),
+		.init = String_init,
+		.free = String_free,
+		.p    = String_p,
+		.unbox = String_unbox
+	};
+	KDEFINE_CLASS defParam = {
+		CLASSNAME(Param),
+		.init = Param_init,
+	};
+	KDEFINE_CLASS defMethod = {
+		CLASSNAME(Method),
+		.init = Method_init,
+		.reftrace = Method_reftrace,
+	};
+//	kparam_t ArrayCparam = {TY_Object, 1};
+	KDEFINE_CLASS defArray = {
+		CLASSNAME(Array),
+		.init = Array_init,
+		.reftrace = Array_reftrace,
+		.free = Array_free,
+	};
+	KDEFINE_CLASS defSystem = {
+		CLASSNAME(System),
+		.init = DEFAULT_init,
+	};
+	KDEFINE_CLASS defT0 = {
+		TYPENAME(0),
+		.init = DEFAULT_init,
+		.realtype = T_realtype,
+	};
+	KDEFINE_CLASS *DATATYPES[] = {
+		&defTvoid,
+		&defTvar,
+		&defObject,
+		&defBoolean,
+		&defInt,
+		&defString,
+		&defArray,
+		&defParam,
+		&defMethod,
+		&defSystem,
+		&defT0,
+		NULL,
+	};
+	KDEFINE_CLASS **dd = DATATYPES;
+	while(dd[0] != NULL) {
+		new_CT(_ctx, NULL, dd[0], 0);
+		dd++;
+	}
+}
 
 static void initStructData(CTX)
 {
@@ -676,21 +716,6 @@ static void initStructData(CTX)
 		ct->nameid = kuname(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
 		CT_setName(_ctx, ct, 0);
 	}
-}
-
-static kclass_t *addClassDef(CTX, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
-{
-	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
-	if(name == NULL) {
-		const char *n = cdef->structname;
-		assert(n != NULL); // structname must be set;
-		ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
-	}
-	else {
-		ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
-	}
-	CT_setName(_ctx, ct, pline);
-	return (kclass_t*)ct;
 }
 
 static void kshare_initklib2(struct _klib2 *l)
@@ -711,33 +736,29 @@ static void kshare_initklib2(struct _klib2 *l)
 
 static void kshare_init(CTX, kcontext_t *ctx)
 {
-	kshare_t *share = (kshare_t*)KNH_ZMALLOC(sizeof(kshare_t));
+	kshare_t *share = (kshare_t*)KNH_ZMALLOC(sizeof(kshare_t), 1);
 	ctx->share = share;
 	kshare_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
-	KDEFINE_CLASS **dd = DATATYPES;
-	while(*dd != NULL) {
-		new_CT(_ctx, NULL, *dd, 0);
-		dd++;
-	}
+	loadInitStructData(_ctx);
 	share->lcnameMapNN = kmap_init(0);
-	KINITv(share->fileidList, new_(Array, 8));
+	KINITv(share->fileidList, new_(StringArray, 8));
 	share->fileidMapNN = kmap_init(0);
-	KINITv(share->packList, new_(Array, 8));
+	KINITv(share->packList, new_(StringArray, 8));
 	share->packMapNN = kmap_init(0);
-	KINITv(share->symbolList, new_(Array, 32));
+	KINITv(share->symbolList, new_(StringArray, 32));
 	share->symbolMapNN = kmap_init(0);
-	KINITv(share->unameList, new_(Array, 32));
+	KINITv(share->unameList, new_(StringArray, 32));
 	share->unameMapNN = kmap_init(0);
 	//
 	KINITv(share->constNull, new_(Object, NULL));
 	kObject_setNullObject(share->constNull, 1);
-	KINITv(share->constTrue, new_(Boolean, 1));
-	KINITv(share->constFalse, new_(Boolean, 0));
-	KINITv(share->nullParam,  new_(Param, NULL));
+	KINITv(share->constTrue,   new_(Boolean, 1));
+	KINITv(share->constFalse,  new_(Boolean, 0));
+	KINITv(share->nullParam,   new_(Param, NULL));
 	KINITv(share->defParam,   new_kParam(CLASS_Object, 0, NULL));
 	KINITv(share->emptyString, new_(String, NULL));
-	KINITv(share->emptyArray, new_(Array, 0));
+	KINITv(share->emptyArray,  new_(Array, 0));
 	FILEID_("(konoha.c)");
 	PN_("konoha");    // PN_konoha
 	PN_("sugar");     // PKG_sugar
@@ -760,21 +781,15 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	for(i = 0; i < size; i++) {
 		kclass_t *ct = cts[i];
 		{
-			BEGIN_REFTRACE(6);
+			BEGIN_REFTRACE(3);
 			KREFTRACEv(ct->cparam);
 			KREFTRACEv(ct->methods);
-			/* TODO(imasahiro) cls->defnull is nullable? */
 			KREFTRACEn(ct->nulvalNUL);
 			END_REFTRACE();
 		}
 //		if (ct->constNameMapSO) kmap_reftrace(ct->constNameMapSO, keyval_reftrace);
 		if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
 	}
-	//kmap_reftrace(share->symbolMapNN, key_reftrace);
-	//kmap_reftrace(share->unameMapNN, key_reftrace);
-	//kmap_reftrace(share->classnameMapNN, key_reftrace);
-	//kmap_reftrace(share->fileidMapNN, key_reftrace);
-	//kmap_reftrace(share->pkgMapNN, key_reftrace);
 
 	BEGIN_REFTRACE(10);
 	KREFTRACEv(share->constNull);
@@ -804,7 +819,7 @@ static void kshare_freeCT(CTX)
 	}
 }
 
-void kshare_free(CTX, kcontext_t *ctx)
+static void kshare_free(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
 	kmap_free(share->lcnameMapNN, NULL);
@@ -851,7 +866,7 @@ static void kshare_init_methods(CTX)
 		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, MethodData);
+	kKonohaSpace_loadMethodData(NULL, MethodData);
 }
 
 #ifdef __cplusplus

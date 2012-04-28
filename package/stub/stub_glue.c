@@ -27,7 +27,7 @@ static	kbool_t stub_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 //		_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 //		DEND,
 //	};
-//	Konoha_loadMethodData(NULL, MethodData);
+//	kKonohaSpace_loadMethodData(NULL, MethodData);
 	return true;
 }
 

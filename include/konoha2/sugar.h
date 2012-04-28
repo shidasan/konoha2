@@ -160,7 +160,7 @@ struct _kKonohaSpace {
 	void         *gluehdr;
 	kObject      *script;
 	kcid_t static_cid;   kcid_t function_cid;
-	kArray*       methodsNULL;
+	kArray*       methods;  // default K_EMPTYARRAY
 	karray_t      cl;
 };
 
@@ -313,10 +313,8 @@ typedef struct gmabuf_t {
 	kKonohaSpace     *ks;
 	kObject          *scrNUL;
 
-	kcid_t                   this_cid;
-	kcid_t                   static_cid;
-	ktype_t           requested_return_type;
-	ktype_t           found_return_type;
+	kcid_t            this_cid;
+	kcid_t            static_cid;
 	kMethod*          mtd;
 	gstack_t f;
 	gstack_t l;

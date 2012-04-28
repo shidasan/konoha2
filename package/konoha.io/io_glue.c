@@ -886,7 +886,7 @@ static kbool_t io_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args,
 		_Public, _F(OutputStream_close),     TY_void,         TY_OutputStream, MN_("close"), 0,
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, MethodData);
+	kKonohaSpace_loadMethodData(NULL, MethodData);
 	return true;
 }
 

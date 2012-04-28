@@ -1372,8 +1372,8 @@ static KMETHOD Array_newARRAY(CTX, ksfp_t *sfp _RIX)
 	if(0 <= init && init < LONG_MAX) {
 		kArray_grow(_ctx, a, (size_t)init, 0);
 		a->size = (size_t)init;
-		if(!kArray_is_UNboxData(a)) {
-			kcid_t p1 = O_p1(a);
+		if(!kArray_isUnboxData(a)) {
+			kcid_t p1 = O_p0(a);
 			Object *v = knh_getClassDefaultValue(_ctx, p1);
 			size_t i;
 			for(i = 0; i < a->size; i++) {
@@ -1573,7 +1573,7 @@ static KMETHOD Array_insert(CTX, ksfp_t *sfp _RIX)
 	if(a->size == dim->capacity) {
 		kArray_grow(_ctx, a, k_grow(dim->capacity), a->size + 1);
 	}
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		knh_memmove(a->nlist+(n+1), a->nlist+n, sizeof(kunbox_t) * (a->size - n));
 	}else {
 		knh_memmove(a->list+(n+1), a->list+n, sizeof(kObject*) * (a->size - n));
@@ -1615,7 +1615,7 @@ static KMETHOD Array_pop(CTX, ksfp_t *sfp _RIX)
 		(a)->api->fastget(_ctx, sfp, a->size - 1, K_RIX);
 		kArray_clear(a, a->size - 1);
 	} else {
-		kcid_t p1 = O_p1(a);
+		kcid_t p1 = O_p0(a);
 		kObject *o = KNH_NULVAL(p1);
 		if (TY_isUnbox(p1)) {
 			RETURNd_(O_data(o));
@@ -1632,7 +1632,7 @@ static KMETHOD Array_indexOf(CTX, ksfp_t *sfp _RIX)
 	kArray *a = sfp[0].a;
 	kint_t res = -1;
 	size_t i;
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		kunbox_t ndata = sfp[1].ndata;
 		for(i = 0; i < a->size; i++) {
 			if(a->nlist[i] == ndata) {
@@ -1656,7 +1656,7 @@ static KMETHOD Array_lastIndexOf(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = sfp[0].a;
 	long i;
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		kunbox_t ndata = sfp[1].ndata;
 		for(i = a->size - 1; i >= 0; i--) {
 			if(a->nlist[i] == ndata) {
@@ -1793,7 +1793,7 @@ static KMETHOD Array_sort(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a  = sfp[0].a;
 	kFunc  *fo = sfp[1].fo;
-	struct asortf *sortf = getasortf(_ctx, O_p1(a));
+	struct asortf *sortf = getasortf(_ctx, O_p0(a));
 	fcompare cmp;
 	if(IS_NULL(fo)) {
 		cmp = sortf->fcmp1;
@@ -1829,7 +1829,7 @@ static KMETHOD Array_swap(CTX, ksfp_t *sfp _RIX)
 	kArray *a = sfp[0].a;
 	size_t m = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[1]), a->size);
 	size_t n = knh_array_index(_ctx, sfp, Int_to(kint_t, sfp[2]), a->size);
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		NArray_swap(_ctx, a, n, m);
 	}
 	else {
@@ -1845,7 +1845,7 @@ static KMETHOD Array_shuffle(CTX, ksfp_t *sfp _RIX)
 {
 	size_t i;
 	kArray *a = sfp[0].a;
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		for(i = 0; i < a->size * 2; i++) {
 			size_t m = knh_rand() % a->size;
 			size_t n = knh_rand() % a->size;
@@ -1869,7 +1869,7 @@ static KMETHOD Array_reverse(CTX, ksfp_t *sfp _RIX)
 {
 	size_t i;
 	kArray *a = sfp[0].a;
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		for(i = 0; i < a->size / 2; i++) {
 			size_t n = a->size - i - 1;
 			NArray_swap(_ctx, a, i, n);
@@ -1960,7 +1960,7 @@ static KMETHOD Map_new(CTX, ksfp_t *sfp _RIX)
 {
 	kMap *m = (kMap *)sfp[0].o;
 	size_t init = sfp[1].ivalue <= 0 ? 0: Int_to(size_t, sfp[1]);
-	m->spi = knh_getDefaultMapDSPI(_ctx, O_p1(m), O_p2(m));
+	m->spi = knh_getDefaultMapDSPI(_ctx, O_p0(m), O_p2(m));
 	m->mapptr = m->spi->init(_ctx, init, NULL, NULL);
 	RETURN_(m);
 }
@@ -1973,7 +1973,7 @@ static KMETHOD Map_newMAP(CTX, ksfp_t *sfp _RIX)
 	kMap *m = sfp[0].m;
 	ksfp_t *v = sfp + 1;
 	size_t i, ac = knh_stack_argc(_ctx, v);
-	m->spi = knh_getDictMapDSPI(_ctx, O_p1(m), O_p2(m));
+	m->spi = knh_getDictMapDSPI(_ctx, O_p0(m), O_p2(m));
 	KNH_ASSERT(m->spi != NULL); // if NULL, it is unsupported
 	m->mapptr  = m->spi->init(_ctx, 0, NULL, NULL);
 	for(i = 0; i < ac; i+=2) {
@@ -2275,7 +2275,7 @@ static KMETHOD Array_opHAS(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = (kArray*)sfp[0].o;
 	size_t i, res = 0/*NotFound*/;
-	if(kArray_is_UNboxData(a)) {
+	if(kArray_isUnboxData(a)) {
 		kunbox_t d = O_data(sfp[1].o);
 		for(i = 0; i < kArray_size(a); i++) {
 			if(d == a->nlist[i]) { res = 1; break; }
@@ -2713,7 +2713,7 @@ static kArray *new_ArrayRANGE(CTX, kArray *a, size_t s, size_t e /*until*/)
 			char *p = (char*)a->list;
 			kArray_grow(_ctx, newa, newsize, newsize);
 			knh_memcpy(newa->list, p + (s * sizeofdata), newsize * sizeofdata);
-			if(!kArray_is_UNboxData(a)) {
+			if(!kArray_isUnboxData(a)) {
 				size_t i;
 				for(i = 0; i < newsize; i++) {
 					knh_Object_RCinc(newa->list[i]);

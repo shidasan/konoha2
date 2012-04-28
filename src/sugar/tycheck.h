@@ -181,7 +181,7 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 static kbool_t CT_isa(CTX, ktype_t cid1, ktype_t cid2)
 {
 	DBG_ASSERT(cid1 != cid2); // should be checked
-	if(cid2 == CLASS_Object || cid2 == TY_dynamic) return true;
+	if(cid2 == CLASS_Object) return true;
 	kclass_t *ct = CT_(cid1);
 	while(ct->supcid != CLASS_Object) {
 		ct = CT_(ct->supcid);
@@ -326,7 +326,6 @@ static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kToken_p(expr->tk, ERR_, "float is unsupported: %s", kToken_s(expr->tk)));
 }
 
-
 static kExpr* Expr_tyCheckVariable(CTX, struct _kExpr *expr, kGamma *gma)
 {
 	DBG_ASSERT(expr->ty == TY_var);
@@ -335,7 +334,7 @@ static kExpr* Expr_tyCheckVariable(CTX, struct _kExpr *expr, kGamma *gma)
 	int i;
 	gmabuf_t *genv = gma->genv;
 	for(i = genv->l.varsize - 1; i >= 0; i--) {
-		DBG_P("searching index=%d, ty=%s fn=%s", i, T_ty(genv->l.vars[i].ty), T_fn(genv->l.vars[i].fn));
+		//DBG_P("searching index=%d, ty=%s fn=%s", i, T_ty(genv->l.vars[i].ty), T_fn(genv->l.vars[i].fn));
 		if(genv->l.vars[i].fn == fn) {
 			expr->build = TEXPR_LOCAL_;
 			expr->ty = genv->l.vars[i].ty;
@@ -352,6 +351,12 @@ static kExpr* Expr_tyCheckVariable(CTX, struct _kExpr *expr, kGamma *gma)
 			return expr;
 		}
 	}
+//	if(_ctx->lib2->KS_getGetterMethodNULL != NULL) {
+//		kMethod *mtd = kKonohaSpace_getGetterMethodNULL(genv->ks, genv->this_cid, fn);
+//		if(mtd != NULL) {
+//
+//		}
+//	}
 	return kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk));
 }
 
@@ -1207,7 +1212,7 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	kjmpbuf_t lbuf = {};
 	int i, jmpresult;
 	if(base->evaljmpbuf == NULL) {
-		base->evaljmpbuf = (kjmpbuf_t*)KNH_ZMALLOC(sizeof(kjmpbuf_t));
+		base->evaljmpbuf = (kjmpbuf_t*)KNH_ZMALLOC(sizeof(kjmpbuf_t), 1);
 	}
 	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
 	if((jmpresult = ksetjmp(*base->evaljmpbuf)) == 0) {

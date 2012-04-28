@@ -1905,7 +1905,7 @@ static kIterator* new_IteratorIterator(CTX, kcid_t cid, kIterator *s)
 	kIterator *it = new_O(Iterator, cid);
 	KSETv(DP(it)->source, s);
 	it->fnext_1 = Iterator_isNDATA(s) ? Iterator_Nnext : Iterator_Onext;
-	kcid_t sp1 = O_p1(s), tp1 = O_p1(it);
+	kcid_t sp1 = O_p0(s), tp1 = O_p0(it);
 	kTypeMap *tmr = knh_findTypeMapNULL(_ctx, sp1, tp1);
 	KNH_ASSERT(tmr != NULL);
 	KINITv(DP(it)->tmrNULL, tmr);
@@ -2000,8 +2000,8 @@ static ITRNEXT Array_nextN(CTX, ksfp_t *sfp _RIX)
 
 kIterator* new_ArrayIterator(CTX, kArray *a)
 {
-	kcid_t cid = O_p1(a);
-	knh_Fitrnext fnext = kArray_is_UNboxData(a) ? Array_nextN : Array_nextO;
+	kcid_t cid = O_p0(a);
+	knh_Fitrnext fnext = kArray_isUnboxData(a) ? Array_nextN : Array_nextO;
 	return new_IteratorG(_ctx, knh_class_P1(_ctx, CLASS_Iterator, cid), UPCAST(a), fnext);
 }
 
@@ -2013,14 +2013,14 @@ kbool_t knh_isArrayIterator(kIterator *itr)
 static TYPEMAP Array_Iterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
-	knh_Fitrnext fnext = kArray_is_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
+	knh_Fitrnext fnext = kArray_isUnboxData(sfp[0].a) ? Array_nextN : Array_nextO;
 	RETURN_(new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext));
 }
 
 static TYPEMAP Array_MIterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
-	knh_Fitrnext fnext = kArray_is_UNboxData(sfp[0].a) ? Array_nextN : Array_nextO;
+	knh_Fitrnext fnext = kArray_isUnboxData(sfp[0].a) ? Array_nextN : Array_nextO;
 	RETURN_(new_IteratorIterator(_ctx, tmr0->scid, new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext)));
 }
 
@@ -2131,7 +2131,7 @@ static ITRNEXT Map_nextN(CTX, ksfp_t *sfp _RIX)
 static TYPEMAP Map_Iterator(CTX, ksfp_t *sfp _RIX)
 {
 	kTypeMap *tmr0 = sfp[K_TMRIDX].tmrNC;
-	kcid_t p1 = O_p1(sfp[0].m);
+	kcid_t p1 = O_p0(sfp[0].m);
 	knh_Fitrnext fnext = TY_isUnbox(p1) ? Map_nextN : Map_nextO;
 	RETURN_(new_IteratorG(_ctx, tmr0->tcid, sfp[0].o, fnext));
 }

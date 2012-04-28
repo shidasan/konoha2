@@ -48,11 +48,6 @@ static inline int lpos(tenv_t *tenv, const char *s)
 	return (tenv->bol == NULL) ? -1 : s - tenv->bol;
 }
 
-static KMETHOD ParseToken(CTX, ksfp_t *sfp _RIX)
-{
-
-}
-
 typedef int (*Ftoken)(CTX, struct _kToken *, tenv_t *, int, kMethod *thunk);
 
 static int parseINDENT(CTX, struct _kToken *tk, tenv_t *tenv, int pos, kMethod *thunk)
@@ -490,7 +485,7 @@ static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, i
 	if(t[0] == opench && t[1] == 0) {
 		int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, closech);
 		tk->tt = tt; tk->kw = tt;
-		KSETv(tk->sub, new_(Array, 0));
+		KSETv(tk->sub, new_(TokenArray, 0));
 		tk->topch = opench; tk->closech = closech;
 		makeSyntaxTree(_ctx, tls, i+1, ne, tk->sub);
 		*s = ne;

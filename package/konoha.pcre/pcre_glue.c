@@ -711,7 +711,7 @@
 //		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
 //		DEND,
 //	};
-//	Konoha_loadMethodData(ks, MethodData);
+//	kKonohaSpace_loadMethodData(ks, MethodData);
 //	return true;
 //}
 //

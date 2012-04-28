@@ -10,7 +10,7 @@ static void karray_init(CTX, karray_t *m, size_t bytemax)
 {
 	m->bytesize = 0;
 	m->bytemax  = bytemax;
-	m->bytebuf = (char*)KNH_ZMALLOC(bytemax);
+	m->bytebuf = (char*)KNH_ZMALLOC(bytemax, 1);
 }
 
 static void karray_resize(CTX, karray_t *m, size_t newsize)
@@ -146,7 +146,7 @@ static void kmap_makeFreeList(kmap_t *kmap, size_t s, size_t e)
 static void kmap_rehash(CTX, kmap_t *kmap)
 {
 	size_t i, newhmax = kmap->hmax * 2 + 1;
-	kmape_t **newhentry = (kmape_t**)KNH_ZMALLOC(newhmax * sizeof(kmape_t*));
+	kmape_t **newhentry = (kmape_t**)KNH_ZMALLOC(newhmax, sizeof(kmape_t*));
 	for(i = 0; i < kmap->arenasize / 2; i++) {
 		kmape_t *e = kmap->arena + i;
 		kuint_t ni = e->hcode % newhmax;
@@ -194,12 +194,12 @@ static kmape_t *Kmap_newentry(CTX, kmap_t *kmap, kuint_t hcode)
 
 static kmap_t *Kmap_init(CTX, size_t init)
 {
-	kmap_t *kmap = (kmap_t*)KNH_ZMALLOC(sizeof(kmap_t));
+	kmap_t *kmap = (kmap_t*)KNH_ZMALLOC(sizeof(kmap_t), 1);
 	if(init < HMAP_INIT) init = HMAP_INIT;
 	kmap->arenasize = (init * 3) / 4;
 	kmap->arena = (kmape_t*)KNH_MALLOC(kmap->arenasize * sizeof(kmape_t));
 	kmap_makeFreeList(kmap, 0, kmap->arenasize);
-	kmap->hentry = (kmape_t**)KNH_ZMALLOC(init * sizeof(kmape_t*));
+	kmap->hentry = (kmape_t**)KNH_ZMALLOC(init, sizeof(kmape_t*));
 	kmap->hmax = init;
 	kmap->size = 0;
 	return (kmap_t*)kmap;
@@ -437,10 +437,10 @@ static const char* KTsymbol(CTX, char *buf, size_t bufsiz, ksymbol_t sym)
 
 static karray_t *new_karray(CTX, size_t bytesize, size_t bytemax)
 {
-	karray_t *m = (karray_t*)KNH_ZMALLOC(sizeof(karray_t));
+	karray_t *m = (karray_t*)KNH_ZMALLOC(sizeof(karray_t), 1);
 	DBG_ASSERT(bytesize <= bytemax);
 	if(bytemax > 0) {
-		m->bytebuf = (char*)KNH_ZMALLOC(bytemax);
+		m->bytebuf = (char*)KNH_ZMALLOC(bytemax, 1);
 		m->bytesize = bytesize;
 		m->bytemax = bytemax;
 	}
@@ -503,7 +503,7 @@ static void kvproto_rehash(CTX, karray_t *p)
 {
 	size_t i, pmax = (p->bytemax) / sizeof(kvs_t);
 	size_t newpmax = pmax * 2, newpsize = newpmax - KVPROTO_DELTA;
-	kvs_t *newkvs = (kvs_t*)KNH_ZMALLOC(sizeof(kvs_t) * newpmax);
+	kvs_t *newkvs = (kvs_t*)KNH_ZMALLOC(sizeof(kvs_t), newpmax);
 	for(i = 0; i < pmax; i++) {
 		kvs_t *d = p->kvs + i;
 		if(d->key != 0) {

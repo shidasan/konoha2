@@ -4279,10 +4279,10 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Const|_Coercion|_Im, _F(Object_toType),  TY_Type,  TY_Object, MN_to(TY_Type), 0,
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, methoddata);
-	Konoha_loadConstData(ks, IntAttributes, 0);
-	Konoha_loadConstData(ks, IntIntrinsic, 0);
-	Konoha_loadConstData(ks, IntGlobalVariable, 0);
+	kKonohaSpace_loadMethodData(NULL, methoddata);
+	kKonohaSpace_loadConstData(ks, IntAttributes, 0);
+	kKonohaSpace_loadConstData(ks, IntIntrinsic, 0);
+	kKonohaSpace_loadConstData(ks, IntGlobalVariable, 0);
 
 	return true;
 }

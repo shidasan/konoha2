@@ -160,24 +160,15 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	if(python_init_count == 1) {
 		Py_Initialize();
 	}
-//	kmodfloat_t *base = (kmodfloat_t*)KNH_ZMALLOC(sizeof(kmodfloat_t));
-//	base->h.name     = "float";
-//	base->h.setup    = kmodfloat_setup;
-//	base->h.reftrace = kmodfloat_reftrace;
-//	base->h.free     = kmodfloat_free;
-//	Konoha_setModule(MOD_float, &base->h, pline);
 
-	KDEFINE_CLASS PyObjectDef = {
+	KDEFINE_CLASS defPython = {
 		STRUCTNAME(PyObject),
-#ifndef WITH_ECLIPSE
-		.packid  = ks->packid,
-#endif
 		.cflag = 0,
 		.init = PyObject_init,
 		.free = PyObject_free,
 		.p    = PyObject_p,
 	};
-	kclass_t *cPython = Konoha_addClassDef(NULL, &PyObjectDef, pline);
+	kclass_t *cPython = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defPython, pline);
 	int TY_PyObject = cPython->cid;
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toBoolean), TY_Boolean, TY_PyObject, MN_to(TY_Boolean), 0,
@@ -191,14 +182,14 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Im, _F(PyObject_), TY_PyObject, TY_PyObject, 0, 1, TY_PyObject, 0,
 		DEND,
 	};
-	Konoha_loadMethodData(ks, MethodData);
+	kKonohaSpace_loadMethodData(ks, MethodData);
 	if(IS_defineFloat()) {
 		intptr_t MethodData[] = {
 			_Public|_Const|_Im|_Coercion, _F(PyObject_toFloat), TY_Float, TY_PyObject, MN_to(TY_Float), 0,
 			_Public|_Const|_Im|_Coercion, _F(Float_toPyObject), TY_PyObject, TY_Float, MN_to(TY_PyObject), 0,
 			DEND,
 		};
-		Konoha_loadMethodData(ks, MethodData);
+		kKonohaSpace_loadMethodData(ks, MethodData);
 	}
 	return true;
 }
@@ -218,11 +209,7 @@ static kbool_t python_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#ifdef WITH_ECLIPSE
-KDEFINE_PACKAGE* KX_init(CTX)
-#else
 KDEFINE_PACKAGE* python_init(void)
-#endif
 {
 	static KDEFINE_PACKAGE d = {
 		KPACKNAME("python", "1.0"),
@@ -231,8 +218,5 @@ KDEFINE_PACKAGE* python_init(void)
 		.initKonohaSpace = python_initKonohaSpace,
 		.setupKonohaSpace = python_setupKonohaSpace,
 	};
-#ifdef WITH_ECLIPSE
-	python_initPackage(_ctx, NULL, 0, NULL, 0);
-#endif
 	return &d;
 }

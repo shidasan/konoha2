@@ -3374,7 +3374,7 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, MethodData);
+	kKonohaSpace_loadMethodData(NULL, MethodData);
 	return true;
 }
 

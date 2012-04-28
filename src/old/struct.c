@@ -1133,14 +1133,14 @@ static kclass_t TupleDef = {
 static void Range_init(CTX, kObject *o)
 {
 	kRange *rng = (kRange*)o;
-	kcid_t p1 = O_p1(rng);
+	kcid_t p1 = O_p0(rng);
 	if(TY_isUnbox(p1)) {
 		Range_setNDATA(rng, 1);
 		rng->nstart = 0;
 		rng->nend = 0;
 	}
 	else {
-		KINITv(rng->ostart, KNH_NULVAL(O_p1(rng)));
+		KINITv(rng->ostart, KNH_NULVAL(O_p0(rng)));
 		KINITv(rng->oend, rng->ostart);
 	}
 }
@@ -1158,7 +1158,7 @@ static void Range_reftrace(CTX, kObject *o)
 static void Range_p(CTX, kOutputStream *w, kObject *o, int level)
 {
 	kRange *range = (kRange*)o;
-	kcid_t p1 = O_p1(range);
+	kcid_t p1 = O_p0(range);
 	kwb_putc(wb, '[');
 	knh_write_TObject(_ctx, w, p1, &range->ostart, 0, level);
 	knh_write(_ctx, w, STEXT(" to "));
@@ -1195,8 +1195,8 @@ static void Array_initcopy(CTX, kObject *o, kObject *src)
 		a->size = a_src->size;
 		a->list = (kObject**)KNH_ZMALLOC(a_src->dim->capacity * a_src->dim->wsize);
 		knh_memcpy(a->list, a_src->list, a_src->dim->capacity * a_src->dim->wsize);
-		kArray_setUnboxData(a, kArray_is_UNboxData(a_src));
-		if(!kArray_is_UNboxData(a)) {
+		kArray_setUnboxData(a, kArray_isUnboxData(a_src));
+		if(!kArray_isUnboxData(a)) {
 			size_t i;
 			for(i = 0; i < a->size; i++) {
 				knh_Object_RCinc(a->list[i]);
@@ -1213,7 +1213,7 @@ static void Array_initcopy(CTX, kObject *o, kObject *src)
 static void Array_reftrace(CTX, kObject *o)
 {
 	kArray *a = (kArray*)o;
-	if(!kArray_is_UNboxData(a)) {
+	if(!kArray_isUnboxData(a)) {
 #ifdef K_USING_FASTREFS_
 		KNH_SETREF(_ctx, a->list, a->size);
 #else
@@ -1238,7 +1238,7 @@ static int Array_compareTo(kObject *o, kObject *o2)
 		kArray *a = (kArray*)o;
 		kArray *a2 = (kArray*)o2;
 		size_t i, asize = kArray_size(a), asize2 = kArray_size(a2);
-		if(kArray_is_UNboxData(a)) {
+		if(kArray_isUnboxData(a)) {
 			for(i = 0; i < asize; i++) {
 				if(!(i < asize2)) return -1;
 				if(a->nlist[i] == a2->nlist[i]) continue;
@@ -1272,7 +1272,7 @@ static void Array_p(CTX, kOutputStream *w, kObject *o, int level)
 	kwb_putc(wb, '[');
 	{
 		kArray *a = (kArray*)o;
-		kcid_t p1 = O_p1(a);
+		kcid_t p1 = O_p0(a);
 		size_t c, size = kArray_size(a);
 		if(size > 0) {
 			if(TY_isUnbox(p1)) {
@@ -1335,8 +1335,8 @@ static void Array_wdata(CTX, kObject *o, void *pkr, const knh_PackSPI_t *packspi
 	kArray *a = (kArray *)o;
 	packspi->pack_beginarray(_ctx, pkr, a->size);
 	size_t i = 0;
-	kcid_t p1 = O_p1(a);
-	if (kArray_is_UNboxData(a)) {
+	kcid_t p1 = O_p0(a);
+	if (kArray_isUnboxData(a)) {
 		for (i = 0; i < a->size; i++) {
 			if (i != 0)
 				packspi->pack_putc(_ctx, pkr, ',');
@@ -1413,7 +1413,7 @@ static void Iterator_free(CTX, kObject *o)
 static void Iterator_p(CTX, kOutputStream *w, kObject *o, int level)
 {
 	kIterator *it = (kIterator*)o;
-	kcid_t p1 = O_p1(it);
+	kcid_t p1 = O_p0(it);
 	if(IS_FMTdump(level)) {
 		ksfp_t *lsfp = ctx->esp;
 		KSETv(lsfp[1].o, it);
@@ -1883,7 +1883,7 @@ static void Thunk_init(CTX, kObject *o)
 	kMethod *mtd = ClassTBL_getMethodNULL(_ctx, ClassTBL(CLASS_Thunk), MN_);
 	DBG_ASSERT(mtd != NULL);
 	Thunk_newenv(_ctx, thk, K_CALLDELTA);
-	KSETv(thk->envsfp[0].o, KNH_NULVAL(O_p1(thk)));
+	KSETv(thk->envsfp[0].o, KNH_NULVAL(O_p0(thk)));
 	thk->envsfp[K_CALLDELTA+K_MTDIDX].mtdNC = mtd;
 }
 

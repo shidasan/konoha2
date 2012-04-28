@@ -106,9 +106,7 @@ KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX)
 	DBG_P("*** man %s", T_cid(ct->cid));
 //	((struct _kclass*)CT_Method)->p = Method_p;
 	while(ks != NULL) {
-		if(ks->methodsNULL != NULL) {
-			copyMethodList(_ctx, ct->cid, ks->methodsNULL, list);
-		}
+		copyMethodList(_ctx, ct->cid, ks->methods, list);
 		ks = ks->parentNULL;
 	}
 	copyMethodList(_ctx, ct->cid, ct->methods, list);
@@ -132,7 +130,7 @@ static	kbool_t i_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, 
 		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
 		DEND,
 	};
-	Konoha_loadMethodData(ks, MethodData);
+	kKonohaSpace_loadMethodData(ks, MethodData);
 	return true;
 }
 
