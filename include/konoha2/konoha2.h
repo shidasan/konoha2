@@ -117,26 +117,13 @@ typedef uintptr_t        kuint_t;
 #define KINT_MAX               LLONG_MAX
 #define KINT_MIN               LLONG_MIN
 #define KINT_FMT               "%lld"
-//#define KINT_XFMT              "%llx"
-//#define KINT0                  0ULL
-//#define KUINT_MAX              ULLONG_MAX
-//#define KUINT_MIN              0ULL
-//#define KUINT_FMT              "%llu"
-//#define knh_abs(n)              llabs(n)
 
 #else/*K_USING_SYS64_*/
 
 #define KINT_MAX               LONG_MAX
 #define KINT_MIN               LONG_MIN
-#define KINT0                  0UL
 #define KINT_FMT               "%ld"
-#define KINT_XFMT              "%lx"
-#define KUINT_MAX              ULONG_MAX
-#define KUINT_MIN              0
-#define KUINT_FMT              "%lu"
-#define knh_abs(n)              labs(n)
-#define VMTX_INT
-#define VMTSIZE_int 0
+#define KINT0                  0UL
 
 #endif/*K_USING_SYS64_*/
 
@@ -532,9 +519,9 @@ struct _kclass {
 #define CLASS_Boolean           ((kcid_t)3)
 #define CLASS_Int               ((kcid_t)4)
 #define CLASS_String            ((kcid_t)5)
-#define CLASS_Array             ((kcid_t)6)
-#define CLASS_Param             ((kcid_t)7)
-#define CLASS_Method            ((kcid_t)8)
+#define CLASS_Param             ((kcid_t)6)
+#define CLASS_Method            ((kcid_t)7)
+#define CLASS_Array             ((kcid_t)8)
 #define CLASS_System            ((kcid_t)9)
 #define CLASS_T0                ((kcid_t)10)    /* ParamType*/
 
