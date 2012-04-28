@@ -75,6 +75,12 @@ static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 	return 0;
 }
 
+static struct _kToken* Token_resolveType(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
+{
+	DBG_ABORT("TODO: CT_Generator");
+	return tk;
+}
+
 static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArray *dst)
 {
 	int next = s; // don't add
@@ -100,12 +106,20 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 			return e;
 		}
 	}
-	kArray_add(dst, tk);
-	while(TK_isType(tk) && next < e) {
-		kToken *tkN = tls->toks[next];
-		if(tkN->topch != '[') break;
-		next = makeTree(_ctx, ks, tls, AST_BRANCET, next, e, ']', dst);
+	if(TK_isType(tk)) {
+		while(next + 1 < e) {
+			kToken *tkN = tls->toks[next + 1];
+			if(tkN->topch != '[') break;
+			kArray *abuf = ctxsugar->tokens;
+			size_t atop = kArray_size(abuf);
+			next = makeTree(_ctx, ks, tls, AST_BRANCET, next, e, ']', abuf) + 1;
+			if(kArray_size(abuf) > atop) {
+				tk = Token_resolveType(_ctx, ks, tk, abuf->toks[atop]);
+				kArray_clear(abuf, atop);
+			}
+		}
 	}
+	kArray_add(dst, tk);
 	return next;
 }
 
@@ -128,29 +142,35 @@ static int makeTree(CTX, kKonohaSpace *ks, kArray *tls, ktoken_t tt, int s, int 
 {
 	int i;
 	kToken *tk = tls->toks[s];
-	struct _kToken *tkp = new_W(Token, 0);
-	kArray_add(tlsdst, tkp);
-	tkp->tt = tt; tkp->kw = tt; tkp->uline = tk->uline; tkp->topch = tk->topch; tkp->lpos = closech;
-	KSETv(tkp->sub, new_(TokenArray, 0));
-	for(i = s + 1; i < e; i++) {
-		tk = tls->toks[i];
-		//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
-		if(tk->topch == '(') {
-			i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
-		if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, tls, AST_BRANCET, i, e, ']', tkp->sub); continue; }
-		if(tk->topch == '{') {
-			i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tkp->sub); continue; }
-		if(tk->topch == closech) {
-			return i;
+	if(AST_PARENTHESIS <= tk->tt && tk->tt <= AST_BRACE) {
+		kArray_add(tlsdst, tk);
+		return s;
+	}
+	else {
+		struct _kToken *tkp = new_W(Token, 0);
+		kArray_add(tlsdst, tkp);
+		tkp->tt = tt; tkp->kw = tt; tkp->uline = tk->uline; tkp->topch = tk->topch; tkp->lpos = closech;
+		KSETv(tkp->sub, new_(TokenArray, 0));
+		for(i = s + 1; i < e; i++) {
+			tk = tls->toks[i];
+			//DBG_P("@IDE i=%d, tk->topch='%c'", i, tk->topch);
+			if(tk->topch == '(') {
+				i = makeTree(_ctx, ks, tls, AST_PARENTHESIS, i, e, ')', tkp->sub); continue; }
+			if(tk->topch == '[') {
+				i = makeTree(_ctx, ks, tls, AST_BRANCET, i, e, ']', tkp->sub); continue; }
+			if(tk->topch == '{') {
+				i = makeTree(_ctx, ks, tls, AST_BRACE, i, e, '}', tkp->sub); continue; }
+			if(tk->topch == closech) {
+				return i;
+			}
+			if(tk->tt == TK_INDENT && closech != '}') continue;  // remove INDENT;
+			i = appendKeyword(_ctx, ks, tls, i, e, tkp->sub);
 		}
-		if(tk->tt == TK_INDENT && closech != '}') continue;  // remove INDENT;
-		i = appendKeyword(_ctx, ks, tls, i, e, tkp->sub);
+		/* syntax error */ {
+			SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);
+		}
+		return e;
 	}
-	/* syntax error */ {
-		SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);
-	}
-	return e;
 }
 
 static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst)
@@ -688,7 +708,7 @@ static KMETHOD ParseStmt_block(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ParseStmt(stmt, syn, name, tls, s, e);
 	kToken *tk = tls->toks[s];
-	//DBG_P("adding block %s as %s", T_tt(tk->tt), T_kw(name));
+	DBG_P("adding block %s as %s", T_tt(tk->tt), T_kw(name));
 	if(tk->tt == TK_CODE) {
 		kObject_setObject(stmt, name, tk);
 		RETURNi_(s+1);
@@ -699,11 +719,11 @@ static KMETHOD ParseStmt_block(CTX, ksfp_t *sfp _RIX)
 		RETURNi_(s+1);
 	}
 	else {
-		//DBG_P("block1, s=%d, e=%d", s, e);
+		DBG_P("block1, s=%d, e=%d", s, e);
+		dumpTokenArray(_ctx, 0, tls, s, e);
 		kBlock *bk = new_Block(_ctx, tls, s, e, kStmt_ks(stmt));
 		kObject_setObject(stmt, name, bk);
 		RETURNi_(e);
-		// s = -1; // ERROR
 	}
 	RETURNi_(-1); // ERROR
 }

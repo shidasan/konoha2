@@ -1343,7 +1343,7 @@ extern kbool_t konoha_load(konoha_t konoha, const char *scriptfile);
 extern kbool_t konoha_eval(konoha_t konoha, const char *script, kline_t uline);
 extern kbool_t konoha_run(konoha_t konoha);  // TODO
 
-extern void MODSUGAR_init(CTX, kcontext_t *ctx);
+//extern void MODSUGAR_init(CTX, kcontext_t *ctx);
 //extern void kvproto_free(CTX, struct karray_t *p);
 //extern void kvproto_reftrace(CTX, struct karray_t *p);
 
@@ -1355,5 +1355,7 @@ typedef struct DEFINE_TESTFUNC {
 	Ftest f;
 } DEFINE_TESTFUNC ;
 #endif
+
+#include "logger.h"
 
 #endif /* KONOHA2_H_ */

@@ -708,12 +708,17 @@ static ssize_t klib2_malloced = 0;
 
 static void* Kmalloc(CTX, size_t s)
 {
-	klib2_malloced += s;
 	size_t *p = (size_t*)do_malloc(s + sizeof(size_t));
 	if(unlikely(p == NULL)) {
-
+		ktrace(_ScriptFault|_SystemFault,
+			KEYVALUE_s("!",  "OutOfMemory"),
+			KEYVALUE_s("at", "malloc"),
+			KEYVALUE_u("size", s),
+			KEYVALUE_u("malloced_size", klib2_malloced)
+		);
 	}
 	p[0] = s;
+	klib2_malloced += s;
 	return (void*)(p+1);
 }
 
@@ -746,6 +751,8 @@ void MODGC_check_malloced_size(void)
 
 void MODGC_init(CTX, kcontext_t *ctx)
 {
+	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
+	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 	if(IS_ROOTCTX(ctx)) {
 		(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
 		//do_bzero(ctx->memshare, sizeof(kmemshare_t));
@@ -757,8 +764,6 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		KSET_KLIB2(zmalloc, 0);
 		KSET_KLIB2(free, 0);
 	}
-	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
-	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 }
 
 void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
@@ -916,17 +921,6 @@ static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
 	}
 	return tail;
 }
-
-//void knh_sizerefs(CTX, kObject** tail)
-//{
-//	_ctx->memlocal->ref_size = (tail - _ctx->memlocal->ref_buf);
-//}
-//
-//void knh_setrefs(CTX, kObject** list, size_t size)
-//{
-//	_ctx->memlocal->refs = list;
-//	_ctx->memlocal->ref_size = size;
-//}
 
 
 static HeapManager *BMGC_init(CTX)

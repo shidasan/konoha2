@@ -28,12 +28,6 @@
 /* ------------------------------------------------------------------------ */
 /* sugar.h */
 
-//## class Token Object;
-//## class Expr  Object;
-//## class Stmt  Object;
-//## class Block Object;
-//## class Gamma Object;
-
 #include <dlfcn.h>
 #include "konoha2.h"
 #include "klib.h"

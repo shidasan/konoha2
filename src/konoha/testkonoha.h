@@ -101,10 +101,10 @@ static int test_logger(CTX)
 	int i;
 	for (i = 0; i < 10; i++) {
 		ktrace(LOGPOL_ERR,
-				LOG_s "key1", "hello world",
-				LOG_u "key2", v2,
-				LOG_u "key3", v3
-				);
+			KEYVALUE_s("key1", "hello world"),
+			KEYVALUE_u("key2", v2),
+			KEYVALUE_u("key3", v3)
+		);
 	}
 	return 0;
 }

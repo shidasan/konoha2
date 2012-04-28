@@ -116,12 +116,12 @@ static uintptr_t Ktrace_p(CTX, klogconf_t *logconf, va_list ap)
 			p = write_byte_toebuf(key, strlen(key), p, ebuf);
 			if(p + 3 < ebuf) { p[0] = '"'; p[1] = ':'; p[2] = ' '; p+=3; }
 			switch(logtype) {
-			case LOG_s_: {
+			case LOG_s: {
 				const char *text = va_arg(ap, const char*);
 				p = write_text_toebuf(text, p, ebuf);
 				break;
 			}
-			case LOG_u_: {
+			case LOG_u: {
 				p = write_uint_toebuf(va_arg(ap, uintptr_t), p, ebuf);
 				break;
 			}

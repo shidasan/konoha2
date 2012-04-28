@@ -100,7 +100,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("true"),  _EXPR, _TERM, ExprTyCheck_(TRUE),},
 		{ TOKEN("false"), _EXPR, _TERM, ExprTyCheck_(FALSE),},
 		{ TOKEN("if"), .rule ="\"if\" \"(\" $expr \")\" $block [\"else\" else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
-		{ TOKEN("else"), .rule = "\"else\" $block" },
+		{ TOKEN("else"), .rule = "\"else\" $block", TopStmtTyCheck_(else), StmtTyCheck_(else), },
 		{ TOKEN("return"), .rule ="\"return\" [$expr]", StmtTyCheck_(return), },
 		{ .name = NULL, },
 	};

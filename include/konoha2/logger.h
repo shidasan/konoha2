@@ -22,8 +22,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifndef LOGGER_H_
-#define LOGGER_H_
+#ifndef EVIDENCE_H_
+#define EVIDENCE_H_
 
 #define LOGPOL_RECORD       (1<<0) /* logger works only with this flag */
  /* Critical */
@@ -34,15 +34,16 @@
 #define LOGPOL_INFO         (1<<3) /* Information */
 #define LOGPOL_DEBUG        (1<<4) /* Debug information */
 
-#define LOGPOL_PREACTION    (1<<5)
-#define LOGPOL_CHANGE       (1<<6)
-#define LOGPOL_AUDIT        (1<<7) /* security auditing */
- /* ??? */
-#define LOGPOL_SYSTEMFAULT     (1<<8)
-/* scripter's fault */
-#define LOGPOL_SCRIPTFAULT     (1<<9)
-#define LOGPOL_DATAFAULT       (1<<10) /* invalid data */
-#define LOGPOL_UKNOWNFAULT     (1<<11) /* faults that aren't belong above */
+/* LogPolicy */
+#define _PreAction         (1<<5) /* preaction */
+#define _ChangeEnv         (1<<6) /* change environment */
+#define _SecurityAudit     (1<<7) /* security auditing */
+
+/* ??? */
+#define _SystemFault       (1<<8)
+#define _ScriptFault       (1<<9)  /* scripter's fault */
+#define _DataFault         (1<<10) /* invalid data */
+#define _ExternalFault     (1<<11)
 
 #define LOGPOL_INIT         (1<<12) /* DONT USE THIS */
 #define LOGPOL_CFUNC        (1<<13) /* DONT USE THIS */
@@ -57,16 +58,13 @@ typedef struct klogconf_t {
 } klogconf_t ;
 
 #define LOG_END 0
-#define LOG_s   1,
-#define LOG_s_  1
-#define LOG_u   2,
-#define LOG_u_  2
+#define LOG_s   1
+#define LOG_u   2
 
-#define KEYVALUE_u(K,V)\
-	LOG_u_, K, (unsigned int)V
+#define KEYVALUE_u(K,V)    LOG_u, (K), ((uintptr_t)V)
+#define KEYVALUE_s(K,V)    LOG_s, (K), (V)
 
-#define KEYVALUE_s(K,V)\
-	LOG_s_, K, (char*)V
+#define LOG_uline          KEYVALUE_u("uline", sfp[K_RTNIDX].uline)
 
 #define ktrace(POLICY, ...)    do {\
 		static klogconf_t _logconf = {LOGPOL_RECORD|LOGPOL_INIT|LOGPOL_CFUNC|POLICY, NULL, {__FUNCTION__}};\
@@ -75,5 +73,4 @@ typedef struct klogconf_t {
 		}\
 	}while(0)\
 
-
-#endif /* LOGGER_H_ */
+#endif /* EVIDENCE_H_ */

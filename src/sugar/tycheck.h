@@ -791,6 +791,58 @@ static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(r);
 }
 
+static kStmt* Stmt_lookupIfStmtWithoutElse(CTX, kStmt *stmt)
+{
+	kBlock *bkElse = kStmt_block(stmt, KW_else, NULL);
+	if(bkElse != NULL) {
+		if(kArray_size(bkElse->blockS) == 1) {
+			kStmt *stmtIf = bkElse->blockS->stmts[0];
+			if(stmtIf->syn->kw == KW_if) {
+				return Stmt_lookupIfStmtWithoutElse(_ctx, stmtIf);
+			}
+		}
+		return NULL;
+	}
+	return stmt;
+}
+
+static kStmt* Stmt_lookupIfStmtNULL(CTX, kStmt *stmt)
+{
+	int i;
+	kArray *bka = stmt->parentNULL->blockS;
+	kStmt *prevIfStmt = NULL;
+	for(i = 0; kArray_size(bka); i++) {
+		kStmt *s = bka->stmts[i];
+		if(s == stmt) {
+			if(prevIfStmt != NULL) {
+				return Stmt_lookupIfStmtWithoutElse(_ctx, prevIfStmt);
+			}
+			return NULL;
+		}
+		if(s->syn == NULL) continue;  // this is done
+		prevIfStmt = (s->syn->kw == KW_if) ? s : NULL;
+	}
+	return NULL;
+}
+
+static KMETHOD StmtTyCheck_else(CTX, ksfp_t *sfp _RIX)
+{
+	kbool_t r = 1;
+	VAR_StmtTyCheck(stmt, syn, gma);
+	kStmt *stmtIf = Stmt_lookupIfStmtNULL(_ctx, stmt);
+	if(stmtIf != NULL) {
+		DBG_P("found previous if statement");
+		kBlock *bkElse = kStmt_block(stmt, KW_block, K_NULLBLOCK);
+		kObject_setObject(stmtIf, KW_else, bkElse);
+		kStmt_done(stmt);
+	}
+	else {
+		SUGAR_P(ERR_, stmt->uline, -1, "else is not statement");
+		r = 0;
+	}
+	RETURNb_(r);
+}
+
 static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_StmtTyCheck(stmt, syn, gma);
