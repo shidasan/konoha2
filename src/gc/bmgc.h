@@ -167,7 +167,7 @@ static inline void ARRAY_##T##_dispose(ARRAY(T) *a) {\
 		for(i=0, x = ARRAY_n(a, i); i < ARRAY_size(a); x = ARRAY_n(a,(++i)))
 
 /* struct gc */
-#define GCDATA(_ctx) (((_ctx)->memlocal->gcHeapMng))
+#define GCDATA(_ctx) (((_ctx)->memshare->gcHeapMng))
 
 struct SubHeap;
 struct Segment;
@@ -544,8 +544,6 @@ static void BMGC_exit(CTX, HeapManager *mng);
 
 
 typedef struct kmemlocal_t {
-	HeapManager                 *gcHeapMng;
-
 	kObject             **refs;
 	size_t                       ref_size;
 	kObject             **ref_buf;        // allocated body
@@ -557,6 +555,7 @@ typedef struct kmemlocal_t {
 } kmemlocal_t;
 
 typedef struct kmemshare_t {
+	HeapManager *gcHeapMng;
 	size_t   gcObjectCount;
 	size_t   usedMemorySize;
 	size_t   markedObject;
@@ -753,7 +752,7 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		//ctx->memshare->memlock = knh_mutex_malloc(ctx);
 		ctx->memshare->gcObjectCount = 0;
 		ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
-		(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
+		(ctx)->memshare->gcHeapMng = BMGC_init(ctx);
 		KSET_KLIB2(malloc, 0);
 		KSET_KLIB2(zmalloc, 0);
 		KSET_KLIB2(free, 0);
@@ -764,8 +763,8 @@ void MODGC_init(CTX, kcontext_t *ctx)
 
 void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 {
-	BMGC_exit(ctx, (ctx)->memlocal->gcHeapMng);
-	((kcontext_t*)ctx)->memlocal->gcHeapMng = NULL;
+	BMGC_exit(ctx, (ctx)->memshare->gcHeapMng);
+	((kcontext_t*)ctx)->memshare->gcHeapMng = NULL;
 }
 
 void MODGC_free(CTX, kcontext_t *ctx)
