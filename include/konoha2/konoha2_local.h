@@ -25,6 +25,8 @@
 #ifndef KONOHA2_LOCAL_H_
 #define KONOHA2_LOCAL_H_
 
+#define IS_ROOTCTX(o)  (_ctx == (CTX_t)o)
+
 // These functions are local functions in konoha2 binary.
 // Don't call from packages directly   (kimio)
 

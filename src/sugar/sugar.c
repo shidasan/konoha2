@@ -321,15 +321,6 @@ static const char *Pkeyword_(CTX, keyword_t kw)
 	return "unknown keyword";
 }
 
-//static kString *Skw_(CTX, keyword_t kw)
-//{
-//	kArray *a = kmodsugar->keywordList;
-//	if(kw < kArray_size(a)) {
-//		return a->strings[kw];
-//	}
-//	return TS_EMPTY;
-//}
-
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def)
 {
 	uintptr_t hcode = strhash(name, len);

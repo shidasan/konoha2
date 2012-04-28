@@ -742,7 +742,7 @@ static void initStructData(CTX)
 	}
 }
 
-static void kshare_initklib2(struct _klib2 *l)
+static void KCLASSTABLE_initklib2(struct _klib2 *l)
 {
 	l->Kclass   = Kclass;
 	l->Knew_Object = new_Object;
@@ -758,11 +758,11 @@ static void kshare_initklib2(struct _klib2 *l)
 	l->Knull = CT_null;
 }
 
-static void kshare_init(CTX, kcontext_t *ctx)
+static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = (kshare_t*)KCALLOC(sizeof(kshare_t), 1);
 	ctx->share = share;
-	kshare_initklib2((struct _klib2*)_ctx->lib2);
+	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	loadInitStructData(_ctx);
 //	share->cStringArray = CT_P0(_ctx, CT_Array, TY_String);
@@ -833,7 +833,7 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	END_REFTRACE();
 }
 
-static void kshare_freeCT(CTX)
+static void CLASSTABLE_freeCT(CTX)
 {
 	struct _kclass **cts = (struct _kclass**)_ctx->share->ca.cts;
 	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
@@ -845,7 +845,7 @@ static void kshare_freeCT(CTX)
 	}
 }
 
-static void kshare_free(CTX, kcontext_t *ctx)
+static void CLASSTABLE_free(CTX, kcontext_t *ctx)
 {
 	kshare_t *share = ctx->share;
 	kmap_free(share->lcnameMapNN, NULL);
@@ -853,7 +853,7 @@ static void kshare_free(CTX, kcontext_t *ctx)
 	kmap_free(share->packMapNN, NULL);
 	kmap_free(share->symbolMapNN, NULL);
 	kmap_free(share->unameMapNN, NULL);
-	kshare_freeCT(_ctx);
+	CLASSTABLE_freeCT(_ctx);
 	KARRAY_FREE(&share->ca);
 	KFREE(share, sizeof(kshare_t));
 }
@@ -866,7 +866,7 @@ static void kshare_free(CTX, kcontext_t *ctx)
 #define _Immutable kMethod_Immutable
 #define _F(F)      (intptr_t)(F)
 
-static void kshare_init_methods(CTX)
+static void KCLASSTABLE_loadMethod(CTX)
 {
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {

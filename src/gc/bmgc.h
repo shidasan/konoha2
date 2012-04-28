@@ -741,37 +741,30 @@ void MODGC_check_malloced_size(void)
 
 /* ------------------------------------------------------------------------ */
 
-void MODGCSHARE_init(CTX, kcontext_t *ctx)
+void MODGC_init(CTX, kcontext_t *ctx)
 {
-	(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
-	//do_bzero(ctx->memshare, sizeof(kmemshare_t));
-	//ctx->memshare->memlock = knh_mutex_malloc(ctx);
-	ctx->memshare->gcObjectCount = 0;
-	ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
-	MODGC_init(_ctx, ctx);
-	(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
-	KSET_KLIB2(malloc, 0);
-	KSET_KLIB2(zmalloc, 0);
-	KSET_KLIB2(free, 0);
+	if(IS_ROOTCTX(ctx)) {
+		(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
+		//do_bzero(ctx->memshare, sizeof(kmemshare_t));
+		//ctx->memshare->memlock = knh_mutex_malloc(ctx);
+		ctx->memshare->gcObjectCount = 0;
+		ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
+		MODGC_init(_ctx, ctx);
+		(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
+		KSET_KLIB2(malloc, 0);
+		KSET_KLIB2(zmalloc, 0);
+		KSET_KLIB2(free, 0);
+	}
+	else {
+		ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
+		do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
+	}
 }
 
-void MODGCSHARE_gc_destroy(CTX, kcontext_t *ctx)
+void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 {
 	BMGC_exit(ctx, (ctx)->memlocal->gcHeapMng);
 	((kcontext_t*)ctx)->memlocal->gcHeapMng = NULL;
-}
-
-void MODGCSHARE_free(CTX, kcontext_t *ctx)
-{
-	//knh_mutex_free(ctx, ctx->memshare->memlock);
-	do_free(ctx->memshare, sizeof(kmemshare_t));
-	(ctx)->memshare = NULL;
-}
-
-void MODGC_init(CTX, kcontext_t *ctx)
-{
-	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
-	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 }
 
 void MODGC_free(CTX, kcontext_t *ctx)
@@ -790,6 +783,10 @@ void MODGC_free(CTX, kcontext_t *ctx)
 		}
 		do_free(ctx->memlocal, sizeof(kmemlocal_t));
 		((kcontext_t*)ctx)->memlocal = NULL;
+	}
+	if(IS_ROOTCTX(ctx)) {
+		do_free(ctx->memshare, sizeof(kmemshare_t));
+		(ctx)->memshare = NULL;
 	}
 }
 
@@ -1684,7 +1681,7 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 
 	knh_ensurerefs(_ctx, memlocal->ref_buf, K_PAGESIZE);
 	context_reset_refs(memlocal);
-	kSystem_reftraceAll(_ctx);
+	KRUNTIME_reftraceAll(_ctx);
 	if (needsCStackTrace) {
 		cstack_mark(_ctx);
 	}

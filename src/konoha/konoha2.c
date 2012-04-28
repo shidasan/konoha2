@@ -40,8 +40,6 @@ extern "C" {
 
 /* ------------------------------------------------------------------------ */
 
-#define IS_ROOTCTX(o)  (_ctx == (CTX_t)o)
-
 //static void MODLOG_init(CTX, kcontext_t *ctx)
 //{
 //#ifdef K_USING_LOGPOOL
@@ -95,7 +93,7 @@ static void knh_endContext(CTX)
 /* ------------------------------------------------------------------------ */
 /* stack */
 
-static void kstack_init(CTX, kcontext_t *ctx, size_t stacksize)
+static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 {
 	size_t i;
 	kstack_t *base = (kstack_t*)KCALLOC(sizeof(kstack_t), 1);
@@ -114,7 +112,7 @@ static void kstack_init(CTX, kcontext_t *ctx, size_t stacksize)
 	ctx->stack = base;
 }
 
-static void kstack_reftrace(CTX, kcontext_t *ctx)
+static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
 {
 	ksfp_t *sp = ctx->stack->stack;
 	BEGIN_REFTRACE((_ctx->esp - sp)+1);
@@ -126,7 +124,7 @@ static void kstack_reftrace(CTX, kcontext_t *ctx)
 	END_REFTRACE();
 }
 
-static void kstack_free(CTX, kcontext_t *ctx)
+static void KRUNTIME_free(CTX, kcontext_t *ctx)
 {
 	if(_ctx->stack->evaljmpbuf != NULL) {
 		KFREE(_ctx->stack->evaljmpbuf, sizeof(kjmpbuf_t));
@@ -160,9 +158,8 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 // modshare[128] mod[128]
 // keval
 
-void KX_init(CTX);
 
-static kcontext_t* new_context(const kcontext_t *_ctx)
+static kcontext_t* new_context(const kcontext_t *_ctx, size_t stacksize)
 {
 	kcontext_t *newctx;
 	static volatile size_t ctxid_counter = 0;
@@ -177,8 +174,8 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->modlocal = (kmodlocal_t**)calloc(sizeof(kmodlocal_t*), MOD_MAX);
 
 		MODLOGGER_init(_ctx, newctx);
-		MODGCSHARE_init(_ctx, newctx);
-		kshare_init(_ctx, newctx);
+		MODGC_init(_ctx, newctx);
+		KCLASSTABLE_init(_ctx, newctx);
 	}
 	else {   // others take ctx as its parent
 		newctx = (kcontext_t*)KCALLOC(sizeof(kcontext_t), 1);
@@ -187,21 +184,22 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
 		newctx->modlocal = (kmodlocal_t**)KCALLOC(sizeof(kmodlocal_t*), MOD_MAX);
-		MODLOGGER_init(_ctx, newctx);
+//		MODLOGGER_init(_ctx, newctx);
 	}
 	//MODGC_init(_ctx, newctx);
-	kstack_init(_ctx, newctx, K_PAGESIZE * 16);
-//	for(i = 0; i < MOD_MAX; i++) {
-//		if(newctx->modshare[i] != NULL && newctx->modshare[i]->new_local != NULL) {
-//			newctx->mod[i] = newctx->modshare[i]->new_local((CTX_t)newctx, newctx->modshare[i]);
-//		}
-//	}
+	KRUNTIME_init(_ctx, newctx, stacksize/*K_PAGESIZE * 16*/);
 	if(IS_ROOTCTX(newctx)) {
 		MODCODE_init(_ctx, newctx);
 		MODSUGAR_init(_ctx, newctx);
-		kshare_init_methods(_ctx);
+		KCLASSTABLE_loadMethod(_ctx);
 		MODSUGAR_loadMethod(_ctx);
-		//KX_init(_ctx);
+	}
+	else {
+//		for(i = 0; i < MOD_MAX; i++) {
+//			if(newctx->modshare[i] != NULL && newctx->modshare[i]->new_local != NULL) {
+//				newctx->mod[i] = newctx->modshare[i]->new_local((CTX_t)newctx, newctx->modshare[i]);
+//			}
+//		}
 	}
 	return newctx;
 }
@@ -218,7 +216,7 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 			}
 		}
 	}
-	kstack_reftrace(_ctx, ctx);
+	KRUNTIME_reftrace(_ctx, ctx);
 	for(i = 0; i < MOD_MAX; i++) {
 		kmodlocal_t *p = ctx->modlocal[i];
 		if(p != NULL && p->reftrace != NULL) {
@@ -227,7 +225,7 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 	}
 }
 
-void kSystem_reftraceAll(CTX)
+void KRUNTIME_reftraceAll(CTX)
 {
 	kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
 }
@@ -235,13 +233,13 @@ void kSystem_reftraceAll(CTX)
 static void kcontext_free(CTX, kcontext_t *ctx)
 {
 	size_t i;
-	for(i = 0; i < MOD_MAX; i++) {
+	for(i = 1; i < MOD_MAX; i++) {   // 0 is LOGGER, free lately
 		kmodlocal_t *p = ctx->modlocal[i];
 		if(p != NULL && p->free != NULL) {
 			p->free(_ctx, p);
 		}
 	}
-	kstack_free(_ctx, ctx);
+	KRUNTIME_free(_ctx, ctx);
 	if(IS_ROOTCTX(_ctx)){  // share
 		struct _klib2 *klib2 = (struct _klib2*)ctx - 1;
 		for(i = 0; i < MOD_MAX; i++) {
@@ -250,15 +248,15 @@ static void kcontext_free(CTX, kcontext_t *ctx)
 				p->free(_ctx, p);
 			}
 		}
-		MODGCSHARE_gc_destroy(_ctx, ctx);
-		kshare_free(_ctx, ctx);
-		MODGCSHARE_free(_ctx, ctx);
+		MODGC_destoryAllObjects(_ctx, ctx);
+		CLASSTABLE_free(_ctx, ctx);
 		MODGC_free(_ctx, ctx);
 		free(_ctx->modlocal);
 		free(_ctx->modshare);
 		free(klib2/*, sizeof(klib2_t) + sizeof(kcontext_t)*/);
 	}
 	else {
+		MODGC_free(_ctx, ctx);
 		KFREE(_ctx->modlocal, sizeof(kmodlocal_t*) * MOD_MAX);
 		KFREE(ctx, sizeof(kcontext_t));
 	}
@@ -291,7 +289,7 @@ struct _kObject** KONOHA_reftail(CTX, size_t size)
 konoha_t konoha_open(void)
 {
 	konoha_init();
-	return (konoha_t)new_context(NULL);
+	return (konoha_t)new_context(NULL, K_PAGESIZE * 8);
 }
 
 void konoha_close(konoha_t konoha)
