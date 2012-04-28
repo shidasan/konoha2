@@ -706,10 +706,14 @@ static inline void do_free(void *ptr, size_t size)
 }
 
 static ssize_t klib2_malloced = 0;
+
 static void* Kmalloc(CTX, size_t s)
 {
 	klib2_malloced += s;
 	size_t *p = (size_t*)do_malloc(s + sizeof(size_t));
+	if(unlikely(p == NULL)) {
+
+	}
 	p[0] = s;
 	return (void*)(p+1);
 }
@@ -749,16 +753,13 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		//ctx->memshare->memlock = knh_mutex_malloc(ctx);
 		ctx->memshare->gcObjectCount = 0;
 		ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
-		MODGC_init(_ctx, ctx);
 		(ctx)->memlocal->gcHeapMng = BMGC_init(ctx);
 		KSET_KLIB2(malloc, 0);
 		KSET_KLIB2(zmalloc, 0);
 		KSET_KLIB2(free, 0);
 	}
-	else {
-		ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
-		do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
-	}
+	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
+	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 }
 
 void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
