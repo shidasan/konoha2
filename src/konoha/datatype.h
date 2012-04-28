@@ -504,6 +504,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->DBG_NAME = (s->structname != NULL) ? s->structname : "N/A";
 		if(s->cparams != NULL) {
 			DBG_P("params");
+			KINITv(ct->cparam, new_kParam(s->rtype, s->psize, s->cparams));
 		}
 		// function
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
@@ -577,6 +578,12 @@ static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam
 	}
 	((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 	return ct->searchSimilarClassNULL;
+}
+
+static kclass_t *CT_P0(CTX, kclass_t *ct, ktype_t ty)
+{
+	kparam_t p = {ty, 0};
+	return CT_Generics(_ctx, ct, TY_void, 1, &p);
 }
 
 static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
@@ -669,12 +676,13 @@ static void loadInitStructData(CTX)
 		.init = Method_init,
 		.reftrace = Method_reftrace,
 	};
-//	kparam_t ArrayCparam = {TY_Object, 1};
+	kparam_t ArrayCparam = {TY_Object, 1};
 	KDEFINE_CLASS defArray = {
 		CLASSNAME(Array),
 		.init = Array_init,
 		.reftrace = Array_reftrace,
 		.free = Array_free,
+		.psize = 1, .cparams = &ArrayCparam,
 	};
 	KDEFINE_CLASS defSystem = {
 		CLASSNAME(System),
@@ -709,8 +717,8 @@ static void loadInitStructData(CTX)
 static void initStructData(CTX)
 {
 	kclass_t **ctt = (kclass_t**)_ctx->share->ca.cts;
-	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
-	for(i = 0; i < size; i++) {
+	size_t i;//, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
+	for(i = 0; i <= CLASS_T0; i++) {
 		struct _kclass *ct = (struct _kclass *)ctt[i];
 		const char *name = ct->DBG_NAME;
 		ct->nameid = kuname(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
@@ -741,6 +749,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	kshare_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	loadInitStructData(_ctx);
+	CT_p0(_ctx, CT_Array, TY_String);
 	share->lcnameMapNN = kmap_init(0);
 	KINITv(share->fileidList, new_(StringArray, 8));
 	share->fileidMapNN = kmap_init(0);
@@ -762,6 +771,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	FILEID_("(konoha.c)");
 	PN_("konoha");    // PN_konoha
 	PN_("sugar");     // PKG_sugar
+	UN_("T");         // UN_T
 	FN_("");          // MN_
 	initStructData(_ctx);
 }
