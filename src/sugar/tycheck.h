@@ -772,21 +772,21 @@ static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 		kExpr *exprCond = kStmt_expr(stmt, KW_EXPR, NULL);
 		kBlock *bkThen = kStmt_block(stmt, KW_block, K_NULLBLOCK);
 		kBlock *bkElse = kStmt_block(stmt, KW_else, K_NULLBLOCK);
-		if(exprCond->build == TEXPR_NCONST) {
-			if(exprCond->ndata) {
-				r = Block_tyCheckAll(_ctx, bkThen, gma);
-				Stmt_toBlockStmt(_ctx, stmt, bkThen);
-			}
-			else {
-				r = Block_tyCheckAll(_ctx, bkElse, gma);
-				Stmt_toBlockStmt(_ctx, stmt, bkElse);
-			}
-		}
-		else {
+//		if(exprCond->build == TEXPR_NCONST) {
+//			if(exprCond->ndata) {
+//				r = Block_tyCheckAll(_ctx, bkThen, gma);
+//				Stmt_toBlockStmt(_ctx, stmt, bkThen);
+//			}
+//			else {
+//				r = Block_tyCheckAll(_ctx, bkElse, gma);
+//				Stmt_toBlockStmt(_ctx, stmt, bkElse);
+//			}
+//		}
+//		else {
 			r = Block_tyCheckAll(_ctx, bkThen, gma);
 			r = r & Block_tyCheckAll(_ctx, bkElse, gma);
 			kStmt_typed(stmt, IF);
-		}
+//		}
 	}
 	RETURNb_(r);
 }
@@ -831,10 +831,10 @@ static KMETHOD StmtTyCheck_else(CTX, ksfp_t *sfp _RIX)
 	VAR_StmtTyCheck(stmt, syn, gma);
 	kStmt *stmtIf = Stmt_lookupIfStmtNULL(_ctx, stmt);
 	if(stmtIf != NULL) {
-		DBG_P("found previous if statement");
 		kBlock *bkElse = kStmt_block(stmt, KW_block, K_NULLBLOCK);
 		kObject_setObject(stmtIf, KW_else, bkElse);
 		kStmt_done(stmt);
+		r = Block_tyCheckAll(_ctx, bkElse, gma);
 	}
 	else {
 		SUGAR_P(ERR_, stmt->uline, -1, "else is not statement");

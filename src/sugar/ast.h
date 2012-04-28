@@ -730,7 +730,6 @@ static KMETHOD ParseStmt_block(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ParseStmt(stmt, syn, name, tls, s, e);
 	kToken *tk = tls->toks[s];
-	DBG_P("adding block %s as %s", T_tt(tk->tt), T_kw(name));
 	if(tk->tt == TK_CODE) {
 		kObject_setObject(stmt, name, tk);
 		RETURNi_(s+1);
@@ -741,8 +740,8 @@ static KMETHOD ParseStmt_block(CTX, ksfp_t *sfp _RIX)
 		RETURNi_(s+1);
 	}
 	else {
-		DBG_P("block1, s=%d, e=%d", s, e);
-		dumpTokenArray(_ctx, 0, tls, s, e);
+//		DBG_P("block1, s=%d, e=%d", s, e);
+//		dumpTokenArray(_ctx, 0, tls, s, e);
 		kBlock *bk = new_Block(_ctx, tls, s, e, kStmt_ks(stmt));
 		kObject_setObject(stmt, name, bk);
 		RETURNi_(e);
