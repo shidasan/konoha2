@@ -1055,6 +1055,8 @@ struct _klib2 {
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 
 	kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
+	kclass_t*  (*KCT_Generics)(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p);
+
 	kObject* (*Knew_Object)(CTX, kclass_t *, void *);
 	kObject* (*Knull)(CTX, kclass_t *);
 	kObject* (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
@@ -1186,6 +1188,7 @@ struct _klib2 {
 #define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 
 #define KCLASS(cid)                          S_text(CT(cid)->name)
+#define kClassTable_Generics(CT, R, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, R, PSIZE, P)
 #define Konoha_setModule(N,D,P)              (KPI)->KsetModule(_ctx, N, D, P)
 #define Konoha_addClassDef(PAC, DOM, NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, PAC, DOM, NAME, DEF, UL)
 #define kKonohaSpace_getCT(NS, THIS, S, L, C)      (KPI)->KS_getCT(_ctx, NS, THIS, S, L, C)

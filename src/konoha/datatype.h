@@ -596,12 +596,6 @@ static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam
 	return ct->searchSimilarClassNULL;
 }
 
-static kclass_t *CT_P0(CTX, kclass_t *ct, ktype_t ty)
-{
-	kparam_t p = {ty, 0};
-	return CT_Generics(_ctx, ct, TY_void, 1, &p);
-}
-
 static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
 {
 	uintptr_t lname = longid(ct->packdom, ct->nameid);
@@ -756,6 +750,7 @@ static void KCLASSTABLE_initklib2(struct _klib2 *l)
 	l->Knew_Method   = new_Method;
 	l->KaddClassDef  = addClassDef;
 	l->Knull = CT_null;
+	l->KCT_Generics = CT_Generics;
 }
 
 static void KCLASSTABLE_init(CTX, kcontext_t *ctx)

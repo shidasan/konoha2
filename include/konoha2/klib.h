@@ -120,6 +120,12 @@ static inline uintptr_t longid(kushort_t packdom, kushort_t un)
 	return (hcode << (sizeof(kshort_t)*8)) | un;
 }
 
+static inline kclass_t *CT_P0(CTX, kclass_t *ct, ktype_t ty)
+{
+	kparam_t p = {ty, 0};
+	return kClassTable_Generics(ct, TY_void, 1, &p);
+}
+
 #define uNULL   ((uintptr_t)NULL)
 static inline void map_addu(CTX, kmap_t *kmp, uintptr_t hcode, uintptr_t uvalue)
 {

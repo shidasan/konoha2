@@ -77,7 +77,29 @@ static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 
 static struct _kToken* Token_resolveType(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
 {
-	DBG_ABORT("TODO: CT_Generator");
+	size_t i, psize= 0, size = kArray_size(tkP->sub);
+	kparam_t p[size];
+	for(i = 0; i < size; i++) {
+		kToken *tkT = (tkP->sub->toks[i]);
+		if(tkT->topch == ',') continue;
+		if(TK_isType(tkT)) {
+			p[psize].ty = TK_type(tkT);
+			psize++;
+		}
+	}
+	kclass_t *ct;
+	if(psize > 0) {
+		ct = CT_(TK_type(tk));
+		if(ct->cparam == K_NULLPARAM) {
+			SUGAR_P(ERR_, tk->uline, tk->lpos, "not generic type: %s", T_ty(TK_type(tk)));
+			return tk;
+		}
+		ct = kClassTable_Generics(ct, TY_void, psize, p);
+	}
+	else {
+		ct = CT_P0(_ctx, CT_Array, TK_type(tk));
+	}
+	tk->ty = ct->cid;
 	return tk;
 }
 
@@ -101,7 +123,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 		}
 	}
 	else if(tk->tt == TK_OPERATOR) {
-		if(!Token_resolved(_ctx, ks, tk)) {
+		if(!Token_resolved(_ctx, ks, tk) && tk->topch != ';') {
 			SUGAR_P(ERR_, tk->uline, tk->lpos, "operator '%s' is undefined", kToken_s(tk));
 			return e;
 		}
@@ -112,7 +134,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 			if(tkN->topch != '[') break;
 			kArray *abuf = ctxsugar->tokens;
 			size_t atop = kArray_size(abuf);
-			next = makeTree(_ctx, ks, tls, AST_BRANCET, next, e, ']', abuf) + 1;
+			next = makeTree(_ctx, ks, tls, AST_BRANCET, next+1, e, ']', abuf);
 			if(kArray_size(abuf) > atop) {
 				tk = Token_resolveType(_ctx, ks, tk, abuf->toks[atop]);
 				kArray_clear(abuf, atop);
