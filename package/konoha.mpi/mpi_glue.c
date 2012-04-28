@@ -3079,7 +3079,7 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_MPI = Konoha_addClassDef(NULL, &MPIDef, pline);
+	kclass_t *CT_MPI = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPIDef, pline);
 #define TY_MPI    (CT_MPI->cid)
 
 	intptr_t MethodData[] = {

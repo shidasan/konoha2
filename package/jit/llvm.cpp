@@ -69,7 +69,7 @@ struct vstack {
 
 static vstack_t *ValueStack_new(CTX, size_t n)
 {
-	vstack_t *stack = (vstack_t*) KCALLOC(sizeof(vstack_t));
+	vstack_t *stack = (vstack_t*) KCALLOC(sizeof(vstack_t), 1);
 	stack->capacity = n;
 	stack->size  = 0;
 	stack->vals = (Value **)(KMALLOC(sizeof(Value*) * n));
@@ -1371,7 +1371,7 @@ static kbool_t kmodjit_init(CTX, kKonohaSpace *ks, int argc, const char**args, k
 {
 	(void)ks;(void)argc;(void)args;(void)pline;
 	InitializeNativeTarget();
-	kmodjit_t *base = (kmodjit_t*)KCALLOC(sizeof(*base));
+	kmodjit_t *base = (kmodjit_t*)KCALLOC(sizeof(*base), 1);
 	base->h.name     = "llvmjit";
 	base->h.setup    = kmodjit_setup;
 	base->h.reftrace = kmodjit_reftrace;

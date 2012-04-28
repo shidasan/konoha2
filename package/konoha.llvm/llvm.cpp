@@ -3731,7 +3731,7 @@ static void kmodllvm_free(CTX, struct kmodshare_t *baseh)
 static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **args, kline_t pline)
 {
 	(void)argc;(void)args;
-	kmodllvm_t *base = (kmodllvm_t*)KCALLOC(sizeof(kmodllvm_t));
+	kmodllvm_t *base = (kmodllvm_t*)KCALLOC(sizeof(kmodllvm_t), 1);
 	base->h.name     = "llvm";
 	base->h.setup    = kmodllvm_setup;
 	base->h.reftrace = kmodllvm_reftrace;
@@ -3741,9 +3741,9 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 	static KDEFINE_CLASS ValueDef = {
 		"Value"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, sizeof(kRawPtr)/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		sizeof(kRawPtr)/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		0/*init*/,
 		0/*reftrace*/,
 		0/*free*/,
@@ -3754,7 +3754,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	base->cValue = Konoha_addClassDef(NULL, &ValueDef, pline);
+	base->cValue = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &ValueDef, pline);
 
 	static const char *TypeDefName[] = {
 		"Type",
@@ -3782,15 +3782,15 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		TypeDef.free = Type_free;
 		for (int i = 0; i < 6; i++) {
 			TypeDef.structname = TypeDefName[i];
-			CT_TypeTBL[i] = Konoha_addClassDef(NULL, &TypeDef, 0);
+			CT_TypeTBL[i] = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &TypeDef, 0);
 		}
 	}
 	static KDEFINE_CLASS BasicBlockDef = {
 		"BasicBlock"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		0/*init*/,
 		0/*reftrace*/,
 		0/*free*/,
@@ -3801,14 +3801,14 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	CT_BasicBlock = Konoha_addClassDef(NULL, &BasicBlockDef, pline);
+	CT_BasicBlock = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &BasicBlockDef, pline);
 
 	static KDEFINE_CLASS IRBuilderDef = {
 		"IRBuilder"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		0/*init*/,
 		0/*reftrace*/,
 		0/*free*/,
@@ -3819,14 +3819,14 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	CT_IRBuilder = Konoha_addClassDef(NULL, &IRBuilderDef, pline);
+	CT_IRBuilder = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &IRBuilderDef, pline);
 #if LLVM_VERSION >= 300
 	static KDEFINE_CLASS PassManagerBuilderDef = {
 		"PassManagerBuilder"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		PassManagerBuilder_ptr_init/*init*/,
 		0/*reftrace*/,
 		PassManagerBuilder_ptr_free/*free*/,
@@ -3837,15 +3837,15 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_PassManagerBuilder = Konoha_addClassDef(NULL, &PassManagerBuilderDef, pline);
+	kclass_t *CT_PassManagerBuilder = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &PassManagerBuilderDef, pline);
 #define TY_PassManagerBuilder         (CT_PassManagerBuilder)->cid
 #endif
 	static KDEFINE_CLASS PassManagerDef = {
 		"PassManager"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		PassManager_ptr_init/*init*/,
 		0/*reftrace*/,
 		PassManager_ptr_free/*free*/,
@@ -3859,9 +3859,9 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 	static KDEFINE_CLASS FunctionPassManagerDef = {
 		"FunctionPassManager"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
-		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*bcid*/, 0/*supcid*/,0/*rtype*/,0/*psize*/,NULL/*cparams*/,
+		0/*cstruct_size*/,
 		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
-		0/*packid*/, 0/*packdom*/,
 		FunctionPassManager_ptr_init/*init*/,
 		0/*reftrace*/,
 		FunctionPassManager_ptr_free/*free*/,
@@ -3872,8 +3872,8 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		0/*hashCode*/,
 		0/*initdef*/
 	};
-	kclass_t *CT_PassManager = Konoha_addClassDef(NULL, &PassManagerDef, pline);
-	kclass_t *CT_FunctionPassManager = Konoha_addClassDef(NULL, &FunctionPassManagerDef, pline);
+	kclass_t *CT_PassManager = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &PassManagerDef, pline);
+	kclass_t *CT_FunctionPassManager = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &FunctionPassManagerDef, pline);
 	kclass_t *CT_InstTBL[20];
 	{
 		static const char *InstDefName[] = {
@@ -3908,7 +3908,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		//InstDef.free = Inst_free;
 		for (unsigned int i = 0; i < ARRAY_SIZE(InstDefName); i++) {
 			InstDef.structname = InstDefName[i];
-			CT_InstTBL[i] = Konoha_addClassDef(NULL, &InstDef, pline);
+			CT_InstTBL[i] = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &InstDef, pline);
 		}
 	}
 #define TY_Instruction         (CT_InstTBL[ 0])->cid
@@ -3947,7 +3947,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		//InstDef.free = Inst_free;
 		for (int i = 0; i < 4; i++) {
 			PassDef.structname = PassDefName[i];
-			CT_PassTBL[i] = Konoha_addClassDef(NULL, &PassDef, pline);
+			CT_PassTBL[i] = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &PassDef, pline);
 		}
 	}
 #define TY_Pass          (CT_PassTBL[0])->cid
