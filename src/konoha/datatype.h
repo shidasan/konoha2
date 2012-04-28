@@ -765,7 +765,7 @@ static void kshare_init(CTX, kcontext_t *ctx)
 	kshare_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	loadInitStructData(_ctx);
-	CT_p0(_ctx, CT_Array, TY_String);
+//	share->cStringArray = CT_P0(_ctx, CT_Array, TY_String);
 	share->lcnameMapNN = kmap_init(0);
 	KINITv(share->fileidList, new_(StringArray, 8));
 	share->fileidMapNN = kmap_init(0);

@@ -83,13 +83,6 @@ static void KonohaSpace_free(CTX, kObject *o)
 	KARRAY_FREE(&ks->cl);
 }
 
-static KDEFINE_CLASS KonohaSpaceDef = {
-	STRUCTNAME(KonohaSpace),
-	.init = KonohaSpace_init,
-	.reftrace = KonohaSpace_reftrace,
-	.free = KonohaSpace_free,
-};
-
 static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int isnew)
 {
 	kKonohaSpace *ks = ks0;
@@ -506,12 +499,6 @@ static void Token_reftrace(CTX, kObject *o)
 	END_REFTRACE();
 }
 
-static KDEFINE_CLASS TokenDef = {
-	STRUCTNAME(Token),
-	.init = Token_init,
-	.reftrace = Token_reftrace,
-};
-
 #define kToken_s(tk) kToken_s_(_ctx, tk)
 static const char *kToken_s_(CTX, kToken *tk)
 {
@@ -620,12 +607,6 @@ static void Expr_reftrace(CTX, kObject *o)
 	KREFTRACEv(expr->data);
 	END_REFTRACE();
 }
-
-static KDEFINE_CLASS ExprDef = {
-	STRUCTNAME(Expr),
-	.init = Expr_init,
-	.reftrace = Expr_reftrace,
-};
 
 static struct _kExpr* Expr_vadd(CTX, struct _kExpr *expr, int n, va_list ap)
 {
@@ -780,12 +761,6 @@ static void Stmt_reftrace(CTX, kObject *o)
 	KREFTRACEn(stmt->parentNULL);
 	END_REFTRACE();
 }
-
-static KDEFINE_CLASS StmtDef = {
-	STRUCTNAME(Stmt),
-	.init = Stmt_init,
-	.reftrace = Stmt_reftrace,
-};
 
 static void _dumpToken(CTX, void *arg, kvs_t *d)
 {
@@ -954,12 +929,6 @@ static void Block_reftrace(CTX, kObject *o)
 	END_REFTRACE();
 }
 
-static KDEFINE_CLASS BlockDef = {
-	STRUCTNAME(Block),
-	.init = Block_init,
-	.reftrace = Block_reftrace,
-};
-
 static void Block_insertAfter(CTX, kBlock *bk, kStmt *target, kStmt *stmt)
 {
 	DBG_ASSERT(stmt->parentNULL == NULL);
@@ -983,7 +952,3 @@ static void Gamma_init(CTX, kObject *o, void *conf)
 	gma->genv = NULL;
 }
 
-static KDEFINE_CLASS GammaDef = {
-	STRUCTNAME(Gamma),
-	.init = Gamma_init,
-};

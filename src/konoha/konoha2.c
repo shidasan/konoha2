@@ -200,7 +200,7 @@ static kcontext_t* new_context(const kcontext_t *_ctx)
 		MODCODE_init(_ctx, newctx);
 		MODSUGAR_init(_ctx, newctx);
 		kshare_init_methods(_ctx);
-		MODSUGAR_defMethods(_ctx);
+		MODSUGAR_loadMethod(_ctx);
 		//KX_init(_ctx);
 	}
 	return newctx;

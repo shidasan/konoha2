@@ -220,6 +220,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->h.setup    = kmodsugar_setup;
 	base->h.reftrace = kmodsugar_reftrace;
 	base->h.free     = kmodsugar_free;
+	Konoha_setModule(MOD_sugar, (kmodshare_t*)base, 0);
 
 	struct _klib2* l = (struct _klib2*)ctx->lib2;
 	l->KS_getCT   = KonohaSpace_getCT;
@@ -232,21 +233,48 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->packageList, new_(Array, 8));
 	base->packageMapNO = kmap_init(0);
 
-	Konoha_setModule(MOD_sugar, (kmodshare_t*)base, 0);
-	base->cKonohaSpace = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &KonohaSpaceDef, 0);
-	base->cToken = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &TokenDef, 0);
-	base->cExpr  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &ExprDef, 0);
-	base->cStmt  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &StmtDef, 0);
-	base->cBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &BlockDef, 0);
-	base->cGamma = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &GammaDef, 0);
+	KDEFINE_CLASS defKonohaSpace = {
+		STRUCTNAME(KonohaSpace),
+		.init = KonohaSpace_init,
+		.reftrace = KonohaSpace_reftrace,
+		.free = KonohaSpace_free,
+	};
+	KDEFINE_CLASS defToken = {
+		STRUCTNAME(Token),
+		.init = Token_init,
+		.reftrace = Token_reftrace,
+	};
+	KDEFINE_CLASS defExpr = {
+		STRUCTNAME(Expr),
+		.init = Expr_init,
+		.reftrace = Expr_reftrace,
+	};
+	KDEFINE_CLASS defStmt = {
+		STRUCTNAME(Stmt),
+		.init = Stmt_init,
+		.reftrace = Stmt_reftrace,
+	};
+	KDEFINE_CLASS defBlock = {
+		STRUCTNAME(Block),
+		.init = Block_init,
+		.reftrace = Block_reftrace,
+	};
+	KDEFINE_CLASS defGamma = {
+		STRUCTNAME(Gamma),
+		.init = Gamma_init,
+	};
+	base->cKonohaSpace = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defKonohaSpace, 0);
+	base->cToken = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defToken, 0);
+	base->cExpr  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defExpr, 0);
+	base->cStmt  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defStmt, 0);
+	base->cBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBlock, 0);
+	base->cGamma = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defGamma, 0);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	knull(base->cToken);
 	knull(base->cExpr);
 	knull(base->cBlock);
-//	KINITv(base->aBuffer, new_(Array, 0));
 	kmodsugar_setup(_ctx, &base->h, 0);
-
 
 	KINITv(base->UndefinedParseExpr, new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
 	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));
@@ -656,15 +684,14 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 #define _F(F)   (intptr_t)(F)
 #define TY_KonohaSpace  (CT_KonohaSpace)->cid
 
-KMETHOD KonohaSpace_man(CTX, ksfp_t *sfp _RIX);
-
-void MODSUGAR_defMethods(CTX)
+void MODSUGAR_loadMethod(CTX)
 {
 	int FN_pkgname = FN_("pkgname");
 	intptr_t MethodData[] = {
 		_Public, _F(KonohaSpace_importPackage_), TY_Boolean, TY_KonohaSpace, MN_("importPackage"), 1, TY_String, FN_pkgname,
-		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("loadScript"), 1, TY_String, FN_("path"),
-//		_Public, _F(KonohaSpace_man), TY_void, TY_KonohaSpace, MN_("man"), 1, TY_Object, FN_("x") | FN_COERCION,
+		_Public, _F(KonohaSpace_importPackage_), TY_Boolean, TY_KonohaSpace, MN_("import"), 1, TY_String, FN_pkgname,
+//		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("loadScript"), 1, TY_String, FN_("path"),
+		_Public, _F(KonohaSpace_loadScript_), TY_Boolean, TY_KonohaSpace, MN_("load"), 1, TY_String, FN_("path"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);
