@@ -758,18 +758,18 @@ static KMETHOD ExprTyCheck_block(CTX, ksfp_t *sfp _RIX)
 	RETURN_(texpr);
 }
 
-static void Stmt_toBlockStmt(CTX, kStmt *stmt, kBlock *bk)
-{
-	kObject_setObject(stmt, KW_block, bk);
-	kStmt_typed(stmt, BLOCK);
-}
+//static void Stmt_toBlockStmt(CTX, kStmt *stmt, kBlock *bk)
+//{
+//	kObject_setObject(stmt, KW_block, bk);
+//	kStmt_typed(stmt, BLOCK);
+//}
 
 static KMETHOD StmtTyCheck_if(CTX, ksfp_t *sfp _RIX)
 {
 	kbool_t r = 1;
 	VAR_StmtTyCheck(stmt, syn, gma);
 	if((r = Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
-		kExpr *exprCond = kStmt_expr(stmt, KW_EXPR, NULL);
+//		kExpr *exprCond = kStmt_expr(stmt, KW_EXPR, NULL);
 		kBlock *bkThen = kStmt_block(stmt, KW_block, K_NULLBLOCK);
 		kBlock *bkElse = kStmt_block(stmt, KW_else, K_NULLBLOCK);
 //		if(exprCond->build == TEXPR_NCONST) {
