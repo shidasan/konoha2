@@ -28,18 +28,16 @@
 #include <konoha2/logger.h>
 #include <konoha2/bytes.h>
 
-
 #ifdef K_USING_ICONV
 #include <iconv.h>
-typedef iconv_t knh_iconv_t;
+typedef iconv_t kiconv_t;
 #else
-typedef long    knh_iconv_t;
+typedef long    kiconv_t;
 #endif
 
-
-typedef knh_iconv_t (*ficonv_open)(const char *, const char *);
-typedef size_t (*ficonv)(knh_iconv_t, const char **, size_t *, char **, size_t *);
-typedef int    (*ficonv_close)(knh_iconv_t);
+typedef kiconv_t (*ficonv_open)(const char *, const char *);
+typedef size_t (*ficonv)(kiconv_t, const char **, size_t *, char **, size_t *);
+typedef int    (*ficonv_close)(kiconv_t);
 
 typedef struct {
     kmodshare_t h;
@@ -47,15 +45,14 @@ typedef struct {
     void*        (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
     const char*  fmt;
     const char*  locale;
-    ficonv_open  iconv_openSPI;
-    ficonv       iconvSPI;
-    ficonv_close iconv_closeSPI;
+    kiconv_t     (*ficonv_open)(const char *, const char*);
+    size_t       (*ficonv)(kiconv_t, const char **, size_t *, char**, size_t *);
+    int          (*ficonv_close)(kiconv_t);
 } kmodiconv_t;
 
 typedef struct {
     kmodlocal_t h;
 } ctxiconv_t;
-
 
 /* ------------------------------------------------------------------------ */
 /* [util] */
@@ -74,22 +71,6 @@ static const char *getSystemEncoding(void)
 #else
 	return "UTF-8";
 #endif
-}
-
-
-static void *kdlopen(CTX, const char* path){
-//    const char *func = __FUNCTION__;
-    void *handler = NULL;
-#if defined(K_USING_WINDOWS_)
-//    func = "LoadLibrary";
-    handler = (void*)LoadLibraryA((LPCTSTR)path);
-#elif defined(K_USING_POSIX_)
-//    func = "dlopen";
-    handler = dlopen(path, RTLD_LAZY);
-#else
-
-#endif
-    return handler;
 }
 
 static void *kdlsym(CTX, void* handler, const char* symbol, const char *another, int isTest)
@@ -120,40 +101,20 @@ static void *kdlsym(CTX, void* handler, const char* symbol, const char *another,
     return p;
 }
 
-static int kdlclose(CTX, void* handler)
-{
-#if defined(K_USING_WINDOWS_)
-    return (int)FreeLibrary((HMODULE)handler);
-#elif defined(K_USING_POSIX_)
-    return dlclose(handler);
-#else
-    return 0;
-#endif
-}
-
-const char *knh_dlerror()
-{
-#if defined(K_USING_POSIX_)
-    return dlerror();
-#else
-    return "unknown dlerror";
-#endif
-}
-
-
 /* ------------------------------------------------------------------------ */
 
 static void klinkDynamicIconv(CTX)
 {
-	void *handler = kdlopen(_ctx, "libiconv" K_OSDLLEXT);
+	void *handler = dlopen("libiconv" K_OSDLLEXT, RTLD_LAZY);
 	void *f = NULL;
 	if (handler != NULL) {
-		f = kdlsym(_ctx, handler, "iconv_open", "libiconv_open", 1/*isTest*/);
+//		f = kdlsym(_ctx, handler, "iconv_open", "libiconv_open", 1/*isTest*/);
+		f = dlsym(handler, "iconv_open");
 		if (f != NULL) {
-			kmodiconv->iconv_openSPI = (ficonv_open)f;
-			kmodiconv->iconvSPI = (ficonv)kdlsym(_ctx, handler, "iconv", "libiconv", 0/*isTest*/);
-			kmodiconv->iconv_closeSPI = (ficonv_close)kdlsym(_ctx, handler, "iconv_close", "libiconv_close", 0);
-			KNH_ASSERT(kmodiconv->iconvSPI != NULL && kmodiconv->iconv_closeSPI != NULL);
+			kmodiconv->ficonv_open = (ficonv_open)f;
+			kmodiconv->ficonv = (ficonv)dlsym(handler, "iconv");
+			kmodiconv->ficonv_close = (ficonv_close)dlsym(handler, "iconv_close");
+			KNH_ASSERT(kmodiconv->ficonv != NULL && kmodiconv->ficonv_close != NULL);
 			return ; // OK
 		}
 	} else {
@@ -188,7 +149,7 @@ static void Bytes_free(CTX, kObject *o)
 	}
 }
 
-static kBytes* new_Bytes(CTX, size_t capacity)
+static kBytes* _new_Bytes(CTX, size_t capacity)
 {
 	kclass_t *ct = CT_Bytes;
 	kBytes *ba = (kBytes*)new_kObject(ct, NULL);
@@ -198,48 +159,39 @@ static kBytes* new_Bytes(CTX, size_t capacity)
 	return ba;
 }
 
-//TODO!! yoan
-//static void Bytes_p(CTX, kOutputStream *w, kObject *o, int level)
-//{
-//	kBytes *ba = (kBytes*)o;
-//	if(IS_FMTs(level)) {
-//		knh_printf(_ctx, w, "byte[%d]", BA_size(ba));
-//	}
-//	else if(IS_FMTdump(level)) {
-//		size_t i, j, n;
-//		char buf[40];
-//		for(j = 0; j * 16 < ba->bu.len; j++) {
-//			knh_snprintf(buf, sizeof(buf), "%08x", (int)(j*16));
-//			knh_write(_ctx, w, B(buf));
-//			for(i = 0; i < 16; i++) {
-//				n = j * 16 + i;
-//				if(n < ba->bu.len) {
-//					knh_snprintf(buf, sizeof(buf), " %2x", (int)ba->bu.utext[n]);
-//					knh_write(_ctx, w, B(buf));
-//				}
-//				else {
-//					knh_write(_ctx, w, STEXT("   "));
-//				}
-//			}
-//			knh_write(_ctx, w, STEXT("    "));
-//			for(i = 0; i < 16; i++) {
-//				n = j * 16 + i;
-//				if(n < ba->bu.len && isprint(ba->bu.utext[n])) {
-//					knh_snprintf(buf, sizeof(buf), "%c", (int)ba->bu.utext[n]);
-//					knh_write(_ctx, w, B(buf));
-//				}
-//				else {
-//					knh_write(_ctx, w, STEXT(" "));
-//				}
-//			}
-//			knh_write_EOL(_ctx, w);
-//		}
-//	}
-//}
-
 static void Bytes_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	//kwb_printf(wb, "%f", sfp[pos].fvalue);
+	kBytes *ba = (kBytes*)sfp[pos].o;
+	DBG_P("level:%d", level);
+	if(level == 0) {
+		kwb_printf(wb, "byte[%d]", ba->bytesize);
+	}
+	else if(level == 1) {
+		size_t i, j, n;
+		for(j = 0; j * 16 < ba->bytesize; j++) {
+			kwb_printf(wb, "%08x", (int)(j*16));
+			for(i = 0; i < 16; i++) {
+				n = j * 16 + i;
+				if(n < ba->bytesize) {
+					kwb_printf(wb, " %2x", (int)ba->utext[n]);
+				}
+				else {
+					kwb_printf(wb, "%s", "   ");
+				}
+			}
+			kwb_printf(wb, "%s", "    ");
+			for(i = 0; i < 16; i++) {
+				n = j * 16 + i;
+				if(n < ba->bytesize && isprint(ba->utext[n])) {
+					kwb_printf(wb, "%c", (int)ba->utext[n]);
+				}
+				else {
+					kwb_printf(wb, "%s", " ");
+				}
+			}
+			kwb_printf(wb, "\n");
+		}
+	}
 }
 
 static void kmodiconv_setup(CTX, struct kmodshare_t *def, int newctx)
@@ -264,90 +216,82 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
+#include <errno.h>
+static kBytes* convTo(CTX, kBytes *fromBa, const char *toCoding)
+{
+	kiconv_t conv;
+	kBytes *toBa = _new_Bytes(_ctx, BYTES_BUFSIZE);
+	const char *fromBuf = fromBa->text;
+	const char ** inbuf = &fromBuf;
+	char *toBuf = toBa->buf;
+	char ** outbuf = &toBuf;
+	size_t fromLen, toLen;
+	fromLen = strlen(fromBuf)+ 1;
+	toLen = toBa->bytesize;
+	DBG_P("to='%s', from='%s'", toCoding, getSystemEncoding());
+	conv = kmodiconv->ficonv_open(toCoding, getSystemEncoding());
+	if (conv == (kiconv_t)(-1)) {
+		ktrace(_UserInputFault,
+				KEYVALUE_s("@","iconv_open"),
+				KEYVALUE_s("from", "UTF-8"),
+				KEYVALUE_s("to", toCoding),
+				LOG_STRERROR()
+		);
+		return (kBytes*)(CT_Bytes->nulvalNUL);
+	}
+	toLen = kmodiconv->ficonv(conv, inbuf, &fromLen, outbuf, &toLen);
+	if (toLen == (size_t)-1) {
+		ktrace(_DataFault,
+			KEYVALUE_s("@","iconv"),
+			KEYVALUE_s("from", "UTF-8"),
+			KEYVALUE_s("to", toCoding),
+			LOG_STRERROR()
+		);
+		return (kBytes*)(CT_Bytes->nulvalNUL);
+	}
+	kmodiconv->ficonv_close(conv);
+	return toBa;
+}
+//## @Const method Bytes Bytes.encode(String fmt);
+static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes* ba = sfp[0].ba;
+	kString* toCoding = sfp[1].s;
+	RETURN_(convTo(_ctx, ba, S_text(toCoding)));
+}
+
+//## @Const method String Bytes.decode(String fmt);
+static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes* fromBa = sfp[0].ba;
+	kString* toCoding = sfp[1].s;
+	kBytes *toBa;
+	if (toCoding == (kString*)(CT_String->nulvalNUL)) {
+		toBa = convTo(_ctx, fromBa, getSystemEncoding());
+	} else {
+		toBa = convTo(_ctx, fromBa, S_text(toCoding));
+	}
+	RETURN_(new_kString(S_text(toBa), S_size(toBa), 0));
+}
 
 //## @Const method Bytes String.toBytes();
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
-	kBytes* ba = new_Bytes(_ctx, S_size(s));
+	kBytes* ba = _new_Bytes(_ctx, S_size(s));
+	DBG_ASSERT(ba->bytesize >= s->bytesize);
+	memcpy(ba->buf, s->utext, S_size(s) + 1);
+	DBG_P("%s", ba->buf);
 	RETURN_(ba);
 }
 
 //## @Const method String Bytes.toString();
 static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 {
-	kBytes* dst = sfp[0].ba;
-	RETURN_(new_kString(S_text(dst), S_size(dst), SPOL_ASCII));
+	kBytes *from = sfp[0].ba;
+	kBytes *to = convTo(_ctx, from, getSystemEncoding());
+	RETURN_(new_kString(S_text(to), S_size(to), 0));
 }
-
-//## @Const method Bytes Bytes.encode(String fmt);
-static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
-{
-	kBytes* ba = sfp[0].ba;
-	kString* to = sfp[1].s;
-	knh_iconv_t conv;
-	size_t len, olen;
-	char ret[BYTES_BUFSIZE] = {'\0'};
-	char *r = ret;
-	len = olen = ba->bytesize + 1;
-	conv = kmodiconv->iconv_openSPI("UTF-8", S_text(to));
-	if (conv == (knh_iconv_t)(-1)) {
-		ktrace(_UserInputFault,
-				KEYVALUE_s("@","iconv_open"),
-				KEYVALUE_s("from", "UTF-8"),
-				KEYVALUE_s("to", S_text(to))
-		);
-		return; // TODO!!: kthrow is better
-	}
-	const char *inbuf = S_text(ba);
-	olen = kmodiconv->iconvSPI(conv, &inbuf, &len, &r, &olen);
-	if (olen == (size_t)-1) {
-		ktrace(_DataFault,
-			KEYVALUE_s("@","iconv"),
-			KEYVALUE_s("from", "UTF-8"),
-			KEYVALUE_s("to", S_text(to))
-		);
-		return; // TODO!!: kthrow is better
-	}
-	kmodiconv->iconv_closeSPI(conv);
-	Bytes_init(_ctx, (kObject*)ba, (void*)ba->bytesize);
-	RETURN_(ba);
-}
-
-
-//## @Const method String Bytes.decode(String fmt);
-static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
-{
-	kBytes* src = sfp[0].ba;
-	kString* from = sfp[1].s;
-	knh_iconv_t conv;
-	size_t len, olen;
-	char ret[BYTES_BUFSIZE] = {'\0'};
-	char *r = ret;
-	len = olen = src->bytesize+1;
-
-	conv = kmodiconv->iconv_openSPI("UTF-8", S_text(from));
-	if (conv == (knh_iconv_t)(-1)) {
-		// @See old/evidence.c
-		ktrace(_ScriptFault,
-				KEYVALUE_s("@","iconv_open"),
-				KEYVALUE_s("from", S_text(src)),
-				KEYVALUE_s("to", "UTF-8")
-		);
-	}
-	const char *inbuf = S_text(src);
-	olen = kmodiconv->iconvSPI(conv, &inbuf, &len, &r, &olen);
-	if (olen == (size_t)-1) {
-		ktrace(_DataFault,
-			KEYVALUE_s("@","iconv"),
-			KEYVALUE_s("from", S_text(src)),
-			KEYVALUE_s("to", "UTF-8")
-		);
-	}
-	kmodiconv->iconv_closeSPI(conv);
-	RETURN_(new_kString(ret, src->bytesize, SPOL_ASCII));
-}
-
 /* ------------------------------------------------------------------------ */
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
