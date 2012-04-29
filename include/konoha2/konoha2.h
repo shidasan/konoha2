@@ -297,7 +297,11 @@ struct _kObject;
 #define MOD_code     2
 #define MOD_sugar    3
 #define MOD_float   11
-//#define MOD_iconv   12
+//#define MOD_jit     12
+#define MOD_iconv   13
+//#define MOD_IO      14
+//#define MOD_llvm    15
+//#define MOD_REGEX   16
 
 struct kmodlocal_t;
 typedef struct kmodlocal_t {

@@ -28,8 +28,6 @@
 #include <iconv.h>
 #include <konoha2/logger.h>
 
-#define MOD_iconv 33 // FIXME!!
-
 /* ------------------------------------------------------------------------ */
 /* [util] */
 
@@ -103,6 +101,7 @@ static kBytes* new_Bytes(CTX, const char *name, size_t capacity)
 	}
 	return ba;
 }
+
 //TODO!! yoan
 //static void Bytes_p(CTX, kOutputStream *w, kObject *o, int level)
 //{
@@ -229,7 +228,6 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* src = sfp[0].ba;
 	kString* from = sfp[1].s;
-	//fprintf(stderr, "(decode)from: %s, text: %s, size: %lu\n", S_totext(from), S_totext(src), src->bytesize);
 	iconv_t c;
 	size_t len, olen;
 	char ret[BYTES_BUFSIZE] = {'\0'};
@@ -278,7 +276,7 @@ static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("Bytes"),  .type = TY_TYPE, },
-		{ TOKEN("$BYTES"), .kw = KW_TK(TK_TYPE), .ExprTyCheck = ExprTyCheck_BYTES, },
+//		{ TOKEN("$BYTES"), .kw = KW_TK(TK_TYPE), .ExprTyCheck = ExprTyCheck_BYTES, },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
