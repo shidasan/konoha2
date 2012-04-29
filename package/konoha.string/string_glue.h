@@ -192,11 +192,11 @@ static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
 	const char *s = S_text(sfp[0].s);
 	int len = S_size(sfp[0].s);
 	kString *ret = NULL;
-	fprintf(stderr, "%s\n", s);
+	DBG_P("%s\n", s);
 	while(isspace(s[0])) {
 		s++;
 		len--;
-		fprintf(stderr, "%s\n", s);
+		DBG_P("%s\n", s);
 	}
 	if(len != 0) {
 		while(isspace(s[len-1])) {
