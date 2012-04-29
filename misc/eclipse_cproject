@@ -53,7 +53,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="package/jit|package/konoha.mpi|package/konoha.bytes|package/konoha.io|package/konoha.socket|package/konoha.pcre|src/tool/test_konoha.c|svn|build|src/old|test" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="package/jit|package/konoha.mpi|package/konoha.io|package/konoha.socket|package/konoha.pcre|src/tool/test_konoha.c|svn|build|src/old|test" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

@@ -21,7 +21,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
-// -------------------------------------------------------------------------
 
 static kObject* DEFAULT_fnull(CTX, kclass_t *ct);
 

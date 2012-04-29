@@ -169,14 +169,15 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 
 /* ------------------------------------------------------------------------ */
 
+
+
+
 //## @Const method Bytes String.toBytes();
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
 	kBytes* ba = new_Bytes(_ctx, S_size(s));
-
 	RETURN_(ba);
-	//RETURN_(new_Bytes(_ctx, S_totext(s), S_size(s));
 }
 
 //## @Const method String Bytes.toString();
@@ -185,7 +186,6 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 	kBytes* dst = sfp[0].ba;
 	RETURN_(new_kString(S_text(dst), S_size(dst), SPOL_ASCII));
 }
-
 
 //## @Const method Bytes Bytes.encode(String fmt);
 static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
