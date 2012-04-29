@@ -159,7 +159,7 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
+static	kbool_t float_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kmodfloat_t *base = (kmodfloat_t*)KCALLOC(sizeof(kmodfloat_t), 1);
 	base->h.name     = "float";
@@ -168,13 +168,13 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	base->h.free     = kmodfloat_free;
 	Konoha_setModule(MOD_float, &base->h, pline);
 
-	KDEFINE_CLASS FloatDef = {
+	KDEFINE_CLASS defFloat = {
 		STRUCTNAME(Float),
 		.cflag = CFLAG_Int,
 		.init = Float_init,
 		.p     = Float_p,
 	};
-	base->cFloat = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &FloatDef, pline);
+	base->cFloat = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &defFloat, pline);
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im, _F(Float_opADD), TY_Float, TY_Float, MN_("opADD"), 1, TY_Float, FN_x,
@@ -202,7 +202,12 @@ static kbool_t share_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-static kbool_t local_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t float_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
+static kbool_t float_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
@@ -212,6 +217,11 @@ static kbool_t local_initfloat(CTX, kKonohaSpace *ks, kline_t pline)
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+	return true;
+}
+
+static kbool_t float_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+{
 	return true;
 }
 

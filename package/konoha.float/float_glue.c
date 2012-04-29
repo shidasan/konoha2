@@ -30,26 +30,6 @@
 
 // --------------------------------------------------------------------------
 
-static	kbool_t float_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
-{
-	return share_initfloat(_ctx, ks, pline);
-}
-
-static kbool_t float_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
-static kbool_t float_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
-{
-	return local_initfloat(_ctx, ks, pline);
-}
-
-static kbool_t float_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
 KDEFINE_PACKAGE* float_init(void)
 {
 	static KDEFINE_PACKAGE d = {

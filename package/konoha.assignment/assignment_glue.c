@@ -27,26 +27,6 @@
 
 #include"assignment_glue.h"
 
-static	kbool_t assignment_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
-{
-	return true;
-}
-
-static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
-static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
-{
-	return local_initassignment(_ctx, ks, pline);
-}
-
-static kbool_t assignment_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
 KDEFINE_PACKAGE* assignment_init(void)
 {
 	static KDEFINE_PACKAGE d = {

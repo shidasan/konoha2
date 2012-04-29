@@ -65,7 +65,17 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 
 // --------------------------------------------------------------------------
 
-static kbool_t local_initassignment(CTX, kKonohaSpace *ks, kline_t pline)
+static	kbool_t assignment_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+{
+	return true;
+}
+
+static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
+static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
@@ -75,5 +85,11 @@ static kbool_t local_initassignment(CTX, kKonohaSpace *ks, kline_t pline)
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
+
+static kbool_t assignment_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
 
 #endif /* ASSIGNMENT_GLUE_H_ */

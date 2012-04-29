@@ -126,7 +126,12 @@ static kbool_t sugar_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t sugar_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
-
+	USING_SUGAR;
+	KDEFINE_SYNTAX SYNTAX[] = {
+		{ TOKEN("sugar"), .rule ="\"sugar\" $toks", /*TopStmtTyCheck_(if),*/ },
+		{ .name = NULL, },
+	};
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
