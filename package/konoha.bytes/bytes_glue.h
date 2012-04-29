@@ -25,6 +25,9 @@
 #ifndef BYTES_GLUE_H_
 #define BYTES_GLUE_H_
 #include <iconv.h>
+#include <konoha2/logger.h>
+
+#define MOD_iconv 33 // FIXME!!
 
 /* ------------------------------------------------------------------------ */
 /* [util] */
@@ -69,14 +72,14 @@ typedef struct {
     kmodlocal_t h;
 } ctxiconv_t;
 
-// Int
+// Bytes_init
 static void Bytes_init(CTX, kObject *o, void *conf)
 {
 	struct _kBytes *ba = (struct _kBytes*)o;
 	ba->byteptr = NULL;
 	ba->bytesize = (size_t)conf;
 	if(ba->bytesize > 0) {
-		ba->byteptr = (const char *)KCALLOC(ba->bytesize);
+		ba->byteptr = (const char *)KCALLOC(ba->bytesize, 1);
 	}
 }
 
@@ -90,6 +93,15 @@ static void Bytes_free(CTX, kObject *o)
 	}
 }
 
+static kBytes* new_Bytes(CTX, const char *name, size_t capacity)
+{
+	kclass_t *ct = CT_Bytes;
+	kBytes *ba = (kBytes*)new_kObject(ct, NULL);
+	if(capacity > 0) {
+		Bytes_init(_ctx, (kObject*)ba, (void*)capacity);
+	}
+	return ba;
+}
 //TODO!! yoan
 //static void Bytes_p(CTX, kOutputStream *w, kObject *o, int level)
 //{
@@ -156,18 +168,6 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setConstValue(expr, TY_Bytes, tk->text));
 }
 
-static kbool_t local_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	USING_SUGAR;
-	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("Bytes"),  .type = TY_Bytes, },
-		{ TOKEN("$BYTES"), .kw = KW_TK(TK_BYTES), .ExprTyCheck = ExprTyCheck_BYTES, },
-		{ .name = NULL, },
-	};
-	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
-	return true;
-}
-
 static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline);
 
 
@@ -177,7 +177,7 @@ static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline);
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
-	kBytes* b = new_Bytes(_ctx, S_totext(s), S_size(s));
+	kBytes* b = new_Bytes(_ctx, S_text(s), S_size(s));
 	RETURN_(b);
 	//RETURN_(new_Bytes(_ctx, S_totext(s), S_size(s));
 }
@@ -186,7 +186,7 @@ static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* dst = sfp[0].ba;
-	RETURN_(new_kString(S_totext(dst), S_size(dst), SPOL_ASCII));
+	RETURN_(new_kString(S_text(dst), S_size(dst), SPOL_ASCII));
 }
 
 
@@ -200,18 +200,28 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 	char ret[BYTES_BUFSIZE] = {'\0'};
 	char *r = ret;
 	len = olen = ba->bytesize + 1;
-	c = iconv_open("UTF-8", to);
+	c = iconv_open("UTF-8", S_text(to));
 	if (c == (iconv_t)(-1)) {
-		perror("ERROR: iconv open");
-		return NULL;
+		ktrace(LOGPOL_ERR | _ScriptFault,
+				KEYVALUE_s("@","iconv_open"),
+				KEYVALUE_s("from", "UTF-8"),
+				KEYVALUE_s("to", S_text(to))
+		);
+		return; // TODO!!: kthrow is better
 	}
-//	olen = iconv(c, &S_totext(ba), &len, &r, &olen);
+	const char *inbuf = S_text(ba);
+	olen = iconv(c, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
-		perror("ERROR: iconv");
-		return NULL;
+		ktrace(LOGPOL_ERR,
+			KEYVALUE_s("@","iconv"),
+			KEYVALUE_s("from", "UTF-8"),
+			KEYVALUE_s("to", S_text(to))
+		);
+		return; // TODO!!: kthrow is better
 	}
 	iconv_close(c);
-	RETURN_(Bytes_init(_ctx, ret, ba->bytesize));
+	Bytes_init(_ctx, (kObject*)ba, (void*)ba->bytesize);
+	RETURN_(ba);
 }
 
 //## @Const method String Bytes.decode(String fmt);
@@ -226,15 +236,26 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 	char *r = ret;
 	len = olen = src->bytesize+1;
 
-	c = iconv_open("UTF-8", from);
+	c = iconv_open("UTF-8", S_text(from));
 	if (c == (iconv_t)(-1)) {
-		perror("ERROR: iconv open");
-		return NULL;
+		// @See old/evidence.c
+		ktrace(LOGPOL_ERR | _ScriptFault,
+				KEYVALUE_s("@","iconv_open"),
+				KEYVALUE_s("from", S_text(src)),
+				KEYVALUE_s("to", "UTF-8")
+		);
+//		kthrow("CharacterEncoding!!",
+//			LOGPOL_ERR,
+//		);
 	}
-//	olen = iconv(c, &S_totext(src), &len, &r, &olen);
+	const char *inbuf = S_text(src);
+	olen = iconv(c, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
-		perror("ERROR: iconv");
-		return NULL;
+		ktrace(LOGPOL_ERR,
+			KEYVALUE_s("@","iconv"),
+			KEYVALUE_s("from", S_text(src)),
+			KEYVALUE_s("to", "UTF-8")
+		);
 	}
 	iconv_close(c);
 	RETURN_(new_kString(ret, src->bytesize, SPOL_ASCII));
@@ -254,14 +275,20 @@ static kbool_t bytes_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
-	return local_initbytes(_ctx, ks, pline);
+	USING_SUGAR;
+	KDEFINE_SYNTAX SYNTAX[] = {
+		{ TOKEN("Bytes"),  .type = TY_TYPE, },
+		{ TOKEN("$BYTES"), .kw = KW_TK(TK_TYPE), .ExprTyCheck = ExprTyCheck_BYTES, },
+		{ .name = NULL, },
+	};
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+	return true;
 }
 
 static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
-
 
 // --------------------------------------------------------------------------
 
@@ -273,22 +300,21 @@ static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 {
-	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t));
+	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
 	base->h.name     = "bytes";
 	base->h.setup    = kmodiconv_setup;
 	base->h.reftrace = kmodiconv_reftrace;
 	base->h.free     = kmodiconv_free;
 	Konoha_setModule(MOD_iconv, &base->h, pline);
 
-	KDEFINE_CLASS BytesDef = {
+	KDEFINE_CLASS defBytes = {
 		STRUCTNAME(Bytes),
-		.packid  = ks->packid,
-		.packdom = 0,
 		.cflag   = CFLAG_Int,
+		.free    = Bytes_free,
 		.init    = Bytes_init,
 		.p       = Bytes_p,
 	};
-	base->cBytes = Konoha_addClassDef(NULL, &BytesDef, pline);
+	base->cBytes = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBytes, pline);
 	int FN_encoding = FN_("encoding");
 	intptr_t methoddata[] = {
 		//_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_to(TY_Bytes),  0,
@@ -299,7 +325,7 @@ static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 		_Public|_Const,     _F(Bytes_decode),   TY_String, TY_Bytes,  MN_("decode"),    1, TY_String, FN_encoding,
 		DEND,
 	};
-	Konoha_loadMethodData(NULL, methoddata);
+	kKonohaSpace_loadMethodData(NULL, methoddata);
 	return true;
 }
 #endif /* BYTES_GLUE_H_ */
