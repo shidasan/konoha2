@@ -29,23 +29,6 @@
 
 #define SPOL_sub(s0) (S_isASCII(s0)? SPOL_ASCII : 0)
 
-#define kObject_Local_all \
-	(kObject_Local1 &  \
-	 kObject_Local2 &  \
-	 kObject_Local3 &  \
-	 kObject_Local4 &  \
-	 kObject_Local5 &  \
-	 kObject_Local6)
-
-#define LOCAL_FLAG(o) ((o)->h.magicflag & kObject_Local_all)
-#define CLEAR_LOCAL_FLAG(o) ((o)->h.magicflag = (o)->h.magicflag & ~kObject_Local_all;)
-#define COPY_LOCAL_FLAG(dist, src)									\
-	(CLEAR_LOCAL_FLAG(dist)											\
-	 (dist)->h.magicflag = (dist)->h.magicflag | LOCAL_FLAG(src);)
-
-//#define _SUB(s0) (S_isASCII(s0) ? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
-//#define _SUBCHAR(s0) (S_isASCII(s0) ? SPOL_ASCII : 0)
-//#define _CHARSIZE(len) (len==1 ? SPOL_ASCII : SPOL_UTF8)
 
 /* ************************************************************************ */
 
@@ -70,7 +53,7 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 #endif
 }
 
-// The function below must not use for ASCII string
+// The function below must not use for ASCII string (nakata)
 static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen)
 {
 	DBG_ASSERT(!S_isASCII(s));
@@ -97,7 +80,6 @@ static KMETHOD String_opEQ(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s0 = sfp[0].s;
 	kString *s1 = sfp[1].s;
-	TODO_ASSERT(IS_NOTNULL(s1));
 	if(S_size(s0) == S_size(s1)) {
 		RETURNb_(strncmp(S_text(s0), S_text(s1), S_size(s0)) == 0);
 	}
@@ -128,15 +110,15 @@ static KMETHOD String_startsWith(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD String_endsWith(CTX, ksfp_t *sfp _RIX)
 {
-	kString *base = sfp[0].s;
-	kString *arg =  sfp[1].s;
+	kString *s0 = sfp[0].s;
+	kString *s1 =  sfp[1].s;
 	int ret;
-	if (S_size(base) < S_size(arg)) {
+	if (S_size(s0) < S_size(s1)) {
 		ret = 0;
 	}
 	else {
-		const char *p = S_text(base) + (S_size(base) - S_size(arg));
-		ret = (strncmp(p, S_text(arg), S_size(arg)) == 0);
+		const char *p = S_text(s0) + (S_size(s0) - S_size(s1));
+		ret = (strncmp(p, S_text(s1), S_size(s1)) == 0);
 	}
 	RETURNb_(ret);
 }
@@ -148,13 +130,13 @@ static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s0 = sfp[0].s, *s1 = sfp[1].s;
 	long loc = -1;
-	const char *base = S_text(s0);
-	const char *arg =  S_text(s1);
-	char *p = strstr(base, arg);
+	const char *t0 = S_text(s0);
+	const char *t1 =  S_text(s1);
+	char *p = strstr(t0, t1);
 	if (p != NULL) {
-		loc = p - base;
+		loc = p - t0;
 		if (!S_isASCII(s0)) {
-			loc = text_mlen(base, (size_t)loc);
+			loc = text_mlen(t0, (size_t)loc);
 		}
 	}
 	RETURNi_(loc);
@@ -167,18 +149,18 @@ static KMETHOD String_lastIndexOf(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s0 = sfp[0].s;
 	kString *s1 = sfp[1].s;
-	const char *c_base = S_text(s0);
-	const char *c_delim = S_text(s1);
+	const char *t0 = S_text(s0);
+	const char *t1 = S_text(s1);
 	kindex_t loc = S_size(s0) - S_size(s1);
 	int len = S_size(s1);
 	if(S_size(s1) == 0) loc--;
 	for(; loc >= 0; loc--) {
-		if(c_base[loc] == c_delim[0]) {
-			if(strncmp(c_base + loc, c_delim, len) == 0) break;
+		if(t0[loc] == t1[0]) {
+			if(strncmp(t0 + loc, t1, len) == 0) break;
 		}
 	}
 	if (loc >= 0 && !S_isASCII(s0)) {
-		loc = text_mlen(c_base, (size_t)loc);
+		loc = text_mlen(t0, (size_t)loc);
 	}
 	RETURNi_(loc);
 }
@@ -191,11 +173,9 @@ static KMETHOD String_trim(CTX, ksfp_t *sfp _RIX)
 	const char *s = S_text(sfp[0].s);
 	int len = S_size(sfp[0].s);
 	kString *ret = NULL;
-	DBG_P("%s\n", s);
 	while(isspace(s[0])) {
 		s++;
 		len--;
-		DBG_P("%s\n", s);
 	}
 	if(len != 0) {
 		while(isspace(s[len-1])) {
@@ -233,7 +213,7 @@ static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 	else { // FIXME NOW DEFINITELY IMMIDEATELY
 		size_t mlen = text_mlen(S_text(s), S_size(s));
 		size_t moff = check_index(_ctx, sfp[1].ivalue, mlen, sfp[K_RTNIDX].uline);
-		s = new_MultiByteSubString(_ctx, s, sfp[1].ivalue, 1); // TODO:
+		s = new_MultiByteSubString(_ctx, s, moff, 1); // TODO:
 	}
 	RETURN_(s);
 }
@@ -353,7 +333,7 @@ static kbool_t string_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im, _F(String_lastIndexOf), TY_Int, TY_String, MN_("lastIndexOf"), 1, TY_String, FN_n,
 		_Public|_Const|_Im, _F(String_toUpper),     TY_String, TY_String, MN_("toUpper"), 0,
 		_Public|_Const|_Im, _F(String_toLower),     TY_String, TY_String, MN_("toLower"), 0,
-		_Public|_Const|_Im, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_n, TY_Int, FN_n,
+		_Public|_Const|_Im, _F(String_substring),   TY_String, TY_String, MN_("substring"), 2, TY_Int, FN_("offset"), TY_Int, FN_("length"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
