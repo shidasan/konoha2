@@ -27,7 +27,7 @@
 #ifndef STRING_GLUE_H_
 #define STRING_GLUE_H_
 
-#define SPOL_sub(s0) (S_isASCII(s0)? SPOL_ASCII|SPOL_POOL : SPOL_POOL)
+#define SPOL_sub(s0) (S_isASCII(s0)? SPOL_ASCII : 0)
 
 #define kObject_Local_all \
 	(kObject_Local1 &  \
@@ -36,6 +36,7 @@
 	 kObject_Local4 &  \
 	 kObject_Local5 &  \
 	 kObject_Local6)
+
 #define LOCAL_FLAG(o) ((o)->h.magicflag & kObject_Local_all)
 #define CLEAR_LOCAL_FLAG(o) ((o)->h.magicflag = (o)->h.magicflag & ~kObject_Local_all;)
 #define COPY_LOCAL_FLAG(dist, src)									\
@@ -69,10 +70,10 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 #endif
 }
 
-// the function below must not use for ASCII string
+// The function below must not use for ASCII string
 static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen)
 {
-#ifdef K_USING_UTF8
+	DBG_ASSERT(!S_isASCII(s));
 	const unsigned char *start = (unsigned char *)S_text(s);
 	const unsigned char *itr = start;
 	size_t i;
@@ -84,8 +85,7 @@ static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen
 		itr += utf8len(itr[0]);
 	}
 	size_t len = itr - start;
-	s = new_kString((const char *)start, len, SPOL_POOL|SPOL_UTF8);
-#endif
+	s = new_kString((const char *)start, len, SPOL_UTF8);
 	return s;
 }
 
