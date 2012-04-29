@@ -33,7 +33,11 @@
 #define K_PAGESIZE        4096
 
 #ifndef K_OSDLLEXT
+#if defined(__APPLE__)
 #define K_OSDLLEXT        ".dylib"
+#else if defined(__LINUX__)
+#define K_OSDLLEXT        ".so"
+#endif
 #endif
 
 #ifndef K_REVISION
