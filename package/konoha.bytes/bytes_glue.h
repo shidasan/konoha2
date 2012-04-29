@@ -169,9 +169,6 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 
 /* ------------------------------------------------------------------------ */
 
-
-
-
 //## @Const method Bytes String.toBytes();
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
@@ -260,7 +257,6 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 #define _Im       kMethod_Immutable
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
-
 
 static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {

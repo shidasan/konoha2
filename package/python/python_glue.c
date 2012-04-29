@@ -30,8 +30,10 @@
 typedef const struct _kPyObject kPyObject;
 struct _kPyObject {
 	kObjectHeader h;
-	PyObject *self;
+	PyObject *self;  // don't set NULL
 };
+
+// new_(PyObject, conf)
 
 static void PyObject_init(CTX, kObject *o, void *conf)
 {
@@ -51,7 +53,7 @@ static void PyObject_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	if(PyInt_Check(pyo->self)) {
 		kwb_printf(wb, "%ld", PyInt_AsLong(pyo->self));
 	}
-	else {
+	else {  // please extend below
 		kwb_printf(wb, "unknown python type");
 	}
 }
@@ -60,7 +62,7 @@ static void PyObject_free(CTX, kObject *o)
 {
 	struct _kPyObject *pyo = (struct _kPyObject*)o;
 	Py_DECREF(pyo->self);
-	pyo->self = NULL;
+	pyo->self = NULL;    // free safe
 }
 
 #define RETURN_PyObject(O)  RETURN_PyObject_(_ctx, sfp, O K_RIXPARAM)
@@ -71,6 +73,7 @@ static void RETURN_PyObject_(CTX, ksfp_t *sfp, PyObject *pyo _RIX)
     	RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), pyo));
 	}
 	else {
+		// switch ktrace
 		PyErr_Print(); // looks stupid
 	}
 }
@@ -138,8 +141,8 @@ static KMETHOD Python_eval(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(PyRun_SimpleString(S_text(sfp[1].s)) == 0);
 }
 
-//## PyObject Python.import(String name);
-static KMETHOD Python_import(CTX, ksfp_t *sfp _RIX)
+//## PyObject System.importPtModule(String name);
+static KMETHOD System_importPyModule(CTX, ksfp_t *sfp _RIX)
 {
 	RETURN_PyObject(PyImport_ImportModule(S_text(sfp[1].s)));
 }
@@ -147,7 +150,7 @@ static KMETHOD Python_import(CTX, ksfp_t *sfp _RIX)
 //## PyObject PyObject.(PyObject o);
 static KMETHOD PyObject_(CTX, ksfp_t *sfp _RIX)
 {
-	int argc = _ctx->esp - sfp - 2;
+	int argc = _ctx->esp - sfp - 2;   // believe me
 	kPyObject *pmod = (kPyObject*)sfp[0].o;
 	PyObject  *pFunc = PyObject_GetAttrString(pmod->self, S_text(_ctx->esp[-1].s));
 	PyObject  *pArgs = NULL, *pValue = NULL;
@@ -184,7 +187,6 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	if(python_init_count == 1) {
 		Py_Initialize();
 	}
-
 	KDEFINE_CLASS defPython = {
 		STRUCTNAME(PyObject),
 		.cflag = 0,
@@ -192,6 +194,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		.free = PyObject_free,
 		.p    = PyObject_p,
 	};
+
 	kclass_t *cPython = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defPython, pline);
 	int TY_PyObject = cPython->cid;
 	intptr_t MethodData[] = {
@@ -202,7 +205,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_to(TY_String), 0,
 		_Public|_Const|_Im|_Coercion, _F(String_toPyObject), TY_PyObject, TY_String, MN_to(TY_PyObject), 0,
 		_Public|_Im, _F(Python_eval), TY_Boolean, TY_System, FN_("pyEval"), 1, TY_String, FN_("script"),
-		_Public|_Im, _F(Python_import), TY_PyObject, TY_System, FN_("importPyModule"), 1, TY_String, FN_("name"),
+		_Public|_Im, _F(System_importPyModule), TY_PyObject, TY_System, FN_("importPyModule"), 1, TY_String, FN_("name"),
 		_Public|_Im, _F(PyObject_), TY_PyObject, TY_PyObject, 0, 1, TY_PyObject, 0,
 		DEND,
 	};
