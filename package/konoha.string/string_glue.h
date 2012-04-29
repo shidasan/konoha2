@@ -24,7 +24,6 @@
 
 /* ************************************************************************ */
 
-
 #ifndef STRING_GLUE_H_
 #define STRING_GLUE_H_
 
@@ -71,7 +70,7 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 }
 
 // the function below must not use for ASCII string
-static kString *knh_msubstring(CTX, kString *s, size_t moff, size_t mlen)
+static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen)
 {
 #ifdef K_USING_UTF8
 	const unsigned char *start = (unsigned char *)S_text(s);
@@ -234,7 +233,7 @@ static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 	else { // FIXME NOW DEFINITELY IMMIDEATELY
 		size_t mlen = text_mlen(S_text(s), S_size(s));
 		size_t moff = check_index(_ctx, sfp[1].ivalue, mlen, sfp[K_RTNIDX].uline);
-		s = knh_msubstring(_ctx, s, sfp[1].ivalue, 1); // TODO:
+		s = new_MultiByteSubString(_ctx, s, sfp[1].ivalue, 1); // TODO:
 	}
 	RETURN_(s);
 }
@@ -264,7 +263,7 @@ static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 		if (length != 0 && length < new_size) {
 			new_size = length;
 		}
-		ret = knh_msubstring(_ctx, s0, moff, new_size); // TODO!!
+		ret = new_MultiByteSubString(_ctx, s0, moff, new_size); // TODO!!
 	}
 	RETURN_(ret);
 }
@@ -331,15 +330,13 @@ static KMETHOD String_toLower(CTX, ksfp_t *sfp _RIX)
 
 // --------------------------------------------------------------------------
 
-//#include "methods.h"
-
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Coercion kMethod_Coercion
 #define _Im kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t string_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_s = FN_("s");
 	int FN_n = FN_("n");
@@ -363,21 +360,20 @@ static kbool_t String_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	return true;
 }
 
-static kbool_t String_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t string_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t string_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t String_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t string_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
-
 
 #endif /* STRING_GLUE_H_ */
 

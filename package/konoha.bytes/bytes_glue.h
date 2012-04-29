@@ -24,6 +24,7 @@
 
 #ifndef BYTES_GLUE_H_
 #define BYTES_GLUE_H_
+
 #include <iconv.h>
 #include <konoha2/logger.h>
 
@@ -50,7 +51,7 @@ static const char *getSystemEncoding(void)
 
 /* ------------------------------------------------------------------------ */
 /* [class defs] */
-#define ctxiconv        ((ctxiconv_t*)_ctx->mod[MOD_iconv])
+#define ctxiconv         ((ctxiconv_t*)_ctx->mod[MOD_iconv])
 #define kmodiconv        ((kmodiconv_t*)_ctx->modshare[MOD_iconv])
 #define IS_defineBytes() (_ctx->modshare[MOD_iconv] != NULL)
 #define CT_Bytes         kmodiconv->cBytes
@@ -140,7 +141,6 @@ static kBytes* new_Bytes(CTX, const char *name, size_t capacity)
 //		}
 //	}
 //}
-
 
 static void Bytes_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {

@@ -39,10 +39,10 @@ KDEFINE_PACKAGE* string_init(void)
 {
 	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("String", "1.0"),
-		.initPackage = String_initPackage,
-		.setupPackage = String_setupPackage,
-		.initKonohaSpace = String_initKonohaSpace,
-		.setupKonohaSpace = String_setupKonohaSpace,
+		.initPackage = string_initPackage,
+		.setupPackage = string_setupPackage,
+		.initKonohaSpace = string_initKonohaSpace,
+		.setupKonohaSpace = string_setupKonohaSpace,
 	};
 	return &d;
 }
