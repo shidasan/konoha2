@@ -25,8 +25,37 @@
 #ifndef BYTES_GLUE_H_
 #define BYTES_GLUE_H_
 
-#include <iconv.h>
 #include <konoha2/logger.h>
+#include <konoha2/bytes.h>
+
+
+#ifdef K_USING_ICONV
+#include <iconv.h>
+typedef iconv_t knh_iconv_t;
+#else
+typedef long    knh_iconv_t;
+#endif
+
+
+typedef knh_iconv_t (*ficonv_open)(const char *, const char *);
+typedef size_t (*ficonv)(knh_iconv_t, const char **, size_t *, char **, size_t *);
+typedef int    (*ficonv_close)(knh_iconv_t);
+
+typedef struct {
+    kmodshare_t h;
+    kclass_t     *cBytes;
+    void*        (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
+    const char*  fmt;
+    const char*  locale;
+    ficonv_open  iconv_openSPI;
+    ficonv       iconvSPI;
+    ficonv_close iconv_closeSPI;
+} kmodiconv_t;
+
+typedef struct {
+    kmodlocal_t h;
+} ctxiconv_t;
+
 
 /* ------------------------------------------------------------------------ */
 /* [util] */
@@ -47,29 +76,96 @@ static const char *getSystemEncoding(void)
 #endif
 }
 
-/* ------------------------------------------------------------------------ */
-/* [class defs] */
-#define ctxiconv         ((ctxiconv_t*)_ctx->mod[MOD_iconv])
-#define kmodiconv        ((kmodiconv_t*)_ctx->modshare[MOD_iconv])
-#define IS_defineBytes() (_ctx->modshare[MOD_iconv] != NULL)
-#define CT_Bytes         kmodiconv->cBytes
-#define TY_Bytes         kmodiconv->cBytes->cid
 
-#define IS_Bytes(O)      ((O)->h.ct == CT_Bytes)
+static void *kdlopen(CTX, const char* path){
+//    const char *func = __FUNCTION__;
+    void *handler = NULL;
+#if defined(K_USING_WINDOWS_)
+//    func = "LoadLibrary";
+    handler = (void*)LoadLibraryA((LPCTSTR)path);
+#elif defined(K_USING_POSIX_)
+//    func = "dlopen";
+    handler = dlopen(path, RTLD_LAZY);
+#else
+
+#endif
+    return handler;
+}
+
+static void *kdlsym(CTX, void* handler, const char* symbol, const char *another, int isTest)
+{
+//    const char *func = __FUNCTION__,
+	const char *emsg = NULL;
+    void *p = NULL;
+#if defined(K_USING_WINDOWS_)
+//    func = "GetProcAddress";
+    p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
+    if(p == NULL && another != NULL) {
+        symbol = another;
+        p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
+    }
+    return p;
+#elif defined(K_USING_POSIX_)
+//    func = "dlsym";
+    p = dlsym(handler, symbol);
+    if(p == NULL && another != NULL) {
+        symbol = another;
+        p = dlsym(handler, symbol);
+    }
+    if(p == NULL) {
+        emsg = dlerror();
+    }
+#else
+#endif
+    return p;
+}
+
+static int kdlclose(CTX, void* handler)
+{
+#if defined(K_USING_WINDOWS_)
+    return (int)FreeLibrary((HMODULE)handler);
+#elif defined(K_USING_POSIX_)
+    return dlclose(handler);
+#else
+    return 0;
+#endif
+}
+
+const char *knh_dlerror()
+{
+#if defined(K_USING_POSIX_)
+    return dlerror();
+#else
+    return "unknown dlerror";
+#endif
+}
+
+
+/* ------------------------------------------------------------------------ */
+
+static void klinkDynamicIconv(CTX)
+{
+	void *handler = kdlopen(_ctx, "libiconv" K_OSDLLEXT);
+	void *f = NULL;
+	if (handler != NULL) {
+		f = kdlsym(_ctx, handler, "iconv_open", "libiconv_open", 1/*isTest*/);
+		if (f != NULL) {
+			kmodiconv->iconv_openSPI = (ficonv_open)f;
+			kmodiconv->iconvSPI = (ficonv)kdlsym(_ctx, handler, "iconv", "libiconv", 0/*isTest*/);
+			kmodiconv->iconv_closeSPI = (ficonv_close)kdlsym(_ctx, handler, "iconv_close", "libiconv_close", 0);
+			KNH_ASSERT(kmodiconv->iconvSPI != NULL && kmodiconv->iconv_closeSPI != NULL);
+			return ; // OK
+		}
+	} else {
+		//TODO: need to insert function for kmodiconv
+		DBG_P("cannot find libiconv");
+	}
+}
+
+/* ------------------------------------------------------------------------ */
+
 
 #define BYTES_BUFSIZE 256
-
-typedef struct {
-    kmodshare_t h;
-    kclass_t *cBytes;
-    void* (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
-    const char* fmt;
-    const char* locale;
-} kmodiconv_t;
-
-typedef struct {
-    kmodlocal_t h;
-} ctxiconv_t;
 
 // Bytes_init
 static void Bytes_init(CTX, kObject *o, void *conf)
@@ -189,13 +285,13 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* ba = sfp[0].ba;
 	kString* to = sfp[1].s;
-	iconv_t c;
+	knh_iconv_t conv;
 	size_t len, olen;
 	char ret[BYTES_BUFSIZE] = {'\0'};
 	char *r = ret;
 	len = olen = ba->bytesize + 1;
-	c = iconv_open("UTF-8", S_text(to));
-	if (c == (iconv_t)(-1)) {
+	conv = kmodiconv->iconv_openSPI("UTF-8", S_text(to));
+	if (conv == (knh_iconv_t)(-1)) {
 		ktrace(_UserInputFault,
 				KEYVALUE_s("@","iconv_open"),
 				KEYVALUE_s("from", "UTF-8"),
@@ -204,7 +300,7 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 		return; // TODO!!: kthrow is better
 	}
 	const char *inbuf = S_text(ba);
-	olen = iconv(c, &inbuf, &len, &r, &olen);
+	olen = kmodiconv->iconvSPI(conv, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
 		ktrace(_DataFault,
 			KEYVALUE_s("@","iconv"),
@@ -213,24 +309,25 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 		);
 		return; // TODO!!: kthrow is better
 	}
-	iconv_close(c);
+	kmodiconv->iconv_closeSPI(conv);
 	Bytes_init(_ctx, (kObject*)ba, (void*)ba->bytesize);
 	RETURN_(ba);
 }
+
 
 //## @Const method String Bytes.decode(String fmt);
 static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* src = sfp[0].ba;
 	kString* from = sfp[1].s;
-	iconv_t c;
+	knh_iconv_t conv;
 	size_t len, olen;
 	char ret[BYTES_BUFSIZE] = {'\0'};
 	char *r = ret;
 	len = olen = src->bytesize+1;
 
-	c = iconv_open("UTF-8", S_text(from));
-	if (c == (iconv_t)(-1)) {
+	conv = kmodiconv->iconv_openSPI("UTF-8", S_text(from));
+	if (conv == (knh_iconv_t)(-1)) {
 		// @See old/evidence.c
 		ktrace(_ScriptFault,
 				KEYVALUE_s("@","iconv_open"),
@@ -239,7 +336,7 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 		);
 	}
 	const char *inbuf = S_text(src);
-	olen = iconv(c, &inbuf, &len, &r, &olen);
+	olen = kmodiconv->iconvSPI(conv, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
 		ktrace(_DataFault,
 			KEYVALUE_s("@","iconv"),
@@ -247,7 +344,7 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 			KEYVALUE_s("to", "UTF-8")
 		);
 	}
-	iconv_close(c);
+	kmodiconv->iconv_closeSPI(conv);
 	RETURN_(new_kString(ret, src->bytesize, SPOL_ASCII));
 }
 
@@ -260,6 +357,7 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 
 static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
+
 	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
 	base->h.name     = "bytes";
 	base->h.setup    = kmodiconv_setup;
@@ -286,6 +384,7 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, methoddata);
+	klinkDynamicIconv(_ctx);
 	return true;
 }
 
