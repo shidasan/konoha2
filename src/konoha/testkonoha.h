@@ -92,15 +92,13 @@ static int test_kwb(CTX)
 	return 0;
 }
 
-#include "konoha2/logger.h"
-
 static int test_logger(CTX)
 {
 	int v2 = 3;
 	int v3 = -3;
 	int i;
 	for (i = 0; i < 10; i++) {
-		ktrace(LOGPOL_ERR,
+		ktrace(LOGPOL_DEBUG,
 			KEYVALUE_s("key1", "hello world"),
 			KEYVALUE_u("key2", v2),
 			KEYVALUE_u("key3", v3)

@@ -26,24 +26,26 @@
 #define EVIDENCE_H_
 
 #define LOGPOL_RECORD       (1<<0) /* logger works only with this flag */
- /* Critical */
-#define LOGPOL_CRIT         (1<<1)
-/*DEFAULT, error*/
-#define LOGPOL_ERR          (0)
-#define LOGPOL_WARN         (1<<2) /* Warning */
-#define LOGPOL_INFO         (1<<3) /* Information */
-#define LOGPOL_DEBUG        (1<<4) /* Debug information */
 
-/* LogPolicy */
-#define _PreAction         (1<<5) /* preaction */
-#define _ChangeEnv         (1<<6) /* change environment */
-#define _SecurityAudit     (1<<7) /* security auditing */
+/* CRIT, ERR */
+#define _SystemFault        (1<<1)  /* operating system, program runtime */
+#define _FileSystemFault    (1<<1)  /* file system fault */
+#define _ScriptFault        (1<<2)  /* developers' fault */
+#define _DeveloperFault     (1<<2)  /* developers' fault */
+#define _DataFault          (1<<3)  /* data fault */
+#define _UserInputFault     (1<<3)  /* users' input fault */
+#define _ExternalFault      (1<<4)  /* explicit connected network service */
 
-/* ??? */
-#define _SystemFault       (1<<8)
-#define _ScriptFault       (1<<9)  /* scripter's fault */
-#define _DataFault         (1<<10) /* invalid data */
-#define _ExternalFault     (1<<11)
+/* WARN, NOTICE, INFO */
+#define _Prediction         (1<<5)  /* prediction WARN */
+#define _PreAction          (1<<6)  /* preaction */
+#define _ChangeEnv          (1<<7)  /* change environment */
+#define _SecurityAudit      (1<<8)  /* security auditing */
+#define _PrivacyCaution     (1<<9)  /* including privacy information */
+
+/* DEBUG, TRACE */
+#define LOGPOL_DEBUG        (1<<10)  /* debug information (interanal state) */
+#define LOGPOL_TRACE        (1<<11)  /* more detailed debug information */
 
 #define LOGPOL_INIT         (1<<12) /* DONT USE THIS */
 #define LOGPOL_CFUNC        (1<<13) /* DONT USE THIS */
@@ -64,7 +66,7 @@ typedef struct klogconf_t {
 #define KEYVALUE_u(K,V)    LOG_u, (K), ((uintptr_t)V)
 #define KEYVALUE_s(K,V)    LOG_s, (K), (V)
 
-#define LOG_uline          KEYVALUE_u("uline", sfp[K_RTNIDX].uline)
+#define LOG_ScriptFault          KEYVALUE_u("uline", sfp[K_RTNIDX].uline)
 
 #define ktrace(POLICY, ...)    do {\
 		static klogconf_t _logconf = {LOGPOL_RECORD|LOGPOL_INIT|LOGPOL_CFUNC|POLICY, NULL, {__FUNCTION__}};\

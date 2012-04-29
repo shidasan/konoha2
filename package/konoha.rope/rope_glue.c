@@ -97,8 +97,7 @@ static StringBase *new_StringBase(CTX, uint32_t mask)
 	return s;
 }
 
-static StringBase *InlineString_new(CTX, StringBase *base,
-		const char *text, size_t len)
+static StringBase *InlineString_new(CTX, StringBase *base, const char *text, size_t len)
 {
 	size_t i;
 	InlineString *s = (InlineString *) base;
@@ -134,8 +133,7 @@ static StringBase *LinerString_new(CTX, StringBase *base,
 	return base;
 }
 
-static StringBase *RopeString_new(CTX, StringBase *left,
-		StringBase *right, size_t len)
+static StringBase *RopeString_new(CTX, StringBase *left, StringBase *right, size_t len)
 {
 	RopeString *s = (RopeString *) new_StringBase(_ctx, MASK_ROPE);
 	s->base.length = len;
@@ -293,7 +291,7 @@ static KMETHOD Rope_opADD(CTX, ksfp_t *sfp _RIX)
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
+static kbool_t rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {
@@ -308,17 +306,17 @@ static kbool_t Rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 	return true;
 }
 
-static kbool_t Rope_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t rope_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t Rope_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t rope_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
 
-static kbool_t Rope_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+static kbool_t rope_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
@@ -327,10 +325,10 @@ KDEFINE_PACKAGE* rope_init(void)
 {
 	static const KDEFINE_PACKAGE d = {
 		KPACKNAME("Rope", "1.0"),
-		.initPackage = Rope_initPackage,
-		.setupPackage = Rope_setupPackage,
-		.initKonohaSpace = Rope_initKonohaSpace,
-		.setupKonohaSpace = Rope_setupKonohaSpace,
+		.initPackage = rope_initPackage,
+		.setupPackage = rope_setupPackage,
+		.initKonohaSpace = rope_initKonohaSpace,
+		.setupKonohaSpace = rope_setupKonohaSpace,
 	};
 	assert(sizeof(StringBase) <= sizeof(kString));
 	assert(sizeof(ExternalString) <= sizeof(kString));

@@ -167,9 +167,6 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setConstValue(expr, TY_Bytes, tk->text));
 }
 
-static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline);
-
-
 /* ------------------------------------------------------------------------ */
 
 //## @Const method Bytes String.toBytes();
