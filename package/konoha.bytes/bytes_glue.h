@@ -92,7 +92,7 @@ static void Bytes_free(CTX, kObject *o)
 	}
 }
 
-static kBytes* new_Bytes(CTX, const char *name, size_t capacity)
+static kBytes* new_Bytes(CTX, size_t capacity)
 {
 	kclass_t *ct = CT_Bytes;
 	kBytes *ba = (kBytes*)new_kObject(ct, NULL);
@@ -173,8 +173,9 @@ static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
-	kBytes* b = new_Bytes(_ctx, S_text(s), S_size(s));
-	RETURN_(b);
+	kBytes* ba = new_Bytes(_ctx, S_size(s));
+
+	RETURN_(ba);
 	//RETURN_(new_Bytes(_ctx, S_totext(s), S_size(s));
 }
 
@@ -198,7 +199,7 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 	len = olen = ba->bytesize + 1;
 	c = iconv_open("UTF-8", S_text(to));
 	if (c == (iconv_t)(-1)) {
-		ktrace(LOGPOL_ERR | _ScriptFault,
+		ktrace(_UserInputFault,
 				KEYVALUE_s("@","iconv_open"),
 				KEYVALUE_s("from", "UTF-8"),
 				KEYVALUE_s("to", S_text(to))
@@ -208,7 +209,7 @@ static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
 	const char *inbuf = S_text(ba);
 	olen = iconv(c, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
-		ktrace(LOGPOL_ERR,
+		ktrace(_DataFault,
 			KEYVALUE_s("@","iconv"),
 			KEYVALUE_s("from", "UTF-8"),
 			KEYVALUE_s("to", S_text(to))
@@ -234,19 +235,16 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 	c = iconv_open("UTF-8", S_text(from));
 	if (c == (iconv_t)(-1)) {
 		// @See old/evidence.c
-		ktrace(LOGPOL_ERR | _ScriptFault,
+		ktrace(_ScriptFault,
 				KEYVALUE_s("@","iconv_open"),
 				KEYVALUE_s("from", S_text(src)),
 				KEYVALUE_s("to", "UTF-8")
 		);
-//		kthrow("CharacterEncoding!!",
-//			LOGPOL_ERR,
-//		);
 	}
 	const char *inbuf = S_text(src);
 	olen = iconv(c, &inbuf, &len, &r, &olen);
 	if (olen == (size_t)-1) {
-		ktrace(LOGPOL_ERR,
+		ktrace(_DataFault,
 			KEYVALUE_s("@","iconv"),
 			KEYVALUE_s("from", S_text(src)),
 			KEYVALUE_s("to", "UTF-8")
@@ -257,43 +255,14 @@ static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
 }
 
 /* ------------------------------------------------------------------------ */
-
-static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
-{
-	return share_initbytes(_ctx, ks, pline);
-}
-
-static kbool_t bytes_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
-static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
-{
-	USING_SUGAR;
-	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("Bytes"),  .type = TY_TYPE, },
-//		{ TOKEN("$BYTES"), .kw = KW_TK(TK_TYPE), .ExprTyCheck = ExprTyCheck_BYTES, },
-		{ .name = NULL, },
-	};
-	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
-	return true;
-}
-
-static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
-{
-	return true;
-}
-
-// --------------------------------------------------------------------------
-
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Im       kMethod_Immutable
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
-static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
+
+static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
 	base->h.name     = "bytes";
@@ -323,4 +292,27 @@ static kbool_t share_initbytes(CTX, kKonohaSpace *ks, kline_t pline)
 	kKonohaSpace_loadMethodData(NULL, methoddata);
 	return true;
 }
+
+static kbool_t bytes_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
+static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
+{
+	USING_SUGAR;
+	KDEFINE_SYNTAX SYNTAX[] = {
+		{ TOKEN("Bytes"),  .type = TY_Bytes, },
+		{ .name = NULL, },
+	};
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+	return true;
+}
+
+static kbool_t bytes_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
+
 #endif /* BYTES_GLUE_H_ */
