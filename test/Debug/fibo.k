@@ -1,5 +1,3 @@
-Konoha.importPackage("konoha.assert");
-
 int fibo(int n) {
     if (n < 3) {
         return 1;

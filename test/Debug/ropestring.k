@@ -1,4 +1,3 @@
-Konoha.importPackage("konoha.assert");
 Konoha.importPackage("konoha.string");
 
 String f(String x, String y) {
