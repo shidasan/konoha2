@@ -509,8 +509,8 @@ KNHAPI2(kString*) new_String(CTX, const char *str)
 
 static knh_conv_t* strconv_open(CTX, const char* to, const char *from)
 {
-	knh_iconv_t rc = ctx->spi->iconv_openSPI(to, from);
-	if(rc == (knh_iconv_t)-1){
+	kiconv_t rc = ctx->spi->iconv_openSPI(to, from);
+	if(rc == (kiconv_t)-1){
 		KNH_NTRACE2(_ctx, "iconv_open", K_FAILED, KNH_LDATA(LOG_msg("unknown codec"),
 					LOG_s("spi", ctx->spi->iconvspi), LOG_s("from", from), LOG_s("to", to)));
 		return NULL;
@@ -522,7 +522,7 @@ static kbool_t strconv(CTX, knh_conv_t *iconvp, const char *text, size_t len, kB
 {
 	char buffer[4096], *ibuf = (char*)text;
 	size_t ilen = len, rsize = 0;//, ilen_prev = ilen;
-	knh_iconv_t cd = (knh_iconv_t)iconvp;
+	kiconv_t cd = (kiconv_t)iconvp;
 	kbytes_t bbuf = {{(const char*)buffer}, 0};
 	while(ilen > 0) {
 		char *obuf = buffer;
@@ -540,7 +540,7 @@ static kbool_t strconv(CTX, knh_conv_t *iconvp, const char *text, size_t len, kB
 }
 static void strconv_close(CTX, knh_conv_t *conv)
 {
-	ctx->spi->iconv_closeSPI((knh_iconv_t)conv);
+	ctx->spi->iconv_closeSPI((kiconv_t)conv);
 }
 
 static knh_ConverterDPI_t SCONV = {
@@ -560,8 +560,8 @@ kStringDecoder* new_StringDecoderNULL(CTX, kbytes_t t)
 		return KNH_TNULL(StringDecoder);
 	}
 	else {
-		knh_iconv_t id = ctx->spi->iconv_openSPI(K_ENCODING, t.text);
-		if(id != (knh_iconv_t)(-1)) {
+		kiconv_t id = ctx->spi->iconv_openSPI(K_ENCODING, t.text);
+		if(id != (kiconv_t)(-1)) {
 			kStringDecoder *c = new_(StringDecoder);
 			c->conv = (knh_conv_t*)id;
 			c->dpi = &SCONV;
@@ -577,8 +577,8 @@ kStringEncoder* new_StringEncoderNULL(CTX, kbytes_t t)
 		return KNH_TNULL(StringEncoder);
 	}
 	else {
-		knh_iconv_t id = ctx->spi->iconv_openSPI(K_ENCODING, t.text);
-		if(id != (knh_iconv_t)(-1)) {
+		kiconv_t id = ctx->spi->iconv_openSPI(K_ENCODING, t.text);
+		if(id != (kiconv_t)(-1)) {
 			kStringEncoder *c = new_(StringEncoder);
 			c->conv = (knh_conv_t*)id;
 			c->dpi = &SCONV;

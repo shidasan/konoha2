@@ -1768,8 +1768,8 @@ static void BLOCK_asm(CTX, kBlock *bk)
 {
 	int i, espidx = bk->esp->index;
 	//DBG_ASSERT(bk->esp->build == TEXPR_LOCAL);
-	for(i = 0; i < kArray_size(bk->blockS); i++) {
-		kStmt *stmt = bk->blockS->stmts[i];
+	for(i = 0; i < kArray_size(bk->blocks); i++) {
+		kStmt *stmt = bk->blocks->stmts[i];
 		if(stmt->syn == NULL) continue;
 		ctxcode->uline = stmt->uline;
 		switch(stmt->build) {

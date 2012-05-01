@@ -396,15 +396,15 @@ static int thread_unlock(kmutex_t *m DBG_TRACE)
 	return knh_mutex_unlock(m);
 }
 
-static knh_iconv_t _iconv_open(const char *t, const char *f)
+static kiconv_t _iconv_open(const char *t, const char *f)
 {
-	return (knh_iconv_t)(-1);
+	return (kiconv_t)(-1);
 }
-static size_t _iconv(knh_iconv_t i, char **t, size_t *ts, char **f, size_t *fs)
+static size_t _iconv(kiconv_t i, char **t, size_t *ts, char **f, size_t *fs)
 {
 	return 0;
 }
-static int _iconv_close(knh_iconv_t i)
+static int _iconv_close(kiconv_t i)
 {
 	return 0;
 }

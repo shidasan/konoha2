@@ -484,6 +484,8 @@ static int konoha_builtintest(const char* name)
 // -------------------------------------------------------------------------
 // ** main **
 
+extern int konoha_AssertResult;
+
 int main(int argc, char *argv[])
 {
 	kbool_t ret = 1;
@@ -507,7 +509,7 @@ int main(int argc, char *argv[])
 	}
 	konoha_close(konoha);
 	MODGC_check_malloced_size();
-	return ret ? 0: 1;
+	return ret ? konoha_AssertResult: 1;
 }
 
 #ifdef __cplusplus

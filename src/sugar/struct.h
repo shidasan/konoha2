@@ -790,18 +790,6 @@ static void dumpStmt(CTX, kStmt *stmt)
 	}
 }
 
-#define kStmt_ks(STMT)   Stmt_ks(_ctx, STMT)
-static inline kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
-{
-	return stmt->parentNULL->ks;
-}
-
-#define kStmt_typed(STMT, T)  Stmt_typed(STMT, TSTMT_##T)
-static inline void Stmt_typed(kStmt *stmt, int build)
-{
-	((struct _kStmt*)stmt)->build = build;
-}
-
 #define kStmt_setsyn(STMT, S)  Stmt_setsyn(_ctx, STMT, S)
 #define kStmt_done(STMT)       Stmt_setsyn(_ctx, STMT, NULL)
 static void Stmt_setsyn(CTX, kStmt *stmt, ksyntax_t *syn)
@@ -885,7 +873,7 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 }
 
 static kbool_t Token_toBRACE(CTX, struct _kToken *tk);
-static kBlock *new_Block(CTX, kArray *tls, int s, int e, kKonohaSpace* ks);
+static kBlock *new_Block(CTX, kKonohaSpace* ks, kStmt *stmt, kArray *tls, int s, int e);
 static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
 {
 	kBlock *bk = (kBlock*)kObject_getObjectNULL(stmt, kw);
@@ -896,7 +884,7 @@ static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
 				Token_toBRACE(_ctx, (struct _kToken*)tk);
 			}
 			if (tk->tt == AST_BRACE) {
-				bk = new_Block(_ctx, tk->sub, 0, kArray_size(tk->sub), kStmt_ks(stmt));
+				bk = new_Block(_ctx, kStmt_ks(stmt), stmt, tk->sub, 0, kArray_size(tk->sub));
 				kObject_setObject(stmt, kw, bk);
 			}
 		}
@@ -914,7 +902,7 @@ static void Block_init(CTX, kObject *o, void *conf)
 	kKonohaSpace *ks = (conf != NULL) ? (kKonohaSpace*)conf : kmodsugar->rootks;
 	bk->parentNULL = NULL;
 	KINITv(bk->ks, ks);
-	KINITv(bk->blockS, new_(StmtArray, 0));
+	KINITv(bk->blocks, new_(StmtArray, 0));
 	KINITv(bk->esp, new_(Expr, 0));
 }
 
@@ -923,7 +911,7 @@ static void Block_reftrace(CTX, kObject *o)
 	kBlock *bk = (kBlock*)o;
 	BEGIN_REFTRACE(4);
 	KREFTRACEv(bk->ks);
-	KREFTRACEv(bk->blockS);
+	KREFTRACEv(bk->blocks);
 	KREFTRACEv(bk->esp);
 	KREFTRACEn(bk->parentNULL);
 	END_REFTRACE();
@@ -934,9 +922,9 @@ static void Block_insertAfter(CTX, kBlock *bk, kStmt *target, kStmt *stmt)
 	DBG_ASSERT(stmt->parentNULL == NULL);
 	KSETv(((struct _kStmt*)stmt)->parentNULL, bk);
 	size_t i;
-	for(i = 0; i < kArray_size(bk->blockS); i++) {
-		if(bk->blockS->stmts[i] == target) {
-			kArray_insert(bk->blockS, i+1, stmt);
+	for(i = 0; i < kArray_size(bk->blocks); i++) {
+		if(bk->blocks->stmts[i] == target) {
+			kArray_insert(bk->blocks, i+1, stmt);
 			return;
 		}
 	}

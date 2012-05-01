@@ -278,7 +278,7 @@ typedef kushort_t       kmethodn_t;
 #define MN_isGETTER(mn)   ((mn & MN_GETTER) == MN_GETTER)
 #define MN_toGETTER(mn)   (mn | MN_GETTER)
 #define MN_isSETTER(mn)   ((mn & MN_SETTER) == MN_SETTER)
-#define MN_toSETTER(mn)   (mn | MN_SETTER)
+#define MN_toSETTER(mn)   ((MN_UNMASK(mn)) | MN_SETTER)
 
 #define MN_to(cid)        (cid | MN_TOCID)
 #define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
@@ -543,12 +543,6 @@ struct _kclass {
 #define kStringArray            kArray
 #define CT_MethodArray          CT_Array
 #define kMethodArray            kArray
-#define CT_TokenArray           CT_Array
-#define kTokenArray             kArray
-#define CT_ExprArray            CT_Array
-#define kExprArray              kArray
-#define CT_StmtArray            CT_Array
-#define kStmtArray              kArray
 
 #define kClass_Ref              ((kflag_t)(1<<0))
 #define kClass_Prototype        ((kflag_t)(1<<1))
@@ -559,7 +553,6 @@ struct _kclass {
 #define kClass_UnboxType        ((kflag_t)(1<<7))
 #define kClass_Interface        ((kflag_t)(1<<8))
 #define kClass_TypeVar          ((kflag_t)(1<<9))
-#define kClass_UNDEF            ((kflag_t)(1<<10))
 
 //#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
 //#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
@@ -571,9 +564,8 @@ struct _kclass {
 #define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
 
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
-#define TY_isUNDEF(T)         (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_UNDEF))
-#define CT_isUNDEF(ct)        (TFLAG_is(kflag_t,(ct)->cflag, kClass_UNDEF))
-#define CT_setUNDEF(ct, B)     TFLAG_set(kflag_t, (ct)->cflag, kClass_UNDEF, B)
+// this is used in konoha.class
+#define CT_isDefined(ct)  ((ct)->fallocsize == 0 || (ct)->fsize == (ct)->fallocsize)
 
 //#define TY_isUnboxType(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_UnboxType))
 //#define T_isInterface(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Interface))
@@ -1224,13 +1216,21 @@ typedef struct {
 	kfloat_t value;
 } KDEFINE_FLOAT_CONST;
 
+typedef enum {
+	CRIT_,     // raise(0)
+	ERR_,
+	WARN_,
+	INFO_,
+	DEBUG_,
+	PRINT_,
+} kreportlevel_t;
 
-#define CRIT_  0
-#define ERR_   1
-#define WARN_  2
-#define INFO_  3
-#define PRINT_ 4
-#define DEBUG_ 5
+//#define CRIT_  0
+//#define ERR_   1
+//#define WARN_  2
+//#define INFO_  3
+//#define PRINT_ 4
+//#define DEBUG_ 5
 
 #define kreport(LEVEL, MSG)            (KPI)->Kreport(_ctx, LEVEL, MSG)
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)

@@ -148,12 +148,15 @@ static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 	RETURN_(s);
 }
 
+int konoha_AssertResult = 0;
+
 //## @Const @Static void System.assert(boolean x)
 static KMETHOD System_assert(CTX, ksfp_t *sfp _RIX)
 {
 	kbool_t cond = sfp[1].bvalue;
 	if (cond == false) {
 		kline_t pline  = sfp[K_RTNIDX].uline;
+		konoha_AssertResult = 1;
 		kreportf(CRIT_, pline, "Assert!!");
 	}
 }

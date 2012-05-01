@@ -25,18 +25,6 @@
 #ifndef ASSIGNMENT_GLUE_H_
 #define ASSIGNMENT_GLUE_H_
 
-// --------------------------------------------------------------------------
-
-static kbool_t Expr_isGetter(CTX, kExpr *expr)
-{
-	DBG_P("setter is unsupported .. ");
-	return false;
-}
-
-static kExpr *Expr_toSetter(CTX, kExpr *expr, kExpr *vexpr)
-{
-	return K_NULLEXPR;
-}
 
 // --------------------------------------------------------------------------
 
@@ -46,18 +34,29 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 	USING_SUGAR;
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	DBG_P("typing: assignment .. ");
-	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
-	if(lexpr != K_NULLEXPR) {
-		kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
-		if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_LOCAL_ || lexpr->build == TEXPR_FIELD) {
-			if(rexpr != K_NULLEXPR) {
+	kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, TY_var, 0);
+	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, rexpr->ty, TPOL_ALLOWVOID);
+	if(rexpr != K_NULLEXPR || lexpr != K_NULLEXPR) {
+		rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
+		if(rexpr != K_NULLEXPR) {
+			if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_LOCAL_ || lexpr->build == TEXPR_FIELD) {
 				((struct _kExpr*)expr)->build = TEXPR_LET;
 				((struct _kExpr*)rexpr)->ty = lexpr->ty;
+				RETURN_(expr);
 			}
-			RETURN_(expr);
-		}
-		if(Expr_isGetter(_ctx, lexpr)) {
-			RETURN_(Expr_toSetter(_ctx, lexpr, rexpr));
+			if(lexpr->build == TEXPR_CALL) {  // check getter and transform to setter
+				kMethod *mtd = lexpr->cons->methods[0];
+				DBG_ASSERT(IS_Method(mtd));
+				if((MN_isGETTER(mtd->mn) || MN_isISBOOL(mtd->mn)) && !kMethod_isStatic(mtd)) {
+					ktype_t cid = lexpr->cons->exprs[1]->ty;
+					mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, cid, MN_toSETTER(mtd->mn));
+					if(mtd != NULL) {
+						KSETv(lexpr->cons->methods[0], mtd);
+						RETURN_(SUGAR Expr_tyCheckCallParams(_ctx, lexpr, mtd, gma, reqty));
+					}
+				}
+			}
+			SUGAR p(_ctx, ERR_, SUGAR Expr_uline(_ctx, expr, ERR_), -1, "assignment needs variable or setter");
 		}
 	}
 	RETURN_(K_NULLEXPR);
@@ -79,7 +78,7 @@ static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, .ExprTyCheck = ExprTyCheck_assignment},
+		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, ExprTyCheck_(assignment)},
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

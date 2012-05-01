@@ -47,13 +47,7 @@ static const char *Pkeyword_(CTX, keyword_t kw);
 #include "ast.h"
 #include "tycheck.h"
 
-#define TOKEN(T)  .name = T /*, .namelen = (sizeof(T)-1)*/
 #define _EXPR     .flag = SYN_ExprFlag
-#define ParseStmt_(NAME)  .ParseStmt = ParseStmt_##NAME
-#define ParseExpr_(NAME)   .ParseExpr = ParseExpr_##NAME
-#define TopStmtTyCheck_(NAME)  .TopStmtTyCheck = StmtTyCheck_##NAME
-#define StmtTyCheck_(NAME)     .StmtTyCheck = StmtTyCheck_##NAME
-#define ExprTyCheck_(NAME)     .ExprTyCheck = ExprTyCheck_##NAME
 #define _TERM     ParseExpr_(Term)
 #define _OP       ParseExpr_(Op)
 
@@ -90,7 +84,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("||"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
 		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
-		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr \"=\" $expr",},
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
@@ -119,7 +113,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 		kArray *tls = ctxsugar->tokens;
 		size_t pos = kArray_size(tls);
 		ktokenize(_ctx, script, uline, tls);
-		kBlock *bk = new_Block(_ctx, tls, pos, kArray_size(tls), ks);
+		kBlock *bk = new_Block(_ctx, ks, NULL, tls, pos, kArray_size(tls));
 		kArray_clear(tls, pos);
 		result = Block_eval(_ctx, bk);
 		RESET_GCSTACK();
@@ -171,7 +165,7 @@ static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 
 		KINITv(base->gma, new_(Gamma, NULL));
 		KINITv(base->singleBlock, new_(Block, NULL));
-		kArray_add(base->singleBlock->blockS, K_NULL);
+		kArray_add(base->singleBlock->blocks, K_NULL);
 		KARRAY_INIT(&base->cwb, K_PAGESIZE);
 		_ctx->modlocal[MOD_sugar] = (kmodlocal_t*)base;
 	}
@@ -269,6 +263,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->cStmt  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defStmt, 0);
 	base->cBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBlock, 0);
 	base->cGamma = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defGamma, 0);
+	base->cTokenArray = CT_P0(_ctx, CT_Array, base->cToken->cid);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	knull(base->cToken);
@@ -276,7 +271,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	knull(base->cBlock);
 	kmodsugar_setup(_ctx, &base->h, 0);
 
-	KINITv(base->UndefinedParseExpr, new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
+	KINITv(base->UndefinedParseExpr,   new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
 	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));
 	KINITv(base->UndefinedExprTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedExprTyCheck));
 
@@ -288,28 +283,9 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
 	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
 	syn->ty = TY_void; // it's not cool, but necessary
-
 	base->syn_err  = SYN_(base->rootks, KW_ERR);
 	base->syn_expr = SYN_(base->rootks, KW_EXPR);
-
-	// export
-	base->keyword             = keyword;
-	base->Stmt_token          = Stmt_token;
-	base->Stmt_block          = Stmt_block;
-	base->Stmt_expr           = Stmt_expr;
-	base->Stmt_text           = Stmt_text;
-
-	base->Expr_setConstValue  = Expr_setConstValue;
-	base->Expr_setNConstValue  = Expr_setNConstValue;
-	base->Expr_setVariable    = Expr_setVariable;
-	base->Expr_tyCheckAt      = Expr_tyCheckAt;
-	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;
-	base->Block_tyCheckAll    = Block_tyCheckAll;
-	base->Stmt_toExprCall     = Stmt_toExprCall;
-	base->parseSyntaxRule     = parseSyntaxRule;
-	base->KonohaSpace_syntax        = KonohaSpace_syntax;
-	base->KonohaSpace_defineSyntax  = KonohaSpace_defineSyntax;
-	base->KonohaSpace_getMethodNULL = KonohaSpace_getMethodNULL;
+	EXPORT_SUGAR(base);
 }
 
 static const char *Pkeyword_(CTX, keyword_t kw)

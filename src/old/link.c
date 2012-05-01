@@ -51,8 +51,8 @@ extern "C" {
 //static kbool_t CHARSET_exists(CTX, kKonohaSpace *ns, kbytes_t path)
 //{
 //	kbytes_t t = knh_bytes_next(path, ':');
-//	knh_iconv_t ic = ctx->spi->iconv_openSPI(t.text, K_ENCODING);
-//	if(ic != (knh_iconv_t)(-1)) {
+//	kiconv_t ic = ctx->spi->iconv_openSPI(t.text, K_ENCODING);
+//	if(ic != (kiconv_t)(-1)) {
 //		ctx->spi->iconv_closeSPI(ic);
 //		return 1;
 //	}

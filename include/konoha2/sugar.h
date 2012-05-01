@@ -85,7 +85,7 @@ struct _kpackage {
 		int UL = (int)sfp[2].ivalue;\
 		(void)TK; (void)STR; (void)UL;\
 
-// ParseStmt
+// int ParseStmt.parseStmt(Token[] tls, int s, int e)
 #define VAR_ParseStmt(STMT, SYN, NAME, TLS, S, E) \
 		kStmt *STMT = (kStmt*)sfp[0].o;\
 		ksyntax_t *SYN = (ksyntax_t*)sfp[0].ndata;\
@@ -143,6 +143,11 @@ struct _ksyntax {
 };
 
 #define TOKEN(T)  .name = T
+#define ParseStmt_(NAME)  .ParseStmt = ParseStmt_##NAME
+#define ParseExpr_(NAME)   .ParseExpr = ParseExpr_##NAME
+#define TopStmtTyCheck_(NAME)  .TopStmtTyCheck = StmtTyCheck_##NAME
+#define StmtTyCheck_(NAME)     .StmtTyCheck = StmtTyCheck_##NAME
+#define ExprTyCheck_(NAME)     .ExprTyCheck = ExprTyCheck_##NAME
 
 typedef struct KDEFINE_SYNTAX {
 	const char *name;
@@ -208,15 +213,12 @@ struct _kToken {
 	union {
 		kString *text;
 		kArray  *sub;
-//		struct kExpr   *expr;
-//		struct kStmt   *stmt;
-//		struct kBlock  *bk;
 	};
 	kline_t     uline;
 	union {
 		kushort_t lpos;
 		kshort_t  closech;  // ast
-		ksymbol_t nameid;   // sugar
+		ksymbol_t nameid;   // sugar rule
 	};
 	union {
 		kshort_t   topch;
@@ -294,9 +296,9 @@ typedef const struct _kBlock kBlock;
 struct _kBlock {
 	kObjectHeader h;
 	kKonohaSpace        *ks;
-	kStmt         *parentNULL;
-	kArray        *blockS;
-	kExpr         *esp;
+	kStmt               *parentNULL;
+	kArray              *blocks;
+	kExpr               *esp;
 };
 
 typedef struct _kGamma kGamma;
@@ -348,6 +350,13 @@ struct _kGamma {
 #define CT_Block    kmodsugar->cBlock
 #define CT_KonohaSpace    kmodsugar->cKonohaSpace
 #define CT_Gamma    kmodsugar->cGamma
+
+#define CT_TokenArray           kmodsugar->cTokenArray
+#define kTokenArray             kArray
+#define CT_ExprArray            CT_Array
+#define kExprArray              kArray
+#define CT_StmtArray            CT_Array
+#define kStmtArray              kArray
 
 #define IS_Token(O)  ((O)->h.ct == CT_Token)
 #define IS_Expr(O)  ((O)->h.ct == CT_Expr)
@@ -430,15 +439,14 @@ typedef struct {
 	kclass_t *cBlock;
 	kclass_t *cKonohaSpace;
 	kclass_t *cGamma;
+	kclass_t *cTokenArray;
 	//
 	kArray         *keywordList;
 	struct kmap_t         *keywordMapNN;
 	kArray         *packageList;
 	struct kmap_t         *packageMapNO;
 	kKonohaSpace         *rootks;
-//	kArray         *aBuffer;
 
-//	struct _kMethod *UndefinedParseStmt;
 	kMethod *UndefinedParseExpr;
 	kMethod *UndefinedStmtTyCheck;
 	kMethod *UndefinedExprTyCheck;
@@ -461,12 +469,46 @@ typedef struct {
 	kExpr*     (*Expr_tyCheckAt)(CTX, kExpr *, size_t, kGamma *, ktype_t, int);
 	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
+	kExpr *    (*Expr_tyCheckCallParams)(CTX, kExpr *, kMethod *, kGamma *, ktype_t);
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
-	void       (*parseSyntaxRule)(CTX, const char*, kline_t, kArray *);
+
+	void       (*p)(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...);
+	kline_t    (*Expr_uline)(CTX, kExpr *expr, int pe);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, KDEFINE_SYNTAX *);
-	kMethod*   (*KonohaSpace_getMethodNULL)(CTX, kKonohaSpace *, kcid_t, kmethodn_t);
+
+	kbool_t    (*makeSyntaxRule)(CTX, kArray*, int, int, kArray *);
+	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int);
+	kExpr*     (*Stmt_newExpr2)(CTX, kStmt *stmt, kArray *tls, int s, int e);
+	kExpr *    (*Stmt_addExprParams)(CTX, kStmt *, kExpr *, kArray *tls, int s, int e);
+
 } kmodsugar_t;
+
+#define EXPORT_SUGAR(base) \
+	base->keyword             = keyword;\
+	base->p                   = sugar_p;\
+	base->Expr_uline          = Expr_uline;\
+	base->Stmt_token          = Stmt_token;\
+	base->Stmt_block          = Stmt_block;\
+	base->Stmt_expr           = Stmt_expr;\
+	base->Stmt_text           = Stmt_text;\
+	base->Expr_setConstValue  = Expr_setConstValue;\
+	base->Expr_setNConstValue  = Expr_setNConstValue;\
+	base->Expr_setVariable    = Expr_setVariable;\
+	base->Expr_tyCheckAt      = Expr_tyCheckAt;\
+	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;\
+	base->Block_tyCheckAll    = Block_tyCheckAll;\
+	base->Expr_tyCheckCallParams = Expr_tyCheckCallParams;\
+	base->Stmt_toExprCall     = Stmt_toExprCall;\
+	/*syntax*/\
+	base->KonohaSpace_defineSyntax  = KonohaSpace_defineSyntax;\
+	base->KonohaSpace_syntax        = KonohaSpace_syntax;\
+	base->makeSyntaxRule     = makeSyntaxRule;\
+	/*ast*/\
+	base->new_Block          = new_Block;\
+	base->Stmt_newExpr2      = Stmt_newExpr2;\
+	base->Stmt_addExprParams = Stmt_addExprParams;\
+
 
 typedef struct {
 	kmodlocal_t h;
@@ -485,7 +527,7 @@ typedef struct {
 
 #ifdef USING_SUGAR_AS_BUILTIN
 
-#define KW_(T)      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
+#define KW_(T)                      keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
 #define SYN_(KS, KW)                KonohaSpace_syntax(_ctx, KS, KW, 0)
 
 #define kStmt_token(STMT, KW, DEF)  Stmt_token(_ctx, STMT, KW, DEF)
@@ -511,6 +553,7 @@ typedef struct {
 #define TY_Block                             _e->cBlock->cid
 #define TY_Expr                              _e->cExpr->cid
 #define TY_Gamma                             _e->cGamma->cid
+#define TY_TokenArray                        _e->cTokenArray->cid
 
 #define KW_(T)                               _e->keyword(_ctx, T, sizeof(T)-1, FN_NONAME)
 #define SYN_(KS, KW)                         _e->KonohaSpace_syntax(_ctx, KS, KW, 0)
@@ -531,9 +574,33 @@ typedef struct {
 #define kStmt_tyCheck(E, NI, GMA, T, P)      _e->Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
 
 #endif/*SUGAR_EXPORTS*/
+
 ///* ------------------------------------------------------------------------ */
-///* Sugar API */
-kstatus_t MODSUGAR_loadscript(CTX, const char *path, size_t len, kline_t pline);
+
+// In future, typeof operator is introduced
+#define TK_isType(TK)    ((TK)->kw == KW_TYPE)
+#define TK_type(TK)       (TK)->ty
+
+#define kStmt_ks(STMT)   Stmt_ks(_ctx, STMT)
+static inline kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
+{
+	return stmt->parentNULL->ks;
+}
+
+#define kStmt_typed(STMT, T)  Stmt_typed(STMT, TSTMT_##T)
+static inline void Stmt_typed(kStmt *stmt, int build)
+{
+	((struct _kStmt*)stmt)->build = build;
+}
+
+#define kExpr_typed(E, B, TY)   Expr_typed(E, TEXPR_##B, TY)
+static inline kExpr *Expr_typed(kExpr *expr, int build, ktype_t ty)
+{
+	((struct _kExpr*)expr)->build = build;
+	((struct _kExpr*)expr)->ty = ty;
+	return expr;
+}
+
 
 #ifdef __cplusplus
 }

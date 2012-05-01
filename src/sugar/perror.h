@@ -77,10 +77,10 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 	}
 }
 
-#define SUGAR_P(PE, UL, POS, FMT, ...)  Kpef(_ctx, PE, UL, POS, FMT,  ## __VA_ARGS__)
+#define SUGAR_P(PE, UL, POS, FMT, ...)  sugar_p(_ctx, PE, UL, POS, FMT,  ## __VA_ARGS__)
 #define ERR_SyntaxError(UL)  SUGAR_P(ERR_, UL, -1, "syntax sugar error at %s:%d", __FUNCTION__, __LINE__)
 
-static void Kpef(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
+static void sugar_p(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);

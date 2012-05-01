@@ -49,6 +49,7 @@ static void ObjectX_init(CTX, kObject *o, void *conf)
 {
 	struct _kObject *of = (struct _kObject*)o;
 	kclass_t *ct = O_ct(of);
+	assert(CT_isDefined(ct));
 	assert(ct->nulvalNUL != NULL);
 	memcpy(of->fields, ct->nulvalNUL->fields, ct->cstruct_size - sizeof(kObjectHeader));
 }
@@ -56,15 +57,14 @@ static void ObjectX_init(CTX, kObject *o, void *conf)
 static void Object_initdef(CTX, struct _kclass *ct, kline_t pline)
 {
 	if(ct->cid == TY_Object) return;
-	DBG_P("new object initialization");
-	kclass_t *supct = kclass(ct->cid, pline);
-	if(CT_isUNDEF(supct)) {
-		kreportf(CRIT_, pline, "%s's fields are not all set", T_cid(ct->cid));
-	}
-	size_t fsize = supct->fsize + ct->fsize;
-	ct->cstruct_size = size64((fsize * sizeof(void*)) + sizeof(kObjectHeader));
+	DBG_P("new object initialization ct->cstruct_size=%d", ct->cstruct_size);
 	KSETv(ct->nulvalNUL, new_kObject(ct, NULL));
-	if(fsize > 0) {
+	if(ct->fsize > 0) {  // this is size of super class
+		kclass_t *supct = CT_(ct->supcid);
+		assert(ct->fsize == supct->fsize);
+		memcpy(ct->WnulvalNUL->fields, supct->nulvalNUL->fields, sizeof(kObject*) * ct->fsize);
+	}
+	if(ct->fallocsize > 0) {
 		ct->init = ObjectX_init;
 	}
 	ct->fnull = DEFAULT_fnull;

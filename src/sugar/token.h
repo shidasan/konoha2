@@ -470,7 +470,7 @@ static int findTopCh(CTX, kArray *tls, int s, int e, ktoken_t tt, int closech)
 	return e;
 }
 
-static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst);
+static kbool_t makeSyntaxRule(CTX, kArray *tls, int s, int e, kArray *adst);
 
 static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, int opench, int closech)
 {
@@ -482,14 +482,14 @@ static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, i
 		tk->tt = tt; tk->kw = tt;
 		KSETv(tk->sub, new_(TokenArray, 0));
 		tk->topch = opench; tk->closech = closech;
-		makeSyntaxTree(_ctx, tls, i+1, ne, tk->sub);
+		makeSyntaxRule(_ctx, tls, i+1, ne, tk->sub);
 		*s = ne;
 		return 1;
 	}
 	return 0;
 }
 
-static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
+static kbool_t makeSyntaxRule(CTX, kArray *tls, int s, int e, kArray *adst)
 {
 	int i;
 	char nbuf[80];
@@ -535,8 +535,9 @@ static void makeSyntaxTree(CTX, kArray *tls, int s, int e, kArray *adst)
 			if(tls->toks[i]->topch == '$') continue;
 		}
 		SUGAR_P(ERR_, tk->uline, tk->lpos, "illegal sugar syntax: %s", kToken_s(tk));
-		break;
+		return false;
 	}
+	return true;
 }
 
 static void parseSyntaxRule(CTX, const char *rule, kline_t uline, kArray *a)
@@ -544,7 +545,7 @@ static void parseSyntaxRule(CTX, const char *rule, kline_t uline, kArray *a)
 	kArray *tls = ctxsugar->tokens;
 	size_t pos = kArray_size(tls);
 	ktokenize(_ctx, rule, uline, tls);
-	makeSyntaxTree(_ctx, tls, pos, kArray_size(tls), a);
+	makeSyntaxRule(_ctx, tls, pos, kArray_size(tls), a);
 	kArray_clear(tls, pos);
 }
 

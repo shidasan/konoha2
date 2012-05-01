@@ -459,9 +459,9 @@ static int konoha_shell(CTX, char *optstr)
 
 /* ------------------------------------------------------------------------- */
 
-typedef knh_iconv_t (*ficonv_open)(const char *, const char *);
-typedef size_t (*ficonv)(knh_iconv_t , char **, size_t *, char **, size_t *);
-typedef int    (*ficonv_close)(knh_iconv_t);
+typedef kiconv_t (*ficonv_open)(const char *, const char *);
+typedef size_t (*ficonv)(kiconv_t , char **, size_t *, char **, size_t *);
+typedef int    (*ficonv_close)(kiconv_t);
 
 static void knh_linkDynamicIconv(CTX)
 {

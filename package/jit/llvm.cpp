@@ -1103,8 +1103,8 @@ static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
 
 static void BLOCK_asm2(CTX, kBlock *bk, int i, int espidx)
 {
-	if (i < (int)kArray_size(bk->blockS)) {
-		kStmt *stmt = bk->blockS->stmts[i];
+	if (i < (int)kArray_size(bk->blocks)) {
+		kStmt *stmt = bk->blocks->stmts[i];
 		kmodjit->uline = stmt->uline;
 		if(stmt->syn != NULL) {;
 			if (stmt->build == TSTMT_ERR) {

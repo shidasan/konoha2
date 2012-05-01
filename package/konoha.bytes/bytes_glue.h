@@ -124,7 +124,6 @@ static void klinkDynamicIconv(CTX)
 
 /* ------------------------------------------------------------------------ */
 
-
 #define BYTES_BUFSIZE 256
 
 // Bytes_init

@@ -153,6 +153,7 @@ static inline size_t check_index(CTX, kint_t n, size_t max, kline_t pline)
 	return n1;
 }
 
+
 #ifdef USE_STRINGLIB
 
 #define utf8len(c)    _utf8len[(int)c]
@@ -179,5 +180,11 @@ static const char _utf8len[] = {
 #endif
 
 
+static inline void Method_setProceedMethod(CTX, kMethod *mtd, kMethod *mtd2)
+{
+	DBG_ASSERT(mtd != mtd2);
+	DBG_ASSERT(mtd->proceedNUL == NULL);
+	KINITv(((struct _kMethod*)mtd)->proceedNUL, mtd2);
+}
 
 #endif /* KONOHA2_INLINELIBS_H_ */

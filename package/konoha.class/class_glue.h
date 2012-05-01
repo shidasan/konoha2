@@ -175,24 +175,41 @@ static KMETHOD KonohaSpace_getCid(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(cid);
 }
 
+static void setfield(CTX, KDEFINE_CLASS *ct, int fctsize, kclass_t *supct)
+{
+	size_t fsize = supct->fsize + fctsize;
+	ct->cstruct_size = fctsize * sizeof(kObject*); //size64((fsize * sizeof(void*)) + sizeof(kObjectHeader));
+	DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
+	if(fsize > 0) {
+		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
+		ct->fsize = supct->fsize;
+		ct->fallocsize = fsize;
+		if(supct->fsize > 0) {
+			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*ct->fsize);
+		}
+	}
+}
+
 // int KonohaSpace.defineClass(int flag, String name, int supcid, int fieldsize);
 static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 {
-	kKonohaSpace *ks = sfp[0].ks;
-	KDEFINE_CLASS cdef = {};
-	cdef.cstruct_size = sfp[4].ivalue * sizeof(void*);
-	cdef.cflag  = (kflag_t)sfp[1].ivalue | ((cdef.cstruct_size > 0) ? kClass_UNDEF : 0);
-	cdef.cid    = CLASS_newid;
-	cdef.bcid   = CLASS_Object;
-	cdef.supcid = (kcid_t)sfp[3].ivalue;
-//	cdef.packid = ks->packid;
-//	cdef.packdom = ks->packdom;
-	if(cdef.supcid == 0) cdef.supcid = TY_Object;
-	kclass_t *supct = kclass(cdef.supcid, sfp[K_RTNIDX].uline);
+	ktype_t supcid = sfp[3].ivalue == 0 ? TY_Object :(ktype_t)sfp[3].ivalue;
+	kclass_t *supct = kclass(supcid, sfp[K_RTNIDX].uline);
 	if(CT_isFinal(supct)) {
-		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s is @Final", T_cid(cdef.supcid));
+		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s is final", T_cid(supcid));
 	}
-	kclass_t *c = Konoha_addClassDef(ks->packid, ks->packdom, sfp[2].s, &cdef, sfp[K_RTNIDX].uline);
+	if(CT_isDefined(supct)) {
+		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s has undefined field(s)", T_cid(supcid));
+	}
+	KDEFINE_CLASS defNewClass = {
+		.cflag  = (kflag_t)sfp[1].ivalue,
+		.cid    = CLASS_newid,
+		.bcid   = CLASS_Object,
+		.supcid = supcid,
+	};
+	setfield(_ctx, &defNewClass, (int)sfp[4].ivalue, supct);
+	kKonohaSpace *ks = sfp[0].ks;
+	kclass_t *c = Konoha_addClassDef(ks->packid, ks->packdom, sfp[2].s, &defNewClass, sfp[K_RTNIDX].uline);
 	RETURNi_(c->cid);
 }
 
@@ -205,8 +222,8 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	kString *name = sfp[4].s;
 	kObject *value = sfp[5].o;
 	struct _kclass *ct = (struct _kclass*)kclass(cid, sfp[K_RTNIDX].uline);
-	if(!CT_isUNDEF(ct) || !(ct->fsize < ct->fallocsize)) {
-		kreportf(CRIT_, sfp[K_RTNIDX].uline, "all fields are defined: %s", T_cid(ct->cid));
+	if(CT_isDefined(ct)) {
+		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s has no undefined field", T_cid(ct->cid));
 	}
 	int pos = ct->fsize;
 	ct->fsize += 1;
@@ -221,12 +238,69 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 		KSETv(ct->WnulvalNUL->ndata[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
-	if(!(ct->fsize < ct->fallocsize)) {
+	if(CT_isDefined(ct)) {
 		DBG_P("all fields are set");
 		KLIB2_setGetterSetter(_ctx, ct);
-		CT_setUNDEF(ct, 0);
 	}
 }
+
+//static kExpr* NewExpr(CTX, ksyntax_t *syn, ktype_t ty, uintptr_t val)
+//{
+//	struct _kExpr *expr = new_W(Expr, 0);
+//	expr->syn = syn;
+//	expr->build = TEXPR_NEW;
+//	expr->ty = ty;
+//	expr->ndata = val;
+//	return (kExpr*)expr;
+//}
+
+/**
+sugar "new" ...
+
+Expr Stmt.ParseNewExpr(Token[] tls, int s, int c, int e)
+{
+	Token tkNEW = tls[s];
+	if(s + 2 < e) {
+		Token tk1 = tls[s+1];
+		Token tk2 = tls[s+2];
+		if(tk1.isTypeName() && tk2.isParenthesis()) {
+			Expr expr = newMethodCallExpr(tkNEW, tk1);
+			expr = addExprParam(expr, tk2);
+			return expr;
+		}
+	}
+	return tk.error();
+}
+
+Expr Expr.tyCheckNewExpr(Gamma gma, int ty)
+{
+	return tyCheckAsMethodCall(gma, ty);
+}
+
+KonohaSpace.addParseExpr("new", "ParseNewExpr");
+KonohaSpace.addExprTyCheck("new", "tyCheckNewExpr");
+
+static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ParseExpr(stmt, syn, tls, s, c, e);
+	assert(s == c);
+	kToken *tkNEW = tls->toks[s];
+	if(s + 2 < e) {
+		kToken *tk1 = tls->toks[s+1];
+		kToken *tk2 = tls->toks[s+2];
+		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {
+			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_("new"));
+			kExpr *expr = new_ConsExpr(_ctx, syn, 3, tkNEW, NewExpr(_ctx, syn, TK_type(tk1), 0), tk2);
+			RETURN_(kExpr_join(expr, stmt, tls, s+3, c+3, e));
+		}
+	}
+	if(!kCallParent(_ctx, sfp K_RIXPARAM)) {
+		kToken_p(tkNEW, ERR_, "syntax error");
+	}
+}
+
+**/
 
 // --------------------------------------------------------------------------
 
