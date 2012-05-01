@@ -542,11 +542,11 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 {
 	kclass_t *bct = ct;
 	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
-		DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
+		//DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
 		if(ct->searchSimilarClassNULL == NULL) {
 			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 			newct->cflag |= kClass_Private;
-			newct->cstruct_size *= 2;
+			newct->cstruct_size = ct->cstruct_size * 2;
 			KINITv(newct->cparam, ct->cparam);
 			KINITv(newct->methods, ct->methods);
 			((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;

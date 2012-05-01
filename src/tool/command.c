@@ -410,36 +410,31 @@ static int konoha_test(const char *testname)
 	char correct_file[256];
 	char result_file[256];
 	snprintf(script_file, 256, "%s", testname);
-	snprintf(correct_file, 256, "%s.correct", script_file);
+	snprintf(correct_file, 256, "%s.proof", script_file);
 	snprintf(result_file, 256, "%s.tested", script_file);
 	FILE *fp = fopen(correct_file, "r");
 	if (fp == NULL) {
-		stdlog = fopen(correct_file, "w");   // create correct file
+		fprintf(stdout, "no proof file: %s\n", testname);
 	}
-	else {
-		stdlog = fopen(result_file, "w");
-	}
+	stdlog = fopen(result_file, "w");
 	((struct _klib2*)konoha->lib2)->Kreport  = Kreport;
 	((struct _klib2*)konoha->lib2)->Kreportf = Kreportf;
 	konoha_load(konoha, script_file);
+	fprintf(stdlog, "Q.E.D.\n");   // Q.E.D.
 	fclose(stdlog);
 	if(fp != NULL) {
 		FILE *fp2 = fopen(result_file, "r");
 		ret = check_result(fp, fp2);
-		if(ret != 0) {
-//			fprintf(stdout, "[FAILED]: %s\n", testname);
-		}
-		else {
+		if(ret == 0) {
 			fprintf(stdout, "[PASS]: %s\n", testname);
 		}
 		fclose(fp);
 		fclose(fp2);
 	}
 	else {
-		fprintf(stdout, "created correct file: %s\n", correct_file);
+		ret = 1;
 	}
 	konoha_close(konoha);
-	MODGC_check_malloced_size();
 	return ret;
 }
 

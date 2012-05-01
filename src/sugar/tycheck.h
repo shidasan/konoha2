@@ -60,7 +60,6 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 
 // --------------------------------------------------------------------------
 
-
 static kline_t Expr_uline(CTX, kExpr *expr, int pe)
 {
 	kToken *tk = expr->tk;
