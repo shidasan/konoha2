@@ -84,7 +84,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("||"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
 		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
-		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr \"=\" $expr",},
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr", /*.rule = "$expr \"=\" $expr"*/},
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
