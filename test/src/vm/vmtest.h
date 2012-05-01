@@ -24,8 +24,8 @@
 
 #include "konoha2/konoha2.h"
 #include "konoha2/gc.h"
-#include "../../vm/vm.h"
-#include "../../vm/minivm.h"
+#include "../../../src/vm/vm.h"
+#include "../../../src/vm/minivm.h"
 
 #ifndef VMTEST_H_
 #define VMTEST_H_
