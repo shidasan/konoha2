@@ -1098,7 +1098,7 @@ static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	(void)_ctx;(void)espidx;
-	DBG_P("undefined asm syntax='%s'", stmt->syn->token);
+	DBG_P("undefined asm syntax='%s'", T_kw(stmt->syn->kw));
 }
 
 static void BLOCK_asm2(CTX, kBlock *bk, int i, int espidx)
