@@ -1,3 +1,5 @@
+//written by takeo onoda
+
 void global_setup() {
 	K.importPackage("konoha.string");
 }
@@ -32,9 +34,9 @@ void test_String_endsWith() {
 	System.p("foobar".endsWith("bar"));
 	System.p("foobar".endsWith("foobar"));
 	System.p("foobar".endsWith("hogefoobar"));
-	System.p("aあiいuう".startsWith("uう"));
-	System.p("aあiいuう".startsWith("aあiいuう"));
-	System.p("aあiいuう".startsWith("hogeaあiいuう"));
+	System.p("aあiいuう".endsWith("uう"));
+	System.p("aあiいuう".endsWith("aあiいuう"));
+	System.p("aあiいuう".endsWith("hogeaあiいuう"));
 	System.p("".endsWith(""));
 	System.p("".endsWith(null));
 }
