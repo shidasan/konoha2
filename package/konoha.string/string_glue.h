@@ -53,24 +53,24 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 #endif
 }
 
-// The function below must not use for ASCII string (nakata)
-static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen)
-{
-	DBG_ASSERT(!S_isASCII(s));
-	const unsigned char *start = (unsigned char *)S_text(s);
-	const unsigned char *itr = start;
-	size_t i;
-	for(i = 0; i < moff; i++) {
-		itr += utf8len(itr[0]);
-	}
-	start = itr;
-	for(i = 0; i < mlen; i++) {
-		itr += utf8len(itr[0]);
-	}
-	size_t len = itr - start;
-	s = new_kString((const char *)start, len, SPOL_UTF8);
-	return s;
-}
+/* // The function below must not use for ASCII string (nakata) */
+/* static kString *new_MultiByteSubString(CTX, kString *s, size_t moff, size_t mlen) */
+/* { */
+/* 	DBG_ASSERT(!S_isASCII(s)); */
+/* 	const unsigned char *start = (unsigned char *)S_text(s); */
+/* 	const unsigned char *itr = start; */
+/* 	size_t i; */
+/* 	for(i = 0; i < moff; i++) { */
+/* 		itr += utf8len(itr[0]); */
+/* 	} */
+/* 	start = itr; */
+/* 	for(i = 0; i < mlen; i++) { */
+/* 		itr += utf8len(itr[0]); */
+/* 	} */
+/* 	size_t len = itr - start; */
+/* 	s = new_kString((const char *)start, len, SPOL_UTF8); */
+/* 	return s; */
+/* } */
 
 /* ------------------------------------------------------------------------ */
 //## @Const method Boolean String.equals(String s);
@@ -203,23 +203,85 @@ static KMETHOD String_opHAS(CTX, ksfp_t *sfp _RIX)
 /* ------------------------------------------------------------------------ */
 //## @Const method String String.get(Int n);
 
+static kString *S_mget(CTX, kString *s, size_t n)
+{
+	DBG_ASSERT(!S_isASCII(s));
+	kString *ret = NULL;
+	const unsigned char *text = (const unsigned char *)S_text(s);
+	const unsigned char *start = text;
+	size_t size = S_size(s);
+	size_t i;
+
+	if ((int)n < 0) {
+		return ret;
+	}
+	for (i = 0; i < n; i++) {
+		start += utf8len(start[0]);
+	}
+	if (start < text + size) {
+		const unsigned char *end = start;
+		end += utf8len(end[0]);
+		ret = new_kString((const char *)start, end - start, SPOL_POOL|SPOL_UTF8);
+	}
+	return ret;
+}
+
 static KMETHOD String_get(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s = sfp[0].s;
+	size_t n = (size_t)sfp[1].ivalue;
 	if (S_isASCII(s)) {
-		size_t n = check_index(_ctx, sfp[1].ivalue, S_size(s), sfp[K_RTNIDX].uline);
+		n = check_index(_ctx, sfp[1].ivalue, S_size(s), sfp[K_RTNIDX].uline);
 		s = new_kString(S_text(s) + n, 1, SPOL_POOL|SPOL_ASCII);
 	}
-	else { // FIXME NOW DEFINITELY IMMIDEATELY
-		size_t mlen = text_mlen(S_text(s), S_size(s));
-		size_t moff = check_index(_ctx, sfp[1].ivalue, mlen, sfp[K_RTNIDX].uline);
-		s = new_MultiByteSubString(_ctx, s, moff, 1); // TODO:
+	else {
+		s = S_mget(_ctx, s, n);
+		if (unlikely(s == NULL)) {
+			kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: out of array index %ld", (int)n);
+		}
 	}
 	RETURN_(s);
 }
 
 /* ------------------------------------------------------------------------ */
 //## @Const method String String.substring(Int offset, Int length);
+
+static kString *S_msubstring(CTX, kString *s, size_t moff, size_t mlen)
+{
+	DBG_ASSERT(!S_isASCII(s));
+	const unsigned char *text = (const unsigned char *)S_text(s);
+	const unsigned char *start = text;
+	size_t size = S_size(s);
+	kString *ret = NULL;
+	size_t i;
+
+	if ((int)moff < 0) {
+		return ret;
+	}
+	for (i = 0; i < moff; i++) {
+		start += utf8len(start[0]);
+	}
+	if (start < text + size) {
+		const unsigned char *end = NULL;
+		if ((int)mlen <= 0) {
+			end = text + size;
+			ret = new_kString((const char *)start, end - start, SPOL_POOL|SPOL_UTF8);
+		}
+		else {
+			end = start;
+			for (i = 0; i < mlen; i++) {
+				end += utf8len(end[0]);
+			}
+			if (end < text + size) {
+				ret = new_kString((const char *)start, end - start, SPOL_POOL|SPOL_UTF8);
+			}
+			else {
+				ret = new_kString((const char *)start, text + size - start, SPOL_POOL|SPOL_UTF8);
+			}
+		}
+	}
+	return ret;
+}
 
 static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 {
@@ -237,13 +299,10 @@ static KMETHOD String_substring(CTX, ksfp_t *sfp _RIX)
 		ret = new_kString(new_text, new_size, SPOL_ASCII|SPOL_POOL); // FIXME SPOL
 	}
 	else {
-		size_t mlen = text_mlen(S_text(s0), S_size(s0));
-		size_t moff = check_index(_ctx, offset,  mlen, sfp[K_RTNIDX].uline);
-		size_t new_size = mlen - moff;
-		if (length != 0 && length < new_size) {
-			new_size = length;
+		ret = S_msubstring(_ctx, s0, offset, length);
+		if (unlikely(ret == NULL)) {
+			kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: out of array index %ld", (int)offset);
 		}
-		ret = new_MultiByteSubString(_ctx, s0, moff, new_size); // TODO!!
 	}
 	RETURN_(ret);
 }
