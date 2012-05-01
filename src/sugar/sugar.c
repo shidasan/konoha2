@@ -218,6 +218,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	l->KS_loadMethodData = KonohaSpace_loadMethodData;
 	l->KS_loadConstData  = KonohaSpace_loadConstData;
 	l->KS_getMethodNULL  = KonohaSpace_getMethodNULL;
+	l->KS_syncMethods    = KonohaSpace_syncMethods;
 
 	KINITv(base->keywordList, new_(Array, 32));
 	base->keywordMapNN = kmap_init(0);

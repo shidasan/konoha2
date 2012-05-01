@@ -1090,6 +1090,7 @@ struct _klib2 {
 	kMethod*   (*KS_getMethodNULL)(CTX, const struct _kKonohaSpace *ks, kcid_t cid, kmethodn_t mn);
 	kMethod*   (*KS_getGetterMethodNULL)(CTX, const struct _kKonohaSpace *, ktype_t cid, ksymbol_t sym);
 
+	void       (*KS_syncMethods)(CTX);
 	void       (*KCodeGen)(CTX, kMethod *, const struct _kBlock *);
 	void       (*Kreport)(CTX, int level, const char *msg);
 	void       (*Kreportf)(CTX, int level, kline_t, const char *fmt, ...);
@@ -1197,6 +1198,7 @@ struct _klib2 {
 #define kKonohaSpace_loadMethodData(NS, DEF)       (KPI)->KS_loadMethodData(_ctx, NS, DEF)
 #define kKonohaSpace_loadConstData(KS, DEF, UL)    (KPI)->KS_loadConstData(_ctx, KS, (const char**)&(DEF), UL)
 #define kKonohaSpace_getMethodNULL(KS, CID, MN)    (KPI)->KS_getMethodNULL(_ctx, KS, CID, MN)
+#define kKonohaSpace_syncMethods()    (KPI)->KS_syncMethods(_ctx)
 
 typedef struct {
 	const char *key;

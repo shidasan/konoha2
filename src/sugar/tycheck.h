@@ -1037,6 +1037,22 @@ static KMETHOD Fmethod_lazyCompilation(CTX, ksfp_t *sfp _RIX)
 	mtd->fcall_1(_ctx, sfp K_RIXPARAM); // call again;
 }
 
+static void KonohaSpace_syncMethods(CTX)
+{
+	size_t i, size = kArray_size(ctxsugar->definedMethods);
+	for (i = 0; i < size; ++i) {
+		kMethod *mtd = ctxsugar->definedMethods->methods[i];
+		if (mtd->fcall_1 == Fmethod_lazyCompilation) {
+			kString *text = mtd->tcode->text;
+			kline_t uline = mtd->tcode->uline;
+			kKonohaSpace *ns = mtd->lazyns;
+			Method_compile(_ctx, mtd, text, uline, ns);
+			assert(mtd->fcall_1 != Fmethod_lazyCompilation);
+		}
+	}
+	kArray_clear(ctxsugar->definedMethods, 0);
+}
+
 static void Stmt_setMethodFunc(CTX, kStmt *stmt, kKonohaSpace *ks, kMethod *mtd)
 {
 	kToken *tcode = kStmt_token(stmt, KW_block, NULL);
