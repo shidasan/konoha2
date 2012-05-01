@@ -65,7 +65,6 @@ typedef struct klogconf_t {
 
 #define KEYVALUE_u(K,V)    LOG_u, (K), ((uintptr_t)V)
 #define KEYVALUE_s(K,V)    LOG_s, (K), (V)
-#define LOG_STRERROR()       LOG_s, "errstr", strerror(errno)
 
 #define LOG_ScriptFault          KEYVALUE_u("uline", sfp[K_RTNIDX].uline)
 

@@ -73,33 +73,33 @@ static const char *getSystemEncoding(void)
 #endif
 }
 
-static void *kdlsym(CTX, void* handler, const char* symbol, const char *another, int isTest)
-{
-//    const char *func = __FUNCTION__,
-	const char *emsg = NULL;
-    void *p = NULL;
-#if defined(K_USING_WINDOWS_)
-//    func = "GetProcAddress";
-    p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
-    if(p == NULL && another != NULL) {
-        symbol = another;
-        p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
-    }
-    return p;
-#elif defined(K_USING_POSIX_)
-//    func = "dlsym";
-    p = dlsym(handler, symbol);
-    if(p == NULL && another != NULL) {
-        symbol = another;
-        p = dlsym(handler, symbol);
-    }
-    if(p == NULL) {
-        emsg = dlerror();
-    }
-#else
-#endif
-    return p;
-}
+//static void *kdlsym(CTX, void* handler, const char* symbol, const char *another, int isTest)
+//{
+////    const char *func = __FUNCTION__,
+////	const char *emsg = NULL;
+//    void *p = NULL;
+//#if defined(K_USING_WINDOWS_)
+////    func = "GetProcAddress";
+//    p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
+//    if(p == NULL && another != NULL) {
+//        symbol = another;
+//        p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
+//    }
+//    return p;
+//#elif defined(K_USING_POSIX_)
+////    func = "dlsym";
+//    p = dlsym(handler, symbol);
+//    if(p == NULL && another != NULL) {
+//        symbol = another;
+//        p = dlsym(handler, symbol);
+//    }
+//    if(p == NULL) {
+//        emsg = dlerror();
+//    }
+//#else
+//#endif
+//    return p;
+//}
 
 /* ------------------------------------------------------------------------ */
 
@@ -108,7 +108,6 @@ static void klinkDynamicIconv(CTX)
 	void *handler = dlopen("libiconv" K_OSDLLEXT, RTLD_LAZY);
 	void *f = NULL;
 	if (handler != NULL) {
-//		f = kdlsym(_ctx, handler, "iconv_open", "libiconv_open", 1/*isTest*/);
 		f = dlsym(handler, "iconv_open");
 		if (f != NULL) {
 			kmodiconv->ficonv_open = (ficonv_open)f;
@@ -207,49 +206,91 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 	KFREE(baseh, sizeof(kmodiconv_t));
 }
 
-static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	kToken *tk = expr->tk;
-	RETURN_(kExpr_setConstValue(expr, TY_Bytes, tk->text));
-}
+//static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
+//{
+//	USING_SUGAR;
+//	VAR_ExprTyCheck(expr, syn, gma, reqty);
+//	kToken *tk = expr->tk;
+//	RETURN_(kExpr_setConstValue(expr, TY_Bytes, tk->text));
+//}
 
 /* ------------------------------------------------------------------------ */
-#include <errno.h>
+#include <errno.h> // include this because of E2BIG
+#define CONV_BUFSIZE 4096 // 4K
+#define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
 static kBytes* convTo(CTX, kBytes *fromBa, const char *toCoding)
 {
 	kiconv_t conv;
-	kBytes *toBa = _new_Bytes(_ctx, BYTES_BUFSIZE);
-	const char *fromBuf = fromBa->text;
-	const char ** inbuf = &fromBuf;
-	char *toBuf = toBa->buf;
-	char ** outbuf = &toBuf;
-	size_t fromLen, toLen;
-	fromLen = strlen(fromBuf)+ 1;
-	toLen = toBa->bytesize;
+	char convBuf[CONV_BUFSIZE] = {'\0'};
+	const char *presentPtrFrom = fromBa->text;
+	const char ** inbuf = &presentPtrFrom;
+	char *presentPtrTo = convBuf;
+	char ** outbuf = &presentPtrTo;
+	size_t inBytesLeft, outBytesLeft;
+	inBytesLeft = strlen(presentPtrFrom)+ 1;
+	outBytesLeft = CONV_BUFSIZE;
 	DBG_P("to='%s', from='%s'", toCoding, getSystemEncoding());
 	conv = kmodiconv->ficonv_open(toCoding, getSystemEncoding());
 	if (conv == (kiconv_t)(-1)) {
 		ktrace(_UserInputFault,
 				KEYVALUE_s("@","iconv_open"),
 				KEYVALUE_s("from", "UTF-8"),
-				KEYVALUE_s("to", toCoding),
-				LOG_STRERROR()
+				KEYVALUE_s("to", toCoding)
 		);
 		return (kBytes*)(CT_Bytes->nulvalNUL);
 	}
-	toLen = kmodiconv->ficonv(conv, inbuf, &fromLen, outbuf, &toLen);
-	if (toLen == (size_t)-1) {
-		ktrace(_DataFault,
-			KEYVALUE_s("@","iconv"),
-			KEYVALUE_s("from", "UTF-8"),
-			KEYVALUE_s("to", toCoding),
-			LOG_STRERROR()
-		);
-		return (kBytes*)(CT_Bytes->nulvalNUL);
+	size_t iconv_ret = -1;
+	char *storeBuf = NULL;
+	char *presentStoreBufPtr = NULL;
+	size_t presentStoreBufSize = CONV_BUFSIZE;
+	size_t processedSize = 0;
+	size_t processedTotalSize = processedSize;
+	while (iconv_ret == -1 && inBytesLeft > 0) {
+		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
+		if (iconv_ret == -1 && errno == E2BIG) {
+			// alloc storeBuf
+			DBG_ASSERT(presentStoreBufSize < MAX_STORE_BUFSIZE);
+			processedSize = CONV_BUFSIZE - outBytesLeft;
+			processedTotalSize += processedSize;
+			if (storeBuf == NULL) {
+				// malloc first buf
+				storeBuf = (char*)KCALLOC(presentStoreBufSize, 1);
+				memcpy(storeBuf, convBuf, processedSize);
+				presentStoreBufPtr = storeBuf + processedSize;
+				presentStoreBufSize += CONV_BUFSIZE; // FIXME: liner increase.
+			} else {
+				//realloc
+				size_t oldStoreBufSize = presentStoreBufSize;
+				char *newStoreBuf = (char*)KCALLOC(presentStoreBufSize, 1);
+				memcpy(newStoreBuf, storeBuf, presentStoreBufSize);
+				KFREE(storeBuf, oldStoreBufSize);
+				storeBuf = newStoreBuf;
+				presentStoreBufPtr = storeBuf + processedTotalSize;
+				memcpy(presentStoreBufPtr, convBuf, processedSize);
+				presentStoreBufPtr += processedSize;
+			}
+			// reset convbuf
+			presentPtrTo = convBuf;
+//			outbuf = &presentPtrTo;
+			memset(convBuf, '\0', CONV_BUFSIZE);
+			outBytesLeft = CONV_BUFSIZE;
+		} else {
+			ktrace(_DataFault,
+				KEYVALUE_s("@","iconv"),
+				KEYVALUE_s("from", "UTF-8"),
+				KEYVALUE_s("to", toCoding)
+			);
+			return (kBytes*)(CT_Bytes->nulvalNUL);
+		}
 	}
 	kmodiconv->ficonv_close(conv);
+	kBytes *toBa = _new_Bytes(_ctx, processedTotalSize);
+	if (storeBuf == NULL) {
+		memcpy(toBa->buf, convBuf, processedTotalSize);
+	} else {
+		// flush last convert
+		memcpy(toBa->buf, storeBuf, processedTotalSize);
+	}
 	return toBa;
 }
 //## @Const method Bytes Bytes.encode(String fmt);
