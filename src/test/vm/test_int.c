@@ -25,7 +25,7 @@
 
 #include "vmtest.h"
 #define DEFINE_KMETHOD
-#include "../../src/konoha/methods.h"
+#include "../../konoha/methods.h"
 
 static void test_add0(konoha_t konoha, kopl_t opbuf[], kopl_t *pc)
 {
