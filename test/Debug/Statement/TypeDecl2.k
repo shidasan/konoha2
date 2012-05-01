@@ -1,8 +1,10 @@
 // written by kimio kuramitsu
-int f(int n) {
+int f() {
 	int a = 1, b = 2;
+	assert(a == 1);
+	assert(a == 2);
 	return a+b;
 }
-System.p(f(0));
 
+assert(f() == 3);
 

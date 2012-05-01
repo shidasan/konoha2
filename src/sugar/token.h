@@ -155,7 +155,7 @@ static int parseOP(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod
 	while((ch = tenv->source[pos++]) != 0) {
 		if(isalnum(ch)) break;
 		switch(ch) {
-			case '<': case '>': case '@': case '$':
+			case '<': case '>': case '@': case '$': case '#':
 			case '+': case '-': case '*': case '%': case '/':
 			case '=': case '&': case '?': case ':': case '.':
 			case '^': case '!': case '~': case '|':
