@@ -1,10 +1,6 @@
 //written by takeo onoda
 
-void global_setup() {
-	K.importPackage("konoha.string");
-}
-
-global_setup();
+K.importPackage("konoha.string");
 
 void test_String_equals() {
 	System.p("hoge" == "h");
