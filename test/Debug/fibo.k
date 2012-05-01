@@ -5,5 +5,5 @@ int fibo(int n) {
         return fibo(n-1) + fibo(n-2);
     }
 }
-System.p(fibo(10));
+
 assert(fibo(10) == 55);

@@ -318,33 +318,33 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		if(rule->tt == TK_CODE) {
 			if(rule->kw != tk->kw) {
 				if(optional) return s;
-				kToken_p(tk, ERR_, "%s needs '%s'", stmt->syn->token, T_kw(rule->kw));
+				kToken_p(tk, ERR_, "%s needs '%s'", T_statement(stmt->syn->kw), T_kw(rule->kw));
 				return -1;
 			}
 			ti++;
 			continue;
 		}
 		else if(rule->tt == TK_METANAME) {
+			ksyntax_t *syn = SYN_(kStmt_ks(stmt), rule->kw);
+			if(syn == NULL || syn->ParseStmt == NULL) {
+				kToken_p(tk, ERR_, "unknown syntax pattern: %s", T_kw(rule->kw));
+				return -1;
+			}
 			int c = e;
 			if(ri + 1 < rule_size && rules->toks[ri+1]->tt == TK_CODE) {
 				c = lookAheadKeyword(tls, ti+1, e, rules->toks[ri+1]);
 				if(c == -1) {
 					if(optional) return s;
-					kToken_p(tk, ERR_, "%s needs '%s'", stmt->syn->token, T_kw(rule->kw));
+					kToken_p(tk, ERR_, "%s needs '%s'", T_statement(stmt->syn->kw), T_kw(rule->kw));
 					return -1;
 				}
 				ri++;
-			}
-			ksyntax_t *syn = SYN_(kStmt_ks(stmt), rule->kw);
-			if(syn == NULL || syn->ParseStmt == NULL) {
-				kToken_p(tk, ERR_, "unknown sugar parser: %s", T_kw(rule->kw));
-				return -1;
 			}
 			int next = ParseStmt(_ctx, syn, stmt, rule->nameid, tls, ti, c);
 //			DBG_P("matched '%s' nameid='%s', next=%d=>%d", Pkeyword(rule->kw), Pkeyword(rule->nameid), ti, next);
 			if(next == -1) {
 				if(optional) return s;
-				kToken_p(tk, ERR_, "'%s' must be syntax %s", kToken_s(tk), T_kw(rule->kw));
+				kToken_p(tk, ERR_, "%s needs syntax pattern %s, not %s ..", T_statement(stmt->syn->kw), T_kw(rule->kw), kToken_s(tk));
 				return -1;
 			}
 			////XXX Why???
@@ -364,13 +364,18 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 				if(next == -1) return -1;
 				ti++;
 			}
+			else {
+				if(optional) return s;
+				kToken_p(tk, ERR_, "%s needs '%c'", T_statement(stmt->syn->kw), rule->topch);
+				return -1;
+			}
 		}
 	}
 	if(!optional) {
 		for(; ri < kArray_size(rules); ri++) {
 			kToken *rule = rules->toks[ri];
 			if(rule->tt != AST_OPTIONAL) {
-				SUGAR_P(ERR_, uline, -1, "%s needs %s syntax", stmt->syn->token, T_kw(rule->kw));
+				SUGAR_P(ERR_, uline, -1, "%s needs syntax pattern: %s", T_statement(stmt->syn->kw), T_kw(rule->kw));
 				return -1;
 			}
 		}
@@ -771,6 +776,7 @@ static KMETHOD ParseStmt_block(CTX, ksfp_t *sfp _RIX)
 static KMETHOD ParseStmt_toks(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ParseStmt(stmt, syn, name, tls, s, e);
+	DBG_P("s=%d, e=%d", s, e);
 	if(s < e) {
 		kArray *a = new_(TokenArray, (intptr_t)(e - s));
 		while(s < e) {
@@ -778,6 +784,7 @@ static KMETHOD ParseStmt_toks(CTX, ksfp_t *sfp _RIX)
 			s++;
 		}
 		kObject_setObject(stmt, name, a);
+		dumpTokenArray(_ctx, 0, a, 0, kArray_size(a));
 		RETURNi_(e);
 	}
 	RETURNi_(-1);

@@ -112,7 +112,7 @@ static KMETHOD UndefinedExprTyCheck(CTX, ksfp_t *sfp _RIX)
 		expr = kExpr_p(expr, ERR_, "undefined token type checker: '%s'", kToken_s(tk));
 	}
 	else {
-		expr = kExpr_p(expr, ERR_, "undefined operator type checker: %s",  syn->token);
+		expr = kExpr_p(expr, ERR_, "undefined operator type checker: %s",  T_kw(syn->kw));
 	}
 	RETURN_(expr);
 }
@@ -200,8 +200,6 @@ static kExpr *new_BoxingExpr(CTX, kExpr *expr, ktype_t reqty)
 	}
 }
 
-static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma, ktype_t reqty);
-
 static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t reqty, int pol)
 {
 	kExpr *texpr = expr;
@@ -231,8 +229,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t reqty, int pol
 		kMethod *mtd = kKonohaSpace_getCastMethodNULL(gma->genv->ks, texpr->ty, reqty);
 		DBG_P("finding cast %s => %s: %p", T_ty(texpr->ty), T_ty(reqty), mtd);
 		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, TPOL_COERCION))) {
-			kExpr *exprCAST = new_ConsExpr(_ctx, SYN_CALL, 2, mtd, texpr);
-			return Expr_tyCheckCallParams(_ctx, exprCAST, mtd, gma, reqty);
+			return new_TypedMethodCall(_ctx, reqty, mtd, gma, 1, texpr);
 		}
 		return Expr_p(_ctx, texpr, ERR_, "%s is requested, not %s", T_ty(reqty), T_ty(texpr->ty));
 	}
@@ -723,8 +720,8 @@ static kbool_t Expr_declLocalVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty,
 static KMETHOD UndefinedStmtTyCheck(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, syn, gma);
-	const char *msg = kGamma_isTOPLEVEL(gma) ? "at the top level" : "inside method";
-	SUGAR_P(ERR_, stmt->uline, -1, "'%s' is not available %s", syn->token, msg);
+	const char *location = kGamma_isTOPLEVEL(gma) ? "at the top level" : "inside the function";
+	SUGAR_P(ERR_, stmt->uline, -1, "%s is not available %s", T_statement(syn->kw), location);
 	RETURNb_(0);
 }
 
@@ -738,7 +735,7 @@ static kbool_t Stmt_TyCheck(CTX, ksyntax_t *syn, kStmt *stmt, kGamma *gma)
 	KSETv(lsfp[K_CALLDELTA+1].o, (kObject*)gma);
 	KCALL(lsfp, 0, mtd, 1, knull(CT_Boolean));
 	END_LOCAL();
-	DBG_P("syn='%s', result=%d", T_kw(syn->kw), lsfp[0].bvalue);
+	//DBG_P("syn='%s', result=%d", T_kw(syn->kw), lsfp[0].bvalue);
 	return lsfp[0].bvalue;
 }
 
@@ -897,7 +894,7 @@ static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 
 static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
 {
-	kExpr *expr = new_ConsExpr(_ctx, SYN_CALL, 0);
+	kExpr *expr = new_ConsExpr(_ctx, SYN_(kStmt_ks(stmt), KW_CALL), 0);
 	int i;
 	va_list ap;
 	va_start(ap, n);
@@ -1233,7 +1230,7 @@ static kstatus_t Method_runEval(CTX, kMethod *mtd, ktype_t rtype)
 
 static ktype_t Stmt_checkReturnType(CTX, kStmt *stmt)
 {
-	if(stmt->syn == SYN_EXPR) {
+	if(stmt->syn->kw == KW_EXPR) {
 		kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
 		DBG_ASSERT(expr != NULL);
 		if(expr->ty != TY_void) {
@@ -1252,7 +1249,7 @@ static ktype_t Gamma_evalMethod(CTX, kGamma *gma, kBlock *bk, kMethod *mtd)
 		_ctx->stack->evalty = TY_void;
 		return K_CONTINUE;
 	}
-	if(stmt->syn == SYN_ERR) return K_FAILED;
+	if(stmt->syn->kw == KW_ERR) return K_FAILED;
 	ktype_t rtype = Stmt_checkReturnType(_ctx, stmt);
 	kMethod_genCode(mtd, bk);
 	return Method_runEval(_ctx, mtd, rtype);

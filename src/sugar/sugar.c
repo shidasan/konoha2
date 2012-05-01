@@ -38,9 +38,6 @@ extern "C" {
 // global variable
 int verbose_sugar = 0;
 
-static const char *Pkeyword_(CTX, keyword_t kw);
-//static kString *Skw_(CTX, keyword_t kw);
-
 #include "perror.h"
 #include "struct.h"
 #include "token.h"
@@ -84,7 +81,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("||"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
 		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
-		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr", /*.rule = "$expr \"=\" $expr"*/},
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr", },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
@@ -283,18 +280,9 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
 	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
 	syn->ty = TY_void; // it's not cool, but necessary
-	base->syn_err  = SYN_(base->rootks, KW_ERR);
-	base->syn_expr = SYN_(base->rootks, KW_EXPR);
+//	base->syn_err  = SYN_(base->rootks, KW_ERR);
+//	base->syn_expr = SYN_(base->rootks, KW_EXPR);
 	EXPORT_SUGAR(base);
-}
-
-static const char *Pkeyword_(CTX, keyword_t kw)
-{
-	kArray *a = kmodsugar->keywordList;
-	if(kw < kArray_size(a)) {
-		return S_text(a->strings[kw]);
-	}
-	return "unknown keyword";
 }
 
 static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def)

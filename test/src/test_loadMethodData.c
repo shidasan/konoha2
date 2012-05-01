@@ -42,7 +42,7 @@
 #define FF_(X)   (kMethod_##X)
 #endif
 
-static const char *Pkeyword_(CTX, keyword_t kw) { return NULL; }
+static const char *T_kw_(CTX, keyword_t kw) { return NULL; }
 static kString *Skw_(CTX, keyword_t kw) { return NULL; }
 
 static const char *MethodData[] = {

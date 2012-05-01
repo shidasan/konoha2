@@ -332,20 +332,32 @@ static kbool_t sugar_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+static kbool_t isSubKeyword(CTX, kArray *tls, int s, int e)
+{
+	if(s+1 < e && tls->toks[s+1]->tt == TK_TEXT) {
+		const char *t = S_text(tls->toks[s+1]->text);
+		if(isalpha(t[0]) || t[0] < 0 /* multibytes char */) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static struct _ksyntax *toks_syntax(CTX, kKonohaSpace *ks, kArray *tls)
 {
 	USING_SUGAR;
 	int s = 0, e = kArray_size(tls);
 	if(s < e) {
-		char buf[256];
 		if(tls->toks[s]->tt == TK_TEXT) {
-			if(s+1 < e && tls->toks[s+1]->tt == TK_TEXT) {
+			keyword_t kw;
+			if(isSubKeyword(_ctx, tls, s, e)) {
+				char buf[256];
 				snprintf(buf, sizeof(buf), "%s %s", S_text(tls->toks[s]->text), S_text(tls->toks[s+1]->text));
+				kw = SUGAR keyword(_ctx, (const char*)buf, strlen(buf), FN_NEWID);
 			}
 			else {
-				snprintf(buf, sizeof(buf), "%s", S_text(tls->toks[s]->text));
+				kw = SUGAR keyword(_ctx, S_text(tls->toks[s]->text), S_size(tls->toks[s]->text), FN_NEWID);
 			}
-			keyword_t kw = SUGAR keyword(_ctx, (const char*)buf, strlen(buf), FN_NEWID);
 			return (struct _ksyntax*)NEWSYN_(ks, kw);
 		}
 	}
@@ -362,7 +374,7 @@ static KMETHOD StmtTyCheck_sugar(CTX, ksfp_t *sfp _RIX)
 		struct _ksyntax *syn = toks_syntax(_ctx, gma->genv->ks, tls);
 		if(syn != NULL) {
 			if(syn->syntaxRule != NULL) {
-				kreportf(CRIT_, sfp[K_RTNIDX].uline, "overriding syntax rule");
+				SUGAR p(_ctx, WARN_, stmt->uline, -1, "overriding syntax rule: %s", T_kw(syn->kw));
 				kArray_clear(syn->syntaxRule, 0);
 			}
 			else {
@@ -375,9 +387,10 @@ static KMETHOD StmtTyCheck_sugar(CTX, ksfp_t *sfp _RIX)
 				kArray_clear(syn->syntaxRule, 0);
 			}
 		}
+		kStmt_done(stmt);
 	}
 	if(r == 0) {
-		kreportf(CRIT_, sfp[K_RTNIDX].uline, "invalid sugar syntax");
+		SUGAR p(_ctx, CRIT_, stmt->uline, -1, "invalid sugar syntax");
 	}
 	RETURNb_(r);
 }

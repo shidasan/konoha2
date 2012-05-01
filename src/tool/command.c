@@ -192,7 +192,6 @@ static int checkstmt(const char *t, size_t len)
 {
 	size_t i = 0;
 	int ch, quote = 0, nest = 0;
-	int hasDOC = 0;
 	L_NORMAL:
 	for(; i < len; i++) {
 		ch = t[i];
@@ -204,12 +203,8 @@ static int checkstmt(const char *t, size_t len)
 				goto L_TQUOTE;
 			}
 		}
-		if(ch == '\n') hasDOC = 0;
-		if(ch == '#') {
-			hasDOC = 1;
-		}
 	}
-	return (hasDOC == 1) ? 1 : nest;
+	return nest;
 	L_TQUOTE:
 	DBG_ASSERT(i > 0);
 	for(; i < len; i++) {

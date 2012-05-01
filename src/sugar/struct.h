@@ -140,6 +140,18 @@ static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, 
 	}
 }
 
+#define T_statement(kw)  T_statement_(_ctx, kw)
+static const char* T_statement_(CTX, ksymbol_t kw)
+{
+	static char buf[80];  // this is not good, but this is very rare case.
+	const char *statement = T_kw(kw), *postfix = " statement";
+	if(kw == KW_COLON) { statement = "expression"; postfix = ""; }
+	if(kw == KW_COLON) { statement = "variable"; postfix = " declaration"; }
+	if(kw == KW_void) { statement =  "function"; postfix = " declaration"; }
+	snprintf(buf, sizeof(buf), "%s%s", statement, postfix);
+	return (const char*)buf;
+}
+
 static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *syndef)
 {
 	knh_Fmethod pParseStmt = NULL, pParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
@@ -147,7 +159,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 	while(syndef->name != NULL) {
 		keyword_t kw = keyword(_ctx, syndef->name, strlen(syndef->name), FN_NEWID);
 		struct _ksyntax* syn = (struct _ksyntax*)KonohaSpace_syntax(_ctx, ks, kw, 1);
-		syn->token = syndef->name;
+		//syn->token = syndef->name;
 		syn->flag  |= syndef->flag;
 		if(syndef->type != 0) {
 			syn->ty = syndef->type;
@@ -248,7 +260,7 @@ static void KonohaSpace_loadConstData(CTX, kKonohaSpace *ks, const char **d, kli
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(d[0] != NULL) {
-		DBG_P("key='%s'", d[0]);
+		//DBG_P("key='%s'", d[0]);
 		kv.key = kuname(d[0], strlen(d[0]), SPOL_TEXT|SPOL_ASCII, _NEWID) | FN_BOXED;
 		kv.ty  = (ktype_t)(uintptr_t)d[1];
 		if(kv.ty == TY_TEXT) {
@@ -611,7 +623,9 @@ static void Expr_reftrace(CTX, kObject *o)
 static struct _kExpr* Expr_vadd(CTX, struct _kExpr *expr, int n, va_list ap)
 {
 	int i;
-	KSETv(expr->cons, new_(Array, 8));
+	if(!IS_Array(expr->cons)) {
+		KSETv(expr->cons, new_(Array, 8));
+	}
 	for(i = 0; i < n; i++) {
 		kObject *v =  (kObject*)va_arg(ap, kObject*);
 		if(v == NULL || v == (kObject*)K_NULLEXPR) return (struct _kExpr*)K_NULLEXPR;
@@ -644,6 +658,24 @@ static kExpr* new_TypedConsExpr(CTX, int build, ktype_t ty, int n, ...)
 	expr->ty = ty;
 	return (kExpr*)expr;
 }
+
+static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma, ktype_t reqty);
+
+static kExpr* new_TypedMethodCall(CTX, ktype_t ty, kMethod *mtd, kGamma *gma, int n, ...)
+{
+	va_list ap;
+	va_start(ap, n);
+	struct _kExpr *expr = new_W(Expr, NULL);
+	PUSH_GCSTACK(expr);
+	KSETv(expr->cons, new_(Array, 8));
+	kArray_add(expr->cons, mtd);
+	expr = Expr_vadd(_ctx, expr, n, ap);
+	va_end(ap);
+	expr->build = TEXPR_CALL;
+	expr->ty = ty;
+	return Expr_tyCheckCallParams(_ctx, (kExpr*)expr, mtd, gma, ty);
+}
+
 
 static kExpr* Expr_add(CTX, kExpr *expr, kExpr *e)
 {
@@ -782,7 +814,7 @@ static void dumpStmt(CTX, kStmt *stmt)
 			DUMP_P("STMT (DONE)\n");
 		}
 		else {
-			DUMP_P("STMT %s {\n", stmt->syn->token);
+			DUMP_P("STMT %s {\n", T_statement(stmt->syn->kw));
 			kObject_protoEach(stmt, NULL, _dumpToken);
 			DUMP_P("\n}\n");
 		}
@@ -790,20 +822,10 @@ static void dumpStmt(CTX, kStmt *stmt)
 	}
 }
 
-#define kStmt_setsyn(STMT, S)  Stmt_setsyn(_ctx, STMT, S)
-#define kStmt_done(STMT)       Stmt_setsyn(_ctx, STMT, NULL)
-static void Stmt_setsyn(CTX, kStmt *stmt, ksyntax_t *syn)
-{
-	if(syn == NULL && stmt->syn != NULL) {
-		DBG_P("DONE: STMT='%s'", stmt->syn->token);
-	}
-	((struct _kStmt*)stmt)->syn = syn;
-}
-
 #define kStmt_toERR(STMT, ENO)  Stmt_toERR(_ctx, STMT, ENO)
 static void Stmt_toERR(CTX, kStmt *stmt, int eno)
 {
-	((struct _kStmt*)stmt)->syn = SYN_ERR;
+	((struct _kStmt*)stmt)->syn = SYN_(kStmt_ks(stmt), KW_ERR);
 	((struct _kStmt*)stmt)->build = TSTMT_ERR;
 	kObject_setObject(stmt, KW_ERR, kstrerror(eno));
 }

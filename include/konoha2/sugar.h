@@ -39,7 +39,7 @@ extern "C" {
 //#define TEXT(T)  T, (sizeof(T)-1)
 
 typedef ksymbol_t keyword_t;
-#define T_kw(X)   Pkeyword_(_ctx, X)
+#define T_kw(X)   T_kw_(_ctx, X)
 #define Skeyword(X)   Skw_(_ctx, X)
 
 //#define FLAG_METHOD_LAZYCOMPILE (0)
@@ -127,7 +127,7 @@ struct _kpackage {
 
 typedef const struct _ksyntax ksyntax_t;
 struct _ksyntax {
-	const char *token;
+//	const char *token;
 	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
 	kMethod  *ParseStmt;
@@ -373,6 +373,7 @@ struct _kGamma {
 
 #define KW_ERR     0
 #define KW_EXPR    1
+#define       KW_CALL  1/*FIXME*/
 #define KW_SYMBOL  2
 #define KW_name    2
 #define KW_USYMBOL 3
@@ -451,8 +452,8 @@ typedef struct {
 	kMethod *UndefinedStmtTyCheck;
 	kMethod *UndefinedExprTyCheck;
 
-	ksyntax_t *syn_err;
-	ksyntax_t *syn_expr;
+//	ksyntax_t *syn_err;
+//	ksyntax_t *syn_expr;
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
@@ -577,6 +578,13 @@ typedef struct {
 
 ///* ------------------------------------------------------------------------ */
 
+static inline const char *T_kw_(CTX, keyword_t kw)
+{
+	kArray *a = kmodsugar->keywordList;
+	DBG_ASSERT(kw < kArray_size(a));
+	return S_text(a->strings[kw]);
+}
+
 // In future, typeof operator is introduced
 #define TK_isType(TK)    ((TK)->kw == KW_TYPE)
 #define TK_type(TK)       (TK)->ty
@@ -585,6 +593,16 @@ typedef struct {
 static inline kKonohaSpace *Stmt_ks(CTX, kStmt *stmt)
 {
 	return stmt->parentNULL->ks;
+}
+
+#define kStmt_setsyn(STMT, S)  Stmt_setsyn(_ctx, STMT, S)
+#define kStmt_done(STMT)       Stmt_setsyn(_ctx, STMT, NULL)
+static inline void Stmt_setsyn(CTX, kStmt *stmt, ksyntax_t *syn)
+{
+//	if(syn == NULL && stmt->syn != NULL) {
+//		DBG_P("DONE: STMT='%s'", T_kw(syn->kw));
+//	}
+	((struct _kStmt*)stmt)->syn = syn;
 }
 
 #define kStmt_typed(STMT, T)  Stmt_typed(STMT, TSTMT_##T)

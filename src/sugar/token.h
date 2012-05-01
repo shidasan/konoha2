@@ -129,7 +129,7 @@ static int parseMSYMBOL(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kM
 	int ch, pos = tok_start;
 	const char *ts = tenv->source;
 	while((ch = ts[pos++]) != 0) {
-		if(!(ch < 127)) break;
+		if(!(ch < 0)) break;
 	}
 	if(IS_NOTNULL(tk)) {
 		KSETv(tk->text, new_kString(ts + tok_start, (pos-1)-tok_start, SPOL_UTF8));
@@ -186,6 +186,7 @@ static int parseLINE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMeth
 static int parseCOMMENT(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
 	int ch, prev = 0, level = 1, pos = tok_start + 2;
+	/*@#nnnn is line number */
 	if(tenv->source[pos] == '@' && tenv->source[pos+1] == '#' && isdigit(tenv->source[pos+2])) {
 		tenv->uline >>= (sizeof(kshort_t)*8);
 		tenv->uline = (tenv->uline<<(sizeof(kshort_t)*8))  | (kshort_t)strtoll(tenv->source + pos + 2, NULL, 10);
@@ -494,7 +495,7 @@ static kbool_t makeSyntaxRule(CTX, kArray *tls, int s, int e, kArray *adst)
 	int i;
 	char nbuf[80];
 	ksymbol_t nameid = 0;
-	//dumpTokenArray(_ctx, 0, tls, s, e);
+	dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		struct _kToken *tk = tls->Wtoks[i];
 		if(tk->tt == TK_INDENT) continue;
