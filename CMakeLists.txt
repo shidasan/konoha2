@@ -169,7 +169,7 @@ endif(TEST_COVERAGE)
 
 # for .k script test
 set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
-file(GLOB test_files ${CMAKE_CURRENT_SOURCE_DIR}/test/*/*.k)
+file(GLOB_RECURSE test_files ${CMAKE_CURRENT_SOURCE_DIR}/test/*.k)
 foreach(f ${test_files})
 	string(REPLACE // / f ${f})
 	string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR}/test/ "" test_name ${f})
