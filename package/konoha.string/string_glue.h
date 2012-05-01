@@ -130,13 +130,15 @@ static KMETHOD String_indexOf(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s0 = sfp[0].s, *s1 = sfp[1].s;
 	long loc = -1;
-	const char *t0 = S_text(s0);
-	const char *t1 =  S_text(s1);
-	char *p = strstr(t0, t1);
-	if (p != NULL) {
-		loc = p - t0;
-		if (!S_isASCII(s0)) {
-			loc = text_mlen(t0, (size_t)loc);
+	if (IS_NOTNULL(s1)) {
+		const char *t0 = S_text(s0);
+		const char *t1 =  S_text(s1);
+		char *p = strstr(t0, t1);
+		if (p != NULL) {
+			loc = p - t0;
+			if (!S_isASCII(s0)) {
+				loc = text_mlen(t0, (size_t)loc);
+			}
 		}
 	}
 	RETURNi_(loc);
