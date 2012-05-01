@@ -1222,7 +1222,7 @@ typedef enum {
 	WARN_,
 	INFO_,
 	DEBUG_,
-	PRINT_,
+	PRINT_
 } kreportlevel_t;
 
 //#define CRIT_  0
