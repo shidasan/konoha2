@@ -28,6 +28,8 @@
 #include <konoha2/logger.h>
 #include <konoha2/bytes.h>
 
+#include <langinfo.h>
+#include <locale.h>
 #ifdef K_USING_ICONV
 #include <iconv.h>
 typedef iconv_t kiconv_t;
@@ -61,6 +63,7 @@ static const char *getSystemEncoding(void)
 {
 	//TODO!! check LC_CTYPE compatibility with iconv
 	char *enc = getenv("LC_CTYPE");
+	//DBG_P("%s", nl_langinfo(CODESET));
 	if(enc != NULL) {
 		return enc;
 	}
@@ -129,6 +132,7 @@ static void klinkDynamicIconv(CTX)
 // Bytes_init
 static void Bytes_init(CTX, kObject *o, void *conf)
 {
+	asm("int3");
 	struct _kBytes *ba = (struct _kBytes*)o;
 	ba->byteptr = NULL;
 	ba->bytesize = (size_t)conf;
@@ -145,16 +149,6 @@ static void Bytes_free(CTX, kObject *o)
 		ba->byteptr = NULL;
 		ba->bytesize = 0;
 	}
-}
-
-static kBytes* _new_Bytes(CTX, size_t capacity)
-{
-	kclass_t *ct = CT_Bytes;
-	kBytes *ba = (kBytes*)new_kObject(ct, NULL);
-	if(capacity > 0) {
-		Bytes_init(_ctx, (kObject*)ba, (void*)capacity);
-	}
-	return ba;
 }
 
 static void Bytes_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
@@ -214,26 +208,34 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 //}
 
 /* ------------------------------------------------------------------------ */
+
 #include <errno.h> // include this because of E2BIG
+#include <string.h>
 #define CONV_BUFSIZE 4096 // 4K
 #define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
-static kBytes* convTo(CTX, kBytes *fromBa, const char *toCoding)
+static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
 	char convBuf[CONV_BUFSIZE] = {'\0'};
 	const char *presentPtrFrom = fromBa->text;
+	DBG_P("presentPtrFrom='%s'", presentPtrFrom);
 	const char ** inbuf = &presentPtrFrom;
 	char *presentPtrTo = convBuf;
 	char ** outbuf = &presentPtrTo;
 	size_t inBytesLeft, outBytesLeft;
-	inBytesLeft = strlen(presentPtrFrom)+ 1;
+	inBytesLeft = strlen(presentPtrFrom) + 1;
 	outBytesLeft = CONV_BUFSIZE;
-	DBG_P("to='%s', from='%s'", toCoding, getSystemEncoding());
-	conv = kmodiconv->ficonv_open(toCoding, getSystemEncoding());
+	DBG_P("from='%s' inBytesLeft=%d, to='%s' outBytesLeft=%d", fromCoding, inBytesLeft, toCoding, outBytesLeft);
+//	const char *fromCoding = getSystemEncoding();
+	if (strncmp(fromCoding, toCoding, strlen(fromCoding)) == 0) {
+		// no need to convert.
+		return fromBa;
+	}
+	conv = kmodiconv->ficonv_open(toCoding, fromCoding);
 	if (conv == (kiconv_t)(-1)) {
 		ktrace(_UserInputFault,
 				KEYVALUE_s("@","iconv_open"),
-				KEYVALUE_s("from", "UTF-8"),
+				KEYVALUE_s("from", fromCoding),
 				KEYVALUE_s("to", toCoding)
 		);
 		return (kBytes*)(CT_Bytes->nulvalNUL);
@@ -244,9 +246,11 @@ static kBytes* convTo(CTX, kBytes *fromBa, const char *toCoding)
 	size_t presentStoreBufSize = CONV_BUFSIZE;
 	size_t processedSize = 0;
 	size_t processedTotalSize = processedSize;
-	while (iconv_ret == -1 && inBytesLeft > 0) {
+	DBG_P("start converting!");
+	while (inBytesLeft > 0 && iconv_ret == -1) {
 		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
 		if (iconv_ret == -1 && errno == E2BIG) {
+			DBG_P("too big");
 			// alloc storeBuf
 			DBG_ASSERT(presentStoreBufSize < MAX_STORE_BUFSIZE);
 			processedSize = CONV_BUFSIZE - outBytesLeft;
@@ -273,63 +277,75 @@ static kBytes* convTo(CTX, kBytes *fromBa, const char *toCoding)
 //			outbuf = &presentPtrTo;
 			memset(convBuf, '\0', CONV_BUFSIZE);
 			outBytesLeft = CONV_BUFSIZE;
-		} else {
+		} else if (iconv_ret == -1) {
 			ktrace(_DataFault,
 				KEYVALUE_s("@","iconv"),
 				KEYVALUE_s("from", "UTF-8"),
-				KEYVALUE_s("to", toCoding)
+				KEYVALUE_s("to", toCoding),
+				KEYVALUE_s("error", strerror(errno))
 			);
 			return (kBytes*)(CT_Bytes->nulvalNUL);
+		} else {
+			// finished. iconv_ret != -1
+			processedSize = CONV_BUFSIZE - outBytesLeft;
+			processedTotalSize += processedSize;
 		}
-	}
+	} /* end of converting loop */
 	kmodiconv->ficonv_close(conv);
-	kBytes *toBa = _new_Bytes(_ctx, processedTotalSize);
+	DBG_P("processedTotalSize=%d, inbuf='%s', outbuf='%s'", processedTotalSize, *inbuf, *outbuf);
+	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize);
 	if (storeBuf == NULL) {
 		memcpy(toBa->buf, convBuf, processedTotalSize);
+		DBG_P("NO BUF EXCEED, copied=%d, '%s'", processedTotalSize, toBa->buf);
 	} else {
 		// flush last convert
 		memcpy(toBa->buf, storeBuf, processedTotalSize);
+		DBG_P("BUF EXCEED, copied=%d, %s", processedTotalSize, convBuf);
+
 	}
 	return toBa;
 }
-//## @Const method Bytes Bytes.encode(String fmt);
-static KMETHOD Bytes_encode(CTX, ksfp_t *sfp _RIX)
+//## @Const method Bytes Bytes.encodeTo(String toEncoding);
+static KMETHOD Bytes_encodeTo(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* ba = sfp[0].ba;
 	kString* toCoding = sfp[1].s;
-	RETURN_(convTo(_ctx, ba, S_text(toCoding)));
+	RETURN_(convFromTo(_ctx, ba, "UTF-8", S_text(toCoding)));
 }
 
-//## @Const method String Bytes.decode(String fmt);
-static KMETHOD Bytes_decode(CTX, ksfp_t *sfp _RIX)
+//## @Const method String Bytes.decodeFrom(String fromEncoding);
+static KMETHOD Bytes_decodeFrom(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes* fromBa = sfp[0].ba;
-	kString* toCoding = sfp[1].s;
+	kString*fromCoding = sfp[1].s;
 	kBytes *toBa;
-	if (toCoding == (kString*)(CT_String->nulvalNUL)) {
-		toBa = convTo(_ctx, fromBa, getSystemEncoding());
+	if (fromCoding != (kString*)(CT_String->nulvalNUL)) {
+		toBa = convFromTo(_ctx, fromBa, S_text(fromCoding), "UTF-8");
 	} else {
-		toBa = convTo(_ctx, fromBa, S_text(toCoding));
+		// conv from default encoding
+		toBa = convFromTo(_ctx, fromBa, getSystemEncoding(), "UTF-8");
 	}
-	RETURN_(new_kString(S_text(toBa), S_size(toBa), 0));
+	RETURN_(new_kString(toBa->buf,toBa->bytesize, 0));
 }
 
 //## @Const method Bytes String.toBytes();
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
-	kBytes* ba = _new_Bytes(_ctx, S_size(s));
+	kBytes* ba = (kBytes*)new_kObject(CT_Bytes, (void*)S_size(s));
 	DBG_ASSERT(ba->bytesize >= s->bytesize);
 	memcpy(ba->buf, s->utext, S_size(s) + 1);
-	DBG_P("%s", ba->buf);
 	RETURN_(ba);
 }
 
+// this method is same as Bytes.decodeFrom(defaultencoding);
 //## @Const method String Bytes.toString();
 static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes *from = sfp[0].ba;
-	kBytes *to = convTo(_ctx, from, getSystemEncoding());
+	DBG_P("given bytes='%s'", from->buf);
+	kBytes *to = convFromTo(_ctx, from, getSystemEncoding(), "UTF-8");
+	DBG_P("converted string:'%s', len=%d", S_text(to), S_size(to));
 	RETURN_(new_kString(S_text(to), S_size(to), 0));
 }
 /* ------------------------------------------------------------------------ */
@@ -361,10 +377,10 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 	intptr_t methoddata[] = {
 		//_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_to(TY_Bytes),  0,
 		//_Public|_Const|_Im, _F(Bytes_toString), TY_String, TY_Bytes,  MN_to(TY_String), 0,
-		_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_("toBytes"),   0,
-		_Public|_Const|_Im, _F(Bytes_toString), TY_String, TY_Bytes,  MN_("toString"),  0,
-		_Public|_Const,     _F(Bytes_encode),   TY_Bytes,  TY_Bytes,  MN_("encode"),    1, TY_String, FN_encoding,
-		_Public|_Const,     _F(Bytes_decode),   TY_String, TY_Bytes,  MN_("decode"),    1, TY_String, FN_encoding,
+		_Public|_Im|_Coercion, _F(String_toBytes), TY_Bytes,  TY_String, MN_("toBytes"),   0,
+		_Public|_Const|_Im|_Coercion, _F(Bytes_toString), TY_String, TY_Bytes,  MN_("toString"),  0,
+		_Public|_Const,     _F(Bytes_encodeTo),   TY_Bytes,  TY_Bytes,  MN_("encodeTo"),    1, TY_String, FN_encoding,
+		_Public|_Const,     _F(Bytes_decodeFrom),   TY_String, TY_Bytes,  MN_("decodeFrom"),    1, TY_String, FN_encoding,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, methoddata);
