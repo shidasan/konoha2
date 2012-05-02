@@ -174,7 +174,7 @@ struct _kKonohaSpace {
 	struct kmap_t   *syntaxMapNN;
 	//
 	void         *gluehdr;
-	kObject      *script;
+	kObject      *scrNUL;
 	kcid_t static_cid;   kcid_t function_cid;
 	kArray*       methods;  // default K_EMPTYARRAY
 	karray_t      cl;
@@ -324,7 +324,6 @@ typedef struct gmabuf_t {
 	kflag_t  flag;    kflag_t  cflag;
 
 	kKonohaSpace     *ks;
-	kObject          *scrNUL;
 
 	kcid_t            this_cid;
 	kcid_t            static_cid;
@@ -471,6 +470,7 @@ typedef struct {
 	kbool_t    (*Stmt_tyCheckExpr)(CTX, kStmt*, ksymbol_t, kGamma *, ktype_t, int);
 	kbool_t    (*Block_tyCheckAll)(CTX, kBlock *, kGamma *);
 	kExpr *    (*Expr_tyCheckCallParams)(CTX, kExpr *, kMethod *, kGamma *, ktype_t);
+	kExpr *    (*new_TypedMethodCall)(CTX, ktype_t ty, kMethod *mtd, kGamma *gma, int n, ...);
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 
 	void       (*p)(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...);
@@ -482,6 +482,7 @@ typedef struct {
 	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int);
 	kExpr*     (*Stmt_newExpr2)(CTX, kStmt *stmt, kArray *tls, int s, int e);
 	kExpr *    (*Stmt_addExprParams)(CTX, kStmt *, kExpr *, kArray *tls, int s, int e);
+
 
 } kmodsugar_t;
 
@@ -500,6 +501,7 @@ typedef struct {
 	base->Stmt_tyCheckExpr    = Stmt_tyCheckExpr;\
 	base->Block_tyCheckAll    = Block_tyCheckAll;\
 	base->Expr_tyCheckCallParams = Expr_tyCheckCallParams;\
+	base->new_TypedMethodCall = new_TypedMethodCall;\
 	base->Stmt_toExprCall     = Stmt_toExprCall;\
 	/*syntax*/\
 	base->KonohaSpace_defineSyntax  = KonohaSpace_defineSyntax;\
@@ -515,6 +517,7 @@ typedef struct {
 	kmodlocal_t h;
 	kArray *tokens;
 	karray_t cwb;
+	int     err_count;
 	kArray *errors;
 	kBlock *singleBlock;
 	kGamma *gma;

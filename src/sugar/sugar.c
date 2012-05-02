@@ -81,7 +81,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("||"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
 		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
-		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, .rule = "$expr", },
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, /*.rule = "var: $expr \"=\" $expr",*/ },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
@@ -156,6 +156,7 @@ static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 		base->h.reftrace = ctxsugar_reftrace;
 		base->h.free     = ctxsugar_free;
 		KINITv(base->tokens, new_(TokenArray, K_PAGESIZE/sizeof(void*)));
+		base->err_count = 0;
 		KINITv(base->errors, new_(StringArray, 8));
 		KINITv(base->lvarlst, new_(ExprArray, K_PAGESIZE/sizeof(void*)));
 		KINITv(base->definedMethods, new_(MethodArray, 8));
@@ -639,6 +640,7 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 #define _Static kMethod_Static
 #define _F(F)   (intptr_t)(F)
 #define TY_KonohaSpace  (CT_KonohaSpace)->cid
+KDEFINE_PACKAGE* konoha_init(void);
 
 void MODSUGAR_loadMethod(CTX)
 {
@@ -654,9 +656,16 @@ void MODSUGAR_loadMethod(CTX)
 	KDEFINE_INT_CONST IntData[] = {
 		{"INT_MAX", TY_Int, KINT_MAX},
 		{"INT_MIN", TY_Int, KINT_MIN},
-		{}
+		{NULL},
 	};
 	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
+#ifdef WITH_ECLIPSE
+	KDEFINE_PACKAGE *d = konoha_init();
+	d->initPackage(_ctx, kmodsugar->rootks, 0, NULL, 0);
+	d->setupPackage(_ctx, kmodsugar->rootks, 0);
+	d->initKonohaSpace(_ctx, kmodsugar->rootks, 0);
+	d->setupKonohaSpace(_ctx, kmodsugar->rootks, 0);
+#endif
 }
 
 #ifdef __cplusplus

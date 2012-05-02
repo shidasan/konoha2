@@ -34,6 +34,7 @@ extern "C" {
 static const char* T_emsg(CTX, int pe)
 {
 	switch(pe) {
+		case CRIT_:
 		case ERR_: return "(error)";
 		case WARN_: return "(warning)";
 		case INFO_:
@@ -73,6 +74,9 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 		msg = kwb_top(&wb, 1);
 		kString *emsg = new_kString(msg, strlen(msg), 0);
 		kArray_add(base->errors, emsg);
+		if(pe == ERR_ || pe == CRIT_) {
+			base->err_count ++;
+		}
 		kreport(pe, S_text(emsg));
 	}
 }

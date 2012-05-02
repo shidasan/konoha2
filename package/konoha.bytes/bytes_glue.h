@@ -89,7 +89,7 @@ static kbool_t klinkDynamicIconv(CTX, kmodiconv_t *base, kline_t pline)
 			base->ficonv_open = (ficonv_open)f;
 			base->ficonv = (ficonv)dlsym(handler, "iconv");
 			base->ficonv_close = (ficonv_close)dlsym(handler, "iconv_close");
-			KNH_ASSERT(kmodiconv->ficonv != NULL && kmodiconv->ficonv_close != NULL);
+			KNH_ASSERT(base->ficonv != NULL && base->ficonv_close != NULL);
 			return true;
 		}
 	}
@@ -335,7 +335,7 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		.init    = Bytes_init,
 		.p       = Bytes_p,
 	};
-	base->cBytes = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBytes, pline);
+	base->cBytes = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &defBytes, pline);
 	int FN_encoding = FN_("encoding");
 	intptr_t methoddata[] = {
 		//_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_to(TY_Bytes),  0,

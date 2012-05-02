@@ -312,41 +312,6 @@ static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kToken_p(expr->tk, ERR_, "float is unsupported: %s", kToken_s(expr->tk)));
 }
 
-//static kExpr* Expr_tyCheckVariable(CTX, struct _kExpr *expr, kGamma *gma)
-//{
-//	DBG_ASSERT(expr->ty == TY_var);
-//	kToken *tk = expr->tk;
-//	ksymbol_t fn = ksymbol(S_text(tk->text), S_size(tk->text), FN_NONAME, SYMPOL_NAME);
-//	int i;
-//	gmabuf_t *genv = gma->genv;
-//	for(i = genv->l.varsize - 1; i >= 0; i--) {
-//		//DBG_P("searching index=%d, ty=%s fn=%s", i, T_ty(genv->l.vars[i].ty), T_fn(genv->l.vars[i].fn));
-//		if(genv->l.vars[i].fn == fn) {
-//			expr->build = TEXPR_LOCAL_;
-//			expr->ty = genv->l.vars[i].ty;
-//			expr->index = i;
-//			kArray_add(genv->lvarlst, expr);
-//			return expr;
-//		}
-//	}
-//	for(i = genv->f.varsize - 1; i >= 0; i--) {
-//		if(genv->f.vars[i].fn == fn) {
-//			expr->build = TEXPR_LOCAL;
-//			expr->ty = genv->f.vars[i].ty;
-//			expr->index = i;
-//			return expr;
-//		}
-//	}
-////	if(_ctx->lib2->KS_getGetterMethodNULL != NULL) {
-////		kMethod *mtd = kKonohaSpace_getGetterMethodNULL(genv->ks, genv->this_cid, fn);
-////		if(mtd != NULL) {
-////
-////		}
-////	}
-//	return kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk));
-//}
-
-
 static kMethod* KS_getGetterMethodNULL(CTX, kKonohaSpace *ks, ktype_t cid, ksymbol_t fn)
 {
 	kMethod *mtd = kKonohaSpace_getMethodNULL(ks, cid, MN_toGETTER(fn));
@@ -391,11 +356,11 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 			return new_GetterExpr(_ctx, mtd, new_Variable(LOCAL, genv->this_cid, 0, gma));
 		}
 	}
-	if(genv->scrNUL != NULL) {
-		ktype_t cid = O_cid(genv->scrNUL);
+	if(genv->ks->scrNUL != NULL) {
+		ktype_t cid = O_cid(genv->ks->scrNUL);
 		kMethod *mtd = KS_getGetterMethodNULL(_ctx, genv->ks, cid, fn);
 		if(mtd != NULL) {
-			return new_GetterExpr(_ctx, mtd, new_ConstValue(cid, genv->scrNUL));
+			return new_GetterExpr(_ctx, mtd, new_ConstValue(cid, genv->ks->scrNUL));
 		}
 
 	}
@@ -682,7 +647,7 @@ static KMETHOD ExprTyCheck_or(CTX, ksfp_t *sfp _RIX)
 static KMETHOD StmtTyCheck_EXPR(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, syn, gma);
-	kbool_t r = Stmt_tyCheckExpr(_ctx, stmt, 1, gma, TY_var, TPOL_ALLOWVOID);
+	kbool_t r = Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_var, TPOL_ALLOWVOID);
 	kStmt_typed(stmt, EXPR);
 	RETURNb_(r);
 }

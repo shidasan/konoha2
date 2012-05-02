@@ -38,37 +38,6 @@ extern "C" {
 #include "klibexec.h"
 #include "datatype.h"
 
-/* ------------------------------------------------------------------------ */
-
-//static void MODLOG_init(CTX, kcontext_t *ctx)
-//{
-//#ifdef K_USING_LOGPOOL
-//	logpool_syslog_param pa = {8, 1024};
-//	ctx->logger = (struct klogger_t *) ltrace_open((ltrace_t*)_ctx->parent->logger, &pa);
-//	if(_ctx == NULL) {
-//		const char *ptrace = getenv("DEOS_TRACE");
-//		if(ptrace == NULL) {
-//			ptrace = "$(setenv DEOS_TRACE )";
-//		}
-//		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
-//				LOG_s("parent", ptrace), LOG_u("ppid", getppid()));
-//	}
-//	else {
-//		ltrace_record(_ctx->logger, LOG_NOTICE, "konoha:newtrace",
-//				LOG_s("parent", _ctx->trace));
-//	}
-//#else
-//	ctx->logger = NULL;
-//#endif
-//}
-//
-//static void MODLOG_free(CTX, kcontext_t *ctx)
-//{
-//#ifdef K_USING_LOGPOOL
-//	ltrace_close((ltrace_t*)_ctx->logger);
-//#endif
-//}
-
 // -------------------------------------------------------------------------
 // util stack
 
@@ -135,7 +104,7 @@ static void KRUNTIME_free(CTX, kcontext_t *ctx)
 	KFREE(_ctx->stack, sizeof(kstack_t));
 }
 
-static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
+static kbool_t KRUNTIME_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 {
 	if(_ctx->modshare[x] == NULL) {
 		_ctx->modshare[x] = d;
@@ -149,15 +118,6 @@ static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 
 /* ------------------------------------------------------------------------ */
 /* [kcontext] */
-
-// module
-// share local
-//       logger
-// mem   mem
-// share stack
-// modshare[128] mod[128]
-// keval
-
 
 static kcontext_t* new_context(const kcontext_t *_ctx, size_t stacksize)
 {

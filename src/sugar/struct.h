@@ -64,7 +64,7 @@ static void KonohaSpace_reftrace(CTX, kObject *o)
 		}
 	}
 	KREFTRACEn(ks->parentNULL);
-	KREFTRACEn(ks->script);
+	KREFTRACEn(ks->scrNUL);
 	KREFTRACEv(ks->methods);
 	END_REFTRACE();
 }
@@ -628,7 +628,9 @@ static struct _kExpr* Expr_vadd(CTX, struct _kExpr *expr, int n, va_list ap)
 	}
 	for(i = 0; i < n; i++) {
 		kObject *v =  (kObject*)va_arg(ap, kObject*);
-		if(v == NULL || v == (kObject*)K_NULLEXPR) return (struct _kExpr*)K_NULLEXPR;
+		if(v == NULL || v == (kObject*)K_NULLEXPR) {
+			return (struct _kExpr*)K_NULLEXPR;
+		}
 		kArray_add(expr->cons, v);
 	}
 	return expr;

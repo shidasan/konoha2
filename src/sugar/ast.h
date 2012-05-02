@@ -349,7 +349,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			}
 			////XXX Why???
 			//optional = 0;
-			ti = next;
+			ti = (c == e) ? next : c + 1;
 			continue;
 		}
 		else if(rule->tt == AST_OPTIONAL) {

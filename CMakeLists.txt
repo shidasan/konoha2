@@ -90,22 +90,24 @@ set(VM
 
 set(PACKAGES
 	sugar
-	jit
 	konoha.string
 	konoha.float
+##	konoha.int
 	konoha.llvm.util
 	konoha.llvm
-	konoha.pcre
-	konoha.io
-	konoha.while
-	konoha.class
-	konoha.assignment
+##	konoha.pcre
+##	konoha.io
+##	konoha.while
+##	konoha.class
+##	konoha.assignment
 	konoha.i
-	konoha.assert
+##	konoha.assert
 	posix.process
-	konoha.socket
+##	konoha.socket
 	konoha.rope
-	konoha.mpi
+##	konoha.mpi
+	konoha.bytes
+	jit
 	python
 )
 

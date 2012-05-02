@@ -21,6 +21,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
+
 #include <konoha2/konoha2.h>
 #include "konoha2/gc.h"
 #include <dlfcn.h>
@@ -491,7 +492,6 @@ int main(int argc, char *argv[])
 		konoha_startup(konoha, startup_script);
 	}
 	if(scriptidx < argc) {
-//		konoha_setargument(konoha, argc - scriptidx, argv + scriptidx);
 		ret = konoha_load(konoha, argv[scriptidx]);
 	}
 	if(ret && interactive_flag) {

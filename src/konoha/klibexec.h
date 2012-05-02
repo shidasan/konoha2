@@ -728,7 +728,7 @@ static void Kraise(CTX, int param)
 
 // -------------------------------------------------------------------------
 
-static kbool_t kshare_setModule(CTX, int x, kmodshare_t *d, kline_t pline);
+static kbool_t KRUNTIME_setModule(CTX, int x, kmodshare_t *d, kline_t pline);
 
 static void klib2_init(struct _klib2 *l)
 {
@@ -766,5 +766,5 @@ static void klib2_init(struct _klib2 *l)
 	l->Kreportf      = Kreportf;
 	l->Kp            = Kdbg_p;
 	l->Kraise        = Kraise;
-	l->KsetModule    = kshare_setModule;
+	l->KsetModule    = KRUNTIME_setModule;
 }
