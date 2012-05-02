@@ -25,16 +25,16 @@
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
 
-#include"assignment_glue.h"
+//#include"assignment_glue.h"
 
 KDEFINE_PACKAGE* assignment_init(void)
 {
 	static KDEFINE_PACKAGE d = {
 		KPACKNAME("assignment", "1.0"),
-		.initPackage = assignment_initPackage,
-		.setupPackage = assignment_setupPackage,
-		.initKonohaSpace = assignment_initKonohaSpace,
-		.setupKonohaSpace = assignment_setupKonohaSpace,
+//		.initPackage = assignment_initPackage,
+//		.setupPackage = assignment_setupPackage,
+//		.initKonohaSpace = assignment_initKonohaSpace,
+//		.setupKonohaSpace = assignment_setupKonohaSpace,
 	};
 	return &d;
 }

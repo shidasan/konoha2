@@ -28,6 +28,8 @@
 #include <konoha2/logger.h>
 #include <konoha2/bytes.h>
 
+#include <errno.h> // include this because of E2BIG
+#include <string.h>
 #include <langinfo.h>
 #include <locale.h>
 #ifdef K_USING_ICONV
@@ -44,7 +46,7 @@ typedef int    (*ficonv_close)(kiconv_t);
 typedef struct {
     kmodshare_t h;
     kclass_t     *cBytes;
-    void*        (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
+    kbool_t      (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
     const char*  fmt;
     const char*  locale;
     kiconv_t     (*ficonv_open)(const char *, const char*);
@@ -76,37 +78,8 @@ static const char *getSystemEncoding(void)
 #endif
 }
 
-//static void *kdlsym(CTX, void* handler, const char* symbol, const char *another, int isTest)
-//{
-////    const char *func = __FUNCTION__,
-////	const char *emsg = NULL;
-//    void *p = NULL;
-//#if defined(K_USING_WINDOWS_)
-////    func = "GetProcAddress";
-//    p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
-//    if(p == NULL && another != NULL) {
-//        symbol = another;
-//        p = GetProcAddress((HMODULE)handler, (LPCSTR)symbol);
-//    }
-//    return p;
-//#elif defined(K_USING_POSIX_)
-////    func = "dlsym";
-//    p = dlsym(handler, symbol);
-//    if(p == NULL && another != NULL) {
-//        symbol = another;
-//        p = dlsym(handler, symbol);
-//    }
-//    if(p == NULL) {
-//        emsg = dlerror();
-//    }
-//#else
-//#endif
-//    return p;
-//}
 
-/* ------------------------------------------------------------------------ */
-
-static void klinkDynamicIconv(CTX)
+static kbool_t klinkDynamicIconv(CTX, kline_t pline)
 {
 	void *handler = dlopen("libiconv" K_OSDLLEXT, RTLD_LAZY);
 	void *f = NULL;
@@ -117,12 +90,11 @@ static void klinkDynamicIconv(CTX)
 			kmodiconv->ficonv = (ficonv)dlsym(handler, "iconv");
 			kmodiconv->ficonv_close = (ficonv_close)dlsym(handler, "iconv_close");
 			KNH_ASSERT(kmodiconv->ficonv != NULL && kmodiconv->ficonv_close != NULL);
-			return ; // OK
+			return true;
 		}
-	} else {
-		//TODO: need to insert function for kmodiconv
-		DBG_P("cannot find libiconv");
 	}
+	kreportf(WARN_, pline, "cannot find libiconv");
+	return false;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -198,20 +170,13 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 	KFREE(baseh, sizeof(kmodiconv_t));
 }
 
-//static KMETHOD ExprTyCheck_BYTES(CTX, ksfp_t *sfp _RIX)
-//{
-//	USING_SUGAR;
-//	VAR_ExprTyCheck(expr, syn, gma, reqty);
-//	kToken *tk = expr->tk;
-//	RETURN_(kExpr_setConstValue(expr, TY_Bytes, tk->text));
-//}
-
 /* ------------------------------------------------------------------------ */
 
-#include <errno.h> // include this because of E2BIG
-#include <string.h>
 #define CONV_BUFSIZE 4096 // 4K
 #define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
+
+// rewrite with kwb_t
+
 static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
@@ -331,9 +296,8 @@ static KMETHOD Bytes_decodeFrom(CTX, ksfp_t *sfp _RIX)
 static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
-	kBytes* ba = (kBytes*)new_kObject(CT_Bytes, (void*)S_size(s));
-	DBG_ASSERT(ba->bytesize >= s->bytesize);
-	memcpy(ba->buf, s->utext, S_size(s) + 1);
+	kBytes* ba = (kBytes*)new_kObject(CT_Bytes, S_size(s));
+	memcpy(ba->buf, s->utext, S_size(s));
 	RETURN_(ba);
 }
 
@@ -348,6 +312,7 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 	RETURN_(new_kString(S_text(to), S_size(to), 0));
 }
 /* ------------------------------------------------------------------------ */
+
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Im       kMethod_Immutable
@@ -356,9 +321,8 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 
 static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-
 	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
-	base->h.name     = "bytes";
+	base->h.name     = 	klinkDynamicIconv(_ctx, pline) ? "iconv" : "noconv";
 	base->h.setup    = kmodiconv_setup;
 	base->h.reftrace = kmodiconv_reftrace;
 	base->h.free     = kmodiconv_free;
@@ -383,7 +347,6 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, methoddata);
-	klinkDynamicIconv(_ctx);
 	return true;
 }
 
