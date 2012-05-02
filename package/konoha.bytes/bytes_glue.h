@@ -132,7 +132,6 @@ static void klinkDynamicIconv(CTX)
 // Bytes_init
 static void Bytes_init(CTX, kObject *o, void *conf)
 {
-	asm("int3");
 	struct _kBytes *ba = (struct _kBytes*)o;
 	ba->byteptr = NULL;
 	ba->bytesize = (size_t)conf;
