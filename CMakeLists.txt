@@ -168,6 +168,7 @@ if(TEST_COVERAGE)
 endif(TEST_COVERAGE)
 
 # for .k script test
+enable_testing()
 set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
 set(PARENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE test_files ${CMAKE_CURRENT_SOURCE_DIR}/test/*.k)
@@ -204,6 +205,7 @@ macro(create_package_project _PKGNAME)
 	foreach(f ${test_files})
 		string(REPLACE // / f ${f})
 		string(REPLACE ${PARENT_SOURCE_DIR}/package/ "" test_name ${f})
+        message("add ${test_name} ${TEST_BIN} --test-with ${f}")
 		add_test(NAME ${test_name} COMMAND ${TEST_BIN} --test-with ${f})
 		set_tests_properties(${test_name} PROPERTIES TIMEOUT 10)
 	endforeach(f ${test_files})
@@ -248,9 +250,6 @@ endmacro(add_konoha_package)
 foreach(dir ${PACKAGES})
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/package/${dir})
 endforeach()
-
-# test cases
-enable_testing()
 
 add_executable(test_konoha src/tool/test_konoha.c)
 target_link_libraries(test_konoha ${ExtraLibs})
