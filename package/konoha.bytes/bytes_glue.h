@@ -79,16 +79,16 @@ static const char *getSystemEncoding(void)
 }
 
 
-static kbool_t klinkDynamicIconv(CTX, kline_t pline)
+static kbool_t klinkDynamicIconv(CTX, kmodiconv_t *base, kline_t pline)
 {
 	void *handler = dlopen("libiconv" K_OSDLLEXT, RTLD_LAZY);
 	void *f = NULL;
 	if (handler != NULL) {
 		f = dlsym(handler, "iconv_open");
 		if (f != NULL) {
-			kmodiconv->ficonv_open = (ficonv_open)f;
-			kmodiconv->ficonv = (ficonv)dlsym(handler, "iconv");
-			kmodiconv->ficonv_close = (ficonv_close)dlsym(handler, "iconv_close");
+			base->ficonv_open = (ficonv_open)f;
+			base->ficonv = (ficonv)dlsym(handler, "iconv");
+			base->ficonv_close = (ficonv_close)dlsym(handler, "iconv_close");
 			KNH_ASSERT(kmodiconv->ficonv != NULL && kmodiconv->ficonv_close != NULL);
 			return true;
 		}
@@ -322,7 +322,7 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
-	base->h.name     = 	klinkDynamicIconv(_ctx, pline) ? "iconv" : "noconv";
+	base->h.name     = 	klinkDynamicIconv(_ctx, base, pline) ? "iconv" : "noconv";
 	base->h.setup    = kmodiconv_setup;
 	base->h.reftrace = kmodiconv_reftrace;
 	base->h.free     = kmodiconv_free;
@@ -357,12 +357,12 @@ static kbool_t bytes_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
-	USING_SUGAR;
-	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("Bytes"),  .type = TY_Bytes, },
-		{ .name = NULL, },
-	};
-	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+//	USING_SUGAR;
+//	KDEFINE_SYNTAX SYNTAX[] = {
+//		{ TOKEN("Bytes"),  .type = TY_Bytes, },
+//		{ .name = NULL, },
+//	};
+//	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
