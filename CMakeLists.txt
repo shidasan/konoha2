@@ -174,7 +174,7 @@ foreach(f ${test_files})
 	string(REPLACE // / f ${f})
 	string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR}/test/ "" test_name ${f})
 	add_test(NAME ${test_name} COMMAND ${TEST_BIN} --test-with ${f})
-	set_tests_properties(${test_name} PROPERTIES TIMEOUT 1)
+	set_tests_properties(${test_name} PROPERTIES TIMEOUT 10)
 endforeach(f ${test_files})
 
 add_library(konoha2 SHARED ${RUNTIME} ${GC} ${LOGGER} ${PARSER} ${VM})
