@@ -56,13 +56,6 @@ static kbool_t int_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#define TOKEN(T)  .name = T /*, .namelen = (sizeof(T)-1)*/
-#define _EXPR     .flag = SYN_ExprFlag
-#define ParseStmt_(NAME)  .ParseStmt = ParseStmt_##NAME
-#define ParseExpr_(NAME)   .ParseExpr = ParseExpr_##NAME
-#define TopStmtTyCheck_(NAME)  .TopStmtTyCheck = StmtTyCheck_##NAME
-#define StmtTyCheck_(NAME)     .StmtTyCheck = StmtTyCheck_##NAME
-#define ExprTyCheck_(NAME)     .ExprTyCheck = ExprTyCheck_##NAME
 #define _TERM     ParseExpr_(Term)
 #define _OP       ParseExpr_(Op)
 
@@ -70,8 +63,8 @@ static kbool_t int_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-			{ TOKEN("<<"), _OP, .op2 = "opLShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
-			{ TOKEN(">>"), _OP, .op2 = "opRShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
+//			{ TOKEN("<<"), _OP, .op2 = "opLShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
+//			{ TOKEN(">>"), _OP, .op2 = "opRShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
 			{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

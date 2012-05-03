@@ -306,11 +306,11 @@ static KMETHOD ExprTyCheck_INT(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setNConstValue(expr, TY_Int, (uintptr_t)n));
 }
 
-static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	RETURN_(kToken_p(expr->tk, ERR_, "float is unsupported: %s", kToken_s(expr->tk)));
-}
+//static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
+//{
+//	VAR_ExprTyCheck(expr, syn, gma, reqty);
+//	RETURN_(kToken_p(expr->tk, ERR_, "float is unsupported: %s", kToken_s(expr->tk)));
+//}
 
 static kMethod* KS_getGetterMethodNULL(CTX, kKonohaSpace *ks, ktype_t cid, ksymbol_t fn)
 {

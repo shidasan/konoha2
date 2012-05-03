@@ -1761,7 +1761,7 @@ static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 
 static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
 {
-	DBG_P("undefined asm syntax kw='%s'", T_kw(stmt->syn->kw));
+	DBG_ABORT("undefined asm syntax kw='%s'", T_kw(stmt->syn->kw));
 }
 
 static void BLOCK_asm(CTX, kBlock *bk)
@@ -1779,6 +1779,7 @@ static void BLOCK_asm(CTX, kBlock *bk)
 		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, espidx); return;
 		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     break;
 		case TSTMT_LOOP:   LoopStmt_asm(_ctx, stmt, espidx);     break;
+
 		default: UndefinedStmt_asm(_ctx, stmt, espidx); break;
 		}
 	}

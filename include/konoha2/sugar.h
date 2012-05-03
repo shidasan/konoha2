@@ -372,7 +372,6 @@ struct _kGamma {
 
 #define KW_ERR     0
 #define KW_EXPR    1
-#define       KW_CALL  1/*FIXME*/
 #define KW_SYMBOL  2
 #define KW_name    2
 #define KW_USYMBOL 3
@@ -388,6 +387,7 @@ struct _kGamma {
 
 #define KW_block   11
 #define KW_params  12
+#define       KW_CALL  12/*FIXME*/
 #define KW_toks    13
 
 #define KW_DOT     14
@@ -481,9 +481,9 @@ typedef struct {
 	kbool_t    (*makeSyntaxRule)(CTX, kArray*, int, int, kArray *);
 	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int);
 	kExpr*     (*Stmt_newExpr2)(CTX, kStmt *stmt, kArray *tls, int s, int e);
+	kExpr*     (*new_ConsExpr)(CTX, ksyntax_t *syn, int n, ...);
 	kExpr *    (*Stmt_addExprParams)(CTX, kStmt *, kExpr *, kArray *tls, int s, int e);
-
-
+	kExpr *    (*Expr_rightJoin)(CTX, kExpr *, kStmt *, kArray *, int, int, int);
 } kmodsugar_t;
 
 #define EXPORT_SUGAR(base) \
@@ -510,7 +510,9 @@ typedef struct {
 	/*ast*/\
 	base->new_Block          = new_Block;\
 	base->Stmt_newExpr2      = Stmt_newExpr2;\
+	base->new_ConsExpr       = new_ConsExpr;\
 	base->Stmt_addExprParams = Stmt_addExprParams;\
+	base->Expr_rightJoin     = Expr_rightJoin;\
 
 
 typedef struct {

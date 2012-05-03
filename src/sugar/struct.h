@@ -694,8 +694,11 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 	if(verbose_sugar) {
 		if(nest == 0) DUMP_P("\n");
 		dumpIndent(nest);
-		if(Expr_isTerm(expr)) {
-			DUMP_P("[%d] ExprTerm: kw=%s %s", n, T_kw(expr->tk->kw), kToken_s(expr->tk));
+		if(expr == K_NULLEXPR) {
+			DUMP_P("[%d] ExprTerm: null", n);
+		}
+		else if(Expr_isTerm(expr)) {
+			DUMP_P("[%d] ExprTerm: kw='%s' %s", n, T_kw(expr->tk->kw), kToken_s(expr->tk));
 			if(expr->ty != TY_var) {
 
 			}
@@ -703,7 +706,12 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 		}
 		else {
 			int i;
-			DUMP_P("[%d] Cons: kw=%s, size=%ld", n, T_kw(expr->syn->kw), kArray_size(expr->cons));
+			if(expr->syn == NULL) {
+				DUMP_P("[%d] Cons: kw=NULL, size=%ld", n, kArray_size(expr->cons));
+			}
+			else {
+				DUMP_P("[%d] Cons: kw='%s', size=%ld", n, T_kw(expr->syn->kw), kArray_size(expr->cons));
+			}
 			if(expr->ty != TY_var) {
 
 			}

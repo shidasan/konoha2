@@ -567,11 +567,11 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 }
 
 
-#define kExpr_join(EXPR, STMT, TLS, S, C, E)    Expr_join(_ctx, EXPR, STMT, TLS, S, C, E)
+#define kExpr_rightJoin(EXPR, STMT, TLS, S, C, E)    Expr_rightJoin(_ctx, EXPR, STMT, TLS, S, C, E)
 
-static kExpr *Expr_join(CTX, kExpr *expr, kStmt *stmt, kArray *tls, int s, int c, int e)
+static kExpr *Expr_rightJoin(CTX, kExpr *expr, kStmt *stmt, kArray *tls, int s, int c, int e)
 {
-	if(c < e) {
+	if(c < e && expr != K_NULLEXPR) {
 		WARN_Ignored(_ctx, tls, c, e);
 	}
 	return expr;
@@ -586,10 +586,44 @@ static KMETHOD ParseExpr_Term(CTX, ksfp_t *sfp _RIX)
 	PUSH_GCSTACK(expr);
 	Expr_setTerm(expr, 1);
 	KSETv(expr->tk, tk);
-	RETURN_(kExpr_join(expr, stmt, tls, s+1, c+1, e));
+	RETURN_(kExpr_rightJoin(expr, stmt, tls, s+1, c+1, e));
 }
 
-#define Expr_isBinaryOp(E,KW)  (!Expr_isTerm(E) && IS_Token(E->cons->toks[0]) && E->cons->toks[0]->kw == KW)
+static KMETHOD ParseExpr_Op(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ParseExpr(stmt, syn, tls, s, c, e);
+	kToken *tk = tls->toks[c];
+	kExpr *expr, *rexpr = Stmt_newExpr2(_ctx, stmt, tls, c+1, e);
+	if(s == c) { // unary operator
+		expr = new_ConsExpr(_ctx, syn, 2, tk, rexpr);
+	}
+	else {   // binary operator
+		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
+		expr = new_ConsExpr(_ctx, syn, 3, tk, lexpr, rexpr);
+	}
+	RETURN_(expr);
+}
+
+static inline kbool_t isFieldName(kArray *tls, int c, int e)
+{
+	if(c+1 < e) {
+		kToken *tk = tls->toks[c+1];
+		return (tk->tt == TK_SYMBOL || tk->tt == TK_USYMBOL || tk->tt == TK_MSYMBOL);
+	}
+	return false;
+}
+static KMETHOD ParseExpr_DOT(CTX, ksfp_t *sfp _RIX)
+{
+	VAR_ParseExpr(stmt, syn, tls, s, c, e);
+	DBG_ASSERT(s < c);
+	if(isFieldName(tls, c, e)) {
+		kExpr *expr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
+		expr = new_ConsExpr(_ctx, syn, 2, tls->toks[c+1], expr);
+		RETURN_(kExpr_rightJoin(expr, stmt, tls, c+2, c+2, e));
+	}
+	if(c + 1 < e) c++;
+	RETURN_(kToken_p(tls->toks[c], ERR_, "needs field name: %s", kToken_s(tls->toks[c])));
+}
 
 static KMETHOD ParseExpr_PARENTHESIS(CTX, ksfp_t *sfp _RIX)
 {
@@ -597,23 +631,23 @@ static KMETHOD ParseExpr_PARENTHESIS(CTX, ksfp_t *sfp _RIX)
 	kToken *tk = tls->toks[c];
 	if(s == c) {
 		kExpr *expr = Stmt_newExpr2(_ctx, stmt, tk->sub, 0, kArray_size(tk->sub));
-		RETURN_(kExpr_join(expr, stmt, tls, s+1, c+1, e));
+		RETURN_(kExpr_rightJoin(expr, stmt, tls, s+1, c+1, e));
 	}
 	else {
 		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
-		if(Expr_isBinaryOp(lexpr, KW_DOT)) {   // ((. a f) null ()) =>  (f a ())
-			DBG_P("folding .. ");
-			KSETv(lexpr->cons->exprs[0], lexpr->cons->exprs[2]);
-			kArray_clear(lexpr->cons, 2);
-			((struct _kExpr*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_params); // CALL
+		if(lexpr == K_NULLEXPR) {
+			RETURN_(lexpr);
 		}
-		else {
+		if(lexpr->syn->kw == KW_DOT) {
+			((struct _kExpr*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_CALL); // CALL
+		}
+		else if(lexpr->syn->kw != KW_CALL) {
 			DBG_P("function calls  .. ");
 			syn = SYN_(kStmt_ks(stmt), KW_PARENTHESIS);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}
 		lexpr = Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub));
-		RETURN_(kExpr_join(lexpr, stmt, tls, s+1, c+1, e));
+		RETURN_(kExpr_rightJoin(lexpr, stmt, tls, s+1, c+1, e));
 	}
 }
 
@@ -643,22 +677,6 @@ static KMETHOD ParseExpr_DOLLAR(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	RETURN_(kToken_p(tls->toks[c], ERR_, "unknown %s parser", kToken_s(tls->toks[c])));
-}
-
-static KMETHOD ParseExpr_Op(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	kToken *tk = tls->toks[c];
-	kExpr *expr, *rexpr = Stmt_newExpr2(_ctx, stmt, tls, c+1, e);
-	if(s == c) { // unary operator
-		expr = new_ConsExpr(_ctx, syn, 2, tk, rexpr);
-	}
-	else {   // binary operator
-		DBG_P("binary");
-		kExpr *lexpr = Stmt_newExpr2(_ctx, stmt, tls, s, c);
-		expr = new_ConsExpr(_ctx, syn, 3, tk, lexpr, rexpr);
-	}
-	RETURN_(expr);
 }
 
 static KMETHOD ParseExpr_type(CTX, ksfp_t *sfp _RIX)

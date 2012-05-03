@@ -57,7 +57,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$USYMBOL"), _EXPR, ParseStmt_(cname), _TERM, ExprTyCheck_(USYMBOL),},
 		{ TOKEN("$TEXT"), _EXPR, _TERM, ExprTyCheck_(TEXT),},
 		{ TOKEN("$INT"), _EXPR, _TERM, ExprTyCheck_(INT),},
-		{ TOKEN("$FLOAT"), _EXPR, _TERM, ExprTyCheck_(FLOAT),},
+		{ TOKEN("$FLOAT"), _EXPR, _TERM, /* ExprTyCheck_(FLOAT), */},
 		{ TOKEN("$type"), _EXPR, _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
 		{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
@@ -65,7 +65,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$block"), ParseStmt_(block), ExprTyCheck_(block), },
 		{ TOKEN("$params"), ParseStmt_(params), TopStmtTyCheck_(declParams), ExprTyCheck_(call),},
 		{ TOKEN("$toks"), ParseStmt_(toks), },
-		{ TOKEN("."), _OP, .op2 = "*", .priority_op2 = 16, .right = 1, /*ExprTyCheck_(getter*/ },
+		{ TOKEN("."), ParseExpr_(DOT), .op2 = "*", .priority_op2 = 16, .right = 1, /*ExprTyCheck_(getter*/ },
 		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call),  },
 		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call), },
 		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call) },
@@ -282,8 +282,6 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
 	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
 	syn->ty = TY_void; // it's not cool, but necessary
-//	base->syn_err  = SYN_(base->rootks, KW_ERR);
-//	base->syn_expr = SYN_(base->rootks, KW_EXPR);
 	EXPORT_SUGAR(base);
 }
 
