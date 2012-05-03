@@ -176,13 +176,107 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 #define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
 
 // rewrite with kwb_t
+//
+//static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
+//{
+//	kiconv_t conv;
+//	char convBuf[CONV_BUFSIZE] = {'\0'};
+//	const char *presentPtrFrom = fromBa->text;
+//	DBG_P("presentPtrFrom='%s'", presentPtrFrom);
+//	const char ** inbuf = &presentPtrFrom;
+//	char *presentPtrTo = convBuf;
+//	char ** outbuf = &presentPtrTo;
+//	size_t inBytesLeft, outBytesLeft;
+//	inBytesLeft = strlen(presentPtrFrom) + 1;
+//	outBytesLeft = CONV_BUFSIZE;
+//	DBG_P("from='%s' inBytesLeft=%d, to='%s' outBytesLeft=%d", fromCoding, inBytesLeft, toCoding, outBytesLeft);
+////	const char *fromCoding = getSystemEncoding();
+//	if (strncmp(fromCoding, toCoding, strlen(fromCoding)) == 0) {
+//		// no need to convert.
+//		return fromBa;
+//	}
+//	conv = kmodiconv->ficonv_open(toCoding, fromCoding);
+//	if (conv == (kiconv_t)(-1)) {
+//		ktrace(_UserInputFault,
+//				KEYVALUE_s("@","iconv_open"),
+//				KEYVALUE_s("from", fromCoding),
+//				KEYVALUE_s("to", toCoding)
+//		);
+//		return (kBytes*)(CT_Bytes->nulvalNUL);
+//	}
+//	size_t iconv_ret = -1;
+//	char *storeBuf = NULL;
+//	char *presentStoreBufPtr = NULL;
+//	size_t presentStoreBufSize = CONV_BUFSIZE;
+//	size_t processedSize = 0;
+//	size_t processedTotalSize = processedSize;
+//	DBG_P("start converting!");
+//	while (inBytesLeft > 0 && iconv_ret == -1) {
+//		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
+//		if (iconv_ret == -1 && errno == E2BIG) {
+//			DBG_P("too big");
+//			// alloc storeBuf
+//			DBG_ASSERT(presentStoreBufSize < MAX_STORE_BUFSIZE);
+//			processedSize = CONV_BUFSIZE - outBytesLeft;
+//			processedTotalSize += processedSize;
+//			if (storeBuf == NULL) {
+//				// malloc first buf
+//				storeBuf = (char*)KCALLOC(presentStoreBufSize, 1);
+//				memcpy(storeBuf, convBuf, processedSize);
+//				presentStoreBufPtr = storeBuf + processedSize;
+//				presentStoreBufSize += CONV_BUFSIZE; // FIXME: liner increase.
+//			} else {
+//				//realloc
+//				size_t oldStoreBufSize = presentStoreBufSize;
+//				char *newStoreBuf = (char*)KCALLOC(presentStoreBufSize, 1);
+//				memcpy(newStoreBuf, storeBuf, presentStoreBufSize);
+//				KFREE(storeBuf, oldStoreBufSize);
+//				storeBuf = newStoreBuf;
+//				presentStoreBufPtr = storeBuf + processedTotalSize;
+//				memcpy(presentStoreBufPtr, convBuf, processedSize);
+//				presentStoreBufPtr += processedSize;
+//			}
+//			// reset convbuf
+//			presentPtrTo = convBuf;
+////			outbuf = &presentPtrTo;
+//			memset(convBuf, '\0', CONV_BUFSIZE);
+//			outBytesLeft = CONV_BUFSIZE;
+//		} else if (iconv_ret == -1) {
+//			ktrace(_DataFault,
+//				KEYVALUE_s("@","iconv"),
+//				KEYVALUE_s("from", "UTF-8"),
+//				KEYVALUE_s("to", toCoding),
+//				KEYVALUE_s("error", strerror(errno))
+//			);
+//			return (kBytes*)(CT_Bytes->nulvalNUL);
+//		} else {
+//			// finished. iconv_ret != -1
+//			processedSize = CONV_BUFSIZE - outBytesLeft;
+//			processedTotalSize += processedSize;
+//		}
+//	} /* end of converting loop */
+//	kmodiconv->ficonv_close(conv);
+//	DBG_P("processedTotalSize=%d, inbuf='%s', outbuf='%s'", processedTotalSize, *inbuf, *outbuf);
+//	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize);
+//	if (storeBuf == NULL) {
+//		memcpy(toBa->buf, convBuf, processedTotalSize);
+//		DBG_P("NO BUF EXCEED, copied=%d, '%s'", processedTotalSize, toBa->buf);
+//	} else {
+//		// flush last convert
+//		memcpy(toBa->buf, storeBuf, processedTotalSize);
+//		DBG_P("BUF EXCEED, copied=%d, %s", processedTotalSize, convBuf);
+//
+//	}
+//	return toBa;
+//}
 
 static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
+	kwb_t wb;
+
 	char convBuf[CONV_BUFSIZE] = {'\0'};
 	const char *presentPtrFrom = fromBa->text;
-	DBG_P("presentPtrFrom='%s'", presentPtrFrom);
 	const char ** inbuf = &presentPtrFrom;
 	char *presentPtrTo = convBuf;
 	char ** outbuf = &presentPtrTo;
@@ -205,37 +299,18 @@ static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const cha
 		return (kBytes*)(CT_Bytes->nulvalNUL);
 	}
 	size_t iconv_ret = -1;
-	char *storeBuf = NULL;
-	char *presentStoreBufPtr = NULL;
-	size_t presentStoreBufSize = CONV_BUFSIZE;
 	size_t processedSize = 0;
 	size_t processedTotalSize = processedSize;
 	DBG_P("start converting!");
+//	karray_t *buf = new_karray(_ctx, 0, 64);
+	kwb_init(&(_ctx->stack->cwb), &wb);
 	while (inBytesLeft > 0 && iconv_ret == -1) {
 		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
 		if (iconv_ret == -1 && errno == E2BIG) {
 			DBG_P("too big");
-			// alloc storeBuf
-			DBG_ASSERT(presentStoreBufSize < MAX_STORE_BUFSIZE);
 			processedSize = CONV_BUFSIZE - outBytesLeft;
 			processedTotalSize += processedSize;
-			if (storeBuf == NULL) {
-				// malloc first buf
-				storeBuf = (char*)KCALLOC(presentStoreBufSize, 1);
-				memcpy(storeBuf, convBuf, processedSize);
-				presentStoreBufPtr = storeBuf + processedSize;
-				presentStoreBufSize += CONV_BUFSIZE; // FIXME: liner increase.
-			} else {
-				//realloc
-				size_t oldStoreBufSize = presentStoreBufSize;
-				char *newStoreBuf = (char*)KCALLOC(presentStoreBufSize, 1);
-				memcpy(newStoreBuf, storeBuf, presentStoreBufSize);
-				KFREE(storeBuf, oldStoreBufSize);
-				storeBuf = newStoreBuf;
-				presentStoreBufPtr = storeBuf + processedTotalSize;
-				memcpy(presentStoreBufPtr, convBuf, processedSize);
-				presentStoreBufPtr += processedSize;
-			}
+			kwb_printf(&wb, "%s", convBuf);
 			// reset convbuf
 			presentPtrTo = convBuf;
 //			outbuf = &presentPtrTo;
@@ -253,22 +328,18 @@ static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const cha
 			// finished. iconv_ret != -1
 			processedSize = CONV_BUFSIZE - outBytesLeft;
 			processedTotalSize += processedSize;
+			kwb_printf(&wb, "%s", convBuf);
 		}
 	} /* end of converting loop */
 	kmodiconv->ficonv_close(conv);
 	DBG_P("processedTotalSize=%d, inbuf='%s', outbuf='%s'", processedTotalSize, *inbuf, *outbuf);
+	const char *kwb_topChar = kwb_top(&wb, 1);
+	DBG_P("kwb:'%s'", kwb_topChar);
 	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize);
-	if (storeBuf == NULL) {
-		memcpy(toBa->buf, convBuf, processedTotalSize);
-		DBG_P("NO BUF EXCEED, copied=%d, '%s'", processedTotalSize, toBa->buf);
-	} else {
-		// flush last convert
-		memcpy(toBa->buf, storeBuf, processedTotalSize);
-		DBG_P("BUF EXCEED, copied=%d, %s", processedTotalSize, convBuf);
-
-	}
+	memcpy(toBa->buf, kwb_topChar, processedTotalSize);
 	return toBa;
 }
+
 //## @Const method Bytes Bytes.encodeTo(String toEncoding);
 static KMETHOD Bytes_encodeTo(CTX, ksfp_t *sfp _RIX)
 {
@@ -309,7 +380,7 @@ static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 	DBG_P("given bytes='%s'", from->buf);
 	kBytes *to = convFromTo(_ctx, from, getSystemEncoding(), "UTF-8");
 	DBG_P("converted string:'%s', len=%d", S_text(to), S_size(to));
-	RETURN_(new_kString(S_text(to), S_size(to), 0));
+	RETURN_(new_kString(to->buf, to->bytesize, 0));
 }
 /* ------------------------------------------------------------------------ */
 
