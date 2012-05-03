@@ -330,7 +330,7 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 
 	KDEFINE_CLASS defBytes = {
 		STRUCTNAME(Bytes),
-		.cflag   = CFLAG_Int,
+		.cflag   = kClass_Final,
 		.free    = Bytes_free,
 		.init    = Bytes_init,
 		.p       = Bytes_p,
