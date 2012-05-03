@@ -389,7 +389,10 @@ static kline_t uline_init(CTX, const char *path, size_t len, int line, int isrea
 {
 	kline_t uline = line;
 	if(isreal) {
-		char buf[256];
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+		char buf[PATH_MAX];
 		char *ptr = realpath(path, buf);
 		uline |= kfileid((const char*)buf, strlen(ptr), 0, _NEWID);
 		if(ptr != buf && ptr != NULL) {
