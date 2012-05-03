@@ -1,3 +1,5 @@
+/* this test is written by shinpei nakata */
+
 void global_setup() { 
 	
 }
@@ -91,6 +93,14 @@ boolean int_operator_cmpMoreThanEqual() {
 	System.p( i1  >=  1 );
 	System.p( i1  >=  i2 );
 }
+boolean int_operator_integerNegatives() { 
+	int i0 = 0;
+	int i1 = 1;
+	System.p((-1) == -1);
+	System.p((-(1)) == -1);
+	System.p((-i0) == 0);
+	System.p((-i1) == -1);
+}
 boolean int_operator_intOperatorPriority() { 
 	int i2 = 2;
 	int i3 = 3;
@@ -123,5 +133,6 @@ int_operator_cmpLessThan();
 int_operator_cmpLessThanEqual();
 int_operator_cmpMoreThan();
 int_operator_cmpMoreThanEqual();
+int_operator_integerNegatives();
 int_operator_intOperatorPriority();
 

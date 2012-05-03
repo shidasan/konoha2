@@ -1,3 +1,4 @@
+
 void global_setup() { 
 	K.importPackage("konoha.float")
 }
