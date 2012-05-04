@@ -56,14 +56,14 @@ typedef struct {
 
 typedef struct {
 	kmodlocal_t h;
+	kline_t uline;
 	kArray *insts;
-	kArray *lstacks;
+	const struct _kBasicBlock *lbEND;  // ON GCSTACK
 	kArray *constPools;
 	union {
 		const struct _kBasicBlock *curbbNC;
 		struct _kBasicBlock *WcurbbNC;
 	};
-	kline_t uline;
 } ctxcode_t;
 
 /* ------------------------------------------------------------------------ */
