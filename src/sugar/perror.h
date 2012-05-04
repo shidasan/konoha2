@@ -51,9 +51,10 @@ static const char* T_emsg(CTX, int pe)
 	return "(unknown)";
 }
 
-static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_list ap)
+static size_t vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_list ap)
 {
 	const char *msg = T_emsg(_ctx, pe);
+	size_t errref = ((size_t)-1);
 	if(msg != NULL) {
 		ctxsugar_t *base = ctxsugar;
 		kwb_t wb;
@@ -73,23 +74,26 @@ static void vperrorf(CTX, int pe, kline_t uline, int lpos, const char *fmt, va_l
 		kwb_vprintf(&wb, fmt, ap);
 		msg = kwb_top(&wb, 1);
 		kString *emsg = new_kString(msg, strlen(msg), 0);
+		errref = kArray_size(base->errors);
 		kArray_add(base->errors, emsg);
 		if(pe == ERR_ || pe == CRIT_) {
 			base->err_count ++;
 		}
 		kreport(pe, S_text(emsg));
 	}
+	return errref;
 }
 
 #define SUGAR_P(PE, UL, POS, FMT, ...)  sugar_p(_ctx, PE, UL, POS, FMT,  ## __VA_ARGS__)
 #define ERR_SyntaxError(UL)  SUGAR_P(ERR_, UL, -1, "syntax sugar error at %s:%d", __FUNCTION__, __LINE__)
 
-static void sugar_p(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
+static size_t sugar_p(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	vperrorf(_ctx, pe, uline, lpos, fmt, ap);
+	size_t errref = vperrorf(_ctx, pe, uline, lpos, fmt, ap);
 	va_end(ap);
+	return errref;
 }
 
 #define kToken_p(TK, PE, FMT, ...)   Token_p(_ctx, TK, PE, FMT, ## __VA_ARGS__)

@@ -122,7 +122,7 @@ struct _kpackage {
 		ktype_t TY = (ktype_t)sfp[2].ivalue;\
 		(void)EXPR; (void)SYN; (void)GMA; (void)TY;\
 
-#define SYN_ExprFlag      1
+//#define SYN_ExprFlag      1
 #define SYN_isExpr(syn)   TFLAG_is(kflag_t, syn->flag, SYN_ExprFlag)
 
 typedef const struct _ksyntax ksyntax_t;
@@ -148,6 +148,15 @@ struct _ksyntax {
 #define TopStmtTyCheck_(NAME)  .TopStmtTyCheck = StmtTyCheck_##NAME
 #define StmtTyCheck_(NAME)     .StmtTyCheck = StmtTyCheck_##NAME
 #define ExprTyCheck_(NAME)     .ExprTyCheck = ExprTyCheck_##NAME
+
+#define _TERM  .flag = SYNFLAG_ExprTerm
+#define _OP    .flag = SYNFLAG_ExprOp
+
+#define SYNFLAG_ExprTerm           ((kflag_t)1)
+#define SYNFLAG_ExprOp             ((kflag_t)1 << 1)
+#define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 2)  /* return, throw */
+#define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 3)  /* continue */
+#define SYNFLAG_StmtJumpSkip       ((kflag_t)1 << 4)  /* break */
 
 typedef struct KDEFINE_SYNTAX {
 	const char *name;
@@ -219,6 +228,7 @@ struct _kToken {
 		kushort_t lpos;
 		kshort_t  closech;  // ast
 		ksymbol_t nameid;   // sugar rule
+		kshort_t  mn_type;  // method type
 	};
 	union {
 		kshort_t   topch;
@@ -227,6 +237,17 @@ struct _kToken {
 		kmethodn_t mn;
 	};
 };
+
+typedef enum {
+	MNTYPE_method, MNTYPE_unary, MNTYPE_binary
+} mntype_t;
+
+static inline void kToken_setmn(kToken *tk, kmethodn_t mn, mntype_t mn_type)
+{
+	((struct _kToken*)tk)->tt = TK_MN;
+	((struct _kToken*)tk)->mn = mn;
+	((struct _kToken*)tk)->mn_type = (kshort_t)mn_type;
+}
 
 #define TEXPR_LOCAL_   -4   /*THIS IS NEVER PASSED*/
 #define TEXPR_BLOCK_   -3   /*THIS IS NEVER PASSED*/
@@ -282,6 +303,7 @@ struct _kExpr {
 #define TSTMT_RETURN         4
 #define TSTMT_IF             5
 #define TSTMT_LOOP           6
+#define TSTMT_JUMP           7
 
 typedef const struct _kStmt kStmt;
 struct _kStmt {
@@ -420,11 +442,6 @@ struct _kGamma {
 #define KW_else      (7+KW_void)
 #define KW_return    (8+KW_void)
 
-
-#define SYN_ERR      kmodsugar->syn_err
-#define SYN_EXPR     kmodsugar->syn_expr
-#define SYN_CALL     kmodsugar->syn_expr
-
 #define FN_this      FN_("this")
 
 struct _kKonohaSpace;
@@ -450,9 +467,8 @@ typedef struct {
 	kMethod *UndefinedParseExpr;
 	kMethod *UndefinedStmtTyCheck;
 	kMethod *UndefinedExprTyCheck;
-
-//	ksyntax_t *syn_err;
-//	ksyntax_t *syn_expr;
+	kMethod *ParseExpr_Term;
+	kMethod *ParseExpr_Op;
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
@@ -473,7 +489,7 @@ typedef struct {
 	kExpr *    (*new_TypedMethodCall)(CTX, ktype_t ty, kMethod *mtd, kGamma *gma, int n, ...);
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 
-	void       (*p)(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...);
+	size_t     (*p)(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...);
 	kline_t    (*Expr_uline)(CTX, kExpr *expr, int pe);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, KDEFINE_SYNTAX *);

@@ -126,20 +126,6 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	return NULL;
 }
 
-static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
-static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
-
-static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, kMethod **mp)
-{
-	if(f != NULL) {
-		if(f != p[0]) {
-			p[0] = f;
-			mp[0] = new_kMethod(0, 0, 0, NULL, f);
-		}
-		KINITv(synp[0], mp[0]);
-	}
-}
-
 #define T_statement(kw)  T_statement_(_ctx, kw)
 static const char* T_statement_(CTX, ksymbol_t kw)
 {
@@ -150,6 +136,23 @@ static const char* T_statement_(CTX, ksymbol_t kw)
 	if(kw == KW_void) { statement =  "function"; postfix = " declaration"; }
 	snprintf(buf, sizeof(buf), "%s%s", statement, postfix);
 	return (const char*)buf;
+}
+
+static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
+static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
+
+static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, kMethod **mp, kMethod *defmtd)
+{
+	if(f != NULL) {
+		if(f != p[0]) {
+			p[0] = f;
+			mp[0] = new_kMethod(0, 0, 0, NULL, f);
+		}
+		KINITv(synp[0], mp[0]);
+	}
+	else if(defmtd != NULL) {
+		KINITv(synp[0], defmtd);
+	}
 }
 
 static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *syndef)
@@ -168,19 +171,26 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 			KINITv(syn->syntaxRule, new_(TokenArray, 0));
 			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRule);
 		}
-		if(syndef->op1 != NULL) {
+		if(syndef->op1 != NULL && syn->op1 == 0) {
 			syn->op1 = (syndef->op1[0] == '*') ? MN_NONAME : ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
 		}
-		if(syndef->op2 != NULL) {
+		if(syndef->op2 != NULL && syn->op2 == 0) {
 			syn->op2 = (syndef->op2[0] == '*') ? MN_NONAME : ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
 			syn->priority = syndef->priority_op2;
 			syn->right = syndef->right;
 		}
-		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmt), &pParseStmt, &mParseStmt);
-		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr);
-		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
-		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
-		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck);
+		kMethod *defmtdParseExpr = kmodsugar->UndefinedParseExpr;
+		if(FLAG_is(syn->flag, SYNFLAG_ExprOp) /*&& syn->op2 != MN_NONAME*/) {
+			defmtdParseExpr = kmodsugar->ParseExpr_Op;
+		}
+		else if(FLAG_is(syn->flag, SYNFLAG_ExprTerm)) {
+			defmtdParseExpr = kmodsugar->ParseExpr_Term;
+		}
+		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmt), &pParseStmt, &mParseStmt, NULL);
+		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr, defmtdParseExpr);
+		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck, kmodsugar->UndefinedExprTyCheck);
 		DBG_ASSERT(syn == SYN_(ks, kw));
 		syndef++;
 	}

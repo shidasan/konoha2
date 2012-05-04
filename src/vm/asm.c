@@ -1749,14 +1749,29 @@ static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 	USING_SUGAR;
 	kBasicBlock* lbCONTINUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock* lbBREAK = new_BasicBlockLABEL(_ctx);
-	BUILD_pushLABEL(_ctx, stmt, lbCONTINUE, lbBREAK);
+//	BUILD_pushLABEL(_ctx, stmt, lbCONTINUE, lbBREAK);
+	kObject_setObject(stmt, KW_("continue"), lbCONTINUE);
+	kObject_setObject(stmt, KW_("break"), lbBREAK);
 	ASM_LABEL(_ctx, lbCONTINUE);
 	ASM_SAFEPOINT(_ctx, espidx);
 	EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbBREAK, espidx);
+	//BLOCK_asm(_ctx, kStmt_block(stmt, KW_("iteration"), K_NULLBLOCK));
 	BLOCK_asm(_ctx, kStmt_block(stmt, KW_block, K_NULLBLOCK));
 	ASM_JMP(_ctx, lbCONTINUE);
 	ASM_LABEL(_ctx, lbBREAK);
-	BUILD_popLABEL(_ctx);
+//	BUILD_popLABEL(_ctx);
+}
+
+static void JumpStmt_asm(CTX, kStmt *stmt, int espidx)
+{
+	ksyntax_t *syn = stmt->syn;
+	kStmt *jump = (kStmt*)kObject_getObject(stmt, syn->kw, NULL);
+	DBG_ASSERT(jump != NULL);
+	DBG_ASSERT(IS_Stmt(jump));
+	kBasicBlock* lbJUMP = (kBasicBlock*)kObject_getObject(stmt, syn->kw, NULL);
+	DBG_ASSERT(lbJUMP != NULL);
+	DBG_ASSERT(IS_BasicBlock(jump));
+	ASM_JMP(_ctx, lbJUMP);
 }
 
 static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
@@ -1779,7 +1794,7 @@ static void BLOCK_asm(CTX, kBlock *bk)
 		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, espidx); return;
 		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     break;
 		case TSTMT_LOOP:   LoopStmt_asm(_ctx, stmt, espidx);     break;
-
+		case TSTMT_JUMP:   JumpStmt_asm(_ctx, stmt, espidx);     break;
 		default: UndefinedStmt_asm(_ctx, stmt, espidx); break;
 		}
 	}

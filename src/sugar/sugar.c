@@ -44,55 +44,51 @@ int verbose_sugar = 0;
 #include "ast.h"
 #include "tycheck.h"
 
-#define _EXPR     .flag = SYN_ExprFlag
-#define _TERM     ParseExpr_(Term)
-#define _OP       ParseExpr_(Op)
-
 static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("$ERR"), },
+		{ TOKEN("$ERR"), .flag = SYNFLAG_StmtBreakExec, },
 		{ TOKEN("$expr"),  .rule ="$expr", ParseStmt_(expr), TopStmtTyCheck_(EXPR), StmtTyCheck_(EXPR),  },
-		{ TOKEN("$SYMBOL"),  _EXPR, ParseStmt_(name),  _TERM, ExprTyCheck_(SYMBOL),},
-		{ TOKEN("$USYMBOL"), _EXPR, ParseStmt_(cname), _TERM, ExprTyCheck_(USYMBOL),},
-		{ TOKEN("$TEXT"), _EXPR, _TERM, ExprTyCheck_(TEXT),},
-		{ TOKEN("$INT"), _EXPR, _TERM, ExprTyCheck_(INT),},
-		{ TOKEN("$FLOAT"), _EXPR, _TERM, /* ExprTyCheck_(FLOAT), */},
-		{ TOKEN("$type"), _EXPR, _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
-		{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
-		{ TOKEN("[]"), _EXPR, },  //AST_BRANCET
-		{ TOKEN("{}"), _EXPR, }, // AST_BRACE
+		{ TOKEN("$SYMBOL"),   ParseStmt_(name),  _TERM, ExprTyCheck_(SYMBOL),},
+		{ TOKEN("$USYMBOL"),  ParseStmt_(cname), _TERM, ExprTyCheck_(USYMBOL),},
+		{ TOKEN("$TEXT"),  _TERM, ExprTyCheck_(TEXT),},
+		{ TOKEN("$INT"),  _TERM, ExprTyCheck_(INT),},
+		{ TOKEN("$FLOAT"),  _TERM, /* ExprTyCheck_(FLOAT), */},
+		{ TOKEN("$type"),  _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
+		{ TOKEN("()"),  ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
+		{ TOKEN("[]"),  },  //AST_BRANCET
+		{ TOKEN("{}"),  }, // AST_BRACE
 		{ TOKEN("$block"), ParseStmt_(block), ExprTyCheck_(block), },
 		{ TOKEN("$params"), ParseStmt_(params), TopStmtTyCheck_(declParams), ExprTyCheck_(call),},
 		{ TOKEN("$toks"), ParseStmt_(toks), },
 		{ TOKEN("."), ParseExpr_(DOT), .op2 = "*", .priority_op2 = 16, .right = 1, /*ExprTyCheck_(getter*/ },
-		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call),  },
-		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call), },
-		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("+"), _EXPR, _OP, .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, ExprTyCheck_(call)},
-		{ TOKEN("-"), _EXPR, _OP, .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("<"), _OP, .op2 = "opLT", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("<="), _OP, .op2 = "opLTE", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN(">"), _OP, .op2 = "opGT", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1, ExprTyCheck_(call) },
-		{ TOKEN("&&"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 1024, .right = 1, ExprTyCheck_(and)},
-		{ TOKEN("||"), _OP, .op2 = "p" /*differ from "*"*/, .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
-		{ TOKEN("!"),  _EXPR, _OP, .op1 = "opNOT", ExprTyCheck_(call)},
+		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1,  },
+		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1,  },
+		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32,  .right = 1,  },
+		{ TOKEN("+"),  _OP, .op1 = "opPLUS", .op2 = "opADD", .priority_op2 = 64, .right = 1, },
+		{ TOKEN("-"),  _OP, .op1 = "opMINUS", .op2 = "opSUB", .priority_op2 = 64, .right = 1,  },
+		{ TOKEN("<"), _OP, .op2 = "opLT", .priority_op2 = 256, .right = 1,  },
+		{ TOKEN("<="), _OP, .op2 = "opLTE", .priority_op2 = 256, .right = 1,  },
+		{ TOKEN(">"), _OP, .op2 = "opGT", .priority_op2 = 256, .right = 1,  },
+		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1,  },
+		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1,  },
+		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1,  },
+		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, ExprTyCheck_(and)},
+		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
+		{ TOKEN("!"),   _OP, .op1 = "opNOT", },
 		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
-		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, /*.rule = "var: $expr \"=\" $expr",*/ },
+		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		{ TOKEN("null"), _EXPR, _TERM, ExprTyCheck_(NULL),},
-		{ TOKEN("true"),  _EXPR, _TERM, ExprTyCheck_(TRUE),},
-		{ TOKEN("false"), _EXPR, _TERM, ExprTyCheck_(FALSE),},
+		{ TOKEN("null"), _TERM, ExprTyCheck_(NULL),},
+		{ TOKEN("true"),  _TERM, ExprTyCheck_(TRUE),},
+		{ TOKEN("false"),  _TERM, ExprTyCheck_(FALSE),},
 		{ TOKEN("if"), .rule ="\"if\" \"(\" $expr \")\" $block [\"else\" else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
 		{ TOKEN("else"), .rule = "\"else\" $block", TopStmtTyCheck_(else), StmtTyCheck_(else), },
-		{ TOKEN("return"), .rule ="\"return\" [$expr]", StmtTyCheck_(return), },
+		{ TOKEN("return"), .rule ="\"return\" [$expr]", .flag = SYNFLAG_StmtBreakExec, StmtTyCheck_(return), },
 		{ .name = NULL, },
 	};
 	KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
@@ -273,6 +269,8 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->UndefinedParseExpr,   new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
 	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));
 	KINITv(base->UndefinedExprTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedExprTyCheck));
+	KINITv(base->ParseExpr_Op,   new_kMethod(0, 0, 0, NULL, ParseExpr_Op));
+	KINITv(base->ParseExpr_Term, new_kMethod(0, 0, 0, NULL, ParseExpr_Term));
 
 	defineDefaultSyntax(_ctx, base->rootks);
 	DBG_ASSERT(KW_("$params") == KW_params);

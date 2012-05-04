@@ -38,6 +38,12 @@ typedef struct {
 	int           indent_tab;
 } tenv_t;
 
+static void Token_toERR(CTX, struct _kToken *tk, size_t errref)
+{
+	tk->tt = TK_ERR;
+	KSETv(tk->text, ctxsugar->errors->strings[errref]);
+}
+
 static inline int lpos(tenv_t *tenv, const char *s)
 {
 	return (tenv->bol == NULL) ? -1 : s - tenv->bol;
@@ -203,7 +209,8 @@ static int parseCOMMENT(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kM
 		prev = ch;
 	}
 	if(IS_NOTNULL(tk)) {
-		SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with */ before the end of the file");
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with */");
+		Token_toERR(_ctx, tk, errref);
 	}
 	return pos-1;/*EOF*/
 }
@@ -237,7 +244,8 @@ static int parseDQUOTE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMe
 		prev = ch;
 	}
 	if(IS_NOTNULL(tk)) {
-		SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with \" before the end of the line");
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with \"");
+		Token_toERR(_ctx, tk, errref);
 	}
 	return pos-1;
 }
@@ -250,8 +258,8 @@ static int parseSKIP(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMeth
 static int parseUNDEF(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
 	if(IS_NOTNULL(tk)) {
-		SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined character '%c'", tenv->source[tok_start]);
-		tk->tt = TK_ERR;
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined token character: %c", tenv->source[tok_start]);
+		Token_toERR(_ctx, tk, errref);
 	}
 	while(tenv->source[++tok_start] != 0);
 	return tok_start;
@@ -409,7 +417,8 @@ static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 		}
 	}
 	if(IS_NOTNULL(tk)) {
-		SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with }");
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with }");
+		Token_toERR(_ctx, tk, errref);
 	}
 	return pos-1;
 }
