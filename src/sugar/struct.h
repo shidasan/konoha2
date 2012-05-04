@@ -131,9 +131,9 @@ static const char* T_statement_(CTX, ksymbol_t kw)
 {
 	static char buf[80];  // this is not good, but this is very rare case.
 	const char *statement = T_kw(kw), *postfix = " statement";
-	if(kw == KW_COLON) { statement = "expression"; postfix = ""; }
-	if(kw == KW_COLON) { statement = "variable"; postfix = " declaration"; }
-	if(kw == KW_void) { statement =  "function"; postfix = " declaration"; }
+	if(kw == KW_Expr) { statement = "expression"; postfix = ""; }
+	if(kw == KW_StmtTypeDecl) { statement = "variable"; postfix = " declaration"; }
+	if(kw == KW_StmtMethodDecl) { statement =  "function"; postfix = " declaration"; }
 	snprintf(buf, sizeof(buf), "%s%s", statement, postfix);
 	return (const char*)buf;
 }
@@ -845,9 +845,9 @@ static void dumpStmt(CTX, kStmt *stmt)
 #define kStmt_toERR(STMT, ENO)  Stmt_toERR(_ctx, STMT, ENO)
 static void Stmt_toERR(CTX, kStmt *stmt, int eno)
 {
-	((struct _kStmt*)stmt)->syn = SYN_(kStmt_ks(stmt), KW_ERR);
+	((struct _kStmt*)stmt)->syn = SYN_(kStmt_ks(stmt), KW_Err);
 	((struct _kStmt*)stmt)->build = TSTMT_ERR;
-	kObject_setObject(stmt, KW_ERR, kstrerror(eno));
+	kObject_setObject(stmt, KW_Err, kstrerror(eno));
 }
 
 #define AKEY(T)   T, (sizeof(T)-1)

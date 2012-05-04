@@ -47,13 +47,13 @@
 //////	USING_SUGAR;
 //////	kbool_t r = 1;
 //////	VAR_StmtTyCheck(stmt, syn, gma);
-//////	if((r = SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_Boolean, 0))) {
-//////		kExpr *expr = kStmt_expr(stmt, KW_EXPR, NULL);
+//////	if((r = SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_Expr, gma, TY_Boolean, 0))) {
+//////		kExpr *expr = kStmt_expr(stmt, KW_Expr, NULL);
 //////		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, TY_KonohaSpace, MN_("assert"));
 //////		assert(expr != NULL);
 //////		assert(mtd != NULL);
 //////		kStmt_toExprCall(stmt, mtd, 2, gma->genv->ks, expr);
-//////		expr = kStmt_expr(stmt, KW_EXPR, NULL);
+//////		expr = kStmt_expr(stmt, KW_Expr, NULL);
 //////		expr->build = TEXPR_CALL;
 //////	}
 //////	RETURNb_(r);

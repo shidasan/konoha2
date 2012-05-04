@@ -273,7 +273,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->ParseExpr_Term, new_kMethod(0, 0, 0, NULL, ParseExpr_Term));
 
 	defineDefaultSyntax(_ctx, base->rootks);
-	DBG_ASSERT(KW_("$params") == KW_params);
+	DBG_ASSERT(KW_("$params") == KW_Params);
 	DBG_ASSERT(KW_(".") == KW_DOT);
 	DBG_ASSERT(KW_(",") == KW_COMMA);
 	DBG_ASSERT(KW_("void") == KW_void);  // declmethod

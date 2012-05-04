@@ -1715,7 +1715,7 @@ static void ExprStmt_asm(CTX, kStmt *stmt, int espidx)
 static void BlockStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	USING_SUGAR;
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
 }
 
 static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
@@ -1726,7 +1726,7 @@ static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
 	/* if */
 	lbELSE = EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbELSE, espidx);
 	/* then */
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
 	ASM_JMP(_ctx, lbEND);
 	/* else */
 	ASM_LABEL(_ctx, lbELSE);
@@ -1756,7 +1756,7 @@ static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 	ASM_SAFEPOINT(_ctx, espidx);
 	EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbBREAK, espidx);
 	//BLOCK_asm(_ctx, kStmt_block(stmt, KW_("iteration"), K_NULLBLOCK));
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
 	ASM_JMP(_ctx, lbCONTINUE);
 	ASM_LABEL(_ctx, lbBREAK);
 //	BUILD_popLABEL(_ctx);

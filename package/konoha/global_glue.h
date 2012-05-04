@@ -150,20 +150,20 @@ static KMETHOD StmtTyCheck_var(CTX, ksfp_t *sfp _RIX)
 		SUGAR p(_ctx, ERR_, stmt->uline, -1, "not variable name");
 		RETURNb_(false);
 	}
-	kExpr *expr = kStmt_expr(stmt, KW_EXPR, K_NULLEXPR);
+	kExpr *expr = kStmt_expr(stmt, KW_Expr, K_NULLEXPR);
 	DBG_P("expr kw='%s'", T_kw(expr->syn->kw));
-	if(!SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_EXPR, gma, TY_var, 0)) {
+	if(!SUGAR Stmt_tyCheckExpr(_ctx, stmt, KW_Expr, gma, TY_var, 0)) {
 		SUGAR p(_ctx, ERR_, stmt->uline, -1, "type error");
 		RETURNb_(false);
 	}
-	/*kExpr **/expr = kStmt_expr(stmt, KW_EXPR, K_NULLEXPR);
+	/*kExpr **/expr = kStmt_expr(stmt, KW_Expr, K_NULLEXPR);
 	kMethod *mtd = Object_newProtoSetterNULL(_ctx, scr, gma->genv->ks, expr->ty, fn, stmt->uline);
 	if(mtd == NULL) {
 		RETURNb_(false);
 	}
 	SUGAR p(_ctx, INFO_, stmt->uline, -1, "%s has type %s", T_fn(fn), T_ty(expr->ty));
 	expr = SUGAR new_TypedMethodCall(_ctx, TY_void, mtd, gma, 2, new_ConstValue(O_cid(scr), scr), expr);
-	kObject_setObject(stmt, KW_EXPR, expr);
+	kObject_setObject(stmt, KW_Expr, expr);
 	kStmt_typed(stmt, EXPR);
 	RETURNb_(true);
 }

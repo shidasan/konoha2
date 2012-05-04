@@ -369,7 +369,7 @@ static KMETHOD StmtTyCheck_sugar(CTX, ksfp_t *sfp _RIX)
 	USING_SUGAR;
 	kbool_t r = 0;
 	VAR_StmtTyCheck(stmt, syn, gma);
-	kTokenArray *tls = (kTokenArray*)kObject_getObject(stmt, KW_toks, NULL);
+	kTokenArray *tls = (kTokenArray*)kObject_getObject(stmt, KW_Toks, NULL);
 	if(tls != NULL) {
 		struct _ksyntax *syn = toks_syntax(_ctx, gma->genv->ks, tls);
 		if(syn != NULL) {

@@ -259,7 +259,7 @@ static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
 		kToken *tk1 = tls->toks[s+1];
 		kToken *tk2 = tls->toks[s+2];
 		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {
-			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_CALL);
+			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall);
 			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, TK_type(tk1), 0));
 			DBG_P("NEW syn=%p", expr->syn);
 			RETURN_(expr);
@@ -295,11 +295,42 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
+static size_t checkFieldSize(CTX, kBlock *bk)
+{
+	size_t i, c = 0;
+	for(i = 0; i < kArray_size(bk->blocks); i++) {
+		kStmt *stmt = bk->blocks->stmts[i];
+		DBG_P("stmt->kw=%s", T_kw(stmt->syn->kw));
+	}
+	return c;
+}
+
+static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	kbool_t r = 1;
+	VAR_StmtTyCheck(stmt, syn, gma);
+	kToken *tkC = kStmt_token(stmt, KW_Usymbol, NULL);
+	kToken *tkE = kStmt_token(stmt, KW_Type,  NULL);
+	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
+	size_t fsize = checkFieldSize(_ctx, bk);
+	DBG_P("fsize=%d", fsize);
+//	if((r = Stmt_tyCheckExpr(_ctx, stmt, KW_Expr, gma, TY_Boolean, 0))) {
+//		kBlock *bkThen = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
+//		kBlock *bkElse = kStmt_block(stmt, KW_else, K_NULLBLOCK);
+//		r = Block_tyCheckAll(_ctx, bkThen, gma);
+//		r = r & Block_tyCheckAll(_ctx, bkElse, gma);
+//		kStmt_typed(stmt, IF);
+//	}
+	RETURNb_(r);
+}
+
 static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
+		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
 //		{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(Getter) },
 		{ .name = NULL, },
 	};

@@ -193,10 +193,10 @@ typedef kshort_t    ksugar_t;
 typedef kshort_t    kexpr_t;
 
 typedef enum {
-	TK_NONE,          // KW_ERR
-	TK_INDENT,        // KW_EXPR
-	TK_SYMBOL,        // KW_SYMBOL
-	TK_USYMBOL,       // KW_USYMBOL
+	TK_NONE,          // KW_Err
+	TK_INDENT,        // KW_Expr
+	TK_SYMBOL,        // KW_Symbol
+	TK_USYMBOL,       // KW_Usymbol
 	TK_TEXT,
 	TK_INT,
 	TK_FLOAT,
@@ -392,25 +392,24 @@ struct _kGamma {
 #define TK_SHIFT    10000
 #define KW_TK(N)    (((keyword_t)N)+TK_SHIFT)
 
-#define KW_ERR     0
-#define KW_EXPR    1
-#define KW_SYMBOL  2
-#define KW_name    2
-#define KW_USYMBOL 3
-#define KW_cname   3
-#define KW_TEXT    4
-#define KW_INT     5
-#define KW_FLOAT   6
-#define KW_TYPE    7
-#define KW_type    7
-#define KW_PARENTHESIS  8
-#define KW_BRANCET      9
-#define KW_BRACE        10
+#define KW_Err     0
+#define KW_Expr    1
+#define KW_Symbol  2
+//#define KW_name    2
+#define KW_Usymbol 3
+//#define KW_cname   3
+#define KW_Text    4
+#define KW_Int     5
+#define KW_Float   6
+#define KW_Type    7
+#define KW_Parenthesis  8
+#define KW_Brancet      9
+#define KW_Brace        10
 
-#define KW_block   11
-#define KW_params  12
-#define       KW_CALL  12/*FIXME*/
-#define KW_toks    13
+#define KW_Block   11
+#define KW_Params  12
+#define       KW_ExprMethodCall  12/*FIXME*/
+#define KW_Toks    13
 
 #define KW_DOT     14
 #define KW_DIV     (1+KW_DOT)
@@ -428,11 +427,13 @@ struct _kGamma {
 #define KW_OR      (13+KW_DOT)
 #define KW_NOT     (14+KW_DOT)
 #define KW_COLON   (15+KW_DOT)
+#define KW_StmtTypeDecl            KW_COLON
 #define KW_LET     (16+KW_DOT)
 #define KW_COMMA   (17+KW_DOT)
 #define KW_DOLLAR  (18+KW_DOT)
 
 #define KW_void      (19+KW_DOT)
+#define KW_StmtMethodDecl          KW_void
 #define KW_boolean   (1+KW_void)
 #define KW_int       (2+KW_void)
 #define KW_null      (3+KW_void)
@@ -607,7 +608,7 @@ static inline const char *T_kw_(CTX, keyword_t kw)
 }
 
 // In future, typeof operator is introduced
-#define TK_isType(TK)    ((TK)->kw == KW_TYPE)
+#define TK_isType(TK)    ((TK)->kw == KW_Type)
 #define TK_type(TK)       (TK)->ty
 
 #define kStmt_ks(STMT)   Stmt_ks(_ctx, STMT)
