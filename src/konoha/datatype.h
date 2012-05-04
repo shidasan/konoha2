@@ -345,6 +345,7 @@ static void Array_insert(CTX, kArray *o, size_t n, kObject *v)
 
 static void Array_clear(CTX, kArray *o, size_t n)
 {
+	DBG_ASSERT(IS_Array(o));
 	size_t asize = kArray_size(o);
 	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
 	if(asize > n) {

@@ -45,10 +45,14 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 		KINITv(bk->parentNULL, parent);
 	}
 	int i = s, indent = 0, atop = kArray_size(tls);
+	dumpTokenArray(_ctx, 0, tls, s, e);
 	while(i < e) {
 		kToken *tkERR = NULL;
+		DBG_ASSERT(atop == kArray_size(tls));
+		DBG_P("S i=%d, e=%d, atop=%d", i, e, atop);
 		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, tls, &tkERR);
 		int asize = kArray_size(tls);
+		DBG_P("E i=%d, e=%d, asize=%d", i, e, asize);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize, tkERR);
 			kArray_clear(tls, atop);
@@ -206,6 +210,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, kArray *tlsdst, kToken **tkERR)
 {
 	int i = s;
+	DBG_ASSERT(e <= kArray_size(tls));
 	for(; i < e; i++) {
 		kToken *tk = tls->toks[i];
 		if (i < e - 1) {
@@ -220,7 +225,6 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 					i++;
 				}
 				continue;
-			} else {
 			}
 		}
 		if(tk->tt != TK_INDENT) break;
@@ -238,7 +242,8 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 			continue;
 		}
 		else if(tk->topch == ';') {
-			i++; break;
+			i++;
+			break;
 		}
 		else if(tk->tt == TK_ERR) {
 			tkERR[0] = tk;
@@ -249,7 +254,6 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 		}
 		i = appendKeyword(_ctx, ks, tls, i, e, tlsdst, tkERR);
 	}
-
 	return i;
 }
 
@@ -559,7 +563,7 @@ static kExpr *Stmt_addExprParams(CTX, kStmt *stmt, kExpr *expr, kArray *tls, int
 	if(start < i) {
 		expr = Expr_add(_ctx, expr, Stmt_newExpr2(_ctx, stmt, tls, start, i));
 	}
-	kArray_clear(tls, 0);
+	kArray_clear(tls, s);
 	return expr;
 }
 
@@ -577,7 +581,15 @@ static kExpr* Stmt_newExpr2(CTX, kStmt *stmt, kArray *tls, int s, int e)
 		return ParseExpr(_ctx, syn, stmt, tls, c, c, e);
 	}
 	else {
-		SUGAR_P(ERR_, stmt->uline, 0, "empty");
+		if (0 < s - 1) {
+			SUGAR_P(ERR_, stmt->uline, -1, "expected expression after %s", kToken_s(tls->toks[s-1]));
+		}
+		else if(e < kArray_size(tls)) {
+			SUGAR_P(ERR_, stmt->uline, -1, "expected expression before %s", kToken_s(tls->toks[e]));
+		}
+		else {
+			SUGAR_P(ERR_, stmt->uline, 0, "expected expression");
+		}
 		return K_NULLEXPR;
 	}
 }

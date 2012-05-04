@@ -791,7 +791,7 @@ struct _kString /* extends _Bytes */ {
 #define CFLAG_Array              kClass_Final
 #define OFLAG_Array              MAGICFLAG(0)
 #define TY_Array                 CLASS_Array
-#define IS_Array(o)              (O_cid(o) == CLASS_Array)
+#define IS_Array(o)              (O_bcid(o) == CLASS_Array)
 
 #define kArray_isUnboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
 #define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
