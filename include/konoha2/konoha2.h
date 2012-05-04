@@ -997,7 +997,7 @@ struct _kSystem {
 #define Method_isKonohaCode(mtd) (0)
 
 #define BEGIN_LOCAL(V,N) \
-	ksfp_t *V = _ctx->esp, *esp_ = _ctx->esp; (void)V;\
+	ksfp_t *V = _ctx->esp, *esp_ = _ctx->esp; (void)V;((kcontext_t*)_ctx)->esp = esp_+N;\
 
 #define END_LOCAL() ((kcontext_t*)_ctx)->esp = esp_;
 
