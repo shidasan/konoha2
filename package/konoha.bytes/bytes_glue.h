@@ -281,7 +281,7 @@ static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const cha
 	char *presentPtrTo = convBuf;
 	char ** outbuf = &presentPtrTo;
 	size_t inBytesLeft, outBytesLeft;
-	inBytesLeft = strlen(presentPtrFrom) + 1;
+	inBytesLeft = fromBa->bytesize;
 	outBytesLeft = CONV_BUFSIZE;
 	DBG_P("from='%s' inBytesLeft=%d, to='%s' outBytesLeft=%d", fromCoding, inBytesLeft, toCoding, outBytesLeft);
 //	const char *fromCoding = getSystemEncoding();
