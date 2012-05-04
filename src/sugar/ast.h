@@ -45,14 +45,11 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 		KINITv(bk->parentNULL, parent);
 	}
 	int i = s, indent = 0, atop = kArray_size(tls);
-	dumpTokenArray(_ctx, 0, tls, s, e);
 	while(i < e) {
 		kToken *tkERR = NULL;
 		DBG_ASSERT(atop == kArray_size(tls));
-		DBG_P("S i=%d, e=%d, atop=%d", i, e, atop);
 		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, tls, &tkERR);
 		int asize = kArray_size(tls);
-		DBG_P("E i=%d, e=%d, asize=%d", i, e, asize);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize, tkERR);
 			kArray_clear(tls, atop);
