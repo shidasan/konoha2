@@ -635,14 +635,6 @@ static int addGammaStack(CTX, gstack_t *s, ktype_t ty, ksymbol_t fn)
 	return index;
 }
 
-static kbool_t Expr_declLocalVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty, ksymbol_t fn)
-{
-	DBG_ASSERT(Expr_isTerm(expr));
-	int index = addGammaStack(_ctx, &gma->genv->l, ty, fn);
-	kExpr_setVariable(expr, LOCAL_, ty, index, gma);
-	return 1;
-}
-
 static KMETHOD UndefinedStmtTyCheck(CTX, ksfp_t *sfp _RIX)  // $expr
 {
 	VAR_StmtTyCheck(stmt, syn, gma);
@@ -703,6 +695,14 @@ static kbool_t Block_checkLastExpr(CTX, kBlock *bk, kGamma *gma, kline_t uline)
 	}
 	SUGAR_P(ERR_, uline, -1, "block has no value");
 	return 0;
+}
+
+static kbool_t Expr_declLocalVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty, ksymbol_t fn)
+{
+	DBG_ASSERT(Expr_isTerm(expr));
+	int index = addGammaStack(_ctx, &gma->genv->l, ty, fn);
+	kExpr_setVariable(expr, LOCAL_, ty, index, gma);
+	return 1;
 }
 
 static KMETHOD ExprTyCheck_Block(CTX, ksfp_t *sfp _RIX)
@@ -837,51 +837,65 @@ static void Stmt_toExprCall(CTX, kStmt *stmt, kMethod *mtd, int n, ...)
 
 ///* ------------------------------------------------------------------------ */
 
-static kbool_t Token_checkVariableSymbol(CTX, kToken *tk, ksymbol_t *symbol)
+
+static kbool_t ExprTerm_toVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty)
 {
-	if(tk->tt == TK_SYMBOL) {
-		*symbol = ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_NAME);
-		return 1;
+	if(Expr_isTerm(expr) && expr->tk->tt == TK_SYMBOL) {
+		kToken *tk = expr->tk;
+		if(tk->kw != KW_Symbol) {
+			kExpr_p(expr, ERR_, "%s is keyword", S_text(tk->text));
+			return false;
+		}
+		ksymbol_t fn = ksymbol(S_text(tk->text), S_size(tk->text), FN_NEWID, SYMPOL_NAME);
+		int index = addGammaStack(_ctx, &gma->genv->l, ty, fn);
+		kExpr_setVariable(expr, LOCAL_, ty, index, gma);
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **REFstmt)
+static kbool_t appendAssignmentStmt(CTX, kExpr *expr, kStmt **lastStmtRef)
+{
+	kStmt *lastStmt = lastStmtRef[0];
+	kStmt *newstmt = new_(Stmt, lastStmt->uline);
+	Block_insertAfter(_ctx, lastStmt->parentNULL, lastStmt, newstmt);
+	kStmt_setsyn(newstmt, SYN_(kStmt_ks(newstmt), KW_Expr));
+	kExpr_typed(expr, LET, TY_void);
+	kObject_setObject(newstmt, KW_Expr, expr);
+	lastStmtRef[0] = newstmt;
+	return true;
+}
+
+static kbool_t Expr_declType(CTX, kExpr *expr, kGamma *gma, ktype_t ty, kStmt **lastStmtRef)
 {
 	DBG_ASSERT(IS_Expr(expr));
 	if(Expr_isTerm(expr)) {
-		if(REFstmt != NULL) {
-			kExpr_p(expr, ERR_, "initial value is required");
-			return false;
-		}
-		else {
-			ksymbol_t fn = FN_NONAME;
-			return (Token_checkVariableSymbol(_ctx, expr->tk, &fn)
-					&& Expr_declLocalVariable(_ctx, expr, gma, ty, fn));
+		if(ExprTerm_toVariable(_ctx, expr, gma, ty)) {
+			kExpr *vexpr = new_Variable(NULL, ty, 0, gma);
+			expr = new_TypedConsExpr(_ctx, TEXPR_LET, TY_void, 3, K_NULL, expr, vexpr);
+			return appendAssignmentStmt(_ctx, expr, lastStmtRef);
 		}
 	}
 	else if(expr->syn->kw == KW_LET) {
-		if(!Expr_declType(_ctx, kExpr_at(expr, 1), gma, ty, NULL)) return false;
-		ty = kExpr_at(expr, 1)->ty;
-		DBG_P("declare %s index=%d", T_ty(ty), kExpr_at(expr, 1)->index);
-		if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
-			kStmt *newstmt = new_(Stmt, Expr_uline(_ctx, expr, INFO_));
-			Block_insertAfter(_ctx, REFstmt[0]->parentNULL, REFstmt[0], newstmt);
-			kStmt_setsyn(newstmt, SYN_(kStmt_ks(newstmt), KW_Expr));
-			kExpr_typed(expr, LET, TY_void);
-			kObject_setObject(newstmt, KW_Expr, expr);
-			REFstmt[0] = newstmt;
-			return true;
+		kExpr *lexpr = kExpr_at(expr, 1);
+		if(kExpr_tyCheckAt(expr, 2, gma, TY_var, 0) == K_NULLEXPR) {
+			// this is neccesarry to avoid 'int a = a + 1;';
+			return false;
 		}
-		return false;
+		if(ExprTerm_toVariable(_ctx, lexpr, gma, ty)) {
+			if(kExpr_tyCheckAt(expr, 2, gma, ty, 0) != K_NULLEXPR) {
+				return appendAssignmentStmt(_ctx, expr, lastStmtRef);
+			}
+			return false;
+		}
 	} else if(expr->syn->kw == KW_COMMA) {
 		size_t i;
 		for(i = 1; i < kArray_size(expr->cons); i++) {
-			if(!Expr_declType(_ctx, kExpr_at(expr, i), gma, ty, REFstmt)) return false;
+			if(!Expr_declType(_ctx, kExpr_at(expr, i), gma, ty, lastStmtRef)) return false;
 		}
 		return true;
 	}
-	kExpr_p(expr, ERR_, "syntax error: not variable");
+	kExpr_p(expr, ERR_, "needs variable name");
 	return false;
 }
 
@@ -892,7 +906,7 @@ static KMETHOD StmtTyCheck_TypeDecl(CTX, ksfp_t *sfp _RIX)
 	kExpr  *expr = kStmt_expr(stmt, KW_Expr, NULL);
 	if(tk == NULL || !TK_isType(tk) || expr == NULL) {
 		ERR_SyntaxError(stmt->uline);
-		RETURNb_(0);
+		RETURNb_(false);
 	}
 	kStmt_done(stmt);
 	RETURNb_(Expr_declType(_ctx, expr, gma, TK_type(tk), &stmt));

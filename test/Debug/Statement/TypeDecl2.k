@@ -2,7 +2,7 @@
 int f() {
 	int a = 1, b = 2;
 	assert(a == 1);
-	assert(a == 2);
+	assert(b == 2);
 	return a+b;
 }
 
