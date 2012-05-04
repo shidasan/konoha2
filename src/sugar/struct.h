@@ -915,7 +915,7 @@ static const char* Stmt_text(CTX, kStmt *stmt, keyword_t kw, const char *def)
 }
 
 static kbool_t Token_toBRACE(CTX, struct _kToken *tk);
-static kBlock *new_Block(CTX, kKonohaSpace* ks, kStmt *stmt, kArray *tls, int s, int e);
+static kBlock *new_Block(CTX, kKonohaSpace* ks, kStmt *stmt, kArray *tls, int s, int e, int delim);
 static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
 {
 	kBlock *bk = (kBlock*)kObject_getObjectNULL(stmt, kw);
@@ -926,7 +926,7 @@ static kBlock* Stmt_block(CTX, kStmt *stmt, keyword_t kw, kBlock *def)
 				Token_toBRACE(_ctx, (struct _kToken*)tk);
 			}
 			if (tk->tt == AST_BRACE) {
-				bk = new_Block(_ctx, kStmt_ks(stmt), stmt, tk->sub, 0, kArray_size(tk->sub));
+				bk = new_Block(_ctx, kStmt_ks(stmt), stmt, tk->sub, 0, kArray_size(tk->sub), ';');
 				kObject_setObject(stmt, kw, bk);
 			}
 		}

@@ -230,7 +230,7 @@ static KMETHOD Stmt_newBlock(CTX, ksfp_t *sfp _RIX)
 	kStmt *stmt  = sfp[0].stmt;
 	kArray *tls  = sfp[1].a;
 	int s = sfp[2].ivalue, e = sfp[3].ivalue;
-	RETURN_(SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, tls, s, e));
+	RETURN_(SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, tls, s, e, ';'));
 }
 
 //## Expr Stmt.newExpr(Token[] tls, int s, int e);

@@ -496,7 +496,7 @@ typedef struct {
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, KDEFINE_SYNTAX *);
 
 	kbool_t    (*makeSyntaxRule)(CTX, kArray*, int, int, kArray *);
-	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int);
+	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int, int);
 	kExpr*     (*Stmt_newExpr2)(CTX, kStmt *stmt, kArray *tls, int s, int e);
 	kExpr*     (*new_ConsExpr)(CTX, ksyntax_t *syn, int n, ...);
 	kExpr *    (*Stmt_addExprParams)(CTX, kStmt *, kExpr *, kArray *tls, int s, int e);

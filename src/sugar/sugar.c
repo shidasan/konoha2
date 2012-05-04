@@ -48,19 +48,19 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 {
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("$ERR"), .flag = SYNFLAG_StmtBreakExec, },
-		{ TOKEN("$expr"),  .rule ="$expr", ParseStmt_(expr), TopStmtTyCheck_(EXPR), StmtTyCheck_(EXPR),  },
-		{ TOKEN("$SYMBOL"),   ParseStmt_(name),  _TERM, ExprTyCheck_(SYMBOL),},
-		{ TOKEN("$USYMBOL"),  ParseStmt_(cname), _TERM, ExprTyCheck_(USYMBOL),},
-		{ TOKEN("$TEXT"),  _TERM, ExprTyCheck_(TEXT),},
-		{ TOKEN("$INT"),  _TERM, ExprTyCheck_(INT),},
-		{ TOKEN("$FLOAT"),  _TERM, /* ExprTyCheck_(FLOAT), */},
-		{ TOKEN("$type"),  _TERM, ParseStmt_(type), ParseExpr_(type), ExprTyCheck_(TYPE),},
-		{ TOKEN("()"),  ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
+		{ TOKEN("$expr"), .rule ="$expr", ParseStmt_(Expr), TopStmtTyCheck_(Expr), StmtTyCheck_(Expr),  },
+		{ TOKEN("$SYMBOL"),  ParseStmt_(Symbol),  _TERM, ExprTyCheck_(Symbol),},
+		{ TOKEN("$USYMBOL"), ParseStmt_(Usymbol), _TERM, ExprTyCheck_(Usymbol),},
+		{ TOKEN("$TEXT"), _TERM, ExprTyCheck_(Text),},
+		{ TOKEN("$INT"), _TERM, ExprTyCheck_(Int),},
+		{ TOKEN("$FLOAT"), _TERM, /* ExprTyCheck_(FLOAT), */},
+		{ TOKEN("$type"), _TERM, ParseStmt_(Type), ParseExpr_(Type), ExprTyCheck_(Type),},
+		{ TOKEN("()"), ParseExpr_(Parenthesis), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"),  },  //AST_BRANCET
 		{ TOKEN("{}"),  }, // AST_BRACE
-		{ TOKEN("$block"), ParseStmt_(block), ExprTyCheck_(block), },
-		{ TOKEN("$params"), ParseStmt_(params), TopStmtTyCheck_(declParams), ExprTyCheck_(call),},
-		{ TOKEN("$toks"), ParseStmt_(toks), },
+		{ TOKEN("$block"), ParseStmt_(Block), ExprTyCheck_(Block), },
+		{ TOKEN("$params"), ParseStmt_(Params), TopStmtTyCheck_(ParamsDecl), ExprTyCheck_(MethodCall),},
+		{ TOKEN("$toks"), ParseStmt_(Toks), },
 		{ TOKEN("."), ParseExpr_(DOT), .op2 = "*", .priority_op2 = 16, .right = 1, /*ExprTyCheck_(getter*/ },
 		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32,  .right = 1,  },
 		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32,  .right = 1,  },
@@ -73,19 +73,19 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, .right = 1,  },
 		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, .right = 1,  },
 		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, .right = 1,  },
-		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, ExprTyCheck_(and)},
-		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, ExprTyCheck_(or)},
+		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, ExprTyCheck_(AND)},
+		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, ExprTyCheck_(OR)},
 		{ TOKEN("!"),   _OP, .op1 = "opNOT", },
-		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(declType)},
+		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(TypeDecl)},
 		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
-		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(declMethod)},
+		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(MethodDecl)},
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		{ TOKEN("null"), _TERM, ExprTyCheck_(NULL),},
-		{ TOKEN("true"),  _TERM, ExprTyCheck_(TRUE),},
-		{ TOKEN("false"),  _TERM, ExprTyCheck_(FALSE),},
+		{ TOKEN("null"), _TERM, ExprTyCheck_(null),},
+		{ TOKEN("true"),  _TERM, ExprTyCheck_(true),},
+		{ TOKEN("false"),  _TERM, ExprTyCheck_(false),},
 		{ TOKEN("if"), .rule ="\"if\" \"(\" $expr \")\" $block [\"else\" else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
 		{ TOKEN("else"), .rule = "\"else\" $block", TopStmtTyCheck_(else), StmtTyCheck_(else), },
 		{ TOKEN("return"), .rule ="\"return\" [$expr]", .flag = SYNFLAG_StmtBreakExec, StmtTyCheck_(return), },
@@ -106,7 +106,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 		kArray *tls = ctxsugar->tokens;
 		size_t pos = kArray_size(tls);
 		ktokenize(_ctx, script, uline, tls);
-		kBlock *bk = new_Block(_ctx, ks, NULL, tls, pos, kArray_size(tls));
+		kBlock *bk = new_Block(_ctx, ks, NULL, tls, pos, kArray_size(tls), ';');
 		kArray_clear(tls, pos);
 		result = Block_eval(_ctx, bk);
 		RESET_GCSTACK();
