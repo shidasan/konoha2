@@ -703,20 +703,20 @@ static KMETHOD ParseExpr_DOLLAR(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kToken_p(tls->toks[c], ERR_, "unknown %s parser", kToken_s(tls->toks[c])));
 }
 
-static KMETHOD ParseExpr_Type(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	if(c + 1 < e) {   // typing T v
-		kToken *tkT = tls->toks[c];
-		struct _kToken *tk = new_W(Token, TK_OPERATOR);
-		tk->kw  = KW_StmtTypeDecl;
-		syn = SYN_(kStmt_ks(stmt), KW_StmtTypeDecl);
-		RETURN_(new_ConsExpr(_ctx, syn, 3, tk, Stmt_newExpr2(_ctx, stmt, tls, c+1, e), tkT));
-	}
-	else {
-		ParseExpr_Term(_ctx, sfp, K_RIX);
-	}
-}
+//static KMETHOD ParseExpr_Type(CTX, ksfp_t *sfp _RIX)
+//{
+//	VAR_ParseExpr(stmt, syn, tls, s, c, e);
+//	if(c + 1 < e) {   // typing T v
+//		kToken *tkT = tls->toks[c];
+//		struct _kToken *tk = new_W(Token, TK_OPERATOR);
+//		tk->kw  = KW_StmtTypeDecl;
+//		syn = SYN_(kStmt_ks(stmt), KW_StmtTypeDecl);
+//		RETURN_(new_ConsExpr(_ctx, syn, 3, tk, Stmt_newExpr2(_ctx, stmt, tls, c+1, e), tkT));
+//	}
+//	else {
+//		ParseExpr_Term(_ctx, sfp, K_RIX);
+//	}
+//}
 /* ------------------------------------------------------------------------ */
 
 static KMETHOD ParseStmt_Expr(CTX, ksfp_t *sfp _RIX)

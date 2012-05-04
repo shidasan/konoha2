@@ -402,6 +402,7 @@ struct _kGamma {
 #define KW_Int     5
 #define KW_Float   6
 #define KW_Type    7
+#define            KW_StmtTypeDecl KW_Type
 #define KW_Parenthesis  8
 #define KW_Brancet      9
 #define KW_Brace        10
@@ -426,13 +427,12 @@ struct _kGamma {
 #define KW_AND     (12+KW_DOT)
 #define KW_OR      (13+KW_DOT)
 #define KW_NOT     (14+KW_DOT)
-#define KW_COLON   (15+KW_DOT)
-#define KW_StmtTypeDecl            KW_COLON
-#define KW_LET     (16+KW_DOT)
-#define KW_COMMA   (17+KW_DOT)
-#define KW_DOLLAR  (18+KW_DOT)
+//#define KW_COLON   (15+KW_DOT)
+#define KW_LET     (15+KW_DOT)
+#define KW_COMMA   (16+KW_DOT)
+#define KW_DOLLAR  (17+KW_DOT)
 
-#define KW_void      (19+KW_DOT)
+#define KW_void      (18+KW_DOT)
 #define KW_StmtMethodDecl          KW_void
 #define KW_boolean   (1+KW_void)
 #define KW_int       (2+KW_void)

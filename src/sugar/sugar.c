@@ -54,7 +54,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$TEXT"), _TERM, ExprTyCheck_(Text),},
 		{ TOKEN("$INT"), _TERM, ExprTyCheck_(Int),},
 		{ TOKEN("$FLOAT"), _TERM, /* ExprTyCheck_(FLOAT), */},
-		{ TOKEN("$type"), _TERM, ParseStmt_(Type), ParseExpr_(Type), ExprTyCheck_(Type),},
+		{ TOKEN("$type"), _TERM, ParseStmt_(Type), .rule = "$type $expr", StmtTyCheck_(TypeDecl), ExprTyCheck_(Type), },
 		{ TOKEN("()"), ParseExpr_(Parenthesis), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"),  },  //AST_BRANCET
 		{ TOKEN("{}"),  }, // AST_BRACE
@@ -76,7 +76,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, .right = 1, ExprTyCheck_(AND)},
 		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, .right = 1, ExprTyCheck_(OR)},
 		{ TOKEN("!"),   _OP, .op1 = "opNOT", },
-		{ TOKEN(":"),  _OP, .rule = "$type $expr", .priority_op2 = 3072, StmtTyCheck_(TypeDecl)},
+//		{ TOKEN(":"),  _OP,  .priority_op2 = 3072,},
 		{ TOKEN("="),  _OP, .op2 = "*", .priority_op2 = 4096, },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
