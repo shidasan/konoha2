@@ -870,7 +870,7 @@ static void CLASSTABLE_freeCT(CTX)
 	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
 	for(i = 0; i < size; i++) {
 		if(cts[i]->fallocsize > 0) {
-			KFREE(cts[i]->fields, cts[i]->fallocsize);
+			KFREE(cts[i]->fields, cts[i]->fallocsize * sizeof(kfield_t));
 		}
 		KFREE(cts[i], sizeof(kclass_t));
 	}
