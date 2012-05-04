@@ -124,6 +124,7 @@ static void setfield(CTX, KDEFINE_CLASS *ct, int fctsize, kclass_t *supct)
 		if(supct->fsize > 0) {
 			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*ct->fsize);
 		}
+
 	}
 }
 
@@ -135,7 +136,7 @@ static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 	if(CT_isFinal(supct)) {
 		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s is final", T_cid(supcid));
 	}
-	if(CT_isDefined(supct)) {
+	if(!CT_isDefined(supct)) {
 		kreportf(CRIT_, sfp[K_RTNIDX].uline, "%s has undefined field(s)", T_cid(supcid));
 	}
 	KDEFINE_CLASS defNewClass = {
@@ -146,8 +147,9 @@ static KMETHOD KonohaSpace_defineClass(CTX, ksfp_t *sfp _RIX)
 	};
 	setfield(_ctx, &defNewClass, (int)sfp[4].ivalue, supct);
 	kKonohaSpace *ks = sfp[0].ks;
-	kclass_t *c = Konoha_addClassDef(ks->packid, ks->packdom, sfp[2].s, &defNewClass, sfp[K_RTNIDX].uline);
-	RETURNi_(c->cid);
+	kclass_t *ct = Konoha_addClassDef(ks->packid, ks->packdom, sfp[2].s, &defNewClass, sfp[K_RTNIDX].uline);
+	ct->fnull(_ctx, ct);  // create null object
+	RETURNi_(ct->cid);
 }
 
 // int KonohaSpace.defineClassField(int cid, int flag, int ty, String name, Object *value);
