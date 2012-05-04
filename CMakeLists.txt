@@ -90,6 +90,7 @@ set(VM
 
 set(PACKAGES
 	sugar
+	konoha
 	konoha.string
 	konoha.float
 ##	konoha.int
