@@ -1039,7 +1039,7 @@ static KMETHOD StmtTyCheck_ParamsDecl(CTX, ksfp_t *sfp _RIX)
 	if(params == NULL) {
 		pa = (rtype == TY_void) ? K_NULLPARAM : new_kParam(rtype, 0, NULL);
 	}
-	else if(IS_Block(params)) {
+	else if(IS_Param(params)) {
 		pa = (kParam*)params;
 	}
 	else if(IS_Block(params)) {

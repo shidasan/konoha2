@@ -540,25 +540,19 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 	return idx;
 }
 
-static kExpr *Stmt_addExprParams(CTX, kStmt *stmt, kExpr *expr, kArray *tls, int s, int e)
+static kExpr *Stmt_addExprParams(CTX, kStmt *stmt, kExpr *expr, kArray *tls, int s, int e, int allowEmpty)
 {
 	int i, start = s;
 	for(i = s; i < e; i++) {
 		kToken *tk = tls->toks[i];
 		if(tk->kw == KW_COMMA) {
-//			if(start < i) {
-				expr = Expr_add(_ctx, expr, Stmt_newExpr2(_ctx, stmt, tls, start, i));
-				start = i + 1;
-//			}
-//			else {
-				// NULL;
-				// Expr_add(_ctx, expr, )
-//			}
+			expr = Expr_add(_ctx, expr, Stmt_newExpr2(_ctx, stmt, tls, start, i));
+			start = i + 1;
 		}
 	}
-//	if(start < i) {
+	if(allowEmpty == 0 || start < i) {
 		expr = Expr_add(_ctx, expr, Stmt_newExpr2(_ctx, stmt, tls, start, i));
-//	}
+	}
 	kArray_clear(tls, s);
 	return expr;
 }
@@ -676,7 +670,7 @@ static KMETHOD ParseExpr_Parenthesis(CTX, ksfp_t *sfp _RIX)
 			syn = SYN_(kStmt_ks(stmt), KW_Parenthesis);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}
-		lexpr = Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub));
+		lexpr = Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
 		RETURN_(kExpr_rightJoin(lexpr, stmt, tls, s+1, c+1, e));
 	}
 }
@@ -685,7 +679,7 @@ static KMETHOD ParseExpr_COMMA(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	kExpr *expr = new_ConsExpr(_ctx, syn, 1, tls->toks[c]);
-	expr = Stmt_addExprParams(_ctx, stmt, expr, tls, s, e);
+	expr = Stmt_addExprParams(_ctx, stmt, expr, tls, s, e, 0/*allowEmpty*/);
 	RETURN_(expr);
 }
 
@@ -782,7 +776,10 @@ static KMETHOD ParseStmt_Params(CTX, ksfp_t *sfp _RIX)
 	int r = -1;
 	kToken *tk = tls->toks[s];
 	if(tk->tt == AST_PARENTHESIS) {
-		kBlock *bk = new_Block(_ctx, kStmt_ks(stmt), stmt, tk->sub, 0, kArray_size(tk->sub), ',');
+		kArray *tls = tk->sub;
+		int ss = 0, ee = kArray_size(tls);
+		if(0 < ee && tls->toks[0]->kw == KW_void) ss = 1;  //  f(void) = > f()
+		kBlock *bk = new_Block(_ctx, kStmt_ks(stmt), stmt, tls, ss, ee, ',');
 		kObject_setObject(stmt, name, bk);
 		r = s + 1;
 	}

@@ -269,7 +269,7 @@ static KMETHOD Stmt_addExprParam(CTX, ksfp_t *sfp _RIX)
 	}
 	if(IS_NOTNULL(expr)) {
 		assert(IS_Array(tk->sub));
-		expr = SUGAR Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub));
+		expr = SUGAR Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
 	}
 	RETURN_(expr);
 }
