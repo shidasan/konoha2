@@ -18,8 +18,11 @@ System.p(fibo(9));
 System.p(fibo(10));
 
 int fibo2(int n) {
-    if (n < 3) return 1;
-    else return fibo2(n-1) + fibo2(n-2);
+    if (n < 3) {
+        return 1;
+    } else {
+        return fibo2(n-1) + fibo2(n-2);
+    }
 }
 
 System.p(fibo2(10));

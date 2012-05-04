@@ -93,13 +93,12 @@ set(PACKAGES
 	konoha.string
 	konoha.float
 ##	konoha.int
-	konoha.llvm.util
 	konoha.llvm
 ##	konoha.pcre
 ##	konoha.io
 ##	konoha.while
 ##	konoha.class
-##	konoha.assignment
+	konoha.assignment
 	konoha.i
 ##	konoha.assert
 	posix.process
@@ -108,6 +107,7 @@ set(PACKAGES
 ##	konoha.mpi
 	konoha.bytes
 	jit
+	native
 	python
 )
 
