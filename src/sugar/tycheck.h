@@ -84,10 +84,9 @@ static kline_t Expr_uline(CTX, kExpr *expr, int pe)
 	if(IS_Expr(a)) {
 		return Expr_uline(_ctx, expr->single, pe);
 	}
-	if (pe < INFO_) {
-		DBG_ABORT("@@@@@@@@ Cannot Find Uline @@@@@@@@@@@");
-	}
-	return 0;
+	DBG_P("Please SET ULINE Token %p, kw='%s'", expr, T_kw(expr->syn->kw));
+	dumpExpr(_ctx, 0, 0, expr);
+	return 9999;
 }
 
 static kExpr *Expr_p(CTX, kExpr *expr, int pe, const char *fmt, ...)
