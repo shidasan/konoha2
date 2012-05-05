@@ -761,7 +761,10 @@ static void dumpExpr(CTX, int n, int nest, kExpr *expr)
 
 static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 {
-	if(expr == NULL) expr = new_(Expr, 0);
+	if(expr == NULL) {
+		expr = new_(Expr, 0);
+		PUSH_GCSTACK(expr);
+	}
 	W(kExpr, expr);
 	Wexpr->ty = ty;
 	if(TY_isUnbox(ty)) {
@@ -779,7 +782,10 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 
 static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 {
-	if(expr == NULL) expr = new_(Expr, 0);
+	if(expr == NULL) {
+		expr = new_(Expr, 0);
+		PUSH_GCSTACK(expr);
+	}
 	W(kExpr, expr);
 	Wexpr->build = TEXPR_NCONST;
 	Wexpr->ndata = ndata;
@@ -791,12 +797,15 @@ static kExpr* Expr_setNConstValue(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata)
 
 static kExpr *Expr_setVariable(CTX, kExpr *expr, int build, ktype_t ty, intptr_t index, kGamma *gma)
 {
-	if(expr == NULL) expr = new_W(Expr, 0);
+	if(expr == NULL) {
+		expr = new_W(Expr, 0);
+		PUSH_GCSTACK(expr);
+	}
 	W(kExpr, expr);
 	Wexpr->build = build;
 	Wexpr->ty = ty;
 	Wexpr->index = index;
-	KSETv(Wexpr->data, K_NULL);
+	// KSETv(Wexpr->data, K_NULL);  block need unclear
 	if(build < TEXPR_UNTYPED) {
 		kArray_add(gma->genv->lvarlst, Wexpr);
 	}

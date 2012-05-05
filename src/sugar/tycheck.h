@@ -688,46 +688,41 @@ static kbool_t Block_tyCheckAll(CTX, kBlock *bk, kGamma *gma)
 	return result;
 }
 
-static kbool_t Block_checkLastExpr(CTX, kBlock *bk, kGamma *gma, kline_t uline)
-{
-	if(kArray_size(bk->blocks) > 0) {
-		kStmt *stmt = bk->blocks->stmts[kArray_size(bk->blocks)-1];
-		if(stmt->syn->kw == KW_Expr) return 1;
-		uline = stmt->uline;
-	}
-	SUGAR_P(ERR_, uline, -1, "block has no value");
-	return 0;
-}
-
-static kbool_t Expr_declLocalVariable(CTX, kExpr *expr, kGamma *gma, ktype_t ty, ksymbol_t fn)
-{
-	DBG_ASSERT(Expr_isTerm(expr));
-	int index = addGammaStack(_ctx, &gma->genv->l, ty, fn);
-	kExpr_setVariable(expr, LOCAL_, ty, index, gma);
-	return 1;
-}
-
 static KMETHOD ExprTyCheck_Block(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	kExpr *texpr = K_NULLEXPR;
+	kStmt *lastExpr = NULL;
+	kline_t uline = expr->tk->uline;
 	kBlock *bk = expr->block;
 	DBG_ASSERT(IS_Block(bk));
-	kExpr *texpr = K_NULLEXPR;
-	if(Block_checkLastExpr(_ctx, bk, gma, expr->tk->uline)) {
+	if(kArray_size(bk->blocks) > 0) {
+		kStmt *stmt = bk->blocks->stmts[kArray_size(bk->blocks)-1];
+		if(stmt->syn->kw == KW_Expr) {
+			lastExpr = stmt;
+		}
+		uline = stmt->uline;
+	}
+	if(lastExpr != NULL) {
 		int lvarsize = gma->genv->l.varsize;
-		kExpr *lvar = new_(Expr, NULL);
-		Expr_declLocalVariable(_ctx, lvar, gma, reqty, 0/*FN_*/);
-		if(Block_tyCheckAll(_ctx, bk, gma)) {
-			kStmt *stmt = bk->blocks->stmts[kArray_size(bk->blocks)-1];
-			kExpr *rexpr = kStmt_expr(stmt, KW_Expr, NULL);  DBG_ASSERT(rexpr != NULL);
-			ktype_t ty = rexpr->ty;
+		kExpr *lvar = new_Variable(LOCAL_, TY_var, addGammaStack(_ctx, &gma->genv->l, TY_var, 0/*FN_*/), gma);
+		if(!Block_tyCheckAll(_ctx, bk, gma)) {
+			RETURN_(texpr);
+		}
+		kExpr *rexpr = kStmt_expr(lastExpr, KW_Expr, NULL);
+		DBG_ASSERT(rexpr != NULL);
+		ktype_t ty = rexpr->ty;
+		if(ty != TY_void) {
 			kExpr *letexpr = new_TypedConsExpr(_ctx, TEXPR_LET, TY_void, 3, K_NULL, lvar, rexpr);
-			kObject_setObject(stmt, KW_Expr, letexpr);
+			kObject_setObject(lastExpr, KW_Expr, letexpr);
 			texpr = kExpr_setVariable(expr, BLOCK_, ty, lvarsize, gma);
 		}
 		if(lvarsize < gma->genv->l.varsize) {
 			gma->genv->l.varsize = lvarsize;
 		}
+	}
+	if(texpr == K_NULLEXPR) {
+		SUGAR_P(ERR_, uline, -1, "block has no value");
 	}
 	RETURN_(texpr);
 }
