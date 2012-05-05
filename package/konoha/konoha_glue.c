@@ -84,7 +84,9 @@ static kbool_t konoha_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	assignment_initKonohaSpace(_ctx, ks, pline);
 	while_initKonohaSpace(_ctx, ks, pline);
 	class_initKonohaSpace(_ctx, ks, pline);
+	DBG_P("hoge");
 	global_initKonohaSpace(_ctx, ks, pline);
+	DBG_P("hage2");
 
 	if(loading_float) {
 		float_initKonohaSpace(_ctx, ks, pline);
