@@ -659,13 +659,13 @@ void MODSUGAR_loadMethod(CTX)
 		{NULL},
 	};
 	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
-#ifdef WITH_ECLIPSE
-	KDEFINE_PACKAGE *d = konoha_init();
-	d->initPackage(_ctx, kmodsugar->rootks, 0, NULL, 0);
-	d->setupPackage(_ctx, kmodsugar->rootks, 0);
-	d->initKonohaSpace(_ctx, kmodsugar->rootks, 0);
-	d->setupKonohaSpace(_ctx, kmodsugar->rootks, 0);
-#endif
+//#ifdef WITH_ECLIPSE
+//	KDEFINE_PACKAGE *d = konoha_init();
+//	d->initPackage(_ctx, kmodsugar->rootks, 0, NULL, 0);
+//	d->setupPackage(_ctx, kmodsugar->rootks, 0);
+//	d->initKonohaSpace(_ctx, kmodsugar->rootks, 0);
+//	d->setupKonohaSpace(_ctx, kmodsugar->rootks, 0);
+//#endif
 }
 
 #ifdef __cplusplus
