@@ -247,6 +247,7 @@ static KMETHOD StmtTyCheck_GlobalTypeDecl(CTX, ksfp_t *sfp _RIX)
 	VAR_StmtTyCheck(stmt, syn, gma);
 	kToken *tk  = kStmt_token(stmt, KW_Type, NULL);
 	kExpr  *expr = kStmt_expr(stmt, KW_Expr, NULL);
+
 //	if(tk == NULL || !TK_isType(tk) || expr == NULL) {
 //		ERR_SyntaxError(stmt->uline);
 //		RETURNb_(false);

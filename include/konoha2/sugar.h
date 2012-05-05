@@ -182,19 +182,19 @@ typedef struct KDEFINE_SYNTAX {
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->TopStmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
-	}while(1)\
+	}while(0)\
 
 #define SYN_setStmtTyCheck(KS, KW, F) do {\
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->StmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
-	}while(1)\
+	}while(0)\
 
 #define SYN_setExprTyCheck(KS, KW, F) do {\
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->ExprTyCheck, new_SugarMethod(ExprTyCheck_##F));\
-	}while(1)\
+	}while(0)\
 
 typedef const struct _kKonohaSpace kKonohaSpace;
 struct _kKonohaSpace {
