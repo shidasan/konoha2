@@ -1,3 +1,4 @@
+// written by imasahiro
 K.importPackage("jit");
 
 int fibo(int n) {
@@ -16,6 +17,7 @@ System.p(fibo(7));
 System.p(fibo(8));
 System.p(fibo(9));
 System.p(fibo(10));
+assert(fibo(10) == 55);
 
 int fibo2(int n) {
     if (n < 3) {
@@ -27,3 +29,4 @@ int fibo2(int n) {
 
 System.p(fibo2(10));
 
+assert(fibo2(10) == 55);
