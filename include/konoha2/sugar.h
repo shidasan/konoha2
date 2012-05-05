@@ -179,19 +179,19 @@ typedef struct KDEFINE_SYNTAX {
 #define new_SugarMethod(F)     new_kMethod(0, 0, 0, NULL, F)
 
 #define SYN_setTopStmtTyCheck(KS, KW, F) do {\
-		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->TopStmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
 	}while(1)\
 
 #define SYN_setStmtTyCheck(KS, KW, F) do {\
-		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->StmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
 	}while(1)\
 
 #define SYN_setExprTyCheck(KS, KW, F) do {\
-		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->ExprTyCheck, new_SugarMethod(ExprTyCheck_##F));\
 	}while(1)\

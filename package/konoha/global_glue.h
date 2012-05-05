@@ -261,7 +261,6 @@ struct _kScript {
 	kObjectHeader h;
 };
 
-
 static kbool_t global_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
@@ -270,7 +269,7 @@ static kbool_t global_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
-	//SYN_setTopStmtTyCheck(ks, KW_StmtTypeDecl, GlobalTypeDecl);
+	SYN_setTopStmtTyCheck(ks, KW_StmtTypeDecl, GlobalTypeDecl);
 	if(ks->scrNUL == NULL) {
 		KDEFINE_CLASS defScript = {
 			.structname = "Script",

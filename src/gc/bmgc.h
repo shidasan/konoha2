@@ -804,7 +804,7 @@ void MODGC_free(CTX, kcontext_t *ctx)
 #define C_STACK_TOP(ctx) ((void**) &ctx)
 #endif
 
-static kbool_t knh_isObject(CTX, kObject *o);
+//static kbool_t knh_isObject(CTX, kObject *o);
 
 static void cstack_mark(CTX)
 {
