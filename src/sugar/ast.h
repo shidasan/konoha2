@@ -646,7 +646,7 @@ static KMETHOD ParseExpr_DOT(CTX, ksfp_t *sfp _RIX)
 		RETURN_(kExpr_rightJoin(expr, stmt, tls, c+2, c+2, e));
 	}
 	if(c + 1 < e) c++;
-	RETURN_(kToken_p(tls->toks[c], ERR_, "needs field name: %s", kToken_s(tls->toks[c])));
+	RETURN_(kToken_p(tls->toks[c], ERR_, "expected field name: not %s", kToken_s(tls->toks[c])));
 }
 
 static KMETHOD ParseExpr_Parenthesis(CTX, ksfp_t *sfp _RIX)
@@ -717,6 +717,7 @@ static KMETHOD ParseExpr_DOLLAR(CTX, ksfp_t *sfp _RIX)
 //		ParseExpr_Term(_ctx, sfp, K_RIX);
 //	}
 //}
+
 /* ------------------------------------------------------------------------ */
 
 static KMETHOD ParseStmt_Expr(CTX, ksfp_t *sfp _RIX)

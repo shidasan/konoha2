@@ -174,6 +174,25 @@ typedef struct KDEFINE_SYNTAX {
 	knh_Fmethod ExprTyCheck;
 } KDEFINE_SYNTAX;
 
+#define new_SugarMethod(F)     new_kMethod(0, 0, 0, NULL, F)
+
+#define SYN_setTopStmtTyCheck(KS, KW, F) do {\
+		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		DBG_ASSERT(syn_ != NULL);\
+		KSETv(syn_->TopStmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
+	}while(1)\
+
+#define SYN_setStmtTyCheck(KS, KW, F) do {\
+		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		DBG_ASSERT(syn_ != NULL);\
+		KSETv(syn_->StmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
+	}while(1)\
+
+#define SYN_setExprTyCheck(KS, KW, F) do {\
+		struct _ksyntax *syn_ = (struct _ksyntax*)SYN_(KS, KW);\
+		DBG_ASSERT(syn_ != NULL);\
+		KSETv(syn_->ExprTyCheck, new_SugarMethod(ExprTyCheck_##F));\
+	}while(1)\
 
 typedef const struct _kKonohaSpace kKonohaSpace;
 struct _kKonohaSpace {
@@ -497,6 +516,8 @@ typedef struct {
 
 	kbool_t    (*makeSyntaxRule)(CTX, kArray*, int, int, kArray *);
 	kBlock*    (*new_Block)(CTX, kKonohaSpace *, kStmt *, kArray *, int, int, int);
+	void       (*Block_insertAfter)(CTX, kBlock *bk, kStmt *target, kStmt *stmt);
+
 	kExpr*     (*Stmt_newExpr2)(CTX, kStmt *stmt, kArray *tls, int s, int e);
 	kExpr*     (*new_ConsExpr)(CTX, ksyntax_t *syn, int n, ...);
 	kExpr *    (*Stmt_addExprParams)(CTX, kStmt *, kExpr *, kArray *tls, int s, int e, int allowEmpty);
@@ -526,6 +547,7 @@ typedef struct {
 	base->makeSyntaxRule     = makeSyntaxRule;\
 	/*ast*/\
 	base->new_Block          = new_Block;\
+	base->Block_insertAfter  = Block_insertAfter;\
 	base->Stmt_newExpr2      = Stmt_newExpr2;\
 	base->new_ConsExpr       = new_ConsExpr;\
 	base->Stmt_addExprParams = Stmt_addExprParams;\
@@ -591,8 +613,8 @@ typedef struct {
 #define kExpr_setConstValue(EXPR, T, O)      _e->Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)                _e->Expr_setNConstValue(_ctx, NULL, T, D)
 #define kExpr_setNConstValue(EXPR, T, D)     _e->Expr_setNConstValue(_ctx, EXPR, T, D)
-#define new_Variable(B, T, I, I2, G)         _e->Expr_setVariable(_ctx, NULL, TEXPR_##B, T, I, I2, G)
-#define kExpr_setVariable(E, B, T, I, I2, G) _e->Expr_setVariable(_ctx, E, TEXPR_##B, T, I, I2, G)
+#define new_Variable(B, T, I, G)             _e->Expr_setVariable(_ctx, NULL, TEXPR_##B, T, I, G)
+#define kExpr_setVariable(E, B, T, I, G)     _e->Expr_setVariable(_ctx, E, TEXPR_##B, T, I, G)
 #define kExpr_tyCheckAt(E, N, GMA, T, P)     _e->Expr_tyCheckAt(_ctx, E, N, GMA, T, P)
 #define kStmt_tyCheck(E, NI, GMA, T, P)      _e->Stmt_tyCheck(_ctx, STMT, NI, GMA, T, P)
 

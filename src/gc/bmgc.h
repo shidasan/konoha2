@@ -808,17 +808,17 @@ static kbool_t knh_isObject(CTX, kObject *o);
 
 static void cstack_mark(CTX)
 {
-	void** stack  = C_STACK_TOP(ctx);
-	void** bottom = (void**) _ctx->stack->cstack_bottom;
-	/* FIXME */
-	BEGIN_REFTRACE((bottom - stack) / sizeof(void*));
-	for (; stack < bottom; ++stack) {
-		kObject *o = (kObject*)(*stack);
-		if (knh_isObject(_ctx, o)) {
-			KREFTRACEv(o);
-		}
-	}
-	END_REFTRACE();
+//	void** stack  = C_STACK_TOP(ctx);
+//	void** bottom = (void**) _ctx->stack->cstack_bottom;
+//	/* FIXME */
+//	BEGIN_REFTRACE((bottom - stack) / sizeof(void*));
+//	for (; stack < bottom; ++stack) {
+//		kObject *o = (kObject*)(*stack);
+//		if (knh_isObject(_ctx, o)) {
+//			KREFTRACEv(o);
+//		}
+//	}
+//	END_REFTRACE();
 }
 
 
@@ -1794,6 +1794,7 @@ static void bmgc_gc_sweep(CTX, HeapManager *mng)
 
 static void bitmapMarkingGC(CTX, HeapManager *mng)
 {
+	DBG_P("GC starting");
 	bmgc_gc_init(_ctx, mng);
 #ifdef GCSTAT
 	size_t i = 0, marked = 0, collected = 0, heap_size = 0;
