@@ -127,7 +127,6 @@ struct _kpackage {
 
 typedef const struct _ksyntax ksyntax_t;
 struct _ksyntax {
-//	const char *token;
 	keyword_t kw;  kflag_t flag;
 	kArray   *syntaxRule;
 	kMethod  *ParseStmt;
