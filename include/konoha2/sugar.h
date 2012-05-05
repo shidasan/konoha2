@@ -512,7 +512,7 @@ typedef struct {
 	void       (*Stmt_toExprCall)(CTX, kStmt *stmt, kMethod *mtd, int n, ...);
 
 	size_t     (*p)(CTX, int pe, kline_t uline, int lpos, const char *fmt, ...);
-	kline_t    (*Expr_uline)(CTX, kExpr *expr, int pe);
+	kline_t    (*Expr_uline)(CTX, kExpr *expr, int level);
 	ksyntax_t* (*KonohaSpace_syntax)(CTX, kKonohaSpace *, ksymbol_t, int);
 	void       (*KonohaSpace_defineSyntax)(CTX, kKonohaSpace *, KDEFINE_SYNTAX *);
 
@@ -582,6 +582,7 @@ typedef struct {
 #define kStmt_text(STMT, KW, DEF)   Stmt_text(_ctx, STMT, KW, DEF)
 #define kStmt_block(STMT, KW, DEF)  Stmt_block(_ctx, STMT, KW, DEF)
 
+#define kExpr_uline(EXPR)           Expr_uline(_ctx, EXPR, 0)
 #define new_ConstValue(T, O)  Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
 #define kExpr_setConstValue(EXPR, T, O)  Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)  Expr_setNConstValue(_ctx, NULL, T, D)
@@ -611,6 +612,7 @@ typedef struct {
 #define kStmt_text(STMT, KW, DEF)            _e->Stmt_text(_ctx, STMT, KW, DEF)
 #define kStmt_block(STMT, KW, DEF)           _e->Stmt_block(_ctx, STMT, KW, DEF)
 
+#define kExpr_uline(EXPR)                    _e->Expr_uline(_ctx, EXPR, 0)
 #define new_ConstValue(T, O)                 _e->Expr_setConstValue(_ctx, NULL, T, UPCAST(O))
 #define kExpr_setConstValue(EXPR, T, O)      _e->Expr_setConstValue(_ctx, EXPR, T, UPCAST(O))
 #define new_NConstValue(T, D)                _e->Expr_setNConstValue(_ctx, NULL, T, D)

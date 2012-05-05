@@ -60,7 +60,7 @@ static gmabuf_t *Gamma_pop(CTX, kGamma *gma, gmabuf_t *oldone, gmabuf_t *checksu
 
 // --------------------------------------------------------------------------
 
-static kline_t Expr_uline(CTX, kExpr *expr, int pe)
+static kline_t Expr_uline(CTX, kExpr *expr, int level)
 {
 	kToken *tk = expr->tk;
 	kArray *a = expr->cons;
@@ -76,24 +76,26 @@ static kline_t Expr_uline(CTX, kExpr *expr, int pe)
 				return tk->uline;
 			}
 			if(IS_Expr(tk)) {
-				kline_t uline = Expr_uline(_ctx, a->exprs[i], pe);
+				kline_t uline = Expr_uline(_ctx, a->exprs[i], level+1);
 				if(uline > 0) return uline;
 			}
 		}
 	}
 	if(IS_Expr(a)) {
-		return Expr_uline(_ctx, expr->single, pe);
+		return Expr_uline(_ctx, expr->single, level+1);
 	}
-	DBG_P("Please SET ULINE Token %p, kw='%s'", expr, T_kw(expr->syn->kw));
-	dumpExpr(_ctx, 0, 0, expr);
-	return 9999;
+	if(level == 0) {
+		kreportf(WARN_, 0, "PLEASE SET ULINE TOKEN TO EXPR %p", expr);
+		dumpExpr(_ctx, 0, 0, expr);
+	}
+	return level == 0 ? 9999 : 0;
 }
 
 static kExpr *Expr_p(CTX, kExpr *expr, int pe, const char *fmt, ...)
 {
 	if(expr != K_NULLEXPR) {
 		int lpos = -1;
-		kline_t uline = Expr_uline(_ctx, expr, pe);
+		kline_t uline = kExpr_uline(expr);
 		va_list ap;
 		va_start(ap, fmt);
 		vperrorf(_ctx, pe, uline, lpos, fmt, ap);
@@ -228,7 +230,7 @@ static kExpr *Expr_tyCheck(CTX, kExpr *expr, kGamma *gma, ktype_t reqty, int pol
 		if(mtd != NULL && (kMethod_isCoercion(mtd) || FLAG_is(pol, TPOL_COERCION))) {
 			return new_TypedMethodCall(_ctx, reqty, mtd, gma, 1, texpr);
 		}
-		return Expr_p(_ctx, texpr, ERR_, "%s is requested, not %s", T_ty(reqty), T_ty(texpr->ty));
+		return Expr_p(_ctx, texpr, ERR_, "%s is requested, but %s is given", T_ty(reqty), T_ty(texpr->ty));
 	}
 	return texpr;
 }
@@ -304,7 +306,6 @@ static KMETHOD ExprTyCheck_Int(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setNConstValue(expr, TY_Int, (uintptr_t)n));
 }
 
-
 static kMethod* KS_getGetterMethodNULL(CTX, kKonohaSpace *ks, ktype_t cid, ksymbol_t fn)
 {
 	kMethod *mtd = kKonohaSpace_getMethodNULL(ks, cid, MN_toGETTER(fn));
@@ -314,9 +315,11 @@ static kMethod* KS_getGetterMethodNULL(CTX, kKonohaSpace *ks, ktype_t cid, ksymb
 	return mtd;
 }
 
-static kExpr* new_GetterExpr(CTX, kMethod *mtd, kExpr *expr)
+static kExpr* new_GetterExpr(CTX, kToken *tkU, kMethod *mtd, kExpr *expr)
 {
-	return new_TypedConsExpr(_ctx, TEXPR_CALL, mtd->pa->rtype, 2, mtd, expr);
+	struct _kExpr *expr1 = (struct _kExpr *)new_TypedConsExpr(_ctx, TEXPR_CALL, mtd->pa->rtype, 2, mtd, expr);
+	KSETv(expr1->tk, tkU); // for uline
+	return (kExpr*)expr1;
 }
 
 static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty)
@@ -346,14 +349,14 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		}
 		kMethod *mtd = KS_getGetterMethodNULL(_ctx, genv->ks, genv->this_cid, fn);
 		if(mtd != NULL) {
-			return new_GetterExpr(_ctx, mtd, new_Variable(LOCAL, genv->this_cid, 0, gma));
+			return new_GetterExpr(_ctx, tk, mtd, new_Variable(LOCAL, genv->this_cid, 0, gma));
 		}
 	}
 	if(genv->ks->scrNUL != NULL) {
 		ktype_t cid = O_cid(genv->ks->scrNUL);
 		kMethod *mtd = KS_getGetterMethodNULL(_ctx, genv->ks, cid, fn);
 		if(mtd != NULL) {
-			return new_GetterExpr(_ctx, mtd, new_ConstValue(cid, genv->ks->scrNUL));
+			return new_GetterExpr(_ctx, tk, mtd, new_ConstValue(cid, genv->ks->scrNUL));
 		}
 
 	}

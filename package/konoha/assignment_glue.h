@@ -55,7 +55,7 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 					}
 				}
 			}
-			SUGAR p(_ctx, ERR_, SUGAR Expr_uline(_ctx, expr, ERR_), -1, "assignment needs variable or setter");
+			SUGAR p(_ctx, ERR_, kExpr_uline(expr), -1, "variable name is expected");
 		}
 	}
 	RETURN_(K_NULLEXPR);
@@ -77,7 +77,7 @@ static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("="), .op2 = "*", .priority_op2 = 4096, ExprTyCheck_(assignment)},
+		{ TOKEN("="), /*.op2 = "*", .priority_op2 = 4096,*/ ExprTyCheck_(assignment)},
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
