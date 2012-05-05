@@ -305,7 +305,7 @@ static int ParseStmt(CTX, ksyntax_t *syn, kStmt *stmt, ksymbol_t name, kArray *t
 	KSETv(lsfp[K_CALLDELTA+2].a, tls);
 	lsfp[K_CALLDELTA+3].ivalue = s;
 	lsfp[K_CALLDELTA+4].ivalue = e;
-	KCALL(lsfp, 0, syn->ParseStmt, 4, knull(CT_Int));
+	KCALL(lsfp, 0, syn->ParseStmtNULL, 4, knull(CT_Int));
 	END_LOCAL();
 	RESET_GCSTACK();
 	return (int)lsfp[0].ivalue;
@@ -341,7 +341,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 		}
 		else if(rule->tt == TK_METANAME) {
 			ksyntax_t *syn = SYN_(kStmt_ks(stmt), rule->kw);
-			if(syn == NULL || syn->ParseStmt == NULL) {
+			if(syn == NULL || syn->ParseStmtNULL == NULL) {
 				kToken_p(tk, ERR_, "unknown syntax pattern: %s", T_kw(rule->kw));
 				return -1;
 			}
@@ -422,13 +422,13 @@ static ksyntax_t* KonohaSpace_getSyntaxRule(CTX, kKonohaSpace *ks, kArray *tls, 
 		return SYN_(ks, KW_Expr);  // expression
 	}
 	ksyntax_t *syn = SYN_(ks, tk->kw);
-	if(syn->syntaxRule == NULL) {
+	if(syn->syntaxRuleNULL == NULL) {
 		DBG_P("kw='%s', %d, %d", T_kw(syn->kw), syn->ParseExpr == kmodsugar->UndefinedParseExpr, kmodsugar->UndefinedExprTyCheck == syn->ExprTyCheck);
 		int i;
 		for(i = s + 1; i < e; i++) {
 			tk = tls->toks[i];
 			syn = SYN_(ks, tk->kw);
-			if(syn->syntaxRule != NULL && syn->priority > 0) {
+			if(syn->syntaxRuleNULL != NULL && syn->priority > 0) {
 				SUGAR_P(DEBUG_, tk->uline, tk->lpos, "binary operator syntax kw='%s'", T_kw(syn->kw));   // sugar $expr "=" $expr;
 				return syn;
 			}
@@ -443,9 +443,9 @@ static kbool_t Stmt_parseSyntaxRule(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	kbool_t ret = false;
 	ksyntax_t *syn = KonohaSpace_getSyntaxRule(_ctx, kStmt_ks(stmt), tls, s, e);
 	DBG_ASSERT(syn != NULL);
-	if(syn->syntaxRule != NULL) {
+	if(syn->syntaxRuleNULL != NULL) {
 		((struct _kStmt*)stmt)->syn = syn;
-		ret = (matchSyntaxRule(_ctx, stmt, syn->syntaxRule, stmt->uline, tls, s, e, 0) != -1);
+		ret = (matchSyntaxRule(_ctx, stmt, syn->syntaxRuleNULL, stmt->uline, tls, s, e, 0) != -1);
 	}
 	else {
 		SUGAR_P(ERR_, stmt->uline, 0, "undefined syntax rule for '%s'", T_kw(syn->kw));
@@ -527,7 +527,7 @@ static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksynta
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
 		if(syn != NULL && syn->op2 != 0) {
 			//DBG_P("operator: %s priotiry=%d", T_kw(syn->kw), syn->priority);
-			if(prif < syn->priority || (prif == syn->priority && syn->right == 1)) {
+			if(prif < syn->priority || (prif == syn->priority && !FLAG_is(syn->flag, SYNFLAG_ExprLeftJoinOp2))) {
 				prif = syn->priority;
 				idx = i;
 				*synR = syn;

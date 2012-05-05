@@ -128,17 +128,16 @@ struct _kpackage {
 typedef const struct _ksyntax ksyntax_t;
 struct _ksyntax {
 	keyword_t kw;  kflag_t flag;
-	kArray   *syntaxRule;
-	kMethod  *ParseStmt;
+	kArray   *syntaxRuleNULL;
+	kMethod  *ParseStmtNULL;
 	kMethod  *ParseExpr;
 	kMethod  *TopStmtTyCheck;
 	kMethod  *StmtTyCheck;
 	kMethod  *ExprTyCheck;
 	// binary
-	kshort_t priority;   kshort_t right;//
-	kmethodn_t op2;      // a if b
-	kmethodn_t op1;      // & a
-	ktype_t    ty;       kshort_t dummy;
+	ktype_t    ty;   kshort_t priority;
+	kmethodn_t op2;  kmethodn_t op1;      // & a
+	//kshort_t dummy;
 };
 
 #define TOKEN(T)  .name = T
@@ -150,21 +149,24 @@ struct _ksyntax {
 
 #define _TERM  .flag = SYNFLAG_ExprTerm
 #define _OP    .flag = SYNFLAG_ExprOp
+#define _OPLeft   .flag = (SYNFLAG_ExprOp|SYNFLAG_ExprLeftJoinOp2)
+
 
 #define SYNFLAG_ExprTerm           ((kflag_t)1)
 #define SYNFLAG_ExprOp             ((kflag_t)1 << 1)
-#define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 2)  /* return, throw */
-#define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 3)  /* continue */
-#define SYNFLAG_StmtJumpSkip       ((kflag_t)1 << 4)  /* break */
+#define SYNFLAG_ExprLeftJoinOp2    ((kflag_t)1 << 2)
+
+#define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 8)  /* return, throw */
+#define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 9)  /* continue */
+#define SYNFLAG_StmtJumpSkip       ((kflag_t)1 << 10)  /* break */
 
 typedef struct KDEFINE_SYNTAX {
 	const char *name;
-//	size_t      namelen;
 	keyword_t kw;  kflag_t flag;
 	const char *rule;
 	const char *op2;
 	const char *op1;
-	int priority_op2; int right;
+	int priority_op2;
 	int type;
 	knh_Fmethod ParseStmt;
 	knh_Fmethod ParseExpr;

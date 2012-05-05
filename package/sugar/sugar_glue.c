@@ -112,7 +112,7 @@ static KMETHOD KonohaSpace_addParseStmt(CTX, ksfp_t *sfp _RIX)
 	kMethod *mtd = kKonohaSpace_getMethodNULL(sfp[0].ks, TY_Stmt, mn);
 	if(checkMethod(_ctx, mtd, isParseStmt, CT_Stmt, name, sfp[K_RTNIDX].uline)) {
 		struct _ksyntax *syn = NEWSYN_(sfp[0].ks, KW_s(key));
-		setSyntaxMethod(_ctx, &syn->ParseStmt, mtd, key, name, sfp[K_RTNIDX].uline);
+		setSyntaxMethod(_ctx, &syn->ParseStmtNULL, mtd, key, name, sfp[K_RTNIDX].uline);
 	}
 }
 
@@ -373,18 +373,18 @@ static KMETHOD StmtTyCheck_sugar(CTX, ksfp_t *sfp _RIX)
 	if(tls != NULL) {
 		struct _ksyntax *syn = toks_syntax(_ctx, gma->genv->ks, tls);
 		if(syn != NULL) {
-			if(syn->syntaxRule != NULL) {
+			if(syn->syntaxRuleNULL != NULL) {
 				SUGAR p(_ctx, WARN_, stmt->uline, -1, "overriding syntax rule: %s", T_kw(syn->kw));
-				kArray_clear(syn->syntaxRule, 0);
+				kArray_clear(syn->syntaxRuleNULL, 0);
 			}
 			else {
-				KINITv(syn->syntaxRule, new_(Array, 8));
+				KINITv(syn->syntaxRuleNULL, new_(Array, 8));
 			}
-			if(SUGAR makeSyntaxRule(_ctx, tls, 0, kArray_size(tls), syn->syntaxRule)) {
+			if(SUGAR makeSyntaxRule(_ctx, tls, 0, kArray_size(tls), syn->syntaxRuleNULL)) {
 				r = 1;
 			}
 			else {
-				kArray_clear(syn->syntaxRule, 0);
+				kArray_clear(syn->syntaxRuleNULL, 0);
 			}
 		}
 		kStmt_done(stmt);

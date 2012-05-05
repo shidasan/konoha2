@@ -56,9 +56,6 @@ static kbool_t int_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-#define _TERM     ParseExpr_(Term)
-#define _OP       ParseExpr_(Op)
-
 static kbool_t int_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;

@@ -42,8 +42,8 @@ static void syntax_reftrace(CTX, kmape_t *p)
 {
 	ksyntax_t *syn = (ksyntax_t*)p->uvalue;
 	BEGIN_REFTRACE(5);
-	KREFTRACEn(syn->syntaxRule);
-	KREFTRACEn(syn->ParseStmt);
+	KREFTRACEn(syn->syntaxRuleNULL);
+	KREFTRACEn(syn->ParseStmtNULL);
 	KREFTRACEn(syn->TopStmtTyCheck);
 	KREFTRACEn(syn->StmtTyCheck);
 	KREFTRACEn(syn->ExprTyCheck);
@@ -168,8 +168,8 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 			syn->ty = syndef->type;
 		}
 		if(syndef->rule != NULL) {
-			KINITv(syn->syntaxRule, new_(TokenArray, 0));
-			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRule);
+			KINITv(syn->syntaxRuleNULL, new_(TokenArray, 0));
+			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRuleNULL);
 		}
 		if(syndef->op1 != NULL && syn->op1 == 0) {
 			syn->op1 = (syndef->op1[0] == '*') ? MN_NONAME : ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
@@ -177,7 +177,6 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		if(syndef->op2 != NULL && syn->op2 == 0) {
 			syn->op2 = (syndef->op2[0] == '*') ? MN_NONAME : ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
 			syn->priority = syndef->priority_op2;
-			syn->right = syndef->right;
 		}
 		kMethod *defmtdParseExpr = kmodsugar->UndefinedParseExpr;
 		if(FLAG_is(syn->flag, SYNFLAG_ExprOp) /*&& syn->op2 != MN_NONAME*/) {
@@ -186,7 +185,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		else if(FLAG_is(syn->flag, SYNFLAG_ExprTerm)) {
 			defmtdParseExpr = kmodsugar->ParseExpr_Term;
 		}
-		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmt), &pParseStmt, &mParseStmt, NULL);
+		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmtNULL), &pParseStmt, &mParseStmt, NULL);
 		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr, defmtdParseExpr);
 		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
 		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
