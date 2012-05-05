@@ -810,6 +810,13 @@ static KMETHOD StmtTyCheck_return(CTX, ksfp_t *sfp _RIX)
 	kStmt_typed(stmt, RETURN);
 	if(rtype != TY_void) {
 		r = Stmt_tyCheckExpr(_ctx, stmt, KW_Expr, gma, rtype, 0);
+	} else {
+		kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
+		if (expr != NULL) {
+			SUGAR_P(WARN_, stmt->uline, -1, "ignored return value");
+			r = Stmt_tyCheckExpr(_ctx, stmt, KW_Expr, gma, TY_var, 0);
+			kObject_removeKey(stmt, 1);
+		}
 	}
 	RETURNb_(r);
 }
