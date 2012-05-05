@@ -808,17 +808,18 @@ static kbool_t knh_isObject(CTX, kObject *o);
 
 static void cstack_mark(CTX)
 {
-//	void** stack  = C_STACK_TOP(ctx);
-//	void** bottom = (void**) _ctx->stack->cstack_bottom;
-//	/* FIXME */
-//	BEGIN_REFTRACE((bottom - stack) / sizeof(void*));
-//	for (; stack < bottom; ++stack) {
-//		kObject *o = (kObject*)(*stack);
-//		if (knh_isObject(_ctx, o)) {
-//			KREFTRACEv(o);
-//		}
-//	}
-//	END_REFTRACE();
+#if 0
+	void** stack  = C_STACK_TOP(ctx);
+	void** bottom = (void**) _ctx->stack->cstack_bottom;
+	for (; stack < bottom; ++stack) {
+		kObject *o = (kObject*)(*stack);
+		if (knh_isObject(_ctx, o)) {
+			BEGIN_REFTRACE(1);
+			KREFTRACEv(o);
+			END_REFTRACE();
+		}
+	}
+#endif
 }
 
 
