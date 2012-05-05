@@ -1,6 +1,6 @@
 // written by kimio
 
-void f(n) {
+void f(int n) {
 	if(n == 0) {
 		return ;
 	}
