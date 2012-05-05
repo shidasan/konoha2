@@ -195,7 +195,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 		i = appendKeyword(_ctx, ks, tls, i, e, tkP->sub, tkERRRef);
 	}
 	if(tk->tt != TK_ERR) {
-		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "'%c' is probably expected before %s", closech, kToken_s(tls->toks[probablyCloseBefore]));
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "'%c' is expected (probably before %s)", closech, kToken_s(tls->toks[probablyCloseBefore]));
 		Token_toERR(_ctx, tkP, errref);
 	}
 	else {
