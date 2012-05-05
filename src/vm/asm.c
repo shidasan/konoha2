@@ -820,7 +820,7 @@ static void JumpStmt_asm(CTX, kStmt *stmt, int espidx)
 	kStmt *jump = (kStmt*)kObject_getObject(stmt, syn->kw, NULL);
 	DBG_ASSERT(jump != NULL);
 	DBG_ASSERT(IS_Stmt(jump));
-	kBasicBlock* lbJUMP = (kBasicBlock*)kObject_getObject(stmt, syn->kw, NULL);
+	kBasicBlock* lbJUMP = (kBasicBlock*)kObject_getObject(jump, syn->kw, NULL);
 	DBG_ASSERT(lbJUMP != NULL);
 	DBG_ASSERT(IS_BasicBlock(lbJUMP));
 	ASM_JMP(_ctx, lbJUMP);
