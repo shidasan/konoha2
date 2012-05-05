@@ -104,6 +104,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	}
 	L_NEW:;
 	if(isnew == 1) {
+		DBG_P("creating new syntax %s old=%p", T_kw(kw), parent);
 		if(ks0->syntaxMapNN == NULL) {
 			((struct _kKonohaSpace*)ks0)->syntaxMapNN = kmap_init(0);
 		}
@@ -111,19 +112,82 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 		kmap_add(ks0->syntaxMapNN, e);
 		struct _ksyntax *syn = (struct _ksyntax*)KCALLOC(sizeof(ksyntax_t), 1);
 		e->uvalue = (uintptr_t)syn;
+
 		if(parent != NULL) {  // TODO: RCGC
 			memcpy(syn, parent, sizeof(ksyntax_t));
 		}
 		else {
 			syn->kw = kw;
 			syn->ty  = TY_unknown;
-			syn->op1 = 0;
-			syn->op2 = 0;
+			syn->op1 = MN_NONAME;
+			syn->op2 = MN_NONAME;
+			KINITv(syn->ParseExpr, kmodsugar->UndefinedParseExpr);
+			KINITv(syn->TopStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+			KINITv(syn->StmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+			KINITv(syn->ExprTyCheck, kmodsugar->UndefinedExprTyCheck);
 		}
 		//syn->parent = parent;
 		return syn;
 	}
 	return NULL;
+}
+
+static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
+static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
+
+static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, kMethod **mp)
+{
+	if(f != NULL) {
+		if(f != p[0]) {
+			p[0] = f;
+			mp[0] = new_SugarMethod(f);
+		}
+		KINITv(synp[0], mp[0]);  // FIXME: in case of
+	}
+}
+
+static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *syndef)
+{
+	knh_Fmethod pParseStmt = NULL, pParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
+	kMethod *mParseStmt = NULL, *mParseExpr = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
+	while(syndef->name != NULL) {
+		keyword_t kw = keyword(_ctx, syndef->name, strlen(syndef->name), FN_NEWID);
+		struct _ksyntax* syn = (struct _ksyntax*)KonohaSpace_syntax(_ctx, ks, kw, 1/*isnew*/);
+		//syn->token = syndef->name;
+		syn->flag  |= ((kflag_t)syndef->flag);
+		if(syndef->type != 0) {
+			syn->ty = syndef->type;
+		}
+		if(syndef->op1 != NULL) {
+			syn->op1 = ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
+		}
+		if(syndef->op2 != NULL) {
+			syn->op2 = ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
+		}
+		if(syndef->priority_op2 > 0) {
+			syn->priority = syndef->priority_op2;
+		}
+		if(syndef->rule != NULL) {
+			KINITv(syn->syntaxRuleNULL, new_(TokenArray, 0));
+			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRuleNULL);
+		}
+		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmtNULL), &pParseStmt, &mParseStmt);
+		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr);
+		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck);
+		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck);
+		if(syn->ParseExpr == kmodsugar->UndefinedParseExpr) {
+			if(FLAG_is(syn->flag, SYNFLAG_ExprOp)) {
+				KSETv(syn->ParseExpr, kmodsugar->ParseExpr_Op);
+			}
+			else if(FLAG_is(syn->flag, SYNFLAG_ExprTerm)) {
+				KSETv(syn->ParseExpr, kmodsugar->ParseExpr_Term);
+			}
+		}
+		DBG_ASSERT(syn == SYN_(ks, kw));
+		syndef++;
+	}
+	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
 }
 
 #define T_statement(kw)  T_statement_(_ctx, kw)
@@ -138,63 +202,6 @@ static const char* T_statement_(CTX, ksymbol_t kw)
 	return (const char*)buf;
 }
 
-static ksymbol_t keyword(CTX, const char *name, size_t len, ksymbol_t def);
-static void parseSyntaxRule(CTX, const char *rule, kline_t pline, kArray *a);
-
-static void setSyntaxMethod(CTX, knh_Fmethod f, kMethod **synp, knh_Fmethod *p, kMethod **mp, kMethod *defmtd)
-{
-	if(f != NULL) {
-		if(f != p[0]) {
-			p[0] = f;
-			mp[0] = new_kMethod(0, 0, 0, NULL, f);
-		}
-		KINITv(synp[0], mp[0]);
-	}
-	else if(defmtd != NULL) {
-		KINITv(synp[0], defmtd);
-	}
-}
-
-static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *syndef)
-{
-	knh_Fmethod pParseStmt = NULL, pParseExpr = NULL, pStmtTyCheck = NULL, pExprTyCheck = NULL;
-	kMethod *mParseStmt = NULL, *mParseExpr = NULL, *mStmtTyCheck = NULL, *mExprTyCheck = NULL;
-	while(syndef->name != NULL) {
-		keyword_t kw = keyword(_ctx, syndef->name, strlen(syndef->name), FN_NEWID);
-		struct _ksyntax* syn = (struct _ksyntax*)KonohaSpace_syntax(_ctx, ks, kw, 1);
-		//syn->token = syndef->name;
-		syn->flag  |= syndef->flag;
-		if(syndef->type != 0) {
-			syn->ty = syndef->type;
-		}
-		if(syndef->rule != NULL) {
-			KINITv(syn->syntaxRuleNULL, new_(TokenArray, 0));
-			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRuleNULL);
-		}
-		if(syndef->op1 != NULL && syn->op1 == 0) {
-			syn->op1 = (syndef->op1[0] == '*') ? MN_NONAME : ksymbol(syndef->op1, 127, FN_NEWID, SYMPOL_METHOD);
-		}
-		if(syndef->op2 != NULL && syn->op2 == 0) {
-			syn->op2 = (syndef->op2[0] == '*') ? MN_NONAME : ksymbol(syndef->op2, 127, FN_NEWID, SYMPOL_METHOD);
-			syn->priority = syndef->priority_op2;
-		}
-		kMethod *defmtdParseExpr = kmodsugar->UndefinedParseExpr;
-		if(FLAG_is(syn->flag, SYNFLAG_ExprOp) /*&& syn->op2 != MN_NONAME*/) {
-			defmtdParseExpr = kmodsugar->ParseExpr_Op;
-		}
-		else if(FLAG_is(syn->flag, SYNFLAG_ExprTerm)) {
-			defmtdParseExpr = kmodsugar->ParseExpr_Term;
-		}
-		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmtNULL), &pParseStmt, &mParseStmt, NULL);
-		setSyntaxMethod(_ctx, syndef->ParseExpr, &(syn->ParseExpr), &pParseExpr, &mParseExpr, defmtdParseExpr);
-		setSyntaxMethod(_ctx, syndef->TopStmtTyCheck, &(syn->TopStmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
-		setSyntaxMethod(_ctx, syndef->StmtTyCheck, &(syn->StmtTyCheck), &pStmtTyCheck, &mStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
-		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck, kmodsugar->UndefinedExprTyCheck);
-		DBG_ASSERT(syn == SYN_(ks, kw));
-		syndef++;
-	}
-	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
-}
 
 // USymbolTable
 

@@ -55,13 +55,13 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$INT"), _TERM, ExprTyCheck_(Int),},
 		{ TOKEN("$FLOAT"), _TERM, /* ExprTyCheck_(FLOAT), */},
 		{ TOKEN("$type"), _TERM, ParseStmt_(Type), .rule = "$type $expr", StmtTyCheck_(TypeDecl), ExprTyCheck_(Type), },
-		{ TOKEN("()"), ParseExpr_(Parenthesis), .op2 = "*", .priority_op2 = 16, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
+		{ TOKEN("()"), .flag = SYNFLAG_ExprPostfixOp2, ParseExpr_(Parenthesis), .priority_op2 = 16, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"),  },  //AST_BRANCET
 		{ TOKEN("{}"),  }, // AST_BRACE
 		{ TOKEN("$block"), ParseStmt_(Block), ExprTyCheck_(Block), },
 		{ TOKEN("$params"), ParseStmt_(Params), TopStmtTyCheck_(ParamsDecl), ExprTyCheck_(MethodCall),},
 		{ TOKEN("$toks"), ParseStmt_(Toks), },
-		{ TOKEN("."), ParseExpr_(DOT), .op2 = "*", .priority_op2 = 16,  /*ExprTyCheck_(getter*/ },
+		{ TOKEN("."), ParseExpr_(DOT), .priority_op2 = 16, },
 		{ TOKEN("/"), _OP, .op2 = "opDIV", .priority_op2 = 32, },
 		{ TOKEN("%"), _OP, .op2 = "opMOD", .priority_op2 = 32, },
 		{ TOKEN("*"), _OP, .op2 = "opMUL", .priority_op2 = 32, },
@@ -73,11 +73,11 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN(">="), _OP, .op2 = "opGTE", .priority_op2 = 256, },
 		{ TOKEN("=="), _OP, .op2 = "opEQ", .priority_op2 = 512, },
 		{ TOKEN("!="), _OP, .op2 = "opNEQ", .priority_op2 = 512, },
-		{ TOKEN("&&"), _OP, .op2 = "*", .priority_op2 = 1024, ExprTyCheck_(AND)},
-		{ TOKEN("||"), _OP, .op2 = "*", .priority_op2 = 2048, ExprTyCheck_(OR)},
+		{ TOKEN("&&"), _OP, /*.op2 = ""unused*/ .priority_op2 = 1024, ExprTyCheck_(AND)},
+		{ TOKEN("||"), _OP, /*.op2 = ""unused*/ .priority_op2 = 2048, ExprTyCheck_(OR)},
 		{ TOKEN("!"),   _OP, .op1 = "opNOT", },
 //		{ TOKEN(":"),  _OP,  .priority_op2 = 3072,},
-		{ TOKEN("="),  _OPLeft, .op2 = "*", .priority_op2 = 4096, },
+		{ TOKEN("="),  _OPLeft, /*.op2 = "*"*/ .priority_op2 = 4096, },
 		{ TOKEN(","), ParseExpr_(COMMA), .op2 = "*", .priority_op2 = 8192, /*.flag = SYNFLAG_ExprLeftJoinOP2,*/ },
 		{ TOKEN("$"), ParseExpr_(DOLLAR), },
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(MethodDecl)},
@@ -182,14 +182,15 @@ static void kmodsugar_reftrace(CTX, struct kmodshare_t *baseh)
 {
 	kmodsugar_t *base = (kmodsugar_t*)baseh;
 	kmap_reftrace(base->packageMapNO, pack_reftrace);
-	BEGIN_REFTRACE(7);
+	BEGIN_REFTRACE(8);
 	KREFTRACEv(base->rootks);
 	KREFTRACEv(base->keywordList);
 	KREFTRACEv(base->packageList);
-//	KREFTRACEv(base->aBuffer);
 	KREFTRACEv(base->UndefinedParseExpr);
 	KREFTRACEv(base->UndefinedStmtTyCheck);
 	KREFTRACEv(base->UndefinedExprTyCheck);
+	KREFTRACEv(base->ParseExpr_Term);
+	KREFTRACEv(base->ParseExpr_Op);
 	END_REFTRACE();
 }
 

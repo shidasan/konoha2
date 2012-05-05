@@ -504,7 +504,7 @@ static kExpr *ParseExpr(CTX, ksyntax_t *syn, kStmt *stmt, kArray *tls, int s, in
 static kbool_t Stmt_isUnaryOp(CTX, kStmt *stmt, kToken *tk)
 {
 	ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
-	return (syn != NULL && syn->op1 != 0);
+	return (syn->op1 != MN_NONAME);
 }
 
 static int Stmt_skipUnaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
@@ -519,20 +519,20 @@ static int Stmt_skipUnaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e)
 	return i;
 }
 
-static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksyntax_t **synR)
+static int Stmt_findBinaryOp(CTX, kStmt *stmt, kArray *tls, int s, int e, ksyntax_t **synRef)
 {
 	int idx = -1, i, prif = 0;
 	for(i = Stmt_skipUnaryOp(_ctx, stmt, tls, s, e) + 1; i < e; i++) {
 		kToken *tk = tls->toks[i];
 		ksyntax_t *syn = SYN_(kStmt_ks(stmt), tk->kw);
-		if(syn != NULL && syn->op2 != 0) {
-			//DBG_P("operator: %s priotiry=%d", T_kw(syn->kw), syn->priority);
-			if(prif < syn->priority || (prif == syn->priority && !FLAG_is(syn->flag, SYNFLAG_ExprLeftJoinOp2))) {
+//		if(syn != NULL && syn->op2 != 0) {
+		if(syn->priority > 0) {
+			if(prif < syn->priority || (prif == syn->priority && !(FLAG_is(syn->flag, SYNFLAG_ExprLeftJoinOp2)) )) {
 				prif = syn->priority;
 				idx = i;
-				*synR = syn;
+				*synRef = syn;
 			}
-			if(syn->op2 != MN_NONAME) {  /* check if real binary operator to parse f() + 1 */
+			if(!FLAG_is(syn->flag, SYNFLAG_ExprPostfixOp2)) {  /* check if real binary operator to parse f() + 1 */
 				i = Stmt_skipUnaryOp(_ctx, stmt, tls, i+1, e) - 1;
 			}
 		}

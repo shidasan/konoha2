@@ -155,6 +155,7 @@ struct _ksyntax {
 #define SYNFLAG_ExprTerm           ((kflag_t)1)
 #define SYNFLAG_ExprOp             ((kflag_t)1 << 1)
 #define SYNFLAG_ExprLeftJoinOp2    ((kflag_t)1 << 2)
+#define SYNFLAG_ExprPostfixOp2     ((kflag_t)1 << 3)
 
 #define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 8)  /* return, throw */
 #define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 9)  /* continue */
