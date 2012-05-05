@@ -527,18 +527,6 @@ static void Token_reftrace(CTX, kObject *o)
 	END_REFTRACE();
 }
 
-#define kToken_s(tk) kToken_s_(_ctx, tk)
-static const char *kToken_s_(CTX, kToken *tk)
-{
-	switch((int)tk->tt) {
-	case TK_CODE: return "{... }";
-	case AST_PARENTHESIS: return "(... )";
-	case AST_BRACE: return "{... }";
-	case AST_BRANCET: return "[... ]";
-	default:  return S_text(tk->text);
-	}
-}
-
 static const char *T_tt(ktoken_t t)
 {
 	static const char* symTKDATA[] = {
@@ -567,6 +555,20 @@ static const char *T_tt(ktoken_t t)
 		return symTKDATA[t];
 	}
 	return "TK_UNKNOWN";
+}
+
+#define kToken_s(tk) kToken_s_(_ctx, tk)
+static const char *kToken_s_(CTX, kToken *tk)
+{
+	DBG_P("T_tt=%s", T_tt(tk->tt));
+	switch((int)tk->tt) {
+	case TK_INDENT: return "end of line";
+	case TK_CODE: ;
+	case AST_BRACE: return "{... }";
+	case AST_PARENTHESIS: return "(... )";
+	case AST_BRANCET: return "[... ]";
+	default:  return S_text(tk->text);
+	}
 }
 
 static void dumpToken(CTX, kToken *tk)

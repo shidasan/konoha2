@@ -35,7 +35,7 @@ extern "C" {
 
 static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, int delim, kArray *tlsdst, kToken **tkERR);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e, kToken *tkERR);
-static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int e, int closech, kArray *tlsdst, kToken **tkERR);
+static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int e, int closech, kArray *tlsdst, kToken **tkERRRef);
 
 static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int s, int e, int delim)
 {
@@ -125,7 +125,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	}
 	else if(tk->tt == TK_OPERATOR) {
 		if(!Token_resolved(_ctx, ks, tk) && tk->topch != ';') {
-			size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined operator: %s", kToken_s(tk));
+			size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined token: %s", kToken_s(tk));
 			Token_toERR(_ctx, tk, errref);
 			tkERR[0] = tk;
 			return e;
@@ -163,9 +163,9 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
 	return 0;
 }
 
-static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int e, int closech, kArray *tlsdst, kToken **tkERR)
+static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int e, int closech, kArray *tlsdst, kToken **tkERRRef)
 {
-	int i;
+	int i, probablyCloseBefore = e - 1;
 	kToken *tk = tls->toks[s];
 	if(AST_PARENTHESIS <= tk->tt && tk->tt <= AST_BRACE) {  // already transformed
 		kArray_add(tlsdst, tk);
@@ -178,29 +178,31 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
 		if(tk->tt == TK_ERR) break;  // ERR
+		DBG_ASSERT(tk->topch != '{');
 		if(tk->topch == '(') {
-			i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i, e, ')', tkP->sub, tkERR);
+			i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i, e, ')', tkP->sub, tkERRRef);
 			continue;
 		}
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tkP->sub, tkERR);
+			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tkP->sub, tkERRRef);
 			continue;
 		}
 		if(tk->topch == closech) {
 			return i;
 		}
+		if((closech == ')' || closech == ']') && tk->tt == TK_CODE) probablyCloseBefore = i;
 		if(tk->tt == TK_INDENT && closech != '}') continue;  // remove INDENT;
-		i = appendKeyword(_ctx, ks, tls, i, e, tkP->sub, tkERR);
+		i = appendKeyword(_ctx, ks, tls, i, e, tkP->sub, tkERRRef);
 	}
 	if(tk->tt != TK_ERR) {
-		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "%c is expected", closech);
+		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "'%c' is probably expected before %s", closech, kToken_s(tls->toks[probablyCloseBefore]));
 		Token_toERR(_ctx, tkP, errref);
 	}
 	else {
 		tkP->tt = TK_ERR;
 		KSETv(tkP->text, tk->text);
 	}
-	tkERR[0] = tkP;
+	tkERRRef[0] = tkP;
 	return e;
 }
 

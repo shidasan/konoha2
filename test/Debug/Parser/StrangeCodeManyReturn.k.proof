@@ -1,8 +1,2 @@
- - (error) (StrangeCodeManyReturn.k:1) undefined expression parser for '
-    return 1;
-    return 1;
-    return 1;
-    return 1;
-    return 1;
-'
+ - (error) (StrangeCodeManyReturn.k:1) undefined expression parser for '{... }'
 Q.E.D.
