@@ -537,7 +537,7 @@ static kObject* BUILD_addConstPool(CTX, kObject *o)
 	kArray_add(ctxcode->constPools, o);
 	return o;
 }
-
+static void BLOCK_asm(CTX, kBlock *bk);
 static void CALL_asm(CTX, int a, kExpr *expr, int espidx);
 static void AND_asm(CTX, int a, kExpr *expr, int espidx);
 static void OR_asm(CTX, int a, kExpr *expr, int espidx);
@@ -555,6 +555,7 @@ static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 
 static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 {
+	DBG_P("SWITCH expr->block=%d", expr->block);
 	switch(expr->build) {
 	case TEXPR_CONST : {
 		kObject *v = expr->data;
@@ -567,11 +568,31 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		}
 		break;
 	}
+	case TEXPR_NEW   : {
+		ASM(NEW, OC_(a), expr->index, CT_(expr->ty));
+		break;
+	}
+	case TEXPR_NULL  : {
+		if(TY_isUnbox(expr->ty)) {
+			ASM(NSET, NC_(a), 0, CT_(expr->ty));
+		}
+		else {
+			ASM(NULL, OC_(a), CT_(expr->ty));
+		}
+		break;
+	}
 	case TEXPR_NCONST : {
 		ASM(NSET, NC_(a), expr->ndata, CT_(expr->ty));
 		break;
 	}
 	case TEXPR_LOCAL : {
+		NMOV_asm(_ctx, a, expr->ty, expr->index);
+		break;
+	}
+	case TEXPR_BLOCK : {
+		DBG_P("CASE expr->block=%d", expr->block);
+		DBG_ASSERT(expr->block);
+		BLOCK_asm(CTX, expr->block);
 		NMOV_asm(_ctx, a, expr->ty, expr->index);
 		break;
 	}
@@ -584,19 +605,6 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		else {
 			ASM(NMOVx, OC_(a), OC_(index), xindex, CT_(expr->ty));
 		}
-		break;
-	}
-	case TEXPR_NULL  : {
-		if(TY_isUnbox(expr->ty)) {
-			ASM(NSET, NC_(a), 0, CT_(expr->ty));
-		}
-		else {
-			ASM(NULL, OC_(a), CT_(expr->ty));
-		}
-		break;
-	}
-	case TEXPR_NEW   : {
-		ASM(NEW, OC_(a), expr->index, CT_(expr->ty));
 		break;
 	}
 	case TEXPR_BOX   : {
@@ -625,8 +633,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		LETEXPR_asm(_ctx, a, expr, espidx);
 		break;
 	default:
-		DBG_P("unknown expr=%d", expr->build);
-		abort();
+		DBG_ABORT("unknown expr=%d", expr->build);
 	}
 }
 
@@ -721,26 +728,6 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 /* ------------------------------------------------------------------------ */
 /* [LABEL]  */
 
-//static void BUILD_pushLABEL(CTX, kStmt *stmtNUL, kBasicBlock *lbC, kBasicBlock *lbB)
-//{
-//	kObject *tkL = NULL;
-//	if(tkL == NULL) {
-//		tkL = K_NULL;
-//	}
-//	kArray_add(ctxcode->lstacks, tkL);
-//	kArray_add(ctxcode->lstacks, lbC);
-//	kArray_add(ctxcode->lstacks, lbB);
-//	kArray_add(ctxcode->lstacks, K_NULL);
-//}
-//
-//static void BUILD_popLABEL(CTX)
-//{
-//	kArray *a = ctxcode->lstacks;
-//	DBG_ASSERT(kArray_size(a) - 4 >= 0);
-//	kArray_clear(a, kArray_size(a) - 4);
-//}
-
-
 //static void DO_asm(CTX, kStmtExpr *stmt)
 //{
 //	kBasicBlock* lbCONTINUE = new_BasicBlockLABEL(_ctx);
@@ -767,8 +754,6 @@ static void ASM_SAFEPOINT(CTX, int espidx)
 	}
 	ASM(SAFEPOINT, SFP_(espidx));
 }
-
-static void BLOCK_asm(CTX, kBlock *bk);
 
 static void ErrStmt_asm(CTX, kStmt *stmt, int espidx)
 {
