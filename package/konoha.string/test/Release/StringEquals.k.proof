@@ -1,0 +1,11 @@
+ - (StringEquals.k:6) false
+ - (StringEquals.k:7) true
+ - (StringEquals.k:8) false
+ - (StringEquals.k:9) false
+ - (StringEquals.k:10) false
+ - (StringEquals.k:11) true
+ - (StringEquals.k:12) false
+ - (StringEquals.k:13) false
+ - (StringEquals.k:14) true
+ - (StringEquals.k:15) true
+Q.E.D.
