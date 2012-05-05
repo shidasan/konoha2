@@ -531,6 +531,7 @@ static void Token_reftrace(CTX, kObject *o)
 static const char *kToken_s_(CTX, kToken *tk)
 {
 	switch((int)tk->tt) {
+	case TK_CODE: return "{.. }";
 	case AST_PARENTHESIS: return "(... )";
 	case AST_BRACE: return "{... }";
 	case AST_BRANCET: return "[... ]";
