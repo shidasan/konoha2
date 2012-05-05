@@ -790,7 +790,7 @@ static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
 static void ReturnStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
-	if(IS_Expr(expr) && expr->ty != TY_void) {
+	if(expr != NULL && IS_Expr(expr) && expr->ty != TY_void) {
 		EXPR_asm(_ctx, K_RTNIDX, expr, espidx);
 	}
 	ASM_JMP(_ctx, ctxcode->lbEND);  // RET

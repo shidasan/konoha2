@@ -666,7 +666,7 @@ static void OR_asm(CTX, int a, kExpr *expr, int espidx)
 	int i, size = kArray_size(expr->cons);
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
-	for(i = 0; i < size; i++) {
+	for(i = 1; i < size; i++) {
 		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 1/*TRUE*/, lbTRUE, espidx);
 	}
 	ASM(NSET, NC_(a), 0/*O_data(K_FALSE)*/, CT_Boolean);
@@ -811,7 +811,7 @@ static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
 static void ReturnStmt_asm(CTX, kStmt *stmt, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
-	if(IS_Expr(expr) && expr->ty != TY_void) {
+	if(expr != NULL && IS_Expr(expr) && expr->ty != TY_void) {
 		EXPR_asm(_ctx, K_RTNIDX, expr, espidx);
 	}
 	ASM_JMP(_ctx, ctxcode->lbEND);  // RET
