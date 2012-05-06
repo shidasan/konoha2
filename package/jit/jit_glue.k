@@ -230,6 +230,17 @@ boolean isBoxTy(int cid) {
 	}
 }
 
+Value getvctx() {
+	Value v = System.getCTX();
+	Type  t = v.getType();
+	return v;
+}
+Value getvsfp() {
+	Value v = System.getSFP();
+	Type  t = v.getType();
+	return v;
+}
+
 Value boxing(Value v) {
 	Module m = System.getModule();
 	IRBuilder builder = System.getBuilder();
@@ -243,7 +254,7 @@ Value boxing(Value v) {
 
 	int cid = type2cid(v.getType());
 	Array params = Array.newN(3);
-	params.set(0, System.getCTX());
+	params.set(0, getvctx());
 	params.set(1, createConstValue(cid2ctype(cid), null, cid, 0.0));
 	if (v.getType() == ctype2Type(/*TY_INT*/3)) {
 		params.set(2, v);
@@ -286,6 +297,25 @@ int rfp(int rbpidx) { return (rbpidx); }
 int esp(int sfpidx, int args) { return  sfp(sfpidx + args + /*K_CALLDELTA*/4 + 1)}
 
 /* ------------------------------------------------------------------------ */
+Value create_object(int a, int index, int cid) {
+	Module m = System.getModule();
+	IRBuilder builder = System.getBuilder();
+	Array argsTy = Array.newN(2);
+	argsTy.set(0, ctype2Type(/*TY_CONTEXT*/16));
+	argsTy.set(1, ctype2Type(/*TY_INT*/3));
+	FunctionType fnTy = FunctionType.get(ctype2Type(/*TY_OBJECT*/12), argsTy, false);
+	Function fnew = m.getOrInsertFunction("new_object_jit", fnTy);
+	Array args = fnew.getArguments();
+
+	Array params = Array.newN(2);
+	Value vctx = getvctx();
+	Value arg1 = createConstValue(/*TY_INT*/3, null, cid, 0.0);
+	arg1.dump();
+	params.set(0, vctx);
+	params.set(1, arg1);
+	Value ret = builder.createCall(fnew, params);
+	return ret;
+}
 
 int tri(boolean cond, int a, int b) {
 	if (cond) {
@@ -303,9 +333,9 @@ Value nmov_asm(int a, int ty, int b) {
 		return v;
 	}
 	else {
-		System.p("TODO");
-		//ASM(NMOV, oc(a), oc(b), CT_(ty));
-		return null;
+		Value v = System.getValue(oc(b));
+		vstack_setValue(oc(a), v);
+		return v;
 	}
 }
 
@@ -324,7 +354,7 @@ Value asm_oset(Object data, int cid, int a) {
 }
 
 Value expr_asm(int a, Expr expr, int espidx) {
-	//System.p("build="+expr.getBuild());
+	//System.p("build="+expr.getBuild()+":"+expr);
 	if (expr.getBuild() == /*TEXPR_CONST*/0) {
 		Object v = expr.getData();
 		boolean isUnbox = ty_isUnbox(expr.getType());
@@ -334,28 +364,16 @@ Value expr_asm(int a, Expr expr, int espidx) {
 			return asm_nset(v.getAddr(), expr.getType(), a);
 		}
 		else {
-			System.getCTX();
 			int addr = v.getAddr();
 			System.addConstPool(v);
 			return asm_oset(v, expr.getType(), a);
 		}
 	}
-	else if(expr.getBuild() == /*TEXPR_NCONST*/3) {
-		return asm_nset(expr.getNdata(), expr.getType(), a);
-		//ASM(NSET, nc(a), expr.ndata, CT_(expr.getType()));
-	}
-	else if(expr.getBuild() == /*TEXPR_LOCAL*/4) {
-		return nmov_asm(a, expr.getType(), expr.getIndex());
-	}
-	else if(expr.getBuild() == /*TEXPR_FIELD*/6) {
-		//kshort_t index = (kshort_t)expr.index;
-		//kshort_t xindex = (kshort_t)(expr.index >> (sizeof(kshort_t)*8));
-		//if(ty_isUnbox(expr.getType())) {
-		//	ASM(NMOVx, nc(a), oc(index), xindex, CT_(expr.getType()));
-		//}
-		//else {
-		//	ASM(NMOVx, oc(a), oc(index), xindex, CT_(expr.getType()));
-		//}
+	else if(expr.getBuild() == /*TEXPR_NEW*/1) {
+		int index = expr.getIndex();
+		int type  = expr.getType();
+		//ASM(NEW, oc(a), expr.index, CT_(expr.getType()));
+		return create_object(a, index, type);
 	}
 	else if(expr.getBuild() == /*TEXPR_NULL*/2) {
 		boolean isUnbox = ty_isUnbox(expr.getType());
@@ -366,18 +384,36 @@ Value expr_asm(int a, Expr expr, int espidx) {
 			return asm_oset(System.knull(expr.getType()), expr.getType(), a);
 		}
 	}
-	else if(expr.getBuild() == /*TEXPR_NEW*/1) {
-		//ASM(NEW, oc(a), expr.index, CT_(expr.getType()));
+	else if(expr.getBuild() == /*TEXPR_NCONST*/3) {
+		return asm_nset(expr.getNdata(), expr.getType(), a);
+		//ASM(NSET, nc(a), expr.ndata, CT_(expr.getType()));
+	}
+	else if(expr.getBuild() == /*TEXPR_LOCAL*/4) {
+		//System.p("type="+expr.getType());
+		return nmov_asm(a, expr.getType(), expr.getIndex());
+	}
+	else if(expr.getBuild() == /*TEXPR_BLOCK*/5) {
+		assert(false);
+	}
+	else if(expr.getBuild() == /*TEXPR_FIELD*/6) {
+		assert(false);
+		//kshort_t index = (kshort_t)expr.index;
+		//kshort_t xindex = (kshort_t)(expr.index >> (sizeof(kshort_t)*8));
+		//if(ty_isUnbox(expr.getType())) {
+		//	ASM(NMOVx, nc(a), oc(index), xindex, CT_(expr.getType()));
+		//}
+		//else {
+		//	ASM(NMOVx, oc(a), oc(index), xindex, CT_(expr.getType()));
+		//}
 	}
 	else if(expr.getBuild() == /*TEXPR_BOX*/7) {
-		System.p("TODO");
-		//abort();
-		//DBG_ASSERT(IS_Expr(expr.single));
-		//expr_asm(a, expr.single, espidx);
-		//ASM(BOX, oc(a), nc(a), CT_(expr.single.getType()));
+		Expr single = expr.getSingle();
+		Value v = expr_asm(a, single, espidx);
+		return boxing(v);
 	}
 	else if(expr.getBuild() == /*TEXPR_UNBOX*/8) {
 		System.p("TODO");
+		assert(false);
 		//ASM(UNBOX, nc(a), oc(a), CT_(expr.getType()));
 	}
 	else if(expr.getBuild() == /*TEXPR_CALL*/9) {
@@ -396,15 +432,15 @@ Value expr_asm(int a, Expr expr, int espidx) {
 	else if(expr.getBuild() == /*TEXPR_LET*/12) {
 		return letexpr_asm(a, expr, espidx);
 	} else {
-		//DBG_P("unknown expr=%d", expr.getBuild());
-		//abort();
+		System.p("unknown expr="+ expr.getBuild());
+		System.assert(false);
 	}
 	//abort();
 }
 
 void storesfp(Value val, int reqtype, int sfpidx) {
 	IRBuilder builder = System.getBuilder();
-	Value vsfp  = System.getSFP();
+	Value vsfp  = getvsfp();
 	Value vsfp0 = loadsfp(builder, vsfp, reqtype, sfpidx);
 	builder.createStore(val, vsfp0, false);
 }
@@ -424,8 +460,8 @@ void emit_param(Method mtd, Expr expr, int thisidx, int i) {
 
 void asm_shift_esp(int idx) {
 	IRBuilder builder = System.getBuilder();
-	Value vesp = builder.createStructGEP(System.getCTX(), 1); /* esp */
-	Value vsfp = builder.createConstInBoundsGEP1_32(System.getSFP(), idx);
+	Value vesp = builder.createStructGEP(getvctx(), 1); /* esp */
+	Value vsfp = builder.createConstInBoundsGEP1_32(getvsfp(), idx);
 	builder.createStore(vsfp, vesp, false);
 }
 
@@ -543,9 +579,8 @@ Value asm_function_call(int uline, Expr expr, int thisidx, int s, Function f) {
 	Array cons = expr.getCons();
 	Array args = Array.newN(cons.getSize());
 	IRBuilder builder = System.getBuilder();
-	Value v = System.getCTX();
-	args.set(0, System.getCTX());
-	args.set(1, System.getSFP());
+	args.set(0, getvctx());
+	args.set(1, getvsfp());
 	push_back_args(args, expr, thisidx+s-1, s, s, cons.getSize());
 	return builder.createCall(f, args);
 }
@@ -556,7 +591,7 @@ void asm_scall(int uline, int sfpidx, int espidx, Method mtd, Object defval) {
 	Value vmtd  = createConstValue(/*TY_METHOD*/11, mtd, 0, 0.0);
 	Value funcp = builder.createStructGEP(vmtd, 1);
 	Value func  = builder.createLoad(funcp, false);
-	prepare_call_stack(thisidx, System.getSFP(), defval, mtd, uline);
+	prepare_call_stack(thisidx, getvsfp(), defval, mtd, uline);
 	Array params = Array.newN(3);
 	param_setCtxSfp(params, thisidx);
 	params.set(2, llvm_getInt(/*K_RTNIDX*/-4));
@@ -571,7 +606,8 @@ Value call_asm(int a, Expr expr, int espidx) {
 	int thisidx = espidx + /*K_CALLDELTA*/4;
 	int argc = (cons).getSize() - 2;
 	if(mtd.isVirtual()) {
-		//TODO
+		System.p("TODO");
+		assert(false);
 		//ASM(NSET, nc(thisidx-1), (intptr_t)mtd, CT_Method);
 		//ASM(CALL, kmodjit.uline, sfp(thisidx), esp(espidx, argc), System.knull(expr.getType()));
 	}
@@ -597,13 +633,11 @@ Value call_asm(int a, Expr expr, int espidx) {
 				vstack_setValue(nc(espidx), v);
 			}
 			return v;
-			//TODO Call llvm-nized function directly
-			//ASM(VCALL, kmodjit.uline, sfp(thisidx), esp(espidx, argc), mtd, System.knull(expr.getType()));
 		}
 	}
 	if (mtd.getReturnType() != /*TY_void*/0) {
 		IRBuilder builder = System.getBuilder();
-		Value v = loadsfp(builder, System.getSFP(), mtd.getReturnType(), sfp(thisidx) + /*K_RTNIDX*/-4);
+		Value v = loadsfp(builder, getvsfp(), mtd.getReturnType(), sfp(thisidx) + /*K_RTNIDX*/-4);
 		Value v1 = builder.createLoad(v, false);
 		vstack_setValue(tri(ty_isUnbox(mtd.getReturnType()), nc(espidx), oc(espidx)), v1);
 		return v1;
@@ -735,6 +769,7 @@ void errstmt_asm(Stmt stmt, int espidx) {
 	Object o = stmt.getObjectNULL(0);
 	String msg = Pointer.convertToString(o.getAddr());
 	System.p("TODO");
+	assert(false);
 	//DBG_ASSERT(IS_String(msg));
 	//ASM(ERROR, sfp(espidx), msg);
 }

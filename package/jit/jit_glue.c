@@ -109,6 +109,12 @@ static KMETHOD System_getUline(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(kmodjit->uline);
 }
 
+static KMETHOD Expr_getSingle(CTX, ksfp_t *sfp _RIX)
+{
+	kExpr *expr = (kExpr *) sfp[0].o;
+	DBG_ASSERT(IS_Expr(expr->single));
+	RETURN_(expr->single);
+}
 
 static kArray *get_stack(CTX, kArray *g)
 {
@@ -716,6 +722,7 @@ static kbool_t jit_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 		_Public, _F(Method_isVirtual_), TY_Boolean, TY_Method, MN_("isVirtual"), 0,
 		_Public|_Coercion, _F(Object_toStmt), TY_Stmt, TY_Object, MN_to(TY_Stmt), 0,
 		_Public|_Coercion, _F(Object_toExpr), TY_Expr, TY_Object, MN_to(TY_Expr), 0,
+		_Public, _F(Expr_getSingle), TY_Expr, TY_Expr, MN_("getSingle"), 0,
 
 		DEND,
 	};

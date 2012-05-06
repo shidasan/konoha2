@@ -17,4 +17,4 @@ System.p(or_1(true, true, true, true));
 System.p(or_2(true, true, true, true));
 System.p(or_3(true, true, true, true));
 System.p(or_4(true, true, true, true));
-assert(or_4(true, true, true, true));
+System.assert(or_4(true, true, true, true));

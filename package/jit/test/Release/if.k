@@ -10,9 +10,14 @@ int g(int x) {
         return 30;
     }
 }
-System.p(g(1000));
-System.p(g(10));
-System.p(g(1));
-assert(g(1000) == 10);
-assert(g(10) == 20);
-assert(g(1) == 30);
+int f() {
+    System.p(g(1000));
+    System.p(g(10));
+    System.p(g(1));
+    System.assert(g(1000) == 10);
+    System.assert(g(10) == 20);
+    System.assert(g(1) == 30);
+    return 0;
+}
+
+f();
