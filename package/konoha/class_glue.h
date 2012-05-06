@@ -331,7 +331,7 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
 		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
-//		{ TOKEN("."), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(Getter) },
+		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

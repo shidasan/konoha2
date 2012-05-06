@@ -248,16 +248,16 @@ struct _kToken {
 	union {
 		kushort_t lpos;
 		kshort_t  closech;  // ast
-		ksymbol_t nameid;   // sugar rule
-		kshort_t  mn_type;  // method type
+		ksymbol_t nameid;   // sugar rule    in sugar
+		kshort_t  mn_type;  // method type   if tt == TK_MN
 	};
 	union {
 		kshort_t   topch;
-		ksymbol_t  symbol;
-		ktype_t    ty;
-		kmethodn_t mn;
+		ktype_t    ty;       // if kw == KW_Type
+		kmethodn_t mn;	     // if tt == TK_MN
 	};
 };
+
 
 typedef enum {
 	MNTYPE_method, MNTYPE_unary, MNTYPE_binary

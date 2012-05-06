@@ -82,11 +82,11 @@ static struct _kToken* Token_resolveType(CTX, kKonohaSpace *ks, struct _kToken *
 	kparam_t p[size];
 	for(i = 0; i < size; i++) {
 		kToken *tkT = (tkP->sub->toks[i]);
-		if(tkT->topch == ',') continue;
 		if(TK_isType(tkT)) {
 			p[psize].ty = TK_type(tkT);
 			psize++;
 		}
+		if(tkT->topch == ',') continue;
 	}
 	kclass_t *ct;
 	if(psize > 0) {
@@ -167,16 +167,18 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 {
 	int i, probablyCloseBefore = e - 1;
 	kToken *tk = tls->toks[s];
-	if(AST_PARENTHESIS <= tk->tt && tk->tt <= AST_BRACE) {  // already transformed
-		kArray_add(tlsdst, tk);
-		return s;
-	}
+	DBG_ASSERT(tk->kw == 0);
+//	if(AST_PARENTHESIS <= tk->tt && tk->tt <= AST_BRACE) {  // already transformed
+//		kArray_add(tlsdst, tk);
+//		return s;
+//	}
 	struct _kToken *tkP = new_W(Token, 0);
 	kArray_add(tlsdst, tkP);
 	tkP->tt = tt; tkP->kw = tt; tkP->uline = tk->uline; tkP->topch = tk->topch; tkP->lpos = closech;
 	KSETv(tkP->sub, new_(TokenArray, 0));
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
+		DBG_ASSERT(tk->kw == 0);
 		if(tk->tt == TK_ERR) break;  // ERR
 		DBG_ASSERT(tk->topch != '{');
 		if(tk->topch == '(') {
@@ -210,29 +212,36 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 {
 	int i = s;
 	DBG_ASSERT(e <= kArray_size(tls));
-	for(; i < e; i++) {
+	for(; i < e - 1; i++) {
 		kToken *tk = tls->toks[i];
-		if (i < e - 1) {
-			struct _kToken *tk1 = tls->Wtoks[i+1];
-			if(tk->topch == '@' && (tk1->tt == TK_SYMBOL || tk1->tt == TK_USYMBOL)) {
-				tk1->tt = TK_METANAME;
-				kArray_add(tlsdst, tk1);
-				if(i + 2 < e && tls->toks[i+2]->topch == '(') {
-					i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i+2, e, ')', tlsdst, tkERR);
-				}
-				else {
-					i++;
-				}
-				continue;
+		struct _kToken *tk1 = tls->Wtoks[i+1];
+		if(tk->kw > 0) break;  // already parsed
+		if(tk->topch == '@' && (tk1->tt == TK_SYMBOL || tk1->tt == TK_USYMBOL)) {
+			tk1->tt = TK_METANAME;  tk1->kw = 0;
+			kArray_add(tlsdst, tk1); i++;
+			if(i + 1 < e && tls->toks[i+1]->topch == '(') {
+				i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i+1, e, ')', tlsdst, tkERR);
 			}
+			continue;
+		}
+		if(tk->tt == TK_METANAME) {  // already parsed
+			kArray_add(tlsdst, tk);
+			if(tk1->tt == AST_PARENTHESIS) {
+				kArray_add(tlsdst, tk1);
+				i++;
+			}
+			continue;
 		}
 		if(tk->tt != TK_INDENT) break;
 		if(*indent == 0) *indent = tk->lpos;
 	}
 	for(; i < e ; i++) {
 		kToken *tk = tls->toks[i];
-		DBG_ASSERT(tk->topch != '{');
-		if(tk->topch == '(') {
+		if(tk->kw > 0) {
+			kArray_add(tlsdst, tk);
+			continue;
+		}
+		else if(tk->topch == '(') {
 			i = makeTree(_ctx, ks, AST_PARENTHESIS, tls,  i, e, ')', tlsdst, tkERR);
 			continue;
 		}
