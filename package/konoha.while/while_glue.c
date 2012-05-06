@@ -28,23 +28,24 @@
 #include<konoha2/sugar.h>
 #include<konoha2/float.h>
 
-#include "../konoha/int_glue.h"
+#include "../konoha/while_glue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-KDEFINE_PACKAGE* int_init(void)
+KDEFINE_PACKAGE* while_init(void)
 {
 	static KDEFINE_PACKAGE d = {
-		KPACKNAME("int", "1.0"),
-		.initPackage =int_initPackage,
-		.setupPackage = int_setupPackage,
-		.initKonohaSpace = int_initKonohaSpace,
-		.setupKonohaSpace = int_setupKonohaSpace,
+		KPACKNAME("C-compatible while", "1.0"),
+		.initPackage      = while_initPackage,
+		.setupPackage     = while_setupPackage,
+		.initKonohaSpace  = while_initKonohaSpace,
+		.setupKonohaSpace = while_setupKonohaSpace,
 	};
 	return &d;
 }
+
 #ifdef __cplusplus
 }
 #endif

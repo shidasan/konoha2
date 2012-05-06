@@ -39,7 +39,8 @@
 
 
 // class and operator
-#include"../konoha.float/float_glue.h"
+#include"int_glue.h"
+#include"float_glue.h"
 
 // method and operator
 #include"array_glue.h"
@@ -56,6 +57,7 @@ static	kbool_t konoha_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	class_initPackage(_ctx, ks, argc, args, pline);
 	global_initPackage(_ctx, ks, argc, args, pline);
 
+	int_initPackage(_ctx, ks, argc, args, pline);
 	if(_ctx->modshare[MOD_float] == NULL) {
 		loading_float = 1;
 		float_initPackage(_ctx, ks, argc, args, pline);
@@ -72,6 +74,7 @@ static kbool_t konoha_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	class_setupPackage(_ctx, ks, pline);
 	global_setupPackage(_ctx, ks, pline);
 
+	int_setupPackage(_ctx, ks, pline);
 	if(loading_float) {
 		float_setupPackage(_ctx, ks, pline);
 	}
@@ -85,6 +88,8 @@ static kbool_t konoha_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	while_initKonohaSpace(_ctx, ks, pline);
 	class_initKonohaSpace(_ctx, ks, pline);
 	global_initKonohaSpace(_ctx, ks, pline);
+
+	int_initKonohaSpace(_ctx, ks, pline);
 	if(loading_float) {
 		float_initKonohaSpace(_ctx, ks, pline);
 	}
@@ -99,6 +104,7 @@ static kbool_t konoha_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	class_setupKonohaSpace(_ctx, ks, pline);
 	global_setupKonohaSpace(_ctx, ks, pline);
 
+	int_setupKonohaSpace(_ctx, ks, pline);
 	if(loading_float) {
 		float_setupKonohaSpace(_ctx, ks, pline);
 	}

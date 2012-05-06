@@ -112,11 +112,7 @@ static kbool_t array_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-		//{ TOKEN("()"), _EXPR, ParseExpr_(PARENTHESIS), .op2 = "*", .priority_op2 = 16, .right = 1, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
 		{ TOKEN("[]"), ParseExpr_(BRANCET), /*_EXPR,*/ },  //AST_BRANCET
-//		{ TOKEN("array"), .type = TY_Float, },
-//		{ TOKEN("double"), .type = TY_Float, },
-//		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
