@@ -33,7 +33,7 @@ extern "C" {
 /* ------------------------------------------------------------------------ */
 // Block
 
-static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, int delim, kArray *tlsdst, kToken **tkERR);
+static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, int delim, kArray *tlsdst, kToken **tkERRRef);
 static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e, kToken *tkERR);
 static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int e, int closech, kArray *tlsdst, kToken **tkERRRef);
 
@@ -48,7 +48,9 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 	while(i < e) {
 		kToken *tkERR = NULL;
 		DBG_ASSERT(atop == kArray_size(tls));
+		DBG_P("B i=%d", i);
 		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, delim, tls, &tkERR);
+		DBG_P("E i=%d", i);
 		int asize = kArray_size(tls);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize, tkERR);
@@ -124,12 +126,15 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 		}
 	}
 	else if(tk->tt == TK_OPERATOR) {
-		if(!Token_resolved(_ctx, ks, tk) && tk->topch != ';') {
+		if(!Token_resolved(_ctx, ks, tk)) {
 			size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "undefined token: %s", kToken_s(tk));
 			Token_toERR(_ctx, tk, errref);
 			tkERR[0] = tk;
 			return e;
 		}
+	}
+	else if(tk->tt == TK_CODE) {
+		tk->kw = KW_Brace;
 	}
 	if(TK_isType(tk)) {
 		while(next + 1 < e) {
@@ -144,7 +149,9 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 			}
 		}
 	}
-	kArray_add(dst, tk);
+	if(tk->kw > KW_Expr) {
+		kArray_add(dst, tk);
+	}
 	return next;
 }
 
@@ -208,7 +215,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 	return e;
 }
 
-static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, int delim, kArray *tlsdst, kToken **tkERR)
+static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s, int e, int delim, kArray *tlsdst, kToken **tkERRRef)
 {
 	int i = s;
 	DBG_ASSERT(e <= kArray_size(tls));
@@ -220,7 +227,7 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 			tk1->tt = TK_METANAME;  tk1->kw = 0;
 			kArray_add(tlsdst, tk1); i++;
 			if(i + 1 < e && tls->toks[i+1]->topch == '(') {
-				i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i+1, e, ')', tlsdst, tkERR);
+				i = makeTree(_ctx, ks, AST_PARENTHESIS, tls, i+1, e, ')', tlsdst, tkERRRef);
 			}
 			continue;
 		}
@@ -237,30 +244,33 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 	}
 	for(; i < e ; i++) {
 		kToken *tk = tls->toks[i];
+		DBG_P("i=%d, e=%d tt=%s kw=%d topch='%c'", i, e, T_tt(tk->tt), tk->kw, tk->topch);
+		if(tk->topch == delim && tk->tt == TK_OPERATOR) {
+			return i+1;
+		}
 		if(tk->kw > 0) {
 			kArray_add(tlsdst, tk);
 			continue;
 		}
 		else if(tk->topch == '(') {
-			i = makeTree(_ctx, ks, AST_PARENTHESIS, tls,  i, e, ')', tlsdst, tkERR);
+			i = makeTree(_ctx, ks, AST_PARENTHESIS, tls,  i, e, ')', tlsdst, tkERRRef);
 			continue;
 		}
 		else if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tlsdst, tkERR);
+			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tlsdst, tkERRRef);
 			continue;
-		}
-		else if(tk->topch == delim) {
-			i++;
-			break;
 		}
 		else if(tk->tt == TK_ERR) {
-			tkERR[0] = tk;
+			tkERRRef[0] = tk;
 		}
 		if(tk->tt == TK_INDENT) {
-			if(tk->lpos <= *indent) break;
+			if(tk->lpos <= *indent) {
+				DBG_P("tk->lpos=%d, indent=%d", tk->lpos, *indent);
+				return i+1;
+			}
 			continue;
 		}
-		i = appendKeyword(_ctx, ks, tls, i, e, tlsdst, tkERR);
+		i = appendKeyword(_ctx, ks, tls, i, e, tlsdst, tkERRRef);
 	}
 	return i;
 }
