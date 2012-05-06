@@ -97,7 +97,7 @@ set(PACKAGES
 	konoha.llvm
 ##	konoha.pcre
 ##	konoha.io
-##	konoha.while
+	konoha.while
 ##	konoha.class
 	konoha.assignment
 	konoha.i
