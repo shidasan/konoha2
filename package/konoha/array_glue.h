@@ -112,7 +112,7 @@ static kbool_t array_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("[]"), ParseExpr_(BRANCET), /*_EXPR,*/ },  //AST_BRANCET
+		{ TOKEN("[]"), .flag = SYNFLAG_ExprPostfixOp2, ParseExpr_(BRANCET), .priority_op2 = 16, },  //AST_BRANCET
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
