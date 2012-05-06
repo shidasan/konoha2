@@ -36,7 +36,7 @@ static void Float_init(CTX, kObject *o, void *conf)
 
 static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	kwb_printf(wb, "%f", sfp[pos].fvalue);
+	kwb_printf(wb, KFLOAT_FMT, sfp[pos].fvalue);
 }
 
 static void kmodfloat_setup(CTX, struct kmodshare_t *def, int newctx)
@@ -50,15 +50,6 @@ static void kmodfloat_reftrace(CTX, struct kmodshare_t *baseh)
 static void kmodfloat_free(CTX, struct kmodshare_t *baseh)
 {
 	KFREE(baseh, sizeof(kmodfloat_t));
-}
-
-static KMETHOD ExprTyCheck_FLOAT(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	kToken *tk = expr->tk;
-	sfp[4].fvalue = strtod(S_text(tk->text), NULL);
-	RETURN_(kExpr_setNConstValue(expr, TY_Float, sfp[4].ndata));
 }
 
 // --------------------------------------------------------------------------
@@ -143,7 +134,7 @@ static KMETHOD Int_toFloat(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Float_toString(CTX, ksfp_t *sfp _RIX)
 {
 	char buf[40];
-	snprintf(buf, sizeof(buf), "%f", sfp[0].fvalue);
+	snprintf(buf, sizeof(buf), KFLOAT_FMT, sfp[0].fvalue);
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
 }
 
@@ -207,13 +198,24 @@ static kbool_t float_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+//----------------------------------------------------------------------------
+
+static KMETHOD ExprTyCheck_Float(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	kToken *tk = expr->tk;
+	sfp[4].fvalue = strtod(S_text(tk->text), NULL);
+	RETURN_(kExpr_setNConstValue(expr, TY_Float, sfp[4].ndata));
+}
+
 static kbool_t float_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("float"), .type = TY_Float, },
 		{ TOKEN("double"), .type = TY_Float, },
-		{ TOKEN("$FLOAT"), .kw = KW_TK(TK_FLOAT), .ExprTyCheck = ExprTyCheck_FLOAT, },
+		{ TOKEN("$FLOAT"), ExprTyCheck_(Float), },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
