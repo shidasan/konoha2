@@ -377,10 +377,25 @@ static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes *from = sfp[0].ba;
-	DBG_P("given bytes='%s'", from->buf);
 	kBytes *to = convFromTo(_ctx, from, getSystemEncoding(), "UTF-8");
-	DBG_P("converted string:'%s', len=%d", S_text(to), S_size(to));
 	RETURN_(new_kString(to->buf, to->bytesize, 0));
+}
+
+//## Int Bytes.get(Int n);
+static KMETHOD Bytes_get(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes *ba = sfp[0].ba;
+	size_t n = check_index(_ctx, sfp[1].ivalue, ba->bytesize, sfp[K_RTNIDX].uline);
+	RETURNi_(ba->utext[n]);
+}
+
+//## method Int Bytes.set(Int n, Int c);
+static KMETHOD Bytes_set(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes *ba = sfp[0].ba;
+	size_t n = check_index(_ctx, sfp[1].ivalue, ba->bytesize, sfp[K_RTNIDX].uline);
+	ba->ubuf[n] = (const char) sfp[2].ivalue;
+	RETURNi_(ba->utext[n]);
 }
 /* ------------------------------------------------------------------------ */
 
@@ -408,13 +423,16 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 	};
 	base->cBytes = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &defBytes, pline);
 	int FN_encoding = FN_("encoding");
+	int FN_x = FN_("x");
+	int FN_c = FN_("c");
 	intptr_t methoddata[] = {
-		//_Public|_Const|_Im, _F(String_toBytes), TY_Bytes,  TY_String, MN_to(TY_Bytes),  0,
-		//_Public|_Const|_Im, _F(Bytes_toString), TY_String, TY_Bytes,  MN_to(TY_String), 0,
 		_Public|_Im|_Coercion, _F(String_toBytes), TY_Bytes,  TY_String, MN_("toBytes"),   0,
 		_Public|_Const|_Im|_Coercion, _F(Bytes_toString), TY_String, TY_Bytes,  MN_("toString"),  0,
 		_Public|_Const,     _F(Bytes_encodeTo),   TY_Bytes,  TY_Bytes,  MN_("encodeTo"),    1, TY_String, FN_encoding,
 		_Public|_Const,     _F(Bytes_decodeFrom),   TY_String, TY_Bytes,  MN_("decodeFrom"),    1, TY_String, FN_encoding,
+		_Public|_Const|_Im,     _F(Bytes_get), TY_Int, TY_Bytes, MN_("get"), 1, TY_Int, FN_x,
+		_Public|_Const|_Im,     _F(Bytes_set), TY_Int, TY_Bytes, MN_("set"), 2, TY_Int, FN_x, TY_Int, FN_c,
+
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, methoddata);
