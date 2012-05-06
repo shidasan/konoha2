@@ -35,6 +35,22 @@ extern "C" {
 #endif
 
 /* ------------------------------------------------------------------------ */
+
+
+static KMETHOD Int_opLSHIFT (CTX, ksfp_t *sfp _RIX)
+{
+	int lshift = sfp[1].ivalue;
+	RETURNi_(sfp[0].ivalue << lshift);
+}
+
+static KMETHOD Int_opRSHIFT (CTX, ksfp_t *sfp _RIX)
+{
+	int rshift = sfp[1].ivalue;
+	RETURNi_(sfp[0].ivalue >> rshift);
+}
+
+/* ------------------------------------------------------------------------ */
+
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Im       kMethod_Immutable
@@ -43,11 +59,21 @@ extern "C" {
 
 static kbool_t int_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	int FN_encoding = FN_("encoding");
-	intptr_t methoddata[] = {
+	int FN_x = FN_("x");
+	intptr_t MethodData[] = {
+		_Public|_Const|_Im, _F(Int_opLSHIFT), TY_Int, TY_Int, MN_("opLSHIFT"), 1, TY_Int, FN_x,
+		_Public|_Const|_Im, _F(Int_opRSHIFT), TY_Int, TY_Int, MN_("opRSHIFT"), 1, TY_Int, FN_x,
+//		_Public|_Const|_Im, _F(Int_opINC), TY_Int, TY_Int, MN_("opINC"), 0,
+//		_Public|_Const|_Im, _F(Int_opDEC), TY_Int, TY_Int, MN_‘("opDEC"), 0,
 		DEND,
 	};
-	kKonohaSpace_loadMethodData(NULL, methoddata);
+	kKonohaSpace_loadMethodData(ks, MethodData);
+	KDEFINE_INT_CONST IntData[] = {
+			{"INT_MAX", TY_Int, KINT_MAX},
+			{"INT_MIN", TY_Int, KINT_MIN},
+			{NULL},
+	};
+	kKonohaSpace_loadConstData(ks, IntData, pline);
 	return true;
 }
 
@@ -60,8 +86,10 @@ static kbool_t int_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-//			{ TOKEN("<<"), _OP, .op2 = "opLShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
-//			{ TOKEN(">>"), _OP, .op2 = "opRShift", .priority_op2 = 1024, .right = 1, ExprTyCheck_(call), },
+			{ TOKEN("<<"), _OP, .op2 = "opLSHIFT", .priority_op2 = 128,},
+			{ TOKEN(">>"), _OP, .op2 = "opRSHIFT", .priority_op2 = 128,},
+//			{ TOKEN("++"), _OP, .op1 = "opINC", .priority_op2 = 16, .flag = SYNFLAG_ExprPostfixOp2, },
+//			{ TOKEN("--"), _OP, .op1 = "opDEC", .priority_op2 = 16, .flag = SYNFLAG_ExprPostfixOp2,},
 			{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

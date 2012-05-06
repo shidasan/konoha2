@@ -653,12 +653,12 @@ void MODSUGAR_loadMethod(CTX)
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);
-	KDEFINE_INT_CONST IntData[] = {
-		{"INT_MAX", TY_Int, KINT_MAX},
-		{"INT_MIN", TY_Int, KINT_MIN},
-		{NULL},
-	};
-	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
+//	KDEFINE_INT_CONST IntData[] = {
+//		{"INT_MAX", TY_Int, KINT_MAX},
+//		{"INT_MIN", TY_Int, KINT_MIN},
+//		{NULL},
+//	};
+//	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
 #ifdef WITH_ECLIPSE
 	KDEFINE_PACKAGE *d = konoha_init();
 	d->initPackage(_ctx, kmodsugar->rootks, 0, NULL, 0);
