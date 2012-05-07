@@ -213,26 +213,6 @@ struct _kKonohaSpace {
 typedef kshort_t    ksugar_t;
 typedef kshort_t    kexpr_t;
 
-#define KW_Err     0
-#define KW_Expr    1
-#define KW_Symbol  2
-//#define KW_name    2
-#define KW_Usymbol 3
-//#define KW_cname   3
-#define KW_Text    4
-#define KW_Int     5
-#define KW_Float   6
-#define KW_Type    7
-#define            KW_StmtTypeDecl KW_Type
-#define KW_Parenthesis  8
-#define KW_Brancet      9
-#define KW_Brace        10
-
-#define KW_Block   11
-#define KW_Params  12
-#define       KW_ExprMethodCall  12/*FIXME*/
-#define KW_Toks    13
-
 typedef enum {
 	TK_NONE,          // KW_Err
 	TK_INDENT,        // KW_Expr

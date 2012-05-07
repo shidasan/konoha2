@@ -48,9 +48,7 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 	while(i < e) {
 		kToken *tkERR = NULL;
 		DBG_ASSERT(atop == kArray_size(tls));
-		DBG_P("B i=%d", i);
 		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, delim, tls, &tkERR);
-		DBG_P("E i=%d", i);
 		int asize = kArray_size(tls);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize, tkERR);
@@ -244,7 +242,6 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 	}
 	for(; i < e ; i++) {
 		kToken *tk = tls->toks[i];
-		DBG_P("i=%d, e=%d tt=%s kw=%d topch='%c'", i, e, T_tt(tk->tt), tk->kw, tk->topch);
 		if(tk->topch == delim && tk->tt == TK_OPERATOR) {
 			return i+1;
 		}
