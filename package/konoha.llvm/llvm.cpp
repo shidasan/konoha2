@@ -4922,6 +4922,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 #endif
 		_Public, _F(PassManager_new), TY_PassManager, TY_PassManager, MN_("new"), 0,
 		_Public, _F(FunctionPassManager_new), TY_FunctionPassManager, TY_FunctionPassManager, MN_("new"), 1, TY_Module, FN_("m"),
+		_Public, _F(PassManager_run), TY_void, TY_PassManager, MN_("run"), 1, TY_Function, FN_("func"),
 		_Public, _F(PassManager_addPass), TY_void, TY_PassManager, MN_("addPass"), 1, TY_Pass, FN_("p"),
 		_Public, _F(PassManager_addImmutablePass), TY_void, TY_PassManager, MN_("addImmutablePass"), 1, TY_ImmutablePass, FN_("p"),
 		_Public, _F(PassManager_addFunctionPass), TY_void, TY_PassManager, MN_("addFunctionPass"), 1, TY_FunctionPass, FN_("p"),
@@ -5038,6 +5039,9 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(LLVM_createObjCARCContractPass), TY_Pass, TY_LLVM, MN_("createObjCARCContractPass"), 0,
 		_Public|_Static, _F(LLVM_createObjCARCOptPass),      TY_Pass, TY_LLVM, MN_("createObjCARCOptPass"), 0,
 		_Public|_Static, _F(LLVM_createLowerExpectIntrinsicPass), TY_Pass, TY_LLVM, MN_("createLowerExpectIntrinsicPass"), 0,
+#endif
+#if LLVM_VERSION >= 310
+		_Public|_Static, _F(LLVM_createBBVectorizePass),     TY_Pass, TY_LLVM, MN_("createBBVectorizePass"), 0,
 #endif
 		_Public|_Static, _F(LLVM_createInstructionSimplifierPass),  TY_Pass, TY_LLVM, MN_("createInstructionSimplifierPass"), 0,
 		_Public|_Static, _F(LLVM_createUnifyFunctionExitNodesPass), TY_Pass, TY_LLVM, MN_("createUnifyFunctionExitNodesPass"), 0,

@@ -337,7 +337,6 @@ int tri(boolean cond, int a, int b) {
 Value nmov_asm(int a, int ty, int b) {
 	if(ty_isUnbox(ty)) {
 		Value v = System.getValue(nc(b));
-		System.p("idx="+nc(b)+""+v);
 		vstack_setValue(nc(a), v);
 		//ASM(NMOV, nc(a), nc(b), CT_(ty));
 		return v;
@@ -677,7 +676,6 @@ void bool_createPHI(Array blocks, PHINode phi, Value vfirst, Value vlast, int i)
 	if (i < blocks.getSize()) {
 		LLVMBasicBlock bb = blocks.get(i);
 		int j = i + 1;
-		bb.dump();
 		if (j == blocks.getSize()) {
 			phi.addIncoming(vfirst, bb);
 		} else {
@@ -864,7 +862,6 @@ void returnstmt_asm(Stmt stmt, int espidx) {
 		Value retval = expr_asm(/*K_RTNIDX*/-4, expr, espidx);
 		Function f = System.getFunction();
 		Type retTy = f.getReturnType();
-		f.dump();
 		int cid1 = type2cid(retTy);
 		int cid2 = type2cid(retval.getType());
 		if (isBoxTy(type2cid(retTy)) && isUnBoxTy(type2cid(retval.getType()))) {
