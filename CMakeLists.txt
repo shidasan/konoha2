@@ -84,9 +84,12 @@ set(PARSER
 	src/sugar/sugar.c
 )
 
-set(VM
-	src/vm/asm.c
-)
+option(KONOHA_VM_MODULE "konoha vm module" "")
+if(KONOHA_VM_MODULE)
+	set(VM module/${KONOHA_VM_MODULE}vm/${KONOHA_VM_MODULE}asm.c)
+else(KONOHA_VM_MODULE)
+	set(VM src/vm/asm.c)
+endif(KONOHA_VM_MODULE)
 
 set(PACKAGES
 	sugar

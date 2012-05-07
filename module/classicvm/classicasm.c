@@ -592,7 +592,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	case TEXPR_BLOCK : {
 		DBG_P("CASE expr->block=%d", expr->block);
 		DBG_ASSERT(expr->block);
-		BLOCK_asm(CTX, expr->block);
+		BLOCK_asm(_ctx, expr->block);
 		NMOV_asm(_ctx, a, expr->ty, expr->index);
 		break;
 	}
@@ -826,7 +826,7 @@ static void JumpStmt_asm(CTX, kStmt *stmt, int espidx)
 	kStmt *jump = (kStmt*)kObject_getObject(stmt, syn->kw, NULL);
 	DBG_ASSERT(jump != NULL);
 	DBG_ASSERT(IS_Stmt(jump));
-	kBasicBlock* lbJUMP = (kBasicBlock*)kObject_getObject(stmt, syn->kw, NULL);
+	kBasicBlock* lbJUMP = (kBasicBlock*)kObject_getObject(jump, syn->kw, NULL);
 	DBG_ASSERT(lbJUMP != NULL);
 	DBG_ASSERT(IS_BasicBlock(lbJUMP));
 	ASM_JMP(_ctx, lbJUMP);
