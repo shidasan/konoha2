@@ -17,4 +17,4 @@ System.p(and_1(true, true, true, true));
 System.p(and_2(true, true, true, true));
 System.p(and_3(true, true, true, true));
 System.p(and_4(true, true, true, true));
-assert(and_4(true, true, true, true));
+System.assert(and_4(true, true, true, true));

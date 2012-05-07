@@ -337,6 +337,7 @@ int tri(boolean cond, int a, int b) {
 Value nmov_asm(int a, int ty, int b) {
 	if(ty_isUnbox(ty)) {
 		Value v = System.getValue(nc(b));
+		System.p("idx="+nc(b)+""+v);
 		vstack_setValue(nc(a), v);
 		//ASM(NMOV, nc(a), nc(b), CT_(ty));
 		return v;
@@ -398,7 +399,7 @@ Value expr_asm(int a, Expr expr, int espidx) {
 		//ASM(NSET, nc(a), expr.ndata, CT_(expr.getType()));
 	}
 	else if(expr.getBuild() == /*TEXPR_LOCAL*/4) {
-		//System.p("type="+expr.getType());
+		//System.p("type="+expr.getType()+",index="+expr.getIndex());
 		return nmov_asm(a, expr.getType(), expr.getIndex());
 	}
 	else if(expr.getBuild() == /*TEXPR_BLOCK*/5) {
@@ -433,10 +434,12 @@ Value expr_asm(int a, Expr expr, int espidx) {
 		return v;
 	}
 	else if(expr.getBuild() == /*TEXPR_AND*/10) {
-		and_asm(a, expr, espidx);
+		Value v = and_asm(a, expr, espidx);
+		return v;
 	}
 	else if(expr.getBuild() == /*TEXPR_OR*/11) {
-		or_asm(a, expr, espidx);
+		Value v = or_asm(a, expr, espidx);
+		return v;
 	}
 	else if(expr.getBuild() == /*TEXPR_LET*/12) {
 		return letexpr_asm(a, expr, espidx);
@@ -637,7 +640,7 @@ Value call_asm(int a, Expr expr, int espidx) {
 		}
 		Function f = System.getJITCache(mtd);
 		if(f.isNull()) {
-			System.p(method2string(mtd));
+			//System.p(method2string(mtd));
 			emit_param(mtd, expr, thisidx, s);
 			asm_scall(System.getUline(), sfp(thisidx), esp(espidx, argc), mtd, System.knull(expr.getType()));
 		}
@@ -669,81 +672,87 @@ Object Array.end() {
 	System.p("FIXME: a.size="+size);
 	return null;
 }
-Array Array.erase(int n) {
-	System.p("TODO");
-	return null;
-}
 
-
-void bool_createPHI(Array blocks, PHINode phi, Value vfirst, Value vlast) {
-	LLVMBasicBlock bb = blocks.get(0);
-	blocks.erase(0);
-	if (blocks.getSize() > 0) {
-		phi.addIncoming(vlast, bb);
-	} else {
-		phi.addIncoming(vfirst, bb);
-		bool_createPHI(blocks, phi, vfirst, vlast);
+void bool_createPHI(Array blocks, PHINode phi, Value vfirst, Value vlast, int i) {
+	if (i < blocks.getSize()) {
+		LLVMBasicBlock bb = blocks.get(i);
+		int j = i + 1;
+		bb.dump();
+		if (j == blocks.getSize()) {
+			phi.addIncoming(vfirst, bb);
+		} else {
+			phi.addIncoming(vlast, bb);
+		}
+		bool_createPHI(blocks, phi, vfirst, vlast, i+1);
 	}
 }
 
-
-void or_asm_inner(Expr expr, Array blocks, LLVMBasicBlock merge, int i, int size, int espidx) {
+void or_asm_helper(Expr expr, Array blocks, LLVMBasicBlock merge, int i, int size, int espidx) {
 	IRBuilder builder = System.getBuilder();
-	builder.setInsertPoint(blocks.end());
-	LLVMBasicBlock next = LLVMBasicBlock.create(System.getFunction(), "bbOrExprCond");
-	blocks.set(i, next);
-	Value cond = expr_asm(espidx+1, expr.at(i), espidx+1);
-	builder.createCondBr(cond, merge, next);
-	if (i == size) {
-		builder.setInsertPoint(next);
-		builder.createBr(merge);
+	if (i < size) {
+		LLVMBasicBlock next = LLVMBasicBlock.create(System.getFunction(), "bbOrExprCond");
+		builder.setInsertPoint(blocks.get(i-1));
+		blocks.set(i, next);
+		Expr e = expr.at(i);
+		Value cond = expr_asm(espidx+1, expr.at(i), espidx+1);
+		builder.createCondBr(cond, next, merge);
+		and_asm_helper(expr, blocks, merge, i+1, size, espidx);
 	} else {
-		or_asm_inner(expr, blocks, merge, i+1, size, espidx);
+		LLVMBasicBlock cond = blocks.get(i-1);
+		builder.setInsertPoint(cond);
+		builder.createBr(merge);
 	}
 }
 
-void or_asm(int a, Expr expr, int espidx) {
+Value or_asm(int a, Expr expr, int espidx) {
 	Array cons = expr.getCons();
-	int size = (cons).getSize();
+	int size = cons.getSize();
 	IRBuilder builder = System.getBuilder();
 	LLVMBasicBlock bbMerge = LLVMBasicBlock.create(System.getFunction(), "bbOrExprMerge");
 	LLVMBasicBlock bbCond = LLVMBasicBlock.create(System.getFunction(), "bbOrExprCond");
-	Array blocks = Array.newN(1+size);
+	Array blocks = Array.newN(size);
+	builder.createBr(bbCond);
+	builder.setInsertPoint(bbMerge);
 	blocks.set(0, bbCond);
-	or_asm_inner(expr, blocks, bbMerge, 1, size, espidx);
+	or_asm_helper(expr, blocks, bbMerge, 1, size, espidx);
 	builder.setInsertPoint(bbMerge);
 	PHINode phi = builder.createPHI(ctype2Type(/*TY_BOOL*/8), 0);
-	bool_createPHI(blocks, phi, llvm_getBool(true), llvm_getBool(false));
+	bool_createPHI(blocks, phi, llvm_getBool(true), llvm_getBool(false), 0);
+	return phi;
 }
 
-void and_asm_inner(Expr expr, Array blocks, LLVMBasicBlock merge, int i, int size, int espidx) {
+void and_asm_helper(Expr expr, Array blocks, LLVMBasicBlock merge, int i, int size, int espidx) {
 	IRBuilder builder = System.getBuilder();
-	builder.setInsertPoint(blocks.end());
-	LLVMBasicBlock next = LLVMBasicBlock.create(System.getFunction(), "bbAndExprCond");
-	blocks.set(i, next);
-	Value cond = expr_asm(espidx+1, expr.at(i), espidx+1);
-	builder.createCondBr(cond, next, merge);
-	if (i == size) {
-		builder.setInsertPoint(next);
-		builder.createBr(merge);
+	if (i < size) {
+		LLVMBasicBlock next = LLVMBasicBlock.create(System.getFunction(), "bbAndExprCond");
+		builder.setInsertPoint(blocks.get(i-1));
+		blocks.set(i, next);
+		Expr e = expr.at(i);
+		Value cond = expr_asm(espidx+1, expr.at(i), espidx+1);
+		builder.createCondBr(cond, next, merge);
+		and_asm_helper(expr, blocks, merge, i+1, size, espidx);
 	} else {
-		and_asm_inner(expr, blocks, merge, i+1, size, espidx);
+		LLVMBasicBlock cond = blocks.get(i-1);
+		builder.setInsertPoint(cond);
+		builder.createBr(merge);
 	}
 }
 
-void and_asm(int a, Expr expr, int espidx) {
+Value and_asm(int a, Expr expr, int espidx) {
 	Array cons = expr.getCons();
-	int size = (cons).getSize();
+	int size = cons.getSize();
 	IRBuilder builder = System.getBuilder();
 	LLVMBasicBlock bbMerge = LLVMBasicBlock.create(System.getFunction(), "bbAndExprMerge");
 	LLVMBasicBlock bbCond = LLVMBasicBlock.create(System.getFunction(), "bbAndExprCond");
-
-	Array blocks = Array.newN(1+size);
+	Array blocks = Array.newN(size);
+	builder.createBr(bbCond);
+	builder.setInsertPoint(bbMerge);
 	blocks.set(0, bbCond);
-	and_asm_inner(expr, blocks, bbMerge, 1, size, espidx);
+	and_asm_helper(expr, blocks, bbMerge, 1, size, espidx);
 	builder.setInsertPoint(bbMerge);
 	PHINode phi = builder.createPHI(ctype2Type(/*TY_BOOL*/8), 0);
-	bool_createPHI(blocks, phi, llvm_getBool(true), llvm_getBool(false));
+	bool_createPHI(blocks, phi, llvm_getBool(true), llvm_getBool(false), 0);
+	return phi;
 }
 
 Value letexpr_asm(int a, Expr expr, int espidx) {
@@ -855,6 +864,7 @@ void returnstmt_asm(Stmt stmt, int espidx) {
 		Value retval = expr_asm(/*K_RTNIDX*/-4, expr, espidx);
 		Function f = System.getFunction();
 		Type retTy = f.getReturnType();
+		f.dump();
 		int cid1 = type2cid(retTy);
 		int cid2 = type2cid(retval.getType());
 		if (isBoxTy(type2cid(retTy)) && isUnBoxTy(type2cid(retval.getType()))) {
@@ -998,7 +1008,7 @@ void push_back_fparams(Array params, Array args, int i, int n) {
 	if (i < n) {
 		Value v = args.get(i+2);
 		params.set(i, v);
-		push_back_fparams(params, args, i+2, n);
+		push_back_fparams(params, args, i+1, n);
 	}
 }
 
@@ -1017,6 +1027,7 @@ Function create_function(Module m, Method mtd) {
 	Array args = f.getArguments();
 	Value vctx = args.get(0);
 	Value vsfp = args.get(1);
+
 	vctx.setName("lctx");
 	vsfp.setName("lsfp");
 
