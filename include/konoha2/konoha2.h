@@ -331,6 +331,10 @@ typedef struct kcontext_t {
 	int						          safepoint; // set to 1
 	struct ksfp_t                    *esp;
 	const struct _klib2              *lib2;
+	/* TODO(imasahiro)
+	 * checking modgc performance and remove
+	 * memshare/memlocal from context
+	 */
 	struct kmemshare_t                *memshare;
 	struct kmemlocal_t                *memlocal;
 	struct kshare_t                   *share;

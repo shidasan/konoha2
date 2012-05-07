@@ -84,7 +84,7 @@ set(PARSER
 	src/sugar/sugar.c
 )
 
-option(KONOHA_VM_MODULE "konoha vm module" "")
+set(KONOHA_VM_MODULE "" CACHE STRING "konoha vm module")
 if(KONOHA_VM_MODULE)
 	set(VM module/${KONOHA_VM_MODULE}vm/${KONOHA_VM_MODULE}asm.c)
 else(KONOHA_VM_MODULE)

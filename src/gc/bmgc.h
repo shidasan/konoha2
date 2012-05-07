@@ -167,7 +167,7 @@ static inline void ARRAY_##T##_dispose(ARRAY(T) *a) {\
 		for(i=0, x = ARRAY_n(a, i); i < ARRAY_size(a); x = ARRAY_n(a,(++i)))
 
 /* struct gc */
-#define GCDATA(_ctx) (((_ctx)->memshare->gcHeapMng))
+#define GCDATA(_ctx) ((memshare(_ctx)->gcHeapMng))
 
 struct SubHeap;
 struct Segment;
@@ -541,20 +541,22 @@ static inline void bmgc_Object_free(CTX, kObject *o);
 static bool findNextFreeBlock(AllocationPointer *p);
 static HeapManager *BMGC_init(CTX);
 static void BMGC_exit(CTX, HeapManager *mng);
-
+//static kbool_t knh_isObject(CTX, kObject *o);
 
 typedef struct kmemlocal_t {
-	kObject             **refs;
-	size_t                       ref_size;
-	kObject             **ref_buf;        // allocated body
-	size_t                       ref_capacity;
+	kmodlocal_t   h;
+	kObject     **refs;
+	size_t        ref_size;
+	kObject     **ref_buf;        // allocated body
+	size_t        ref_capacity;
 
-	kObject             **queue;
-	size_t                       queue_capacity;
-	size_t                       queue_log2;
+	kObject     **queue;
+	size_t        queue_capacity;
+	size_t        queue_log2;
 } kmemlocal_t;
 
 typedef struct kmemshare_t {
+	kmodshare_t h;
 	HeapManager *gcHeapMng;
 	size_t   gcObjectCount;
 	size_t   usedMemorySize;
@@ -567,6 +569,9 @@ typedef struct kmemshare_t {
 	size_t   gcTime;
 	//kmutex_t         *memlock;
 } kmemshare_t;
+
+#define memlocal(_ctx) ((kmemlocal_t*)((_ctx)->modlocal[MOD_gc]))
+#define memshare(_ctx) ((kmemshare_t*)((_ctx)->modshare[MOD_gc]))
 
 /* ------------------------------------------------------------------------ */
 
@@ -600,8 +605,8 @@ static inline uint64_t knh_getTimeMilliSecond(void)
 
 static void THROW_OutOfMemory(CTX, size_t size)
 {
-    /* TODO */
-    abort();
+	/* TODO */
+	abort();
 }
 
 static void *call_malloc_aligned(CTX, size_t size, size_t align)
@@ -748,50 +753,79 @@ void MODGC_check_malloced_size(void)
 }
 
 /* ------------------------------------------------------------------------ */
+static void kmodgc_local_reftrace(CTX, struct kmodlocal_t *baseh) {}
+
+static void kmodgc_local_free(CTX, struct kmodlocal_t *baseh)
+{
+	kmemlocal_t *local = (kmemlocal_t *) baseh;
+	if(local->queue_capacity > 0) {
+		do_free(local->queue,  (local->queue_capacity + 1) * sizeof(kObject*));
+		local->queue = NULL;
+		local->queue_capacity = 0;
+	}
+	if(local->ref_capacity > 0) {
+		do_free(local->ref_buf, local->ref_capacity * sizeof(kObject*));
+		local->ref_buf = NULL;
+		local->refs = NULL;
+		local->ref_capacity = 0;
+	}
+	do_free(local, sizeof(kmemlocal_t));
+	_ctx->modlocal[MOD_gc] = NULL;
+}
+
+static void kmodgc_setup(CTX, struct kmodshare_t *def, int newctx)
+{
+	if(memlocal(_ctx) == NULL) {
+		kmemlocal_t *base = do_malloc(sizeof(kmemlocal_t));
+		do_bzero(base, sizeof(kmemlocal_t));
+		base->h.reftrace = kmodgc_local_reftrace;
+		base->h.free     = kmodgc_local_free;
+		_ctx->modlocal[MOD_gc] = (kmodlocal_t*)base;
+	}
+}
+
+static void kmodgc_reftrace(CTX, struct kmodshare_t *baseh) {}
+
+static void kmodgc_free(CTX, struct kmodshare_t *baseh)
+{
+	do_free(baseh, sizeof(kmemshare_t));
+	_ctx->modshare[MOD_gc] = NULL;
+}
 
 void MODGC_init(CTX, kcontext_t *ctx)
 {
-	ctx->memlocal = do_malloc(sizeof(kmemlocal_t));
-	do_bzero(ctx->memlocal, sizeof(kmemlocal_t));
 	if(IS_ROOTCTX(ctx)) {
-		(ctx)->memshare = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
-		//do_bzero(ctx->memshare, sizeof(kmemshare_t));
-		//ctx->memshare->memlock = knh_mutex_malloc(ctx);
-		ctx->memshare->gcObjectCount = 0;
-		ctx->memshare->latestGcTime  = knh_getTimeMilliSecond();
-		(ctx)->memshare->gcHeapMng = BMGC_init(ctx);
+		kmemshare_t *base = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
+		base->h.name     = "bmgc";
+		base->h.setup    = kmodgc_setup;
+		base->h.reftrace = kmodgc_reftrace;
+		//XXX MODGC: do not set 'free'
+		//base->h.free     = kmodgc_free;
+
+		//base->memlock = knh_mutex_malloc(ctx);
+		base->gcObjectCount = 0;
+		base->latestGcTime  = knh_getTimeMilliSecond();
+		base->gcHeapMng = BMGC_init(ctx);
 		KSET_KLIB2(malloc, 0);
 		KSET_KLIB2(zmalloc, 0);
 		KSET_KLIB2(free, 0);
+		Konoha_setModule(MOD_gc, &base->h, 0);
 	}
+	kmodgc_setup(ctx, (kmodshare_t*) memshare(_ctx), 1);
 }
 
 void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 {
-	BMGC_exit(ctx, (ctx)->memshare->gcHeapMng);
-	((kcontext_t*)ctx)->memshare->gcHeapMng = NULL;
+	BMGC_exit(ctx, memshare(ctx)->gcHeapMng);
+	memshare((kcontext_t*)ctx)->gcHeapMng = NULL;
 }
 
 void MODGC_free(CTX, kcontext_t *ctx)
 {
-	if(ctx->memlocal != NULL) {
-		if(ctx->memlocal->queue_capacity > 0) {
-			do_free(/*ctx, */ctx->memlocal->queue,  (ctx->memlocal->queue_capacity + 1) * sizeof(kObject*));
-			ctx->memlocal->queue = NULL;
-			ctx->memlocal->queue_capacity = 0;
-		}
-		if(ctx->memlocal->ref_capacity > 0) {
-			do_free(ctx->memlocal->ref_buf, ctx->memlocal->ref_capacity * sizeof(kObject*));
-			ctx->memlocal->ref_buf = NULL;
-			ctx->memlocal->refs = NULL;
-			ctx->memlocal->ref_capacity = 0;
-		}
-		do_free(ctx->memlocal, sizeof(kmemlocal_t));
-		((kcontext_t*)ctx)->memlocal = NULL;
-	}
+	assert(memlocal(ctx) == NULL);
 	if(IS_ROOTCTX(ctx)) {
-		do_free(ctx->memshare, sizeof(kmemshare_t));
-		(ctx)->memshare = NULL;
+		kmodgc_free(_ctx, (kmodshare_t*) memshare(_ctx));
+		Konoha_setModule(MOD_gc, NULL, 0);
 	}
 }
 
@@ -804,11 +838,9 @@ void MODGC_free(CTX, kcontext_t *ctx)
 #define C_STACK_TOP(ctx) ((void**) &ctx)
 #endif
 
-//static kbool_t knh_isObject(CTX, kObject *o);
-
 static void cstack_mark(CTX)
 {
-#if 0
+#ifdef USE_CSTACK_TRACE
 	void** stack  = C_STACK_TOP(ctx);
 	void** bottom = (void**) _ctx->stack->cstack_bottom;
 	for (; stack < bottom; ++stack) {
@@ -856,9 +888,9 @@ typedef struct knh_ostack_t {
 
 static knh_ostack_t *ostack_init(CTX, knh_ostack_t *ostack)
 {
-	ostack->capacity = _ctx->memlocal->queue_capacity;
-	ostack->stack = _ctx->memlocal->queue;
-	ostack->capacity_log2  = _ctx->memlocal->queue_log2;
+	ostack->capacity = memlocal(_ctx)->queue_capacity;
+	ostack->stack = memlocal(_ctx)->queue;
+	ostack->capacity_log2  = memlocal(_ctx)->queue_log2;
 	if(ostack->capacity == 0) {
 		ostack->capacity_log2 = 12;
 		ostack->capacity = (1 << ostack->capacity_log2) - 1;
@@ -899,26 +931,26 @@ static kObject *ostack_next(knh_ostack_t *ostack)
 static void ostack_free(CTX, knh_ostack_t *ostack)
 {
 	kcontext_t *wctx = (kcontext_t*) _ctx;
-	wctx->memlocal->queue_capacity = ostack->capacity;
-	wctx->memlocal->queue = ostack->stack;
-	wctx->memlocal->queue_log2 = ostack->capacity_log2;
+	memlocal(wctx)->queue_capacity = ostack->capacity;
+	memlocal(wctx)->queue = ostack->stack;
+	memlocal(wctx)->queue_log2 = ostack->capacity_log2;
 }
 
 static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
 {
-	size_t ref_size = tail - _ctx->memlocal->ref_buf;
-	if(unlikely(_ctx->memlocal->ref_capacity < size + ref_size)) {
+	size_t ref_size = tail - memlocal(_ctx)->ref_buf;
+	if(unlikely(memlocal(_ctx)->ref_capacity < size + ref_size)) {
 		kcontext_t *wctx = (kcontext_t*) _ctx;
-		size_t oldsize = _ctx->memlocal->ref_capacity;
+		size_t oldsize = memlocal(_ctx)->ref_capacity;
 		size_t newsize = (oldsize == 0) ? 8 : oldsize * 2;
 		while(newsize < size + ref_size) {
 			newsize *= 2;
 		}
-		wctx->memlocal->ref_buf = (kObject**) do_realloc(_ctx->memlocal->ref_buf,
+		memlocal(wctx)->ref_buf = (kObject**) do_realloc(memlocal(_ctx)->ref_buf,
 				oldsize * sizeof(kObject*), newsize * sizeof(kObject*));
-		wctx->memlocal->ref_capacity = newsize;
-		wctx->memlocal->refs = _ctx->memlocal->ref_buf;
-		tail = _ctx->memlocal->ref_buf + ref_size;
+		memlocal(wctx)->ref_capacity = newsize;
+		memlocal(wctx)->refs = memlocal(_ctx)->ref_buf;
+		tail = memlocal(_ctx)->ref_buf + ref_size;
 	}
 	return tail;
 }
@@ -1277,7 +1309,7 @@ static void HeapManager_expandHeap(CTX, HeapManager *mng, size_t list_size)
 	ARRAY_add(SegmentPtr, &mng->segment_pool_a, segment_pool);
 	ARRAY_add(size_t, &mng->segment_size_a, list_size);
 #ifdef K_USING_DEBUG
-	_ctx->memshare->usedMemorySize += heap_size;
+	memshare(_ctx)->usedMemorySize += heap_size;
 #endif
 #ifdef GCSTAT
 	gc_stat("Expand Heap(%luMB)[%p, %p]", heap_size/MB_, managed_heap, managed_heap_end);
@@ -1321,7 +1353,7 @@ static void HeapManager_delete(CTX, HeapManager *mng)
 		size_t size = ARRAY_n(mng->heap_size_a, i);
 		call_free_aligned(_ctx, p, size);
 #ifdef K_USING_DEBUG
-		_ctx->memshare->usedMemorySize += size;
+		memshare(_ctx)->usedMemorySize += size;
 #endif
 	}
 	ARRAY_dispose(size_t,  &mng->heap_size_a);
@@ -1403,7 +1435,7 @@ static bool DBG_CHECK_OBJECT_IN_HEAP(kObject *o, SubHeap *h)
 
 static void deferred_sweep(CTX, kObject *o)
 {
-	_ctx->memshare->collectedObject++;
+	memshare(_ctx)->collectedObject++;
 	bmgc_Object_free(_ctx, o);
 	CLEAR_GCINFO(o);
 }
@@ -1602,7 +1634,7 @@ static void bmgc_gc_init(CTX, HeapManager *mng)
 	size_t i;
 	SubHeap *h;
 
-	STAT_(_ctx->memshare->markedObject = 0;)
+	STAT_(memshare(_ctx)->markedObject = 0;)
 	BMGC_dump(mng);
 	for_each_heap(h, i, mng->heaps) {
 		clearAllBitMapsAndCount(mng, h);
@@ -1652,7 +1684,7 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 		bitmap_mark(*bm, seg, bpidx, bpmask);
 		++(seg->live_count);
 		ostack_push(_ctx, ostack, o);
-		STAT_(++(_ctx->memshare->markedObject););
+		STAT_(++(memshare(_ctx)->markedObject););
 #ifdef GCSTAT
 		global_gc_stat.marked[klass]++;
 #endif
@@ -1672,7 +1704,7 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 	long i;
 	knh_ostack_t ostackbuf, *ostack = ostack_init(_ctx, &ostackbuf);
 	kObject *ref = NULL;
-	kmemlocal_t *memlocal = _ctx->memlocal;
+	kmemlocal_t *memlocal = memlocal(_ctx);
 
 	knh_ensurerefs(_ctx, memlocal->ref_buf, K_PAGESIZE);
 	context_reset_refs(memlocal);
@@ -1815,15 +1847,15 @@ static void bitmapMarkingGC(CTX, HeapManager *mng)
 	bmgc_gc_sweep(_ctx, GCDATA(_ctx));
 
 	STAT_(
-		_ctx->memshare->gcCount++;
-		_ctx->memshare->markingTime += (mark_time-start_time);
-		_ctx->memshare->latestGcTime = knh_getTimeMilliSecond();
-		_ctx->memshare->gcTime += (_ctx->memshare->latestGcTime - start_time);
+		memshare(_ctx)->gcCount++;
+		memshare(_ctx)->markingTime += (mark_time-start_time);
+		memshare(_ctx)->latestGcTime = knh_getTimeMilliSecond();
+		memshare(_ctx)->gcTime += (memshare(_ctx)->latestGcTime - start_time);
 		GC_LOG("GC(%dMb): marked:%d, collected:%d marking_time=%dms",
-			_ctx->memshare->usedMemorySize/ MB_,
-			_ctx->memshare->markedObject, _ctx->memshare->collectedObject, 
+			memshare(_ctx)->usedMemorySize/ MB_,
+			memshare(_ctx)->markedObject, memshare(_ctx)->collectedObject, 
 			(int)(mark_time - start_time));
-		_ctx->memshare->collectedObject = 0;
+		memshare(_ctx)->collectedObject = 0;
 		);
 
 #ifdef GCSTAT
@@ -1843,31 +1875,31 @@ static void bitmapMarkingGC(CTX, HeapManager *mng)
 /* ------------------------------------------------------------------------ */
 /* [Object] */
 
-static kbool_t knh_isObject(CTX, kObject *o)
-{
-	HeapManager *mng = (HeapManager*) GCDATA(_ctx);
-
-	size_t i;
-	if ((uintptr_t) o % KlassBlockSize(SUBHEAP_KLASS_MIN) != 0)
-		return false;
-	FOR_EACH_ARRAY_(mng->managed_heap_a, i) {
-		kObject *s = (kObject *) ARRAY_n(mng->managed_heap_a, i);
-		kObject *e = (kObject *) ARRAY_n(mng->managed_heap_end_a, i);
-		if (s < o && o < e) {
-			Segment *seg;
-			uintptr_t klass, index;
-			OBJECT_LOAD_BLOCK_INFO(o, seg, index, klass);
-			DBG_ASSERT((uintptr_t) o % KlassBlockSize(klass) == 0);
-			uintptr_t bpidx, bpmask;
-			BITPTR_INIT_(bpidx, bpmask, index);
-			bitmap_t *bm = SEG_BITMAP_N(seg, 0, bpidx);
-			if (BM_TEST(*bm, bpmask)) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
+//static kbool_t knh_isObject(CTX, kObject *o)
+//{
+//	HeapManager *mng = (HeapManager*) GCDATA(_ctx);
+//
+//	size_t i;
+//	if ((uintptr_t) o % KlassBlockSize(SUBHEAP_KLASS_MIN) != 0)
+//		return false;
+//	FOR_EACH_ARRAY_(mng->managed_heap_a, i) {
+//		kObject *s = (kObject *) ARRAY_n(mng->managed_heap_a, i);
+//		kObject *e = (kObject *) ARRAY_n(mng->managed_heap_end_a, i);
+//		if (s < o && o < e) {
+//			Segment *seg;
+//			uintptr_t klass, index;
+//			OBJECT_LOAD_BLOCK_INFO(o, seg, index, klass);
+//			DBG_ASSERT((uintptr_t) o % KlassBlockSize(klass) == 0);
+//			uintptr_t bpidx, bpmask;
+//			BITPTR_INIT_(bpidx, bpmask, index);
+//			bitmap_t *bm = SEG_BITMAP_N(seg, 0, bpidx);
+//			if (BM_TEST(*bm, bpmask)) {
+//				return true;
+//			}
+//		}
+//	}
+//	return false;
+//}
 
 /* ------------------------------------------------------------------------ */
 
@@ -1912,17 +1944,17 @@ void MODGC_gc_invoke(CTX, int needsCStackTrace)
 		start_the_world(_ctx);
 	}
 	bmgc_gc_sweep(_ctx, GCDATA(_ctx));
-	intval = start_time - _ctx->memshare->latestGcTime;
+	intval = start_time - memshare(_ctx)->latestGcTime;
 	//GC_LOG("GC(%dMb): marked=%lu, collected=%lu, avail=%lu=>%lu, interval=%dms, marking_time=%dms",
-	//		_ctx->memshare->usedMemorySize/ MB_,
-	//		_ctx->memshare->markedObject, _ctx->memshare->collectedObject,
-	//		_ctx->memshare->freeObjectCount, _ctx->memshare->freeObjectCount,
+	//		memshare(_ctx)->usedMemorySize/ MB_,
+	//		memshare(_ctx)->markedObject, memshare(_ctx)->collectedObject,
+	//		memshare(_ctx)->freeObjectCount, memshare(_ctx)->freeObjectCount,
 	//		(int)(intval), (int)(mark_time-start_time));
-	_ctx->memshare->gcCount++;
-	_ctx->memshare->markingTime += (mark_time-start_time);
-	_ctx->memshare->latestGcTime = knh_getTimeMilliSecond();
-	_ctx->memshare->gcTime += (_ctx->memshare->latestGcTime - start_time);
-	_ctx->memshare->collectedObject = 0;
+	memshare(_ctx)->gcCount++;
+	memshare(_ctx)->markingTime += (mark_time-start_time);
+	memshare(_ctx)->latestGcTime = knh_getTimeMilliSecond();
+	memshare(_ctx)->gcTime += (memshare(_ctx)->latestGcTime - start_time);
+	memshare(_ctx)->collectedObject = 0;
 }
 
 /* ------------------------------------------------------------------------ */
