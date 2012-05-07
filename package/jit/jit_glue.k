@@ -84,6 +84,11 @@ void Method.setFunc(int faddr) {
 	Pointer.set(x, 32, 64, faddr);
 }
 
+String method2string(Method mtd) {
+	String cname = mtd.getCname();
+	String fname = mtd.getFname();
+	return cname + "_" + fname;
+}
 
 void vstack_setValue(int idx, Value value) {
 	if (idx < 0) {
@@ -255,11 +260,15 @@ Value boxing(Value v) {
 	int cid = type2cid(v.getType());
 	Array params = Array.newN(3);
 	params.set(0, getvctx());
-	params.set(1, createConstValue(cid2ctype(cid), null, cid, 0.0));
+	params.set(1, createConstValue(/*TY_INT*/3, null, cid, 0.0));
 	if (v.getType() == ctype2Type(/*TY_INT*/3)) {
 		params.set(2, v);
+	} else if (v.getType() == ctype2Type(/*TY_BOOL*/8)) {
+		Value v0 = builder.createZExt(v, ctype2Type(/*TY_LONG*/2));
+		params.set(2, v0);
 	} else {
-		//TODO float type
+		System.p("TODO float type");
+		System.assert(false);
 		Value v0 = builder.createZExt(v, ctype2Type(/*TY_LONG*/2));
 		params.set(2, v0);
 	}
@@ -277,11 +286,11 @@ Value llvm_getBool(boolean v) {
 }
 
 Value llvm_getInt(int v) {
-    return (ConstantInt.getValue(ctype2Type(/*TY_INT*/3),    (v)));
+	return (ConstantInt.getValue(ctype2Type(/*TY_INT*/3),    (v)));
 }
 
 Value llvm_getFloat(float v) {
-    return (ConstantInt.getValue(ctype2Type(/*TY_FLOAT*/5),  (v)));
+	return (ConstantInt.getValue(ctype2Type(/*TY_FLOAT*/5),  (v)));
 }
 
 
@@ -441,8 +450,13 @@ Value expr_asm(int a, Expr expr, int espidx) {
 void storesfp(Value val, int reqtype, int sfpidx) {
 	IRBuilder builder = System.getBuilder();
 	Value vsfp  = getvsfp();
-	Value vsfp0 = loadsfp(builder, vsfp, reqtype, sfpidx);
-	builder.createStore(val, vsfp0, false);
+	if (type2cid(val.getType()) == /*TY_Object*/2) {
+		Value vsfp0 = loadsfp(builder, vsfp, /*TY_Object*/2, sfpidx);
+		builder.createStore(val, vsfp0, false);
+	} else {
+		Value vsfp0 = loadsfp(builder, vsfp, reqtype, sfpidx);
+		builder.createStore(val, vsfp0, false);
+	}
 }
 
 void emit_param(Method mtd, Expr expr, int thisidx, int i) {
@@ -623,6 +637,7 @@ Value call_asm(int a, Expr expr, int espidx) {
 		}
 		Function f = System.getJITCache(mtd);
 		if(f.isNull()) {
+			System.p(method2string(mtd));
 			emit_param(mtd, expr, thisidx, s);
 			asm_scall(System.getUline(), sfp(thisidx), esp(espidx, argc), mtd, System.knull(expr.getType()));
 		}
@@ -651,6 +666,7 @@ Object Array.end() {
 	if (size > 0) {
 		return a.get(size-1);
 	}
+	System.p("FIXME: a.size="+size);
 	return null;
 }
 Array Array.erase(int n) {
@@ -914,12 +930,6 @@ void construct_args(Array argsTy, Param pa, int n, int psize) {
 		argsTy.set(n+2/*ctx+sfp*/, cid2Type(pa.getType(n)));
 		construct_args(argsTy, pa, n+1, psize);
 	}
-}
-
-String method2string(Method mtd) {
-	String cname = mtd.getCname();
-	String fname = mtd.getFname();
-	return cname + "_" + fname;
 }
 
 Value loadsfp(IRBuilder builder, Value vsfp, int reqtype, int sfpidx) {
