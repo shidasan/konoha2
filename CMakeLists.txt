@@ -84,9 +84,12 @@ set(PARSER
 	src/sugar/sugar.c
 )
 
-set(VM
-	src/vm/asm.c
-)
+option(KONOHA_VM_MODULE "konoha vm module" "")
+if(KONOHA_VM_MODULE)
+	set(VM module/${KONOHA_VM_MODULE}vm/${KONOHA_VM_MODULE}asm.c)
+else(KONOHA_VM_MODULE)
+	set(VM src/vm/asm.c)
+endif(KONOHA_VM_MODULE)
 
 set(PACKAGES
 	sugar
@@ -213,7 +216,6 @@ macro(create_package_project _PKGNAME)
 		set_tests_properties(${test_name} PROPERTIES TIMEOUT 10)
 	endforeach(f ${test_files})
 	set(CMAKE_BUILD_TYPE ${KONOHA_BUILD_TYPE})
-	#set(_PACKAGE_NAME    ${PROJECT_NAME})
 	PKGNAME(${_PKGNAME} _PACKAGE_NAME)
 	set(LIB  "${_PACKAGE_NAME}_glue")
 	set(_PACKAGE_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
@@ -232,8 +234,9 @@ macro(create_package_project _PKGNAME)
 	if(${LEN} GREATER 0)
 		add_library(${LIB} SHARED ${PACKAGE_SOURCE_CODE})
 		set_target_properties(${LIB} PROPERTIES PREFIX "")
+		target_link_libraries(${LIB} konoha2)
 		if(PACKAGE_EXTRA_LIBRARY)
-		target_link_libraries(${LIB} konoha2 ${PACKAGE_EXTRA_LIBRARY})
+		target_link_libraries(${LIB} ${PACKAGE_EXTRA_LIBRARY})
 		endif(PACKAGE_EXTRA_LIBRARY)
 		install(TARGETS ${LIB} DESTINATION ${_KONOHA_PACKAGE_DIR})
 	endif(${LEN} GREATER 0)
