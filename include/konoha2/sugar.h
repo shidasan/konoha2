@@ -506,6 +506,7 @@ typedef struct {
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
+	void (*KonohaSpace_setTokenizer)(CTX, kKonohaSpace *ks, int ch, Ftokenizer f, kMethod *mtd/*future extension*/);
 
 	kExpr* (*Expr_setConstValue)(CTX, kExpr *expr, ktype_t ty, kObject *o);
 	kExpr* (*Expr_setNConstValue)(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata);
@@ -540,6 +541,7 @@ typedef struct {
 
 #define EXPORT_SUGAR(base) \
 	base->keyword             = keyword;\
+	bade->KonohaSpace_setTokenizer = KonohaSpace_setTokenizer;\
 	base->p                   = sugar_p;\
 	base->Expr_uline          = Expr_uline;\
 	base->Stmt_token          = Stmt_token;\

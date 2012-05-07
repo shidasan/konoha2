@@ -454,7 +454,7 @@ static const Ftokenizer *KonohaSpace_tokenizerMatrix(CTX, kKonohaSpace *ks)
 	return ks->fmat;
 }
 
-static void KonohaSpace_setTokenizer(CTX, kKonohaSpace *ks, int ch, Ftokenizer f)
+static void KonohaSpace_setTokenizer(CTX, kKonohaSpace *ks, int ch, Ftokenizer f, kMethod *mtd/*future extension*/)
 {
 	int kchar = (ch < 0) ? _MULTI : cMatrix[ch];
 	Ftokenizer *fmat = (Ftokenizer*)KonohaSpace_tokenizerMatrix(_ctx, ks);
