@@ -770,6 +770,7 @@ static void kmodgc_local_free(CTX, struct kmodlocal_t *baseh)
 		local->ref_capacity = 0;
 	}
 	do_free(local, sizeof(kmemlocal_t));
+	_ctx->modlocal[MOD_gc] = NULL;
 }
 
 static void kmodgc_setup(CTX, struct kmodshare_t *def, int newctx)
@@ -788,6 +789,7 @@ static void kmodgc_reftrace(CTX, struct kmodshare_t *baseh) {}
 static void kmodgc_free(CTX, struct kmodshare_t *baseh)
 {
 	do_free(baseh, sizeof(kmemshare_t));
+	_ctx->modshare[MOD_gc] = NULL;
 }
 
 void MODGC_init(CTX, kcontext_t *ctx)
@@ -797,7 +799,8 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		base->h.name     = "bmgc";
 		base->h.setup    = kmodgc_setup;
 		base->h.reftrace = kmodgc_reftrace;
-		base->h.free     = kmodgc_free;
+		//XXX MODGC: do not set 'free'
+		//base->h.free     = kmodgc_free;
 
 		//base->memlock = knh_mutex_malloc(ctx);
 		base->gcObjectCount = 0;
@@ -819,9 +822,7 @@ void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 
 void MODGC_free(CTX, kcontext_t *ctx)
 {
-	if(memlocal(ctx) != NULL) {
-		kmodgc_local_free(ctx, (kmodlocal_t*)memlocal(ctx));
-	}
+	assert(memlocal(ctx) == NULL);
 	if(IS_ROOTCTX(ctx)) {
 		kmodgc_free(_ctx, (kmodshare_t*) memshare(_ctx));
 		Konoha_setModule(MOD_gc, NULL, 0);
