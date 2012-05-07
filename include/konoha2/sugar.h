@@ -541,7 +541,7 @@ typedef struct {
 
 #define EXPORT_SUGAR(base) \
 	base->keyword             = keyword;\
-	bade->KonohaSpace_setTokenizer = KonohaSpace_setTokenizer;\
+	base->KonohaSpace_setTokenizer = KonohaSpace_setTokenizer;\
 	base->p                   = sugar_p;\
 	base->Expr_uline          = Expr_uline;\
 	base->Stmt_token          = Stmt_token;\
