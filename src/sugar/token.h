@@ -30,14 +30,6 @@ extern "C" {
 
 /* ------------------------------------------------------------------------ */
 
-typedef struct {
-	const char   *source;
-	kline_t       uline;
-	kArray       *list;
-	const char   *bol;     // begin of line
-	int           indent_tab;
-} tenv_t;
-
 static void Token_toERR(CTX, struct _kToken *tk, size_t errref)
 {
 	tk->tt = TK_ERR;
@@ -48,8 +40,6 @@ static inline int lpos(tenv_t *tenv, const char *s)
 {
 	return (tenv->bol == NULL) ? -1 : s - tenv->bol;
 }
-
-typedef int (*Ftoken)(CTX, struct _kToken *, tenv_t *, int, kMethod *thunk);
 
 static int parseINDENT(CTX, struct _kToken *tk, tenv_t *tenv, int pos, kMethod *thunk)
 {
@@ -267,7 +257,7 @@ static int parseUNDEF(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 
 static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk);
 
-static const Ftoken MiniKonohaTokenMatrix[] = {
+static const Ftokenizer MiniKonohaTokenMatrix[] = {
 #define _NULL      0
 	parseSKIP,
 #define _UNDEF     1
@@ -395,7 +385,7 @@ static int kchar(const char *t, int pos)
 static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
 	int ch, level = 1, pos = tok_start + 1;
-	const Ftoken *fmat = MiniKonohaTokenMatrix;
+	const Ftokenizer *fmat = MiniKonohaTokenMatrix;
 	tk->lpos += 1;
 	while((ch = kchar(tenv->source, pos)) != 0) {
 		if(ch == _RBR/*}*/) {
@@ -426,7 +416,7 @@ static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 static void tokenize(CTX, tenv_t *tenv)
 {
 	int ch, pos = 0;
-	const Ftoken *fmat = MiniKonohaTokenMatrix;
+	const Ftokenizer *fmat = tenv->fmat;
 	struct _kToken *tk = new_W(Token, 0);
 	assert(tk->tt == 0);
 	tk->uline = tenv->uline;
@@ -448,7 +438,30 @@ static void tokenize(CTX, tenv_t *tenv)
 	}
 }
 
-static void ktokenize(CTX, const char *source, kline_t uline, kArray *a)
+static const Ftokenizer *KonohaSpace_tokenizerMatrix(CTX, kKonohaSpace *ks)
+{
+	if(ks->fmat == NULL) {
+		DBG_ASSERT(KCHAR_MAX * sizeof(Ftokenizer) == sizeof(MiniKonohaTokenMatrix));
+		Ftokenizer *fmat = (Ftokenizer*)KMALLOC(sizeof(MiniKonohaTokenMatrix));
+		if(ks->parentNULL != NULL && ks->parentNULL->fmat != NULL) {
+			memcpy(fmat, ks->parentNULL->fmat, sizeof(MiniKonohaTokenMatrix));
+		}
+		else {
+			memcpy(fmat, MiniKonohaTokenMatrix, sizeof(MiniKonohaTokenMatrix));
+		}
+		((struct _kKonohaSpace*)ks)->fmat = (const Ftokenizer*)fmat;
+	}
+	return ks->fmat;
+}
+
+static void KonohaSpace_setTokenizer(CTX, kKonohaSpace *ks, int ch, Ftokenizer f)
+{
+	int kchar = (ch < 0) ? _MULTI : cMatrix[ch];
+	Ftokenizer *fmat = (Ftokenizer*)KonohaSpace_tokenizerMatrix(_ctx, ks);
+	fmat[kchar] = f;
+}
+
+static void KonohaSpace_tokenize(CTX, kKonohaSpace *ks, const char *source, kline_t uline, kArray *a)
 {
 	size_t i, pos = kArray_size(a);
 	tenv_t tenv = {
@@ -457,6 +470,7 @@ static void ktokenize(CTX, const char *source, kline_t uline, kArray *a)
 		.list   = a,
 		.bol    = source,
 		.indent_tab = 4,
+		.fmat   = ks == NULL ? MiniKonohaTokenMatrix : KonohaSpace_tokenizerMatrix(_ctx, ks),
 	};
 	tokenize(_ctx, &tenv);
 	if(uline == 0) {
@@ -553,7 +567,7 @@ static void parseSyntaxRule(CTX, const char *rule, kline_t uline, kArray *a)
 {
 	kArray *tls = ctxsugar->tokens;
 	size_t pos = kArray_size(tls);
-	ktokenize(_ctx, rule, uline, tls);
+	KonohaSpace_tokenize(_ctx, NULL, rule, uline, tls);
 	makeSyntaxRule(_ctx, tls, pos, kArray_size(tls), a);
 	kArray_clear(tls, pos);
 }

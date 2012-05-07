@@ -153,13 +153,13 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	return next;
 }
 
-static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
+static kbool_t Token_toBRACE(CTX, struct _kToken *tk, kKonohaSpace *ks)
 {
 	if(tk->tt == TK_CODE) {
 		INIT_GCSTACK();
 		kArray *a = new_(TokenArray, 0);
 		PUSH_GCSTACK(a);
-		ktokenize(_ctx, S_text(tk->text), tk->uline,a);
+		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline,a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
@@ -707,7 +707,7 @@ static KMETHOD ParseExpr_DOLLAR(CTX, ksfp_t *sfp _RIX)
 	if(s == c && c + 1 < e) {
 		kToken *tk = tls->toks[c+1];
 		if(tk->tt == TK_CODE) {
-			Token_toBRACE(_ctx, (struct _kToken*)tk);
+			Token_toBRACE(_ctx, (struct _kToken*)tk, kStmt_ks(stmt));
 		}
 		if(tk->tt == AST_BRACE) {
 			struct _kExpr *expr = new_W(Expr, SYN_(kStmt_ks(stmt), KW_Block));

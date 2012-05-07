@@ -105,7 +105,7 @@ static kstatus_t KonohaSpace_eval(CTX, kKonohaSpace *ks, const char *script, kli
 		INIT_GCSTACK();
 		kArray *tls = ctxsugar->tokens;
 		size_t pos = kArray_size(tls);
-		ktokenize(_ctx, script, uline, tls);
+		KonohaSpace_tokenize(_ctx, ks, script, uline, tls);
 		kBlock *bk = new_Block(_ctx, ks, NULL, tls, pos, kArray_size(tls), ';');
 		kArray_clear(tls, pos);
 		result = Block_eval(_ctx, bk);
