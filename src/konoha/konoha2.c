@@ -140,13 +140,12 @@ static kcontext_t* new_context(const kcontext_t *_ctx, size_t stacksize)
 	else {   // others take ctx as its parent
 		newctx = (kcontext_t*)KCALLOC(sizeof(kcontext_t), 1);
 		newctx->lib2 = _ctx->lib2;
-		newctx->memshare = _ctx->memshare;
 		newctx->share = _ctx->share;
 		newctx->modshare = _ctx->modshare;
 		newctx->modlocal = (kmodlocal_t**)KCALLOC(sizeof(kmodlocal_t*), MOD_MAX);
+		MODGC_init(_ctx, newctx);
 //		MODLOGGER_init(_ctx, newctx);
 	}
-	//MODGC_init(_ctx, newctx);
 	KRUNTIME_init(_ctx, newctx, stacksize/*K_PAGESIZE * 16*/);
 	if(IS_ROOTCTX(newctx)) {
 		MODCODE_init(_ctx, newctx);
