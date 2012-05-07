@@ -533,6 +533,23 @@ static KMETHOD Array_setO(CTX, ksfp_t *sfp _RIX)
 	RETURNvoid_();
 }
 
+// Array Array.erase(int n);
+static KMETHOD Array_erase(CTX, ksfp_t *sfp _RIX)
+{
+	kArray *src = sfp[0].a;
+	size_t n = check_index(_ctx, sfp[1].ivalue, kArray_size(src), sfp[K_RTNIDX].uline);
+	size_t asize = kArray_size(src);
+	size_t i, j = 0;
+	kArray *dst = new_(Array, (asize-1));
+	for (i = 0; i < asize; ++i) {
+		if (i != n) {
+			KSETv(dst->list[j], src->list[i]);
+			++j;
+		}
+	}
+	RETURN_(dst);
+}
+
 //## Int Method.getParamSize();
 static KMETHOD Method_getParamSize(CTX, ksfp_t *sfp _RIX)
 {
@@ -710,6 +727,7 @@ static kbool_t jit_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 		_Public|_Static, _F(Array_newN), TY_Array, TY_Array, MN_("newN"), 1, TY_Int, FN_x,
 		_Public, _F(Array_getO), TY_Object, TY_Array, MN_("get"), 1, TY_Int, FN_x,
 		_Public, _F(Array_setO), TY_void,   TY_Array, MN_("set"), 2, TY_Int, FN_x, TY_O, FN_y,
+		_Public, _F(Array_erase), TY_Array, TY_Array, MN_("erase"), 1, TY_Int, FN_x,
 		_Public, _F(Method_getParamSize), TY_Int, TY_Method, MN_("getParamSize"), 0,
 		_Public, _F(Method_getParam), TY_Param, TY_Method, MN_("getParam"), 0,
 		_Public, _F(Param_getType), TY_Int, TY_Param, MN_("getType"), 1, TY_Int, FN_x,

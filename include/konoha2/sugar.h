@@ -36,13 +36,9 @@
 extern "C" {
 #endif
 
-//#define TEXT(T)  T, (sizeof(T)-1)
-
 typedef ksymbol_t keyword_t;
 #define T_kw(X)   T_kw_(_ctx, X)
 #define Skeyword(X)   Skw_(_ctx, X)
-
-//#define FLAG_METHOD_LAZYCOMPILE (0)
 
 #define kflag_clear(flag)  (flag) = 0
 #define K_CHECKSUM 1
@@ -77,6 +73,20 @@ struct _kpackage {
 	KDEFINE_PACKAGE             *packdef;
 	kline_t                      export_script;
 };
+
+// tokenizer
+
+struct tenv_t;
+typedef int (*Ftokenizer)(CTX, struct _kToken *, struct tenv_t *, int, kMethod *thunk);
+
+typedef struct tenv_t {
+	const char   *source;
+	kline_t       uline;
+	kArray       *list;
+	const char   *bol;     // begin of line
+	int           indent_tab;
+	const Ftokenizer *fmat;
+} tenv_t;
 
 // ParseToken
 #define VAR_ParseToken(TK, STR, UL) \
@@ -151,7 +161,6 @@ struct _ksyntax {
 #define _OP    .flag = SYNFLAG_ExprOp
 #define _OPLeft   .flag = (SYNFLAG_ExprOp|SYNFLAG_ExprLeftJoinOp2)
 
-
 #define SYNFLAG_ExprTerm           ((kflag_t)1)
 #define SYNFLAG_ExprOp             ((kflag_t)1 << 1)
 #define SYNFLAG_ExprLeftJoinOp2    ((kflag_t)1 << 2)
@@ -196,11 +205,13 @@ typedef struct KDEFINE_SYNTAX {
 		KSETv(syn_->ExprTyCheck, new_SugarMethod(ExprTyCheck_##F));\
 	}while(0)\
 
+
 typedef const struct _kKonohaSpace kKonohaSpace;
 struct _kKonohaSpace {
 	kObjectHeader h;
 	kpack_t packid;  kpack_t packdom;
 	const struct _kKonohaSpace   *parentNULL;
+	const Ftokenizer *fmat;
 	struct kmap_t   *syntaxMapNN;
 	//
 	void         *gluehdr;
@@ -212,26 +223,6 @@ struct _kKonohaSpace {
 
 typedef kshort_t    ksugar_t;
 typedef kshort_t    kexpr_t;
-
-#define KW_Err     0
-#define KW_Expr    1
-#define KW_Symbol  2
-//#define KW_name    2
-#define KW_Usymbol 3
-//#define KW_cname   3
-#define KW_Text    4
-#define KW_Int     5
-#define KW_Float   6
-#define KW_Type    7
-#define            KW_StmtTypeDecl KW_Type
-#define KW_Parenthesis  8
-#define KW_Brancet      9
-#define KW_Brace        10
-
-#define KW_Block   11
-#define KW_Params  12
-#define       KW_ExprMethodCall  12/*FIXME*/
-#define KW_Toks    13
 
 typedef enum {
 	TK_NONE,          // KW_Err
@@ -278,7 +269,6 @@ struct _kToken {
 	};
 };
 
-
 typedef enum {
 	MNTYPE_method, MNTYPE_unary, MNTYPE_binary
 } mntype_t;
@@ -308,7 +298,9 @@ static inline void kToken_setmn(kToken *tk, kmethodn_t mn, mntype_t mn_type)
 #define TEXPR_AND           10
 #define TEXPR_OR            11
 #define TEXPR_LET           12
-#define TEXPR_MAX           13
+#define TEXPR_STACKTOP      13
+#define TEXPR_MAX           14
+
 
 #define Expr_isCONST(o)     (TEXPR_CONST <= (o)->build && (o)->build <= TEXPR_NCONST)
 #define Expr_isTerm(o)      (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
@@ -514,6 +506,7 @@ typedef struct {
 
 	// export
 	keyword_t  (*keyword)(CTX, const char*, size_t, ksymbol_t);
+	void (*KonohaSpace_setTokenizer)(CTX, kKonohaSpace *ks, int ch, Ftokenizer f, kMethod *mtd/*future extension*/);
 
 	kExpr* (*Expr_setConstValue)(CTX, kExpr *expr, ktype_t ty, kObject *o);
 	kExpr* (*Expr_setNConstValue)(CTX, kExpr *expr, ktype_t ty, uintptr_t ndata);
@@ -548,6 +541,7 @@ typedef struct {
 
 #define EXPORT_SUGAR(base) \
 	base->keyword             = keyword;\
+	base->KonohaSpace_setTokenizer = KonohaSpace_setTokenizer;\
 	base->p                   = sugar_p;\
 	base->Expr_uline          = Expr_uline;\
 	base->Stmt_token          = Stmt_token;\

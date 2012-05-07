@@ -1086,7 +1086,7 @@ static kBlock* Method_newBlock(CTX, kMethod *mtd, kString *source, kline_t uline
 	}
 	kArray *tls = ctxsugar->tokens;
 	size_t pos = kArray_size(tls);
-	ktokenize(_ctx, script, uline, tls);
+	KonohaSpace_tokenize(_ctx, kmodsugar->rootks, script, uline, tls);
 	kBlock *bk = new_Block(_ctx, kmodsugar->rootks, NULL, tls, pos, kArray_size(tls), ';');
 	kArray_clear(tls, pos);
 	return bk;

@@ -48,9 +48,7 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 	while(i < e) {
 		kToken *tkERR = NULL;
 		DBG_ASSERT(atop == kArray_size(tls));
-		DBG_P("B i=%d", i);
 		i = selectStmtLine(_ctx, ks, &indent, tls, i, e, delim, tls, &tkERR);
-		DBG_P("E i=%d", i);
 		int asize = kArray_size(tls);
 		if(asize > atop) {
 			Block_addStmtLine(_ctx, bk, tls, atop, asize, tkERR);
@@ -155,13 +153,13 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	return next;
 }
 
-static kbool_t Token_toBRACE(CTX, struct _kToken *tk)
+static kbool_t Token_toBRACE(CTX, struct _kToken *tk, kKonohaSpace *ks)
 {
 	if(tk->tt == TK_CODE) {
 		INIT_GCSTACK();
 		kArray *a = new_(TokenArray, 0);
 		PUSH_GCSTACK(a);
-		ktokenize(_ctx, S_text(tk->text), tk->uline,a);
+		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline,a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
@@ -244,7 +242,6 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 	}
 	for(; i < e ; i++) {
 		kToken *tk = tls->toks[i];
-		DBG_P("i=%d, e=%d tt=%s kw=%d topch='%c'", i, e, T_tt(tk->tt), tk->kw, tk->topch);
 		if(tk->topch == delim && tk->tt == TK_OPERATOR) {
 			return i+1;
 		}
@@ -710,7 +707,7 @@ static KMETHOD ParseExpr_DOLLAR(CTX, ksfp_t *sfp _RIX)
 	if(s == c && c + 1 < e) {
 		kToken *tk = tls->toks[c+1];
 		if(tk->tt == TK_CODE) {
-			Token_toBRACE(_ctx, (struct _kToken*)tk);
+			Token_toBRACE(_ctx, (struct _kToken*)tk, kStmt_ks(stmt));
 		}
 		if(tk->tt == AST_BRACE) {
 			struct _kExpr *expr = new_W(Expr, SYN_(kStmt_ks(stmt), KW_Block));

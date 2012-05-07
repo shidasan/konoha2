@@ -1,0 +1,11 @@
+ - (PrintTest.k:4) 1
+ - (PrintTest.k:5) 1.0
+ - (PrintTest.k:6) hello, world.
+ - (PrintTest.k:7) True
+ - (PrintTest.k:8) False
+ - (PrintTest.k:9) hello, world.
+ - (PrintTest.k:10) (1+2j)
+ - (PrintTest.k:11) (1, 2, 'hello', 1.0, (1, 2))
+ - (PrintTest.k:12) [1, 2, 'hello', 1.0, (1, 2)]
+ - (PrintTest.k:13) {1: 'hello', 2: 1.0, 'foo': 'bar'}
+Q.E.D.
