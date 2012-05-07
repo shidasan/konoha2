@@ -80,7 +80,6 @@ static void reverse(char *const start, char *const end, const int len)
 	register char *e = end - 1;
 	for (i = 0; i < l; i++) {
 		char tmp = *s;
-		tmp  = *s;
 		*s++ = *e;
 		*e-- = tmp;
 	}

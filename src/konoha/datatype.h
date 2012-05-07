@@ -925,7 +925,3 @@ static void KCLASSTABLE_loadMethod(CTX)
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);
 }
-
-#ifdef __cplusplus
-}
-#endif
