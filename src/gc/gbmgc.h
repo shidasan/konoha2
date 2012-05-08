@@ -65,6 +65,7 @@ extern "C" {
 #define GENGC_MAX_AGE 3
 #define setYoung(o)  ((o)->h.refc = 0)
 #define setAge(o)    ((o)->h.refc = ((o)->h.refc % (GENGC_MAX_AGE+1)))
+#define isTenure(o)  ((o)->h.refc == GENGC_MAX_AGE)
 
 #define KlassBlockSize(klass) (ONE << klass)
 #define SUBHEAP_KLASS_SIZE_MIN KlassBlockSize(SUBHEAP_KLASS_MIN)
@@ -231,6 +232,7 @@ struct Segment {
 	const AllocationBlock *blk;
 	bitmap_t **bitmap;
 	void *unused;
+	ARRAY(VoidPtr) remset;
 #if GCDEBUG
 	void  *managed_heap;
 	void  *managed_heap_end;
@@ -1054,8 +1056,8 @@ static bool newSegment(HeapManager *mng, SubHeap *h)
 		h->seglist = (Segment**)(do_realloc(h->seglist, oldSize, newSize));
 	}
 	seg->bitmap = newSegmentBitmap(klass);
-	//seg->bitmap = AllocBitMap(klass);
 	seg->heap_klass = klass;
+	ARRAY_init(VoidPtr, &seg->remset);
 	h->seglist[h->seglist_size++] = seg;
 
 	h->p.seg = seg;
@@ -1749,9 +1751,25 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 	memlocal->ref_size = 0;\
 } while (0)
 
-static void remset_reftrace(CtX)
+static void remset_reftrace(CTX, HeapManager *mng)
 {
-
+	size_t i, j, k;
+	SubHeap *h;
+	Segment *s;
+	for_each_heap(h, i, mng->heaps) {
+		for (j = 0; j < h->seglist_size; j++) {
+			s = h->seglist[j];
+			size_t size = ARRAY_size(s->remset);
+			if (size == 0) {
+				continue;
+			}
+			BEGIN_REFTRACE(size);
+			FOR_EACH_ARRAY_(s->remset, k) {
+				KREFTRACEv((kObject *)ARRAY_n(s->remset, k));
+			}
+			END_REFTRACE();
+		}
+	}
 }
 static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace, int isMajor)
 {
@@ -1764,7 +1782,7 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace, int isMajo
 	context_reset_refs(memlocal);
 	KRUNTIME_reftraceAll(_ctx);
 	if (!isMajor) {
-		remset_reftrace(_ctx);
+		remset_reftrace(_ctx, mng);
 	}
 	if (needsCStackTrace) {
 		cstack_mark(_ctx);
