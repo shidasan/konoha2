@@ -25,7 +25,11 @@
 /* ************************************************************************ */
 
 #include "vm.h"
+#ifdef _CLASSICVM
+#include "../../module/classicvm/classicvm_.h"
+#else
 #include "minivm.h"
+#endif
 
 /* ************************************************************************ */
 
@@ -89,6 +93,10 @@ static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
 #define SFP_(sfpidx)   ((sfpidx) * 2)
 #define RIX_(rix)      rix
 
+#ifdef _CLASSICVM
+#include "../../module/classicvm/classicvm.h"
+#endif
+
 static void BasicBlock_add(CTX, struct _kBasicBlock *bb, kushort_t line, kopl_t *op, size_t size)
 {
 	if(bb->op.bytemax == 0) {
@@ -114,6 +122,11 @@ static int BUILD_asmJMPF(CTX, klr_JMPF_t *op)
 	struct _kBasicBlock *bb = ctxcode->WcurbbNC;
 	DBG_ASSERT(op->opcode == OPCODE_JMPF);
 	int swap = 0;
+#ifdef _CLASSICVM
+	if (CLASSICVM_BUILD_asmJMPF(_ctx, bb, op, &swap)) {
+		return swap;
+	}
+#endif
 	BasicBlock_add(_ctx, bb, ctxcode->uline, (kopl_t*)op, 0);
 	return swap;
 }
@@ -239,13 +252,12 @@ static void BasicBlock_strip1(CTX, struct _kBasicBlock *bb)
 	}
 }
 
-#define _REMOVE(opX)   opX->opcode = OPNOP; bbsize--; continue;
-#define _REMOVE2(opX, opX2)   opX->opcode = OPNOP; opX2->opcode = OPNOP; bbsize -= 2; continue;
-#define _REMOVE3(opX, opX2, opX3)   opX->opcode = OPNOP; opX2->opcode = OPNOP; opX3->opcode = OPNOP; bbsize -= 3; continue;
-
 static size_t BasicBlock_peephole(CTX, kBasicBlock *bb)
 {
 	size_t i, bbsize = BBSIZE(bb);
+#ifdef _CLASSICVM
+	CLASSICVM_BasicBlock_peephole(_ctx, bb);
+#endif
 	for(i = 0; i < BBSIZE(bb); i++) {
 		kopl_t *op = BBOP(bb) + i;
 		if(op->opcode == OPCODE_NOP) {
@@ -631,6 +643,11 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 	kMethod *mtd = expr->cons->methods[0];
 	DBG_ASSERT(IS_Method(mtd));
 	int i, s = kMethod_isStatic(mtd) ? 2 : 1, thisidx = espidx + K_CALLDELTA;
+#ifdef _CLASSICVM
+	if (CLASSICVM_CALL_asm(_ctx, mtd, expr, espidx)) {
+		return;
+	}
+#endif
 	for(i = s; i < kArray_size(expr->cons); i++) {
 		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
