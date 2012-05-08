@@ -62,6 +62,7 @@ extern "C" {
 #define SUBHEAP_DEFAULT_SEGPOOL_SIZE (128)/* 128 * SEGMENT_SIZE(128k) = 16MB*/
 #define MIN_ALIGN (ONE << SUBHEAP_KLASS_MIN)
 #define SEGMENT_LEVEL 3
+#define GENGC_MAX_AGE 3
 
 #define KlassBlockSize(klass) (ONE << klass)
 #define SUBHEAP_KLASS_SIZE_MIN KlassBlockSize(SUBHEAP_KLASS_MIN)
@@ -212,6 +213,7 @@ struct HeapManager {
 	bitmap_t flags;
 	SubHeap heaps[SUBHEAP_KLASS_MAX+1];
 	Segment *segmentList;
+	int isFull;
 	ARRAY(SegmentPtr) segment_pool_a;
 	ARRAY(size_t)     segment_size_a;
 	ARRAY(VoidPtr)    managed_heap_a;
@@ -225,7 +227,7 @@ struct Segment {
 	int live_count;
 	int heap_klass;
 	const AllocationBlock *blk;
-	bitmap_t *bitmap;
+	bitmap_t **bitmap;
 	void *unused;
 #if GCDEBUG
 	void  *managed_heap;
@@ -400,6 +402,10 @@ static inline void BITPTRS_SET_BASE##N (bitmap_t **base, bitmap_t *bitmap)\
 static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
 {\
 	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
+}\
+static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
+{\
+	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
 }
 
 #define DEF_BM_OP1(N, L0, L1, L2)\
@@ -415,6 +421,12 @@ static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
 	struct BM##N *bm = (struct BM##N *)bitmap;\
 	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
 	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
+}\
+static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
+{\
+	struct BM##N *bm = (struct BM##N *)bitmap;\
+	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
+	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
 }
 
 #define DEF_BM_OP2(N, L0, L1, L2)\
@@ -426,6 +438,13 @@ static inline void BITPTRS_SET_BASE##N (bitmap_t **base, bitmap_t *bitmap)\
 	base[2] = (bitmap_t*)(&bm->m2.bm);\
 }\
 static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
+{\
+	struct BM##N *bm = (struct BM##N *)bitmap;\
+	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
+	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
+	bm->m2.bm[L2-1] = BM_SENTINEL_L2_##N;\
+}\
+static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
 {\
 	struct BM##N *bm = (struct BM##N *)bitmap;\
 	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
@@ -492,10 +511,22 @@ static inline void BITMAP_SET_LIMIT(bitmap_t *const bitmap, size_t klass)
 	BM_SET(bitmap[0], 1);
 }
 
+typedef void (*fBITMAP_SET_LIMIT_AND_CPY)(bitmap_t *const bm, bitmap_t *const snapshot);
+static void BITMAP_SET_LIMIT_AND_CPY_(bitmap_t *const bm, bitmap_t *const snapshot) {
+	(void)bm;(void)snapshot;
+}
+static const fBITMAP_SET_LIMIT_AND_CPY BITMAP_SET_LIMIT_AND_CPY__[] = {
+	BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_,
+	BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY5,
+	BITMAP_SET_LIMIT_AND_CPY6, BITMAP_SET_LIMIT_AND_CPY7, BITMAP_SET_LIMIT_AND_CPY8,
+	BITMAP_SET_LIMIT_AND_CPY9, BITMAP_SET_LIMIT_AND_CPY10, BITMAP_SET_LIMIT_AND_CPY11,
+	BITMAP_SET_LIMIT_AND_CPY12
+};
+
 static inline void BITPTRS_INIT(BitPtr bitptrs[SEGMENT_LEVEL], Segment *seg, size_t klass)
 {
 	size_t i;
-	BITPTRS_SET_BASE[klass](seg->base, seg->bitmap);
+	BITPTRS_SET_BASE[klass](seg->base, seg->bitmap[0]);
 	for (i = 0; i < SEGMENT_LEVEL; ++i) {
 		bitptrs[i].idx = 0;
 		bitptrs[i].mask = BITMAP_DEFAULT_MASK[klass][i];
@@ -958,6 +989,10 @@ static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
 
 static HeapManager *BMGC_init(CTX)
 {
+	size_t i = 0;
+	for (; i < 13; i++) {
+		fprintf(stderr, "i %zd\n", BM_SIZE[i]);
+	}
 	HeapManager *mng = (HeapManager*) do_malloc(sizeof(*mng));
 #ifdef GCSTAT
 	global_gc_stat.fp = fopen("KONOHA_BMGC_INFO", "a");
@@ -1021,6 +1056,15 @@ static void findBlockOfLastSegment(Segment *seg, SubHeap *h, size_t size)
 	h->p.blkptr = (AllocationBlock*)((char*)blk+(size));
 }
 
+static bitmap_t **newSegmentBitmap(size_t klass) {
+	bitmap_t **bitmap = (bitmap_t**)do_malloc(sizeof(bitmap_t*) * (GENGC_MAX_AGE+1));
+	size_t i = 0;
+	for (; i <= GENGC_MAX_AGE; i++) {
+		bitmap[i] = AllocBitMap(klass);
+	}
+	return bitmap;
+}
+
 static bool newSegment(HeapManager *mng, SubHeap *h)
 {
 	size_t klass = h->heap_klass;
@@ -1036,14 +1080,15 @@ static bool newSegment(HeapManager *mng, SubHeap *h)
 		h->seglist_max *= 2;
 		h->seglist = (Segment**)(do_realloc(h->seglist, oldSize, newSize));
 	}
-	seg->bitmap = AllocBitMap(klass);
+	seg->bitmap = newSegmentBitmap(klass);
+	//seg->bitmap = AllocBitMap(klass);
 	seg->heap_klass = klass;
 	h->seglist[h->seglist_size++] = seg;
 
 	h->p.seg = seg;
 	findBlockOfLastSegment(seg, h, KlassBlockSize(klass));
 	BITPTRS_INIT(h->p.bitptrs, seg, klass);
-	BITMAP_SET_LIMIT(seg->bitmap, klass);
+	BITMAP_SET_LIMIT(seg->bitmap[0], klass);
 
 	return true;
 }
@@ -1280,7 +1325,7 @@ static void SegmentPool_dispose(Segment *pool, size_t size)
 	for (i = 0; i < size; i++) {
 		seg = pool + i;
 		if (seg->bitmap) {
-			DeleteBitMap(seg->bitmap, seg->heap_klass);
+			DeleteBitMap(seg->bitmap[0], seg->heap_klass);
 		}
 	}
 	do_free(pool, sizeof(Segment) * size);
@@ -1320,6 +1365,7 @@ static void HeapManager_init(CTX, HeapManager *mng, size_t list_size)
 {
 	size_t i;
 	SubHeap *h;
+	mng->isFull = false;
 	ARRAY_init(size_t,  &mng->heap_size_a);
 	ARRAY_init(VoidPtr, &mng->managed_heap_a);
 	ARRAY_init(VoidPtr, &mng->managed_heap_end_a);
@@ -1473,14 +1519,39 @@ static kObject *bm_malloc_internal(CTX, HeapManager *mng, size_t n)
 	return temp;
 }
 
+int bitcount(uintptr_t bits) {
+  bits = (bits & (uintptr_t)0x5555555555555555) + (bits >> 1 & (uintptr_t)0x5555555555555555);
+  bits = (bits & (uintptr_t)0x3333333333333333) + (bits >> 2 & (uintptr_t)0x3333333333333333);
+  bits = (bits & (uintptr_t)0x0f0f0f0f0f0f0f0f) + (bits >> 4 & (uintptr_t)0x0f0f0f0f0f0f0f0f);
+  bits = (bits & (uintptr_t)0x00ff00ff00ff00ff) + (bits >> 8 & (uintptr_t)0x00ff00ff00ff00ff);
+  bits = (bits & (uintptr_t)0x0000ffff0000ffff) + (bits >>16 & (uintptr_t)0x0000ffff0000ffff);
+  return (bits & (uintptr_t)0x00000000ffffffff) + (bits >>32 & (uintptr_t)0x00000000ffffffff);
+}
+
+static void copyBitMapsAndCount(HeapManager *mng, SubHeap *h)
+{
+	size_t i, k;
+	for (i = 0; i < h->seglist_size; i++) {
+		Segment *s = h->seglist[i];
+		do_memcpy(s->bitmap[0], s->bitmap[GENGC_MAX_AGE-1], BM_SIZE[s->heap_klass]);
+		int live_count = 0;
+		for (k = 0; k < (BM_SIZE[s->heap_klass] / sizeof(uintptr_t)); k++) {
+			live_count += bitcount(s->bitmap[GENGC_MAX_AGE-1][k]);
+		}
+		BITMAP_SET_LIMIT(s->bitmap[0], h->heap_klass);
+		s->live_count = live_count;
+		fprintf(stderr, "s->live_count: %d\n", s->live_count);
+	}
+}
+
 static void clearAllBitMapsAndCount(HeapManager *mng, SubHeap *h)
 {
 	size_t i;
 
 	for (i = 0; i < h->seglist_size; i++) {
 		Segment *s = h->seglist[i];
-		ClearBitMap(s->bitmap, h->heap_klass);
-		BITMAP_SET_LIMIT(s->bitmap, h->heap_klass);
+		ClearBitMap(s->bitmap[0], h->heap_klass);
+		BITMAP_SET_LIMIT(s->bitmap[0], h->heap_klass);
 		gc_info("klass=%d, seg[%lu]=%p count=%d",
 				s->heap_klass, i, s, s->live_count);
 		s->live_count = 0;
@@ -1629,15 +1700,20 @@ static void BMGC_dump(HeapManager *info) {}
 #define DBG_CHECK_BITMAP(seg, bm) true
 #endif
 
-static void bmgc_gc_init(CTX, HeapManager *mng)
+static void bmgc_gc_init(CTX, HeapManager *mng, int isMajor)
 {
+	fprintf(stderr, "gc start\n");
 	size_t i;
 	SubHeap *h;
 
 	STAT_(memshare(_ctx)->markedObject = 0;)
 	BMGC_dump(mng);
 	for_each_heap(h, i, mng->heaps) {
-		clearAllBitMapsAndCount(mng, h);
+		if (isMajor) {
+			clearAllBitMapsAndCount(mng, h);
+		} else {
+			copyBitMapsAndCount(mng, h);
+		}
 	}
 }
 
@@ -1699,7 +1775,11 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 	memlocal->ref_size = 0;\
 } while (0)
 
-static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
+static void remset_reftrace(CtX)
+{
+
+}
+static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace, int isMajor)
 {
 	long i;
 	knh_ostack_t ostackbuf, *ostack = ostack_init(_ctx, &ostackbuf);
@@ -1709,6 +1789,9 @@ static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 	knh_ensurerefs(_ctx, memlocal->ref_buf, K_PAGESIZE);
 	context_reset_refs(memlocal);
 	KRUNTIME_reftraceAll(_ctx);
+	if (!isMajor) {
+		remset_reftrace(_ctx);
+	}
 	if (needsCStackTrace) {
 		cstack_mark(_ctx);
 	}
@@ -1785,7 +1868,19 @@ void *bm_realloc(CTX, void *ptr, size_t os, size_t ns)
 	*tail = e;\
 	tail  = &e->next;\
 } while (0)
-
+static void save_snapshot(Segment *s) {
+	size_t j, k;
+	for (j = 0; j < GENGC_MAX_AGE-1; j++) {
+		for (k = 0; k < (BM_SIZE[s->heap_klass] / sizeof(uintptr_t)); k++) {
+			s->bitmap[j+1][k] &= s->bitmap[j][k];
+		}
+	}
+	bitmap_t *bitmap = s->bitmap[GENGC_MAX_AGE];
+	for (j = 0; j < GENGC_MAX_AGE-1; j++) {
+		s->bitmap[j+1] = s->bitmap[j];
+	}
+	s->bitmap[0] = bitmap;
+}
 static bool rearrangeSegList(CTX, SubHeap *h, size_t klass)
 {
 	size_t i, count_dead = 0;
@@ -1807,16 +1902,16 @@ static bool rearrangeSegList(CTX, SubHeap *h, size_t klass)
 	return h->isFull;
 }
 
-static void bmgc_gc_sweep(CTX, HeapManager *mng)
+static void bmgc_gc_sweep(CTX, HeapManager *mng, int isMajor)
 {
-	bool isFull = false;
+	mng->isFull = false;
 	size_t i;
 	SubHeap *h;
 
 	for_each_heap(h, i, mng->heaps) {
-		isFull |= rearrangeSegList(_ctx, h, i);
+		mng->isFull |= rearrangeSegList(_ctx, h, i);
 	}
-	if (isFull) {
+	if (mng->isFull) {
 		HeapManager_expandHeap(_ctx, mng, SUBHEAP_DEFAULT_SEGPOOL_SIZE*2);
 		for_each_heap(h, i, mng->heaps) {
 			if (h->isFull)
@@ -1827,8 +1922,10 @@ static void bmgc_gc_sweep(CTX, HeapManager *mng)
 
 static void bitmapMarkingGC(CTX, HeapManager *mng)
 {
+	fprintf(stderr, "gc start\n");
 	DBG_P("GC starting");
-	bmgc_gc_init(_ctx, mng);
+	int isMajor = mng->isFull;
+	bmgc_gc_init(_ctx, mng, isMajor);
 #ifdef GCSTAT
 	size_t i = 0, marked = 0, collected = 0, heap_size = 0;
 	FOR_EACH_ARRAY_(mng->heap_size_a, i) {
@@ -1840,11 +1937,11 @@ static void bitmapMarkingGC(CTX, HeapManager *mng)
 		uint64_t mark_time = 0;
 	);
 
-	bmgc_gc_mark(_ctx, mng, 1);
+	bmgc_gc_mark(_ctx, mng, 1, isMajor);
 
 	STAT_(mark_time = knh_getTimeMilliSecond());
 
-	bmgc_gc_sweep(_ctx, GCDATA(_ctx));
+	bmgc_gc_sweep(_ctx, GCDATA(_ctx), isMajor);
 
 	STAT_(
 		memshare(_ctx)->gcCount++;
@@ -1937,13 +2034,15 @@ static bool start_the_world(CTX)
 void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
 	uint64_t start_time = knh_getTimeMilliSecond(), mark_time = 0, intval;
+	HeapManager *mng = GCDATA(_ctx);
+	int isMajor = mng->isFull;
 	if(stop_the_world(_ctx)) {
-		bmgc_gc_init(_ctx, GCDATA(_ctx));
-		bmgc_gc_mark(_ctx, GCDATA(_ctx), needsCStackTrace);
+		bmgc_gc_init(_ctx, GCDATA(_ctx), isMajor);
+		bmgc_gc_mark(_ctx, GCDATA(_ctx), needsCStackTrace, isMajor);
 		mark_time = knh_getTimeMilliSecond();
 		start_the_world(_ctx);
 	}
-	bmgc_gc_sweep(_ctx, GCDATA(_ctx));
+	bmgc_gc_sweep(_ctx, GCDATA(_ctx), isMajor);
 	intval = start_time - memshare(_ctx)->latestGcTime;
 	//GC_LOG("GC(%dMb): marked=%lu, collected=%lu, avail=%lu=>%lu, interval=%dms, marking_time=%dms",
 	//		memshare(_ctx)->usedMemorySize/ MB_,
