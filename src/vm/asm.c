@@ -576,7 +576,9 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	case TEXPR_BLOCK : {
 		DBG_ASSERT(IS_Block(expr->block));
 		BLOCK_asm(_ctx, expr->block);
-		NMOV_asm(_ctx, a, expr->ty, expr->index);
+		//DBG_ASSERT(expr->index == espidx);
+		DBG_P("TEXPR_BLOCK mov=%d,%d", a, espidx);
+		NMOV_asm(_ctx, a, expr->ty, /*expr->index*/ espidx);
 		break;
 	}
 	case TEXPR_FIELD : {
@@ -614,6 +616,10 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	case TEXPR_LET  :
 		LETEXPR_asm(_ctx, a, expr, espidx);
+		break;
+	case TEXPR_STACKTOP  :
+		DBG_P("TEXPR_STACKTOP mov %d,%d expr->index=%d, espidx=%d, ", a, expr->index + espidx, expr->index, espidx);
+		NMOV_asm(_ctx, a, expr->ty, expr->index + espidx);
 		break;
 	default:
 		DBG_ABORT("unknown expr=%d", expr->build);
@@ -683,6 +689,13 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	if(exprL->build == TEXPR_LOCAL) {
 		EXPR_asm(_ctx, exprL->index, exprR, espidx);
 		if(a != espidx) {
+			NMOV_asm(_ctx, a, exprL->ty, espidx);
+		}
+	}
+	else if(exprL->build == TEXPR_STACKTOP) {
+		DBG_P("LET TEXPR_STACKTOP a=%d, espidx=%d", exprL->index + espidx, espidx);
+		EXPR_asm(_ctx, exprL->index + espidx, exprR, espidx);
+		if(a != exprL->index + espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);
 		}
 	}

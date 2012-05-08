@@ -702,7 +702,7 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 {
 	kExpr *exprL = kExpr_at(expr, 1);
 	kExpr *exprR = kExpr_at(expr, 2);
-	if(exprL->build == TEXPR_LOCAL) {
+	if(exprL->build == TEXPR_LOCAL || exprL->build == TEXPR_STACKON) {
 		EXPR_asm(_ctx, exprL->index, exprR, espidx);
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);
