@@ -445,7 +445,6 @@ static void CT_checkMethodDecl(CTX, kToken *tkC, kBlock *bk, kStmt **lastStmtRef
 		if(stmt->syn->kw == KW_StmtMethodDecl) {
 			kStmt *lastStmt = lastStmtRef[0];
 			SUGAR Block_insertAfter(_ctx, lastStmt->parentNULL, lastStmt, stmt);
-//			kObject_setObject(newstmt, KW_Expr, expr);
 			lastStmtRef[0] = stmt;
 		}
 		else {
@@ -481,6 +480,7 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 	}
 	((struct _kToken*)tkC)->kw = KW_Type;
 	((struct _kToken*)tkC)->ty = ct->cid;
+	kStmt_done(stmt);
 	CT_checkMethodDecl(_ctx, tkC, bk, &stmt);
 	RETURNb_(true);
 }
