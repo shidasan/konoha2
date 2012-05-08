@@ -28,14 +28,13 @@
 
 int verbose_gc = 0;
 
+#ifdef K_USING_RCGC
+#include "rcgc.h"
+#elif defined(K_USING_GENGC)
 #include "gbmgc.h"
-//#ifdef K_USING_RCGC
-//#include "rcgc.h"
-//#elif defined(K_USING_GENGC)
-//#include "gbmgc.h"
-//#else
-//#include "bmgc.h"
-//#endif
+#else
+#include "bmgc.h"
+#endif
 
 /* ------------------------------------------------------------------------ */
 /* [klocalgc] */

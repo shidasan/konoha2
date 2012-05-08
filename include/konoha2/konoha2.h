@@ -25,6 +25,8 @@
 #ifndef KONOHA2_H_
 #define KONOHA2_H_
 
+#define K_USING_GENGC    1
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
