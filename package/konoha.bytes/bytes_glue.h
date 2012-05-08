@@ -175,101 +175,6 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 #define CONV_BUFSIZE 4096 // 4K
 #define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
 
-// rewrite with kwb_t
-//
-//static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
-//{
-//	kiconv_t conv;
-//	char convBuf[CONV_BUFSIZE] = {'\0'};
-//	const char *presentPtrFrom = fromBa->text;
-//	DBG_P("presentPtrFrom='%s'", presentPtrFrom);
-//	const char ** inbuf = &presentPtrFrom;
-//	char *presentPtrTo = convBuf;
-//	char ** outbuf = &presentPtrTo;
-//	size_t inBytesLeft, outBytesLeft;
-//	inBytesLeft = strlen(presentPtrFrom) + 1;
-//	outBytesLeft = CONV_BUFSIZE;
-//	DBG_P("from='%s' inBytesLeft=%d, to='%s' outBytesLeft=%d", fromCoding, inBytesLeft, toCoding, outBytesLeft);
-////	const char *fromCoding = getSystemEncoding();
-//	if (strncmp(fromCoding, toCoding, strlen(fromCoding)) == 0) {
-//		// no need to convert.
-//		return fromBa;
-//	}
-//	conv = kmodiconv->ficonv_open(toCoding, fromCoding);
-//	if (conv == (kiconv_t)(-1)) {
-//		ktrace(_UserInputFault,
-//				KEYVALUE_s("@","iconv_open"),
-//				KEYVALUE_s("from", fromCoding),
-//				KEYVALUE_s("to", toCoding)
-//		);
-//		return (kBytes*)(CT_Bytes->nulvalNUL);
-//	}
-//	size_t iconv_ret = -1;
-//	char *storeBuf = NULL;
-//	char *presentStoreBufPtr = NULL;
-//	size_t presentStoreBufSize = CONV_BUFSIZE;
-//	size_t processedSize = 0;
-//	size_t processedTotalSize = processedSize;
-//	DBG_P("start converting!");
-//	while (inBytesLeft > 0 && iconv_ret == -1) {
-//		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
-//		if (iconv_ret == -1 && errno == E2BIG) {
-//			DBG_P("too big");
-//			// alloc storeBuf
-//			DBG_ASSERT(presentStoreBufSize < MAX_STORE_BUFSIZE);
-//			processedSize = CONV_BUFSIZE - outBytesLeft;
-//			processedTotalSize += processedSize;
-//			if (storeBuf == NULL) {
-//				// malloc first buf
-//				storeBuf = (char*)KCALLOC(presentStoreBufSize, 1);
-//				memcpy(storeBuf, convBuf, processedSize);
-//				presentStoreBufPtr = storeBuf + processedSize;
-//				presentStoreBufSize += CONV_BUFSIZE; // FIXME: liner increase.
-//			} else {
-//				//realloc
-//				size_t oldStoreBufSize = presentStoreBufSize;
-//				char *newStoreBuf = (char*)KCALLOC(presentStoreBufSize, 1);
-//				memcpy(newStoreBuf, storeBuf, presentStoreBufSize);
-//				KFREE(storeBuf, oldStoreBufSize);
-//				storeBuf = newStoreBuf;
-//				presentStoreBufPtr = storeBuf + processedTotalSize;
-//				memcpy(presentStoreBufPtr, convBuf, processedSize);
-//				presentStoreBufPtr += processedSize;
-//			}
-//			// reset convbuf
-//			presentPtrTo = convBuf;
-////			outbuf = &presentPtrTo;
-//			memset(convBuf, '\0', CONV_BUFSIZE);
-//			outBytesLeft = CONV_BUFSIZE;
-//		} else if (iconv_ret == -1) {
-//			ktrace(_DataFault,
-//				KEYVALUE_s("@","iconv"),
-//				KEYVALUE_s("from", "UTF-8"),
-//				KEYVALUE_s("to", toCoding),
-//				KEYVALUE_s("error", strerror(errno))
-//			);
-//			return (kBytes*)(CT_Bytes->nulvalNUL);
-//		} else {
-//			// finished. iconv_ret != -1
-//			processedSize = CONV_BUFSIZE - outBytesLeft;
-//			processedTotalSize += processedSize;
-//		}
-//	} /* end of converting loop */
-//	kmodiconv->ficonv_close(conv);
-//	DBG_P("processedTotalSize=%d, inbuf='%s', outbuf='%s'", processedTotalSize, *inbuf, *outbuf);
-//	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize);
-//	if (storeBuf == NULL) {
-//		memcpy(toBa->buf, convBuf, processedTotalSize);
-//		DBG_P("NO BUF EXCEED, copied=%d, '%s'", processedTotalSize, toBa->buf);
-//	} else {
-//		// flush last convert
-//		memcpy(toBa->buf, storeBuf, processedTotalSize);
-//		DBG_P("BUF EXCEED, copied=%d, %s", processedTotalSize, convBuf);
-//
-//	}
-//	return toBa;
-//}
-
 static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
@@ -444,14 +349,56 @@ static kbool_t bytes_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+
+static int parseSQUOTE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
+{
+	USING_SUGAR;
+	int ch, prev = '\'', pos = tok_start + 1;
+	while((ch = tenv->source[pos++]) != 0) {
+		if(ch == '\n') {
+			break;
+		}
+		if(ch == '\'' && prev != '\\') {
+			if(IS_NOTNULL(tk)) {
+				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1)- (tok_start+1), 0));
+				tk->tt = TK_CODE;
+				tk->kw = KW_("$SQUOTE");
+			}
+			return pos;
+		}
+		prev = ch;
+	}
+	if(IS_NOTNULL(tk)) {
+		kreportf(ERR_, tk->uline, "must close with \'");
+	}
+	return pos-1;
+}
+
+
+static KMETHOD ExprTyCheck_Squote(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	kToken *tk = expr->tk;
+	kString *s = tk->text;
+	if (S_size(s) == 1) {
+		int ch = S_text(s)[0];
+		RETURN_(kExpr_setNConstValue(expr, TY_Int, ch));
+	} else {
+		kreportf(ERR_, tk->uline, "single quote cannot accepts multi characters, '%s'", S_text(s));
+	}
+	RETURN_(K_NULLEXPR);
+}
+
 static kbool_t bytes_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
-//	USING_SUGAR;
-//	KDEFINE_SYNTAX SYNTAX[] = {
-//		{ TOKEN("Bytes"),  .type = TY_Bytes, },
-//		{ .name = NULL, },
-//	};
-//	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+	USING_SUGAR;
+	SUGAR KonohaSpace_setTokenizer(_ctx, ks, '\'', parseSQUOTE, NULL);
+	KDEFINE_SYNTAX SYNTAX[] = {
+		{ TOKEN("$SQUOTE"), _TERM, ExprTyCheck_(Squote)},
+		{ .name = NULL, },
+	};
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
 	return true;
 }
 
