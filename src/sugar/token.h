@@ -385,7 +385,7 @@ static int kchar(const char *t, int pos)
 static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
 	int ch, level = 1, pos = tok_start + 1;
-	const Ftokenizer *fmat = MiniKonohaTokenMatrix;
+	const Ftokenizer *fmat = tenv->fmat;
 	tk->lpos += 1;
 	while((ch = kchar(tenv->source, pos)) != 0) {
 		if(ch == _RBR/*}*/) {
