@@ -24,3074 +24,505 @@
 
 #include <konoha2/konoha2.h>
 #include <konoha2/sugar.h>
-#include <unistd.h>
-#include <mpi.h>
-#define Int_to(T, a)               ((T)a.ivalue)
+#include <konoha2/float.h>
+//#include <konoha2/bytes.h>
+#include "mpi_glue.h"
+#include "../konoha.bytes/bytes_glue.h"//FIXME
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Abort(MPI_Comm comm, int errorcode);
-static KMETHOD k_MPI_Abort(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Abort(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
-static KMETHOD k_MPI_Accumulate(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	MPI_Aint p4 = sfp[4].ivalue;
-	int p5 = sfp[5].ivalue;
-	MPI_Datatype p6 = sfp[6].ivalue;
-	MPI_Op p7 = sfp[7].ivalue;
-	MPI_Win p8 = sfp[8].ivalue;
-	RETURNi_(MPI_Accumulate(p0, p1, p2, p3, p4, p5, p6, p7, p8));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Add_error_class(int *errorclass);
-static KMETHOD k_MPI_Add_error_class(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Add_error_class(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Add_error_code(int errorclass, int *errorcode);
-static KMETHOD k_MPI_Add_error_code(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Add_error_code(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Add_error_string(int errorcode, char *string);
-static KMETHOD k_MPI_Add_error_string(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Add_error_string(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Address(void *location, MPI_Aint *address);
-static KMETHOD k_MPI_Address(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	RETURNi_(MPI_Address(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
-static KMETHOD k_MPI_Allgather(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	MPI_Comm p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Allgather(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int *recvcount, int *displs, MPI_Datatype recvtype, MPI_Comm comm);
-static KMETHOD k_MPI_Allgatherv(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	int* p5 = (int*)sfp[5].p;
-	MPI_Datatype p6 = sfp[6].ivalue;
-	MPI_Comm p7 = sfp[7].ivalue;
-	RETURNi_(MPI_Allgatherv(p0, p1, p2, p3, p4, p5, p6, p7));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
-static KMETHOD k_MPI_Alloc_mem(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Aint p0 = sfp[0].ivalue;
-	MPI_Info p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	RETURNi_(MPI_Alloc_mem(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Allreduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static KMETHOD k_MPI_Allreduce(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Allreduce(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
-static KMETHOD k_MPI_Alltoall(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	MPI_Comm p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Alltoall(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype sendtype, void *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
-static KMETHOD k_MPI_Alltoallv(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	void* p4 = (void*)sfp[4].p;
-	int* p5 = (int*)sfp[5].p;
-	int* p6 = (int*)sfp[6].p;
-	MPI_Datatype p7 = sfp[7].ivalue;
-	MPI_Comm p8 = sfp[8].ivalue;
-	RETURNi_(MPI_Alltoallv(p0, p1, p2, p3, p4, p5, p6, p7, p8));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype *sendtypes, void *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm);
-static KMETHOD k_MPI_Alltoallw(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype* p3 = (MPI_Datatype*)sfp[3].p;
-	void* p4 = (void*)sfp[4].p;
-	int* p5 = (int*)sfp[5].p;
-	int* p6 = (int*)sfp[6].p;
-	MPI_Datatype* p7 = (MPI_Datatype*)sfp[7].p;
-	MPI_Comm p8 = sfp[8].ivalue;
-	RETURNi_(MPI_Alltoallw(p0, p1, p2, p3, p4, p5, p6, p7, p8));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Attr_delete(MPI_Comm comm, int keyval);
-static KMETHOD k_MPI_Attr_delete(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Attr_delete(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
-static KMETHOD k_MPI_Attr_put(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	RETURNi_(MPI_Attr_put(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Barrier(MPI_Comm comm);
-static KMETHOD k_MPI_Barrier(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Barrier(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Bcast(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	MPI_Comm p4 = sfp[4].ivalue;
-	RETURNi_(MPI_Bcast(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Bsend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
-static KMETHOD k_MPI_Bsend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Bsend(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Bsend_init(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Bsend_init(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Bsend_init(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Buffer_attach(void *buf, int size);
-static KMETHOD k_MPI_Buffer_attach(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Buffer_attach(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Buffer_detach(void *buf, int *size);
-static KMETHOD k_MPI_Buffer_detach(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Buffer_detach(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cancel(MPI_Request *request);
-static KMETHOD k_MPI_Cancel(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request* p0 = (MPI_Request*)sfp[0].p;
-	RETURNi_(MPI_Cancel(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords);
-static KMETHOD k_MPI_Cart_coords(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Cart_coords(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_create(MPI_Comm comm_old, int ndims, int *dims, int *periods, int reorder, MPI_Comm *comm_cart);
-static KMETHOD k_MPI_Cart_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm* p5 = (MPI_Comm*)sfp[5].p;
-	RETURNi_(MPI_Cart_create(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims, int *periods, int *coords);
-static KMETHOD k_MPI_Cart_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Cart_get(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims, int *periods, int *newrank);
-static KMETHOD k_MPI_Cart_map(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Cart_map(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank);
-static KMETHOD k_MPI_Cart_rank(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Cart_rank(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int *rank_source, int *rank_dest);
-static KMETHOD k_MPI_Cart_shift(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Cart_shift(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cart_sub(MPI_Comm comm, int *remain_dims, MPI_Comm *comm_new);
-static KMETHOD k_MPI_Cart_sub(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Comm* p2 = (MPI_Comm*)sfp[2].p;
-	RETURNi_(MPI_Cart_sub(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Cartdim_get(MPI_Comm comm, int *ndims);
-static KMETHOD k_MPI_Cartdim_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Cartdim_get(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Close_port(char *port_name);
-static KMETHOD k_MPI_Close_port(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	RETURNi_(MPI_Close_port(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_accept(char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm);
-static KMETHOD k_MPI_Comm_accept(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	MPI_Comm p3 = sfp[3].ivalue;
-	MPI_Comm* p4 = (MPI_Comm*)sfp[4].p;
-	RETURNi_(MPI_Comm_accept(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
-static KMETHOD k_MPI_Comm_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Comm_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Comm_c2f(MPI_Comm comm);
-static KMETHOD k_MPI_Comm_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Comm_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_File MPI_File_f2c(MPI_Fint file);
-static KMETHOD k_MPI_File_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURN_(MPI_File_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_File_c2f(MPI_File file);
-static KMETHOD k_MPI_File_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	RETURNi_(MPI_File_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Group MPI_Group_f2c(MPI Fint group);
-static KMETHOD k_MPI_Group_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Group_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Group_c2f(MPI Group group);
-static KMETHOD k_MPI_Group_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Group_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Info MPI_Info_f2c(MPI_Fint info);
-static KMETHOD k_MPI_Info_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Info_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Info_c2f(MPI_Info info);
-static KMETHOD k_MPI_Info_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Info_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Op MPI_Op_f2c(MPI_Fint op);
-static KMETHOD k_MPI_Op_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Op_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Op_c2f(MPI_Op op);
-static KMETHOD k_MPI_Op_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Op p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Op_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Request MPI_Request_f2c(MPI_Fint request);
-static KMETHOD k_MPI_Request_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Request_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Request_c2f(MPI_Request request);
-static KMETHOD k_MPI_Request_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Request_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
-static KMETHOD k_MPI_Type_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Type_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Type_c2f(MPI_Datatype datatype);
-static KMETHOD k_MPI_Type_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Type_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Win MPI_Win_f2c(MPI_Fint win);
-static KMETHOD k_MPI_Win_f2c(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Fint p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Win_f2c(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method MPI_Fint MPI_Win_c2f(MPI_Win win);
-static KMETHOD k_MPI_Win_c2f(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Win_c2f(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_call_errhandler(MPI_Comm comm, int errorcode);
-static KMETHOD k_MPI_Comm_call_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Comm_call_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result);
-static KMETHOD k_MPI_Comm_compare(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Comm p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Comm_compare(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_connect(char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm);
-static KMETHOD k_MPI_Comm_connect(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	MPI_Comm p3 = sfp[3].ivalue;
-	MPI_Comm* p4 = (MPI_Comm*)sfp[4].p;
-	RETURNi_(MPI_Comm_connect(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm);
-static KMETHOD k_MPI_Comm_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Group p1 = sfp[1].ivalue;
-	MPI_Comm* p2 = (MPI_Comm*)sfp[2].p;
-	RETURNi_(MPI_Comm_create(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Comm_create_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm_errhandler_function* p0 = (MPI_Comm_errhandler_function*)sfp[0].p;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Comm_create_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state);
-static KMETHOD k_MPI_Comm_create_keyval(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm_copy_attr_function* p0 = (MPI_Comm_copy_attr_function*)sfp[0].p;
-	MPI_Comm_delete_attr_function* p1 = (MPI_Comm_delete_attr_function*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	RETURNi_(MPI_Comm_create_keyval(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval);
-static KMETHOD k_MPI_Comm_delete_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Comm_delete_attr(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_disconnect(MPI_Comm *comm);
-static KMETHOD k_MPI_Comm_disconnect(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm* p0 = (MPI_Comm*)sfp[0].p;
-	RETURNi_(MPI_Comm_disconnect(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
-static KMETHOD k_MPI_Comm_dup(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Comm* p1 = (MPI_Comm*)sfp[1].p;
-	RETURNi_(MPI_Comm_dup(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_free(MPI_Comm *comm);
-static KMETHOD k_MPI_Comm_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm* p0 = (MPI_Comm*)sfp[0].p;
-	RETURNi_(MPI_Comm_free(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_free_keyval(int *comm_keyval);
-static KMETHOD k_MPI_Comm_free_keyval(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Comm_free_keyval(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag);
-static KMETHOD k_MPI_Comm_get_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Comm_get_attr(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Comm_get_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Comm_get_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_get_name(MPI_Comm comm, char *comm_name, int *resultlen);
-static KMETHOD k_MPI_Comm_get_name(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Comm_get_name(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_get_parent(MPI_Comm *parent);
-static KMETHOD k_MPI_Comm_get_parent(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm* p0 = (MPI_Comm*)sfp[0].p;
-	RETURNi_(MPI_Comm_get_parent(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_group(MPI_Comm comm, MPI_Group *group);
-static KMETHOD k_MPI_Comm_group(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Group* p1 = (MPI_Group*)sfp[1].p;
-	RETURNi_(MPI_Comm_group(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_join(int fd, MPI_Comm *intercomm);
-static KMETHOD k_MPI_Comm_join(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Comm* p1 = (MPI_Comm*)sfp[1].p;
-	RETURNi_(MPI_Comm_join(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_rank(MPI_Comm comm, int *rank);
-static KMETHOD k_MPI_Comm_rank(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Comm_rank(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group);
-static KMETHOD k_MPI_Comm_remote_group(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Group* p1 = (MPI_Group*)sfp[1].p;
-	RETURNi_(MPI_Comm_remote_group(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_remote_size(MPI_Comm comm, int *size);
-static KMETHOD k_MPI_Comm_remote_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Comm_remote_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val);
-static KMETHOD k_MPI_Comm_set_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	RETURNi_(MPI_Comm_set_attr(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
-static KMETHOD k_MPI_Comm_set_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Errhandler p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Comm_set_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_set_name(MPI_Comm comm, char *comm_name);
-static KMETHOD k_MPI_Comm_set_name(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Comm_set_name(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_size(MPI_Comm comm, int *size);
-static KMETHOD k_MPI_Comm_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Comm_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_spawn(char *command, char *argv[], int maxprocs, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *intercomm, int array_of_errcodes[]);
-static KMETHOD k_MPI_Comm_spawn(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	char** p1 = (char**)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Info p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Comm* p6 = (MPI_Comm*)sfp[6].p;
-	int* p7 = (int*)sfp[7].p;
-	RETURNi_(MPI_Comm_spawn(p0, p1, p2, p3, p4, p5, p6, p7));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_of_argv[], int array_of_maxprocs[], MPI_Info array_of_info[], int root, MPI_Comm comm, MPI_Comm *intercomm, int array_of_errcodes[]);
-static KMETHOD k_MPI_Comm_spawn_multiple(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	char** p1 = (char**)sfp[1].p;
-	char*** p2 = (char***)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	MPI_Info* p4 = (MPI_Info*)sfp[4].p;
-	int p5 = sfp[5].ivalue;
-	MPI_Comm p6 = sfp[6].ivalue;
-	MPI_Comm* p7 = (MPI_Comm*)sfp[7].p;
-	int* p8 = (int*)sfp[8].p;
-	RETURNi_(MPI_Comm_spawn_multiple(p0, p1, p2, p3, p4, p5, p6, p7, p8));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
-static KMETHOD k_MPI_Comm_split(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	MPI_Comm* p3 = (MPI_Comm*)sfp[3].p;
-	RETURNi_(MPI_Comm_split(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
-static KMETHOD k_MPI_Comm_test_inter(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Comm_test_inter(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Dims_create(int nnodes, int ndims, int *dims);
-static KMETHOD k_MPI_Dims_create(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Dims_create(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Errhandler_create(MPI_Handler_function *function, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Errhandler_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Handler_function* p0 = (MPI_Handler_function*)sfp[0].p;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Errhandler_create(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Errhandler_free(MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Errhandler_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Errhandler* p0 = (MPI_Errhandler*)sfp[0].p;
-	RETURNi_(MPI_Errhandler_free(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Errhandler_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Errhandler_get(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Errhandler_set(MPI_Comm comm, MPI_Errhandler errhandler);
-static KMETHOD k_MPI_Errhandler_set(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	MPI_Errhandler p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Errhandler_set(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Error_class(int errorcode, int *errorclass);
-static KMETHOD k_MPI_Error_class(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Error_class(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Error_string(int errorcode, char *string, int *resultlen);
-static KMETHOD k_MPI_Error_string(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Error_string(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Exscan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static KMETHOD k_MPI_Exscan(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Exscan(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_call_errhandler(MPI_File fh, int errorcode);
-static KMETHOD k_MPI_File_call_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_call_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_close(MPI_File *fh);
-static KMETHOD k_MPI_File_close(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File* p0 = (MPI_File*)sfp[0].p;
-	RETURNi_(MPI_File_close(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_create_errhandler(MPI_File_errhandler_function *function, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_File_create_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File_errhandler_function* p0 = (MPI_File_errhandler_function*)sfp[0].p;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_File_create_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_delete(char *filename, MPI_Info info);
-static KMETHOD k_MPI_File_delete(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_delete(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_amode(MPI_File fh, int *amode);
-static KMETHOD k_MPI_File_get_amode(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_File_get_amode(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_atomicity(MPI_File fh, int *flag);
-static KMETHOD k_MPI_File_get_atomicity(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_File_get_atomicity(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp);
-static KMETHOD k_MPI_File_get_byte_offset(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	MPI_Offset* p2 = (MPI_Offset*)sfp[2].p;
-	RETURNi_(MPI_File_get_byte_offset(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_errhandler(MPI_File file, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_File_get_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_File_get_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_group(MPI_File fh, MPI_Group *group);
-static KMETHOD k_MPI_File_get_group(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Group* p1 = (MPI_Group*)sfp[1].p;
-	RETURNi_(MPI_File_get_group(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_info(MPI_File fh, MPI_Info *info_used);
-static KMETHOD k_MPI_File_get_info(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Info* p1 = (MPI_Info*)sfp[1].p;
-	RETURNi_(MPI_File_get_info(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_position(MPI_File fh, MPI_Offset *offset);
-static KMETHOD k_MPI_File_get_position(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset* p1 = (MPI_Offset*)sfp[1].p;
-	RETURNi_(MPI_File_get_position(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_position_shared(MPI_File fh, MPI_Offset *offset);
-static KMETHOD k_MPI_File_get_position_shared(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset* p1 = (MPI_Offset*)sfp[1].p;
-	RETURNi_(MPI_File_get_position_shared(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_size(MPI_File fh, MPI_Offset *size);
-static KMETHOD k_MPI_File_get_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset* p1 = (MPI_Offset*)sfp[1].p;
-	RETURNi_(MPI_File_get_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint *extent);
-static KMETHOD k_MPI_File_get_type_extent(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	RETURNi_(MPI_File_get_type_extent(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype, MPI_Datatype *filetype, char *datarep);
-static KMETHOD k_MPI_File_get_view(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset* p1 = (MPI_Offset*)sfp[1].p;
-	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-	MPI_Datatype* p3 = (MPI_Datatype*)sfp[3].p;
-	char* p4 = (char*)sfp[4].p;
-	RETURNi_(MPI_File_get_view(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_iread(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-	RETURNi_(MPI_File_iread(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_iread_at(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Request* p5 = (MPI_Request*)sfp[5].p;
-	RETURNi_(MPI_File_iread_at(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_iread_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_iread_shared(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-	RETURNi_(MPI_File_iread_shared(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_iwrite(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_iwrite(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-	RETURNi_(MPI_File_iwrite(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Request *request);
-static KMETHOD k_MPI_File_iwrite_at(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Request* p5 = (MPI_Request*)sfp[5].p;
-	RETURNi_(MPI_File_iwrite_at(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_open(MPI_Comm comm, char *filename, int amode, MPI_Info info, MPI_File *fh);
-static KMETHOD k_MPI_File_open(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Info p3 = sfp[3].ivalue;
-	MPI_File* p4 = (MPI_File*)sfp[4].p;
-	RETURNi_(MPI_File_open(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_preallocate(MPI_File fh, MPI_Offset size);
-static KMETHOD k_MPI_File_preallocate(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_preallocate(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_read(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read_all(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_read_all(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_all_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_read_all_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	RETURNi_(MPI_File_read_all_begin(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_all_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_read_all_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_read_all_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read_at(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Status* p5 = (MPI_Status*)sfp[5].p;
-	RETURNi_(MPI_File_read_at(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read_at_all(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Status* p5 = (MPI_Status*)sfp[5].p;
-	RETURNi_(MPI_File_read_at_all(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_read_at_all_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	RETURNi_(MPI_File_read_at_all_begin(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_read_at_all_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_read_at_all_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_ordered(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read_ordered(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_read_ordered(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_read_ordered_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	RETURNi_(MPI_File_read_ordered_begin(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_read_ordered_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_read_ordered_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_read_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_read_shared(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_read_shared(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
-static KMETHOD k_MPI_File_seek(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	RETURNi_(MPI_File_seek(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence);
-static KMETHOD k_MPI_File_seek_shared(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	RETURNi_(MPI_File_seek_shared(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_set_atomicity(MPI_File fh, int flag);
-static KMETHOD k_MPI_File_set_atomicity(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_set_atomicity(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
-static KMETHOD k_MPI_File_set_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Errhandler p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_set_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_set_info(MPI_File fh, MPI_Info info);
-static KMETHOD k_MPI_File_set_info(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_set_info(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_set_size(MPI_File fh, MPI_Offset size);
-static KMETHOD k_MPI_File_set_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	RETURNi_(MPI_File_set_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, char *datarep, MPI_Info info);
-static KMETHOD k_MPI_File_set_view(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	char* p4 = (char*)sfp[4].p;
-	MPI_Info p5 = sfp[5].ivalue;
-	RETURNi_(MPI_File_set_view(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_sync(MPI_File fh);
-static KMETHOD k_MPI_File_sync(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	RETURNi_(MPI_File_sync(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_write(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_all(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write_all(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_write_all(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_all_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_write_all_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	RETURNi_(MPI_File_write_all_begin(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_all_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_write_all_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_write_all_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write_at(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Status* p5 = (MPI_Status*)sfp[5].p;
-	RETURNi_(MPI_File_write_at(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write_at_all(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	MPI_Status* p5 = (MPI_Status*)sfp[5].p;
-	RETURNi_(MPI_File_write_at_all(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_at_all_begin(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_write_at_all_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	MPI_Offset p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int p3 = sfp[3].ivalue;
-	MPI_Datatype p4 = sfp[4].ivalue;
-	RETURNi_(MPI_File_write_at_all_begin(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_at_all_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_write_at_all_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_write_at_all_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_ordered(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write_ordered(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_write_ordered(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_ordered_begin(MPI_File fh, void *buf, int count, MPI_Datatype datatype);
-static KMETHOD k_MPI_File_write_ordered_begin(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	RETURNi_(MPI_File_write_ordered_begin(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_ordered_end(MPI_File fh, void *buf, MPI_Status *status);
-static KMETHOD k_MPI_File_write_ordered_end(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_File_write_ordered_end(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_File_write_shared(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI_Status *status);
-static KMETHOD k_MPI_File_write_shared(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_File p0 = (MPI_File)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_File_write_shared(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Finalize();
-static KMETHOD k_MPI_Finalize(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNi_(MPI_Finalize());
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Finalized(int *flag);
-static KMETHOD k_MPI_Finalized(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Finalized(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Free_mem(void *base);
-static KMETHOD k_MPI_Free_mem(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	RETURNi_(MPI_Free_mem(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Gather(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	int p6 = sfp[6].ivalue;
-	MPI_Comm p7 = sfp[7].ivalue;
-	RETURNi_(MPI_Gather(p0, p1, p2, p3, p4, p5, p6, p7));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Gatherv(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	int* p5 = (int*)sfp[5].p;
-	MPI_Datatype p6 = sfp[6].ivalue;
-	int p7 = sfp[7].ivalue;
-	MPI_Comm p8 = sfp[8].ivalue;
-	RETURNi_(MPI_Gatherv(p0, p1, p2, p3, p4, p5, p6, p7, p8));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Get_address(void *location, MPI_Aint *address);
-static KMETHOD k_MPI_Get_address(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	RETURNi_(MPI_Get_address(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
-static KMETHOD k_MPI_Get_count(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Get_count(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count);
-static KMETHOD k_MPI_Get_elements(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Get_elements(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Get_processor_name(char *name, int *resultlen);
-static KMETHOD k_MPI_Get_processor_name(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Get_processor_name(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Get_version(int *version, int *subversion);
-static KMETHOD k_MPI_Get_version(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Get_version(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, int *edges, int reorder, MPI_Comm *comm_graph);
-static KMETHOD k_MPI_Graph_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm* p5 = (MPI_Comm*)sfp[5].p;
-	RETURNi_(MPI_Graph_create(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, int *index, int *edges);
-static KMETHOD k_MPI_Graph_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Graph_get(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges, int *newrank);
-static KMETHOD k_MPI_Graph_map(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Graph_map(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors, int *neighbors);
-static KMETHOD k_MPI_Graph_neighbors(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Graph_neighbors(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
-static KMETHOD k_MPI_Graph_neighbors_count(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Graph_neighbors_count(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
-static KMETHOD k_MPI_Graphdims_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Graphdims_get(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Grequest_complete(MPI_Request request);
-static KMETHOD k_MPI_Grequest_complete(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Grequest_complete(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Grequest_start(MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn, MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Request *request);
-static KMETHOD k_MPI_Grequest_start(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Grequest_query_function* p0 = (MPI_Grequest_query_function*)sfp[0].p;
-	MPI_Grequest_free_function* p1 = (MPI_Grequest_free_function*)sfp[1].p;
-	MPI_Grequest_cancel_function* p2 = (MPI_Grequest_cancel_function*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	MPI_Request* p4 = (MPI_Request*)sfp[4].p;
-	RETURNi_(MPI_Grequest_start(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
-static KMETHOD k_MPI_Group_compare(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	MPI_Group p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Group_compare(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_difference(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_difference(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	MPI_Group p1 = sfp[1].ivalue;
-	MPI_Group* p2 = (MPI_Group*)sfp[2].p;
-	RETURNi_(MPI_Group_difference(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_excl(MPI_Group group, int n, int *ranks, MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_excl(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Group* p3 = (MPI_Group*)sfp[3].p;
-	RETURNi_(MPI_Group_excl(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_free(MPI_Group *group);
-static KMETHOD k_MPI_Group_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group* p0 = (MPI_Group*)sfp[0].p;
-	RETURNi_(MPI_Group_free(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_incl(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Group* p3 = (MPI_Group*)sfp[3].p;
-	RETURNi_(MPI_Group_incl(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_intersection(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_intersection(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	MPI_Group p1 = sfp[1].ivalue;
-	MPI_Group* p2 = (MPI_Group*)sfp[2].p;
-	RETURNi_(MPI_Group_intersection(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_range_excl(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int** p2 = (int**)sfp[2].p;
-	MPI_Group* p3 = (MPI_Group*)sfp[3].p;
-	RETURNi_(MPI_Group_range_excl(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_range_incl(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int** p2 = (int**)sfp[2].p;
-	MPI_Group* p3 = (MPI_Group*)sfp[3].p;
-	RETURNi_(MPI_Group_range_incl(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_rank(MPI_Group group, int *rank);
-static KMETHOD k_MPI_Group_rank(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Group_rank(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_size(MPI_Group group, int *size);
-static KMETHOD k_MPI_Group_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Group_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1, MPI_Group group2, int *ranks2);
-static KMETHOD k_MPI_Group_translate_ranks(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Group p3 = sfp[3].ivalue;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Group_translate_ranks(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *newgroup);
-static KMETHOD k_MPI_Group_union(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Group p0 = sfp[0].ivalue;
-	MPI_Group p1 = sfp[1].ivalue;
-	MPI_Group* p2 = (MPI_Group*)sfp[2].p;
-	RETURNi_(MPI_Group_union(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Ibsend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Ibsend(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_create(MPI_Info *info);
-static KMETHOD k_MPI_Info_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info* p0 = (MPI_Info*)sfp[0].p;
-	RETURNi_(MPI_Info_create(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_delete(MPI_Info info, char *key);
-static KMETHOD k_MPI_Info_delete(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Info_delete(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
-static KMETHOD k_MPI_Info_dup(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	MPI_Info* p1 = (MPI_Info*)sfp[1].p;
-	RETURNi_(MPI_Info_dup(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_free(MPI_Info *info);
-static KMETHOD k_MPI_Info_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info* p0 = (MPI_Info*)sfp[0].p;
-	RETURNi_(MPI_Info_free(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_get(MPI_Info info, char *key, int valuelen, char *value, int *flag);
-static KMETHOD k_MPI_Info_get(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	char* p3 = (char*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Info_get(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
-static KMETHOD k_MPI_Info_get_nkeys(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Info_get_nkeys(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
-static KMETHOD k_MPI_Info_get_nthkey(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	char* p2 = (char*)sfp[2].p;
-	RETURNi_(MPI_Info_get_nthkey(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag);
-static KMETHOD k_MPI_Info_get_valuelen(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Info_get_valuelen(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Info_set(MPI_Info info, char *key, char *value);
-static KMETHOD k_MPI_Info_set(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	char* p2 = (char*)sfp[2].p;
-	RETURNi_(MPI_Info_set(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Init(int *argc, char ***argv);
-static KMETHOD k_MPI_Init(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	char*** p1 = (char***)sfp[1].p;
-	RETURNi_(MPI_Init(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Init_thread(int *argc, char ***argv, int required, int *provided);
-static KMETHOD k_MPI_Init_thread(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	char*** p1 = (char***)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Init_thread(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Initialized(int *flag);
-static KMETHOD k_MPI_Initialized(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Initialized(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader, MPI_Comm peer_comm, int remote_leader, int tag, MPI_Comm *newintercomm);
-static KMETHOD k_MPI_Intercomm_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Comm p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm* p5 = (MPI_Comm*)sfp[5].p;
-	RETURNi_(MPI_Intercomm_create(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status);
-static KMETHOD k_MPI_Iprobe(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Comm p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_Iprobe(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Irecv(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Irecv(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Irsend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Irsend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Irsend(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Is_thread_main(int *flag);
-static KMETHOD k_MPI_Is_thread_main(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Is_thread_main(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Isend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Isend(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Issend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Issend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Issend(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Keyval_create(MPI_Copy_function *copy_fn, MPI_Delete_function *delete_fn, int *keyval, void *extra_state);
-static KMETHOD k_MPI_Keyval_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Copy_function* p0 = (MPI_Copy_function*)sfp[0].p;
-	MPI_Delete_function* p1 = (MPI_Delete_function*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	RETURNi_(MPI_Keyval_create(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Keyval_free(int *keyval);
-static KMETHOD k_MPI_Keyval_free(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Keyval_free(p0));
-}
+kMPIComm *g_comm_world;
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
-static KMETHOD k_MPI_Lookup_name(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	char* p2 = (char*)sfp[2].p;
-	RETURNi_(MPI_Lookup_name(p0, p1, p2));
-}
+typedef struct {
+	kObjectHeader h;
+	void *rawptr;
+} kRawPtr;
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
-static KMETHOD k_MPI_Op_create(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_User_function* p0 = (MPI_User_function*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Op* p2 = (MPI_Op*)sfp[2].p;
-	RETURNi_(MPI_Op_create(p0, p1, p2));
+static inline kObject *new_ReturnCppObject(CTX,ksfp_t *sfp, void *ptr _RIX) {
+	kObject *defobj = sfp[K_RIX].o;
+	kObject *ret = new_kObject(O_ct(defobj), ptr);
+	((kRawPtr *)ret)->rawptr = ptr;
+	return ret;
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Op_free(MPI_Op *op);
-static KMETHOD k_MPI_Op_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Op* p0 = (MPI_Op*)sfp[0].p;
-	RETURNi_(MPI_Op_free(p0));
-}
+#define WRAP(a) a
+#define toRawPtr(type, o) ((type)((kRawPtr *)o)->rawptr)
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Open_port(MPI_Info info, char *port_name);
-static KMETHOD k_MPI_Open_port(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Info p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Open_port(p0, p1));
-}
+static void *getbuf(kMPIData *p) {
+	switch(p->cid) {
+		case KMPI_BYTES:  return p->b->buf + p->offset;
+		case KMPI_FARRAY: return p->fa + p->offset;
+		case KMPI_IARRAY: return p->ia + p->offset;
+		default: abort();
+	}
+} 
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, int outsize, int *position, MPI_Comm comm);
-static KMETHOD k_MPI_Pack(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	int* p5 = (int*)sfp[5].p;
-	MPI_Comm p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Pack(p0, p1, p2, p3, p4, p5, p6));
+static void mpidata_extend(CTX, kMPIData *p, int count) {
+	size_t newSize = p->offset + count;
+	if(p->size < newSize) {
+		switch(p->cid) {
+		case KMPI_BYTES: {
+			kBytes *b = (kBytes *)new_kObject(CT_Bytes, (void *)newSize);
+			memcpy(b->buf, p->b->buf, p->size);
+			p->b = b;
+			p->size = newSize;
+			break;
+		}
+		case KMPI_FARRAY: {
+			kfloat_t *fa = KCALLOC(sizeof(kfloat_t), newSize);
+			memcpy(fa, p->fa, p->size * sizeof(kfloat_t));
+			KFREE(p->fa, p->size * sizeof(kfloat_t));
+			p->fa = fa;
+			p->size = newSize;
+			break;
+		}
+		case KMPI_IARRAY: {
+			kint_t *ia = KCALLOC(sizeof(kint_t), newSize);
+			memcpy(ia, p->ia, p->size * sizeof(kint_t));
+			KFREE(p->ia, p->size * sizeof(kint_t));
+			p->ia = ia;
+			p->size = newSize;
+			break;
+		}
+		default:
+			abort();
+		}
+	}
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, MPI_Aint outsize, MPI_Aint *position);
-static KMETHOD k_MPI_Pack_external(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	void* p4 = (void*)sfp[4].p;
-	MPI_Aint p5 = sfp[5].ivalue;
-	MPI_Aint* p6 = (MPI_Aint*)sfp[6].p;
-	RETURNi_(MPI_Pack_external(p0, p1, p2, p3, p4, p5, p6));
+static kMPIRequest *newMPIRequest(CTX) {
+	kMPIRequest* p = (kMPIRequest*)KMALLOC(sizeof(kMPIRequest));
+	return p;
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Pack_external_size(char *datarep, int incount, MPI_Datatype datatype, MPI_Aint *size);
-static KMETHOD k_MPI_Pack_external_size(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	MPI_Aint* p3 = (MPI_Aint*)sfp[3].p;
-	RETURNi_(MPI_Pack_external_size(p0, p1, p2, p3));
+static kMPIData *newMPIData(CTX) {
+	kMPIData* p = (kMPIData*)KMALLOC(sizeof(kMPIData));
+	return p;
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm, int *size);
-static KMETHOD k_MPI_Pack_size(CTX, ksfp_t *sfp _RIX)
+static void MPIRequest_ptr_free(CTX , kObject *po)
 {
-	int p0 = sfp[0].ivalue;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	MPI_Comm p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Pack_size(p0, p1, p2, p3));
+	kMPIRequest *p = toRawPtr(kMPIRequest *, po);
+	KFREE(p, sizeof(kMPIRequest));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
-static KMETHOD k_MPI_Probe(CTX, ksfp_t *sfp _RIX)
+static void MPIData_ptr_free(CTX , kObject *po)
 {
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Comm p2 = sfp[2].ivalue;
-	MPI_Status* p3 = (MPI_Status*)sfp[3].p;
-	RETURNi_(MPI_Probe(p0, p1, p2, p3));
+	kMPIData *p = toRawPtr(kMPIData *, po);
+	switch(p->cid) {
+		case KMPI_BYTES: break;
+		case KMPI_FARRAY: KFREE(p->fa, p->size * sizeof(kfloat_t)); break;
+		case KMPI_IARRAY: KFREE(p->ia, p->size * sizeof(kint_t)); break;
+		default: abort();
+	}
+	KFREE(p, sizeof(kMPIData));
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Publish_name(char *service_name, MPI_Info info, char *port_name);
-static KMETHOD k_MPI_Publish_name(CTX, ksfp_t *sfp _RIX)
+//## float MPI.getWtime();
+static KMETHOD MPI_getWtime(CTX, ksfp_t *sfp _RIX)
 {
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	char* p2 = (char*)sfp[2].p;
-	RETURNi_(MPI_Publish_name(p0, p1, p2));
+	RETURNf_(MPI_Wtime());
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Query_thread(int *provided);
-static KMETHOD k_MPI_Query_thread(CTX, ksfp_t *sfp _RIX)
+//## MPIComm MPIComm.getWorld();
+static KMETHOD MPIComm_getWorld(CTX, ksfp_t *sfp _RIX)
 {
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Query_thread(p0));
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(g_comm_world) K_RIXPARAM));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status);
-static KMETHOD k_MPI_Recv(CTX, ksfp_t *sfp _RIX)
+//## int MPIComm.getRank();
+static KMETHOD MPIComm_getRank(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Status* p6 = (MPI_Status*)sfp[6].p;
-	RETURNi_(MPI_Recv(p0, p1, p2, p3, p4, p5, p6));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	int ret;
+	MPI_Comm_rank(comm->comm, &ret);
+	RETURNi_(ret);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Recv_init(CTX, ksfp_t *sfp _RIX)
+//## int MPIComm.getSize();
+static KMETHOD MPIComm_getSize(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Recv_init(p0, p1, p2, p3, p4, p5, p6));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	int ret;
+	MPI_Comm_size(comm->comm, &ret);
+	RETURNi_(ret);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Reduce(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.barrier();
+static KMETHOD MPIComm_barrier(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	int p5 = sfp[5].ivalue;
-	MPI_Comm p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Reduce(p0, p1, p2, p3, p4, p5, p6));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	RETURNb_(MPI_Barrier(comm->comm));
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Reduce_local(void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op);
-static KMETHOD k_MPI_Reduce_local(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.send(MPIData data, int count, int dest, int tag);
+static KMETHOD MPIComm_send(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	RETURNi_(MPI_Reduce_local(p0, p1, p2, p3, p4));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *data = toRawPtr(kMPIData *, sfp[1].o);
+	int count = sfp[2].ivalue;
+	int dest = sfp[3].ivalue;
+	int tag = sfp[4].ivalue;
+	RETURNb_(MPI_Send(getbuf(data), count, data->type, dest, tag, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static KMETHOD k_MPI_Reduce_scatter(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.recv(MPIData data, int count, int src, int tag);
+static KMETHOD MPIComm_recv(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Reduce_scatter(p0, p1, p2, p3, p4, p5));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *data = toRawPtr(kMPIData *, sfp[1].o);
+	int count = sfp[2].ivalue;
+	int src = sfp[3].ivalue;
+	int tag = sfp[4].ivalue;
+	mpidata_extend(_ctx, data, count);
+	MPI_Status stat;
+	RETURNb_(MPI_Recv(getbuf(data), count, data->type, src, tag, comm->comm, &stat));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Register_datarep(char *datarep, MPI_Datarep_conversion_function *read_conversion_fn, MPI_Datarep_conversion_function *write_conversion_fn, MPI_Datarep_extent_function *dtype_file_extent_fn, void *extra_state);
-static KMETHOD k_MPI_Register_datarep(CTX, ksfp_t *sfp _RIX)
+//## MPIRequest MPIComm.iSend(Bytes buf, int count, int dest, int tag);
+static KMETHOD MPIComm_iSend(CTX, ksfp_t *sfp _RIX)
 {
-	char* p0 = (char*)sfp[0].p;
-	MPI_Datarep_conversion_function* p1 = (MPI_Datarep_conversion_function*)sfp[1].p;
-	MPI_Datarep_conversion_function* p2 = (MPI_Datarep_conversion_function*)sfp[2].p;
-	MPI_Datarep_extent_function* p3 = (MPI_Datarep_extent_function*)sfp[3].p;
-	void* p4 = (void*)sfp[4].p;
-	RETURNi_(MPI_Register_datarep(p0, p1, p2, p3, p4));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *data = toRawPtr(kMPIData *, sfp[1].o);
+	int count = sfp[2].ivalue;
+	int dest = sfp[3].ivalue;
+	int tag = sfp[4].ivalue;
+	kMPIRequest *ret = newMPIRequest(_ctx);
+	MPI_Isend(getbuf(data), count, data->type, dest, tag, comm->comm, &ret->req);
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(ret) K_RIXPARAM));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Request_free(MPI_Request *request);
-static KMETHOD k_MPI_Request_free(CTX, ksfp_t *sfp _RIX)
+//## MPIRequest MPIComm.iRecv(Bytes buf, int count, int src, int tag);
+static KMETHOD MPIComm_iRecv(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Request* p0 = (MPI_Request*)sfp[0].p;
-	RETURNi_(MPI_Request_free(p0));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *data = toRawPtr(kMPIData *, sfp[1].o);
+	int count = sfp[2].ivalue;
+	int src = sfp[3].ivalue;
+	int tag = sfp[4].ivalue;
+	kMPIRequest *ret = newMPIRequest(_ctx);
+	mpidata_extend(_ctx, data, count);
+	MPI_Irecv(getbuf(data), count, data->type, src, tag, comm->comm, &ret->req);
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(ret) K_RIXPARAM));
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *status);
-static KMETHOD k_MPI_Request_get_status(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.bcast(MPIData sdata, int count, int root_rank);
+static KMETHOD MPIComm_bcast(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Request p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_Request_get_status(p0, p1, p2));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	int count = sfp[2].ivalue;
+	int root = sfp[3].ivalue;
+	RETURNb_(MPI_Bcast(getbuf(sdata), count, sdata->type, root, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Rsend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
-static KMETHOD k_MPI_Rsend(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.scatter(MPIData sdata, int scount, MPIData rdata, int rcount, int root_rank);
+static KMETHOD MPIComm_scatter(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Rsend(p0, p1, p2, p3, p4, p5));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	int scount = sfp[2].ivalue;
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
+	int rcount = sfp[4].ivalue;
+	int root = sfp[5].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Scatter(getbuf(sdata), scount, sdata->type, 
+			getbuf(rdata), rcount, rdata->type, root, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Rsend_init(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Rsend_init(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.gather(MPIData sdata, int scount, MPIData rdata, int rcount, int root_rank);
+static KMETHOD MPIComm_gather(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Rsend_init(p0, p1, p2, p3, p4, p5, p6));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	int scount = sfp[2].ivalue;
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
+	int rcount = sfp[4].ivalue;
+	int root = sfp[5].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Gather(getbuf(sdata), scount, sdata->type, 
+			getbuf(rdata), rcount, rdata->type, root, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Scan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-static KMETHOD k_MPI_Scan(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.allGather(MPIData sdata, int scount, MPIData rdata, int rcount);
+static KMETHOD MPIComm_allGather(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Op p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Scan(p0, p1, p2, p3, p4, p5));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	int scount = sfp[2].ivalue;
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
+	int rcount = sfp[4].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Allgather(getbuf(sdata), scount, sdata->type, getbuf(rdata),
+			rcount, rdata->type, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Scatter(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.allToAll(MPIData sdata, int scount, MPIData rdata, int rcount);
+static KMETHOD MPIComm_allToAll(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	int p6 = sfp[6].ivalue;
-	MPI_Comm p7 = sfp[7].ivalue;
-	RETURNi_(MPI_Scatter(p0, p1, p2, p3, p4, p5, p6, p7));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	int scount = sfp[2].ivalue;
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
+	int rcount = sfp[4].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Alltoall(getbuf(sdata), scount, sdata->type, getbuf(rdata), 
+			rcount, rdata->type, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm);
-static KMETHOD k_MPI_Scatterv(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.reduce(MPIData sdata, MPIData rdata, int rcount, MPIOp op, int root_rank);
+static KMETHOD MPIComm_reduce(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	void* p4 = (void*)sfp[4].p;
-	int p5 = sfp[5].ivalue;
-	MPI_Datatype p6 = sfp[6].ivalue;
-	int p7 = sfp[7].ivalue;
-	MPI_Comm p8 = sfp[8].ivalue;
-	RETURNi_(MPI_Scatterv(p0, p1, p2, p3, p4, p5, p6, p7, p8));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[2].o);
+	int rcount = sfp[3].ivalue;
+	MPI_Op op = (MPI_Op)sfp[4].ivalue;
+	int root = sfp[5].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Reduce(getbuf(sdata), getbuf(rdata), rcount, rdata->type, 
+			op, root, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
-static KMETHOD k_MPI_Send(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.allReduce(MPIData sdata, MPIData rdata, int rcount, MPIOp op);
+static KMETHOD MPIComm_allReduce(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Send(p0, p1, p2, p3, p4, p5));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[2].o);
+	int rcount = sfp[3].ivalue;
+	MPI_Op op = (MPI_Op)sfp[4].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Allreduce(getbuf(sdata), getbuf(rdata), rcount, rdata->type, 
+			op, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Send_init(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Send_init(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.scan(MPIData sdata, MPIData rdata, int rcount, MPIOp op);
+static KMETHOD MPIComm_scan(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Send_init(p0, p1, p2, p3, p4, p5, p6));
+	kMPIComm *comm = toRawPtr(kMPIComm *, sfp[0].o);
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[1].o);
+	kMPIData *rdata = toRawPtr(kMPIData *, sfp[2].o);
+	int rcount = sfp[3].ivalue;
+	MPI_Op op = (MPI_Op)sfp[4].ivalue;
+	mpidata_extend(_ctx, rdata, rcount);
+	RETURNb_(MPI_Scan(getbuf(sdata), getbuf(rdata), rcount, rdata->type, op, comm->comm));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype, int dest, int sendtag, void *recvbuf, int recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
-//static KMETHOD k_MPI_Sendrecv(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIComm.reduceScatter(MPIData sdata, MPIData rdata, int[] rcounts, MPIOp op);
+//static KMETHOD MPIComm_reduceScatter(CTX, ksfp_t *sfp _RIX)
 //{
-//	void* p0 = (void*)sfp[0].p;
-//	int p1 = sfp[1].ivalue;
-//	MPI_Datatype p2 = sfp[2].ivalue;
-//	int p3 = sfp[3].ivalue;
-//	int p4 = sfp[4].ivalue;
-//	void* p5 = (void*)sfp[5].p;
-//	int p6 = sfp[6].ivalue;
-//	MPI_Datatype p7 = sfp[7].ivalue;
-//	int p8 = sfp[8].ivalue;
-//	int p9 = sfp[9].ivalue;
-//	MPI_Comm p10 = sfp[10].ivalue;
-//	MPI_Status* p11 = (MPI_Status*)sfp[11].p;
-//	RETURNi_(MPI_Sendrecv(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
+//	//TODO
 //}
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Sendrecv_replace(void *buf, int count, MPI_Datatype datatype, int dest, int sendtag, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
-static KMETHOD k_MPI_Sendrecv_replace(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIRequest.wait()
+static KMETHOD MPIRequest_wait(CTX, ksfp_t *sfp _RIX)
 {
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	int p5 = sfp[5].ivalue;
-	int p6 = sfp[6].ivalue;
-	MPI_Comm p7 = sfp[7].ivalue;
-	MPI_Status* p8 = (MPI_Status*)sfp[8].p;
-	RETURNi_(MPI_Sendrecv_replace(p0, p1, p2, p3, p4, p5, p6, p7, p8));
+	kMPIRequest *req = toRawPtr(kMPIRequest *, sfp[0].o);
+	MPI_Status stat;
+	RETURNb_(MPI_Wait(&req->req, &stat));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Ssend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
-static KMETHOD k_MPI_Ssend(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	RETURNi_(MPI_Ssend(p0, p1, p2, p3, p4, p5));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Ssend_init(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request);
-static KMETHOD k_MPI_Ssend_init(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int p4 = sfp[4].ivalue;
-	MPI_Comm p5 = sfp[5].ivalue;
-	MPI_Request* p6 = (MPI_Request*)sfp[6].p;
-	RETURNi_(MPI_Ssend_init(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Start(MPI_Request *request);
-static KMETHOD k_MPI_Start(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request* p0 = (MPI_Request*)sfp[0].p;
-	RETURNi_(MPI_Start(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Startall(int count, MPI_Request *array_of_requests);
-static KMETHOD k_MPI_Startall(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	RETURNi_(MPI_Startall(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Status_set_cancelled(MPI_Status *status, int flag);
-static KMETHOD k_MPI_Status_set_cancelled(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Status_set_cancelled(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count);
-static KMETHOD k_MPI_Status_set_elements(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	RETURNi_(MPI_Status_set_elements(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Test(MPI_Request *request, int *flag, MPI_Status *status);
-static KMETHOD k_MPI_Test(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request* p0 = (MPI_Request*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_Test(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Test_cancelled(MPI_Status *status, int *flag);
-static KMETHOD k_MPI_Test_cancelled(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Status* p0 = (MPI_Status*)sfp[0].p;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Test_cancelled(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Testall(int count, MPI_Request *array_of_requests, int *flag, MPI_Status *array_of_statuses);
-static KMETHOD k_MPI_Testall(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Status* p3 = (MPI_Status*)sfp[3].p;
-	RETURNi_(MPI_Testall(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MPI_Status *status);
-static KMETHOD k_MPI_Testany(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_Testany(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Testsome(int incount, MPI_Request *array_of_requests, int *outcount, int *array_of_indices, MPI_Status *array_of_statuses);
-static KMETHOD k_MPI_Testsome(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_Testsome(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Topo_test(MPI_Comm comm, int *top_type);
-static KMETHOD k_MPI_Topo_test(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Comm p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Topo_test(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_commit(MPI_Datatype *datatype);
-static KMETHOD k_MPI_Type_commit(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype* p0 = (MPI_Datatype*)sfp[0].p;
-	RETURNi_(MPI_Type_commit(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_contiguous(int count, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_contiguous(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Datatype p1 = sfp[1].ivalue;
-	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-	RETURNi_(MPI_Type_contiguous(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_darray(int size, int rank, int ndims, int array_of_gsizes[], int array_of_distribs[], int array_of_dargs[], int array_of_psizes[], int order, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_darray(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	int* p5 = (int*)sfp[5].p;
-	int* p6 = (int*)sfp[6].p;
-	int p7 = sfp[7].ivalue;
-	MPI_Datatype p8 = sfp[8].ivalue;
-	MPI_Datatype* p9 = (MPI_Datatype*)sfp[9].p;
-	RETURNi_(MPI_Type_create_darray(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_hindexed(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_hindexed(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_create_hindexed(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_hvector(int count, int blocklength, MPI_Aint stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_hvector(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Aint p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_create_hvector(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_indexed_block(int count, int blocklength, int array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_indexed_block(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_create_indexed_block(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state);
-static KMETHOD k_MPI_Type_create_keyval(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Type_copy_attr_function* p0 = (MPI_Type_copy_attr_function*)sfp[0].p;
-	MPI_Type_delete_attr_function* p1 = (MPI_Type_delete_attr_function*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	RETURNi_(MPI_Type_create_keyval(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_resized(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint p1 = sfp[1].ivalue;
-	MPI_Aint p2 = sfp[2].ivalue;
-	MPI_Datatype* p3 = (MPI_Datatype*)sfp[3].p;
-	RETURNi_(MPI_Type_create_resized(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_struct(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], MPI_Datatype array_of_types[], MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_struct(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	MPI_Datatype* p3 = (MPI_Datatype*)sfp[3].p;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_create_struct(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_create_subarray(int ndims, int array_of_sizes[], int array_of_subsizes[], int array_of_starts[], int order, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_create_subarray(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	MPI_Datatype* p6 = (MPI_Datatype*)sfp[6].p;
-	RETURNi_(MPI_Type_create_subarray(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_delete_attr(MPI_Datatype type, int type_keyval);
-static KMETHOD k_MPI_Type_delete_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Type_delete_attr(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_dup(MPI_Datatype type, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_dup(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Datatype* p1 = (MPI_Datatype*)sfp[1].p;
-	RETURNi_(MPI_Type_dup(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
-static KMETHOD k_MPI_Type_extent(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	RETURNi_(MPI_Type_extent(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_free(MPI_Datatype *datatype);
-static KMETHOD k_MPI_Type_free(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype* p0 = (MPI_Datatype*)sfp[0].p;
-	RETURNi_(MPI_Type_free(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_free_keyval(int *type_keyval);
-static KMETHOD k_MPI_Type_free_keyval(CTX, ksfp_t *sfp _RIX)
-{
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Type_free_keyval(p0));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_attr(MPI_Datatype type, int type_keyval, void *attribute_val, int *flag);
-static KMETHOD k_MPI_Type_get_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Type_get_attr(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes, int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]);
-static KMETHOD k_MPI_Type_get_contents(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	int p3 = sfp[3].ivalue;
-	int* p4 = (int*)sfp[4].p;
-	MPI_Aint* p5 = (MPI_Aint*)sfp[5].p;
-	MPI_Datatype* p6 = (MPI_Datatype*)sfp[6].p;
-	RETURNi_(MPI_Type_get_contents(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
-static KMETHOD k_MPI_Type_get_envelope(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	int* p4 = (int*)sfp[4].p;
-	RETURNi_(MPI_Type_get_envelope(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
-static KMETHOD k_MPI_Type_get_extent(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	RETURNi_(MPI_Type_get_extent(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen);
-static KMETHOD k_MPI_Type_get_name(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Type_get_name(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
-static KMETHOD k_MPI_Type_get_true_extent(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	RETURNi_(MPI_Type_get_true_extent(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_hindexed(int count, int *array_of_blocklengths, MPI_Aint *array_of_displacements, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_hindexed(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_hindexed(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_hvector(int count, int blocklength, MPI_Aint stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_hvector(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Aint p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_hvector(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_indexed(int count, int *array_of_blocklengths, int *array_of_displacements, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_indexed(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_indexed(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_lb(MPI_Datatype datatype, MPI_Aint *displacement);
-static KMETHOD k_MPI_Type_lb(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	RETURNi_(MPI_Type_lb(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type);
-static KMETHOD k_MPI_Type_match_size(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Datatype* p2 = (MPI_Datatype*)sfp[2].p;
-	RETURNi_(MPI_Type_match_size(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_set_attr(MPI_Datatype type, int type_keyval, void *attribute_val);
-static KMETHOD k_MPI_Type_set_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	RETURNi_(MPI_Type_set_attr(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_set_name(MPI_Datatype type, char *type_name);
-static KMETHOD k_MPI_Type_set_name(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Type_set_name(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_size(MPI_Datatype datatype, int *size);
-static KMETHOD k_MPI_Type_size(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Type_size(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_struct(int count, int *array_of_blocklengths, MPI_Aint *array_of_displacements, MPI_Datatype *array_of_types, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_struct(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	MPI_Aint* p2 = (MPI_Aint*)sfp[2].p;
-	MPI_Datatype* p3 = (MPI_Datatype*)sfp[3].p;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_struct(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_ub(MPI_Datatype datatype, MPI_Aint *displacement);
-static KMETHOD k_MPI_Type_ub(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Datatype p0 = sfp[0].ivalue;
-	MPI_Aint* p1 = (MPI_Aint*)sfp[1].p;
-	RETURNi_(MPI_Type_ub(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Type_vector(int count, int blocklength, int stride, MPI_Datatype oldtype, MPI_Datatype *newtype);
-static KMETHOD k_MPI_Type_vector(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	MPI_Datatype p3 = sfp[3].ivalue;
-	MPI_Datatype* p4 = (MPI_Datatype*)sfp[4].p;
-	RETURNi_(MPI_Type_vector(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Unpack(void *inbuf, int insize, int *position, void *outbuf, int outcount, MPI_Datatype datatype, MPI_Comm comm);
-static KMETHOD k_MPI_Unpack(CTX, ksfp_t *sfp _RIX)
-{
-	void* p0 = (void*)sfp[0].p;
-	int p1 = sfp[1].ivalue;
-	int* p2 = (int*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	int p4 = sfp[4].ivalue;
-	MPI_Datatype p5 = sfp[5].ivalue;
-	MPI_Comm p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Unpack(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize, MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype);
-static KMETHOD k_MPI_Unpack_external(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	void* p1 = (void*)sfp[1].p;
-	MPI_Aint p2 = sfp[2].ivalue;
-	MPI_Aint* p3 = (MPI_Aint*)sfp[3].p;
-	void* p4 = (void*)sfp[4].p;
-	int p5 = sfp[5].ivalue;
-	MPI_Datatype p6 = sfp[6].ivalue;
-	RETURNi_(MPI_Unpack_external(p0, p1, p2, p3, p4, p5, p6));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Unpublish_name(char *service_name, MPI_Info info, char *port_name);
-static KMETHOD k_MPI_Unpublish_name(CTX, ksfp_t *sfp _RIX)
-{
-	char* p0 = (char*)sfp[0].p;
-	MPI_Info p1 = sfp[1].ivalue;
-	char* p2 = (char*)sfp[2].p;
-	RETURNi_(MPI_Unpublish_name(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Wait(MPI_Request *request, MPI_Status *status);
-static KMETHOD k_MPI_Wait(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Request* p0 = (MPI_Request*)sfp[0].p;
-	MPI_Status* p1 = (MPI_Status*)sfp[1].p;
-	RETURNi_(MPI_Wait(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_statuses);
-static KMETHOD k_MPI_Waitall(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	MPI_Status* p2 = (MPI_Status*)sfp[2].p;
-	RETURNi_(MPI_Waitall(p0, p1, p2));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *status);
-static KMETHOD k_MPI_Waitany(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	MPI_Status* p3 = (MPI_Status*)sfp[3].p;
-	RETURNi_(MPI_Waitany(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Waitsome(int incount, MPI_Request *array_of_requests, int *outcount, int *array_of_indices, MPI_Status *array_of_statuses);
-static KMETHOD k_MPI_Waitsome(CTX, ksfp_t *sfp _RIX)
-{
-	int p0 = sfp[0].ivalue;
-	MPI_Request* p1 = (MPI_Request*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	MPI_Status* p4 = (MPI_Status*)sfp[4].p;
-	RETURNi_(MPI_Waitsome(p0, p1, p2, p3, p4));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
-static KMETHOD k_MPI_Win_call_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Win_call_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_create_errhandler(MPI_Win_errhandler_function *function, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Win_create_errhandler(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win_errhandler_function* p0 = (MPI_Win_errhandler_function*)sfp[0].p;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Win_create_errhandler(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state);
-static KMETHOD k_MPI_Win_create_keyval(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win_copy_attr_function* p0 = (MPI_Win_copy_attr_function*)sfp[0].p;
-	MPI_Win_delete_attr_function* p1 = (MPI_Win_delete_attr_function*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	void* p3 = (void*)sfp[3].p;
-	RETURNi_(MPI_Win_create_keyval(p0, p1, p2, p3));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_delete_attr(MPI_Win win, int win_keyval);
-static KMETHOD k_MPI_Win_delete_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Win_delete_attr(p0, p1));
-}
-
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_fence(int assert, MPI_Win win);
-static KMETHOD k_MPI_Win_fence(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIRequest.test()
+static KMETHOD MPIRequest_test(CTX, ksfp_t *sfp _RIX)
 {
-	int p0 = sfp[0].ivalue;
-	MPI_Win p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Win_fence(p0, p1));
+	kMPIRequest *req = toRawPtr(kMPIRequest *, sfp[0].o);
+	MPI_Status stat;
+	int flag;
+	MPI_Test(&req->req, &flag, &stat);
+	RETURNb_(flag != 0);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_free(MPI_Win *win);
-static KMETHOD k_MPI_Win_free(CTX, ksfp_t *sfp _RIX)
+//## boolean MPIRequest.cancel()
+static KMETHOD MPIRequest_cancel(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win* p0 = (MPI_Win*)sfp[0].p;
-	RETURNi_(MPI_Win_free(p0));
+	kMPIRequest *req = toRawPtr(kMPIRequest *, sfp[0].o);
+	RETURNb_(MPI_Cancel(&req->req));
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Win_free_keyval(int *win_keyval);
-static KMETHOD k_MPI_Win_free_keyval(CTX, ksfp_t *sfp _RIX)
+//## MPIData MPIData.fromBytes(Bytes b)
+static KMETHOD MPIData_fromBytes(CTX, ksfp_t *sfp _RIX)
 {
-	int* p0 = (int*)sfp[0].p;
-	RETURNi_(MPI_Win_free_keyval(p0));
+	kMPIData *d = newMPIData(_ctx);
+	d->type = MPI_CHAR;
+	d->b = sfp[1].ba;
+	d->size = sfp[1].ba->bytesize;
+	d->offset = 0;
+	d->cid = KMPI_BYTES;
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(d) K_RIXPARAM));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag);
-static KMETHOD k_MPI_Win_get_attr(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	int* p3 = (int*)sfp[3].p;
-	RETURNi_(MPI_Win_get_attr(p0, p1, p2, p3));
-}
+////## MPIData MPIData.fromIntArray(Array[int] a)
+//static KMETHOD MPIData_fromIntArray(CTX, ksfp_t *sfp _RIX)
+//{
+//	kMPIData *d = newMPIData(_ctx);
+//	d->type = MPI_LONG;
+//	d->size = 0;
+//	d->offset = 0;
+//	d->a = sfp[1].a;
+//	d->cid = KMPI_IARRAY;
+//	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(d) K_RIXPARAM));
+//}
+//
+////## MPIData MPIData.fromFloatArray(Array[float] a)
+//static KMETHOD MPIData_fromFloatArray(CTX, ksfp_t *sfp _RIX)
+//{
+//	kMPIData *d = newMPIData(_ctx);
+//	d->type = MPI_DOUBLE;
+//	d->size = 0;
+//	d->offset = 0;
+//	d->a = sfp[1].a;
+//	d->cid = KMPI_FARRAY;
+//	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(d) K_RIXPARAM));
+//}
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
-static KMETHOD k_MPI_Win_get_errhandler(CTX, ksfp_t *sfp _RIX)
+//## Bytes MPIData.toBytes()
+static KMETHOD MPIData_toBytes(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	MPI_Errhandler* p1 = (MPI_Errhandler*)sfp[1].p;
-	RETURNi_(MPI_Win_get_errhandler(p0, p1));
+	RETURN_(toRawPtr(kMPIData *, sfp[0].o)->b);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen);
-static KMETHOD k_MPI_Win_get_name(CTX, ksfp_t *sfp _RIX)
+//## void MPIData.setOffset(int offset)
+static KMETHOD MPIData_setOffset(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	int* p2 = (int*)sfp[2].p;
-	RETURNi_(MPI_Win_get_name(p0, p1, p2));
+	kMPIData *d = toRawPtr(kMPIData *, sfp[0].o);
+	d->offset = sfp[1].ivalue;
+	RETURNvoid_();
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win);
-static KMETHOD k_MPI_Win_lock(CTX, ksfp_t *sfp _RIX)
+//## int MPIData.getOffset()
+static KMETHOD MPIData_getOffset(CTX, ksfp_t *sfp _RIX)
 {
-	int p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	int p2 = sfp[2].ivalue;
-	MPI_Win p3 = sfp[3].ivalue;
-	RETURNi_(MPI_Win_lock(p0, p1, p2, p3));
+	kMPIData *d = toRawPtr(kMPIData *, sfp[0].o);
+	RETURNi_(d->offset);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_post(MPI_Group group, int assert, MPI_Win win);
-static KMETHOD k_MPI_Win_post(CTX, ksfp_t *sfp _RIX)
+//## int MPIData.getSize()
+static KMETHOD MPIData_getSize(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Win p2 = sfp[2].ivalue;
-	RETURNi_(MPI_Win_post(p0, p1, p2));
+	kMPIData *d = toRawPtr(kMPIData *, sfp[0].o);
+	RETURNi_(d->size - d->offset);
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val);
-static KMETHOD k_MPI_Win_set_attr(CTX, ksfp_t *sfp _RIX)
+//## MPIData MPIData.newFloatArray(int size)
+static KMETHOD MPIData_newFloatArray(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	void* p2 = (void*)sfp[2].p;
-	RETURNi_(MPI_Win_set_attr(p0, p1, p2));
+	int size = sfp[1].ivalue;
+	kMPIData *d = newMPIData(_ctx);
+	d->type = MPI_DOUBLE;
+	d->size = size;
+	d->offset = 0;
+	d->fa = KCALLOC(sizeof(kfloat_t), size);
+	d->cid = KMPI_FARRAY;
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(d) K_RIXPARAM));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
-static KMETHOD k_MPI_Win_set_errhandler(CTX, ksfp_t *sfp _RIX)
+//## MPIData MPIData.newIntArray(int size)
+static KMETHOD MPIData_newIntArray(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	MPI_Errhandler p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Win_set_errhandler(p0, p1));
+	int size = sfp[1].ivalue;
+	kMPIData *d = newMPIData(_ctx);
+	d->type = MPI_LONG;
+	d->size = size;
+	d->offset = 0;
+	d->fa = KCALLOC(sizeof(kint_t), size);
+	d->cid = KMPI_IARRAY;
+	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(d) K_RIXPARAM));
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_set_name(MPI_Win win, char *win_name);
-static KMETHOD k_MPI_Win_set_name(CTX, ksfp_t *sfp _RIX)
+//## float MPIData.getf(int n)
+static KMETHOD MPIData_getf(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	char* p1 = (char*)sfp[1].p;
-	RETURNi_(MPI_Win_set_name(p0, p1));
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[0].o);
+	int n = sfp[1].ivalue + sdata->offset;
+	RETURNf_(sdata->fa[n]);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_start(MPI_Group group, int assert, MPI_Win win);
-static KMETHOD k_MPI_Win_start(CTX, ksfp_t *sfp _RIX)
+//## void MPIData.setf(int n, float v)
+static KMETHOD MPIData_setf(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Group p0 = sfp[0].ivalue;
-	int p1 = sfp[1].ivalue;
-	MPI_Win p2 = sfp[2].ivalue;
-	RETURNi_(MPI_Win_start(p0, p1, p2));
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[0].o);
+	int n = sfp[1].ivalue + sdata->offset;
+	double v = sfp[2].fvalue;
+	sdata->fa[n] = v;
+	RETURNvoid_();
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_test(MPI_Win win, int *flag);
-static KMETHOD k_MPI_Win_test(CTX, ksfp_t *sfp _RIX)
+//## int MPIData.geti(int n)
+static KMETHOD MPIData_geti(CTX, ksfp_t *sfp _RIX)
 {
-	MPI_Win p0 = sfp[0].ivalue;
-	int* p1 = (int*)sfp[1].p;
-	RETURNi_(MPI_Win_test(p0, p1));
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[0].o);
+	int n = sfp[1].ivalue + sdata->offset;
+	RETURNi_(sdata->ia[n]);
 }
 
-/* ------------------------------------------------------------------------ */
-//## method int MPI_Win_unlock(int rank, MPI_Win win);
-static KMETHOD k_MPI_Win_unlock(CTX, ksfp_t *sfp _RIX)
+//## void MPIData.seti(int n, int v)
+static KMETHOD MPIData_seti(CTX, ksfp_t *sfp _RIX)
 {
-	int p0 = sfp[0].ivalue;
-	MPI_Win p1 = sfp[1].ivalue;
-	RETURNi_(MPI_Win_unlock(p0, p1));
+	kMPIData *sdata = toRawPtr(kMPIData *, sfp[0].o);
+	int n = sfp[1].ivalue + sdata->offset;
+	kint_t v = sfp[2].ivalue;
+	sdata->ia[n] = v;
+	RETURNvoid_();
 }
 
 /* ------------------------------------------------------------------------ */
-//## method int MPI_Win_wait(MPI_Win win);
-static KMETHOD k_MPI_Win_wait(CTX, ksfp_t *sfp _RIX)
-{
-	MPI_Win p0 = sfp[0].ivalue;
-	RETURNi_(MPI_Win_wait(p0));
-}
-
-// --------------------------------------------------------------------------
-
 #define _Public   kMethod_Public
 #define _Static   kMethod_Static
 #define _Const    kMethod_Const
 #define _Coercion kMethod_Coercion
 #define _F(F)   (intptr_t)(F)
 
+typedef struct {
+	kmodshare_t h;
+	kclass_t *cValue;
+} kmodmpi_t;
+
+static void kmodmpi_setup(CTX, struct kmodshare_t *def, int newctx)
+{
+	(void)_ctx;(void)def;(void)newctx;
+}
+
+static void kmodmpi_reftrace(CTX, struct kmodshare_t *baseh)
+{
+	(void)_ctx;(void)baseh;
+}
+
+static void kmodmpi_free(CTX, struct kmodshare_t *baseh)
+{
+	MPI_Finalize();
+}
+
+#define MOD_mpi 19/*TODO*/
+
 static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	int init = 0;
-	MPI_Initialized(&init);
-	if (init) {
-		MPI_Errhandler errfn;
-		//MPI_Comm_create_errhandler(knh_MPI_errhandler, &errfn);
-		MPI_Errhandler_set(MPI_COMM_WORLD, errfn);
-	} else {
-		DBG_P("process is not initialized for MPI: MPI functions are NOT available");
-	}
+	kmodmpi_t *base = (kmodmpi_t*)KCALLOC(sizeof(kmodmpi_t), 1);
+	base->h.name     = "mpi";
+	base->h.setup    = kmodmpi_setup;
+	base->h.reftrace = kmodmpi_reftrace;
+	base->h.free     = kmodmpi_free;
+	Konoha_setModule(MOD_mpi, &base->h, pline);
 
+	MPI_Init(&argc, (char ***)&args);
+	g_comm_world = (kMPIComm *)KMALLOC(sizeof(kMPIComm));
+	g_comm_world->comm = MPI_COMM_WORLD;
 	static KDEFINE_CLASS MPIDef = {
 		"MPI"/*structname*/,
 		CLASS_newid/*cid*/,  0/*cflag*/,
 		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
-		NULL/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
 		0/*packid*/, 0/*packdom*/,
 		0/*init*/,
 		0/*reftrace*/,
@@ -3103,302 +534,152 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 		0/*hashCode*/,
 		0/*initdef*/
 	};
+	static KDEFINE_CLASS MPICommDef = {
+		"MPIComm"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		0/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	static KDEFINE_CLASS MPIRequestDef = {
+		"MPIRequest"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		MPIRequest_ptr_free/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	static KDEFINE_CLASS MPIDataDef = {
+		"MPIData"/*structname*/,
+		CLASS_newid/*cid*/,  0/*cflag*/,
+		0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+		0/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+		0/*packid*/, 0/*packdom*/,
+		0/*init*/,
+		0/*reftrace*/,
+		MPIData_ptr_free/*free*/,
+		0/*fnull*/,
+		0/*p*/, 0/*unbox*/,
+		0/*compareTo*/,
+		0/*getkey*/,
+		0/*hashCode*/,
+		0/*initdef*/
+	};
+	//static KDEFINE_CLASS MPIOpDef = {
+	//	"MPIOp"/*structname*/,
+	//	CLASS_newid/*cid*/,  0/*cflag*/,
+	//	0/*bcid*/, 0/*supcid*/, 0/*cstruct_size*/,
+	//	0/*fields*/, 0/*fsize*/, 0/*fallocsize*/,
+	//	0/*packid*/, 0/*packdom*/,
+	//	0/*init*/,
+	//	0/*reftrace*/,
+	//	0/*free*/,
+	//	0/*fnull*/,
+	//	0/*p*/, 0/*unbox*/,
+	//	0/*compareTo*/,
+	//	0/*getkey*/,
+	//	0/*hashCode*/,
+	//	0/*initdef*/
+	//};
 	kclass_t *CT_MPI = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPIDef, pline);
-#define TY_MPI    (CT_MPI->cid)
-
+	kclass_t *CT_MPIComm = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPICommDef, pline);
+	kclass_t *CT_MPIRequest = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPIRequestDef, pline);
+	kclass_t *CT_MPIData = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPIDataDef, pline);
+	//kclass_t *CT_MPIOp = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MPIOpDef, pline);
+#define TY_MPI         (CT_MPI->cid)
+#define TY_MPIComm     (CT_MPIComm->cid)
+#define TY_MPIRequest  (CT_MPIRequest->cid)
+#define TY_MPIData     (CT_MPIData->cid)
+#define TY_MPIOp       TY_Int //(CT_MPIOp->cid) // TODO
 	intptr_t MethodData[] = {
-		_Public|_Static, _F(k_MPI_Abort), TY_Int, TY_MPI, MN_("MPI_Abort"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Accumulate), TY_Int, TY_MPI, MN_("MPI_Accumulate"), 9, TY_Array, FN_("origin_addr"), TY_Int, FN_("origin_count"), TY_Int, FN_("origin_datatype"), TY_Int, FN_("target_rank"), TY_Int, FN_("target_disp"), TY_Int, FN_("target_count"), TY_Int, FN_("target_datatype"), TY_Int, FN_("op"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Add_error_class), TY_Int, TY_MPI, MN_("MPI_Add_error_class"), 1, TY_Array, FN_("errorclass"), 
-		_Public|_Static, _F(k_MPI_Add_error_code), TY_Int, TY_MPI, MN_("MPI_Add_error_code"), 2, TY_Int, FN_("errorclass"), TY_Array, FN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Add_error_string), TY_Int, TY_MPI, MN_("MPI_Add_error_string"), 2, TY_Int, FN_("errorcode"), TY_Array, FN_("string"), 
-		_Public|_Static, _F(k_MPI_Address), TY_Int, TY_MPI, MN_("MPI_Address"), 2, TY_Array, FN_("location"), TY_Array, FN_("address"), 
-		_Public|_Static, _F(k_MPI_Allgather), TY_Int, TY_MPI, MN_("MPI_Allgather"), 7, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Allgatherv), TY_Int, TY_MPI, MN_("MPI_Allgatherv"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcount"), TY_Array, FN_("displs"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alloc_mem), TY_Int, TY_MPI, MN_("MPI_Alloc_mem"), 3, TY_Int, FN_("size"), TY_Int, FN_("info"), TY_Array, FN_("baseptr"), 
-		_Public|_Static, _F(k_MPI_Allreduce), TY_Int, TY_MPI, MN_("MPI_Allreduce"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoall), TY_Int, TY_MPI, MN_("MPI_Alltoall"), 7, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoallv), TY_Int, TY_MPI, MN_("MPI_Alltoallv"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("sdispls"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("rdispls"), TY_Int, FN_("recvtype"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Alltoallw), TY_Int, TY_MPI, MN_("MPI_Alltoallw"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("sdispls"), TY_Array, FN_("sendtypes"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("rdispls"), TY_Array, FN_("recvtypes"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Attr_delete), TY_Int, TY_MPI, MN_("MPI_Attr_delete"), 2, TY_Int, FN_("comm"), TY_Int, FN_("keyval"), 
-		_Public|_Static, _F(k_MPI_Attr_put), TY_Int, TY_MPI, MN_("MPI_Attr_put"), 3, TY_Int, FN_("comm"), TY_Int, FN_("keyval"), TY_Array, FN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Barrier), TY_Int, TY_MPI, MN_("MPI_Barrier"), 1, TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bcast), TY_Int, TY_MPI, MN_("MPI_Bcast"), 5, TY_Array, FN_("buffer"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bsend), TY_Int, TY_MPI, MN_("MPI_Bsend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Bsend_init), TY_Int, TY_MPI, MN_("MPI_Bsend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Buffer_attach), TY_Int, TY_MPI, MN_("MPI_Buffer_attach"), 2, TY_Array, FN_("buf"), TY_Int, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Buffer_detach), TY_Int, TY_MPI, MN_("MPI_Buffer_detach"), 2, TY_Array, FN_("buf"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Cancel), TY_Int, TY_MPI, MN_("MPI_Cancel"), 1, TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Cart_coords), TY_Int, TY_MPI, MN_("MPI_Cart_coords"), 4, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Int, FN_("maxdims"), TY_Array, FN_("coords"), 
-		_Public|_Static, _F(k_MPI_Cart_create), TY_Int, TY_MPI, MN_("MPI_Cart_create"), 6, TY_Int, FN_("comm_old"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Int, FN_("reorder"), TY_Array, FN_("comm_cart"), 
-		_Public|_Static, _F(k_MPI_Cart_get), TY_Int, TY_MPI, MN_("MPI_Cart_get"), 5, TY_Int, FN_("comm"), TY_Int, FN_("maxdims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Array, FN_("coords"), 
-		_Public|_Static, _F(k_MPI_Cart_map), TY_Int, TY_MPI, MN_("MPI_Cart_map"), 5, TY_Int, FN_("comm"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), TY_Array, FN_("periods"), TY_Array, FN_("newrank"), 
-		_Public|_Static, _F(k_MPI_Cart_rank), TY_Int, TY_MPI, MN_("MPI_Cart_rank"), 3, TY_Int, FN_("comm"), TY_Array, FN_("coords"), TY_Array, FN_("rank"), 
-		_Public|_Static, _F(k_MPI_Cart_shift), TY_Int, TY_MPI, MN_("MPI_Cart_shift"), 5, TY_Int, FN_("comm"), TY_Int, FN_("direction"), TY_Int, FN_("disp"), TY_Array, FN_("rank_source"), TY_Array, FN_("rank_dest"), 
-		_Public|_Static, _F(k_MPI_Cart_sub), TY_Int, TY_MPI, MN_("MPI_Cart_sub"), 3, TY_Int, FN_("comm"), TY_Array, FN_("remain_dims"), TY_Array, FN_("comm_new"), 
-		_Public|_Static, _F(k_MPI_Cartdim_get), TY_Int, TY_MPI, MN_("MPI_Cartdim_get"), 2, TY_Int, FN_("comm"), TY_Array, FN_("ndims"), 
-		_Public|_Static, _F(k_MPI_Close_port), TY_Int, TY_MPI, MN_("MPI_Close_port"), 1, TY_Array, FN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Comm_accept), TY_Int, TY_MPI, MN_("MPI_Comm_accept"), 5, TY_Array, FN_("port_name"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_f2c), TY_Int, TY_MPI, MN_("MPI_Comm_f2c"), 1, TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_c2f), TY_Int, TY_MPI, MN_("MPI_Comm_c2f"), 1, TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_File_f2c), TY_Object, TY_MPI, MN_("MPI_File_f2c"), 1, TY_Int, FN_("file"), 
-		_Public|_Static, _F(k_MPI_File_c2f), TY_Int, TY_MPI, MN_("MPI_File_c2f"), 1, TY_Object, FN_("file"), 
-		_Public|_Static, _F(k_MPI_Group_f2c), TY_Int, TY_MPI, MN_("MPI_Group_f2c"), 1, TY_Int, FN_("group"), 
-		_Public|_Static, _F(k_MPI_Group_c2f), TY_Int, TY_MPI, MN_("MPI_Group_c2f"), 1, TY_Int, FN_("group"), 
-		_Public|_Static, _F(k_MPI_Info_f2c), TY_Int, TY_MPI, MN_("MPI_Info_f2c"), 1, TY_Int, FN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_c2f), TY_Int, TY_MPI, MN_("MPI_Info_c2f"), 1, TY_Int, FN_("info"), 
-		_Public|_Static, _F(k_MPI_Op_f2c), TY_Int, TY_MPI, MN_("MPI_Op_f2c"), 1, TY_Int, FN_("op"), 
-		_Public|_Static, _F(k_MPI_Op_c2f), TY_Int, TY_MPI, MN_("MPI_Op_c2f"), 1, TY_Int, FN_("op"), 
-		_Public|_Static, _F(k_MPI_Request_f2c), TY_Int, TY_MPI, MN_("MPI_Request_f2c"), 1, TY_Int, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Request_c2f), TY_Int, TY_MPI, MN_("MPI_Request_c2f"), 1, TY_Int, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Type_f2c), TY_Int, TY_MPI, MN_("MPI_Type_f2c"), 1, TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_c2f), TY_Int, TY_MPI, MN_("MPI_Type_c2f"), 1, TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Win_f2c), TY_Int, TY_MPI, MN_("MPI_Win_f2c"), 1, TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_c2f), TY_Int, TY_MPI, MN_("MPI_Win_c2f"), 1, TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Comm_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_call_errhandler"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Comm_compare), TY_Int, TY_MPI, MN_("MPI_Comm_compare"), 3, TY_Int, FN_("comm1"), TY_Int, FN_("comm2"), TY_Array, FN_("result"), 
-		_Public|_Static, _F(k_MPI_Comm_connect), TY_Int, TY_MPI, MN_("MPI_Comm_connect"), 5, TY_Array, FN_("port_name"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_create), TY_Int, TY_MPI, MN_("MPI_Comm_create"), 3, TY_Int, FN_("comm"), TY_Int, FN_("group"), TY_Array, FN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_create_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_create_keyval"), 4, TY_Array, FN_("comm_copy_attr_fn"), TY_Array, FN_("comm_delete_attr_fn"), TY_Array, FN_("comm_keyval"), TY_Array, FN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Comm_delete_attr), TY_Int, TY_MPI, MN_("MPI_Comm_delete_attr"), 2, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), 
-		_Public|_Static, _F(k_MPI_Comm_disconnect), TY_Int, TY_MPI, MN_("MPI_Comm_disconnect"), 1, TY_Array, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_dup), TY_Int, TY_MPI, MN_("MPI_Comm_dup"), 2, TY_Int, FN_("comm"), TY_Array, FN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_free), TY_Int, TY_MPI, MN_("MPI_Comm_free"), 1, TY_Array, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Comm_free_keyval), TY_Int, TY_MPI, MN_("MPI_Comm_free_keyval"), 1, TY_Array, FN_("comm_keyval"), 
-		_Public|_Static, _F(k_MPI_Comm_get_attr), TY_Int, TY_MPI, MN_("MPI_Comm_get_attr"), 4, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Comm_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_get_errhandler"), 2, TY_Int, FN_("comm"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_get_name), TY_Int, TY_MPI, MN_("MPI_Comm_get_name"), 3, TY_Int, FN_("comm"), TY_Array, FN_("comm_name"), TY_Array, FN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Comm_get_parent), TY_Int, TY_MPI, MN_("MPI_Comm_get_parent"), 1, TY_Array, FN_("parent"), 
-		_Public|_Static, _F(k_MPI_Comm_group), TY_Int, TY_MPI, MN_("MPI_Comm_group"), 2, TY_Int, FN_("comm"), TY_Array, FN_("group"), 
-		_Public|_Static, _F(k_MPI_Comm_join), TY_Int, TY_MPI, MN_("MPI_Comm_join"), 2, TY_Int, FN_("fd"), TY_Array, FN_("intercomm"), 
-		_Public|_Static, _F(k_MPI_Comm_rank), TY_Int, TY_MPI, MN_("MPI_Comm_rank"), 2, TY_Int, FN_("comm"), TY_Array, FN_("rank"), 
-		_Public|_Static, _F(k_MPI_Comm_remote_group), TY_Int, TY_MPI, MN_("MPI_Comm_remote_group"), 2, TY_Int, FN_("comm"), TY_Array, FN_("group"), 
-		_Public|_Static, _F(k_MPI_Comm_remote_size), TY_Int, TY_MPI, MN_("MPI_Comm_remote_size"), 2, TY_Int, FN_("comm"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Comm_set_attr), TY_Int, TY_MPI, MN_("MPI_Comm_set_attr"), 3, TY_Int, FN_("comm"), TY_Int, FN_("comm_keyval"), TY_Array, FN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Comm_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Comm_set_errhandler"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Comm_set_name), TY_Int, TY_MPI, MN_("MPI_Comm_set_name"), 2, TY_Int, FN_("comm"), TY_Array, FN_("comm_name"), 
-		_Public|_Static, _F(k_MPI_Comm_size), TY_Int, TY_MPI, MN_("MPI_Comm_size"), 2, TY_Int, FN_("comm"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Comm_spawn), TY_Int, TY_MPI, MN_("MPI_Comm_spawn"), 8, TY_Array, FN_("command"), TY_Array, FN_("argv"), TY_Int, FN_("maxprocs"), TY_Int, FN_("info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("intercomm"), TY_Array, FN_("array_of_errcodes"), 
-		_Public|_Static, _F(k_MPI_Comm_spawn_multiple), TY_Int, TY_MPI, MN_("MPI_Comm_spawn_multiple"), 9, TY_Int, FN_("count"), TY_Array, FN_("array_of_commands"), TY_Array, FN_("array_of_argv"), TY_Array, FN_("array_of_maxprocs"), TY_Array, FN_("array_of_info"), TY_Int, FN_("root"), TY_Int, FN_("comm"), TY_Array, FN_("intercomm"), TY_Array, FN_("array_of_errcodes"), 
-		_Public|_Static, _F(k_MPI_Comm_split), TY_Int, TY_MPI, MN_("MPI_Comm_split"), 4, TY_Int, FN_("comm"), TY_Int, FN_("color"), TY_Int, FN_("key"), TY_Array, FN_("newcomm"), 
-		_Public|_Static, _F(k_MPI_Comm_test_inter), TY_Int, TY_MPI, MN_("MPI_Comm_test_inter"), 2, TY_Int, FN_("comm"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Dims_create), TY_Int, TY_MPI, MN_("MPI_Dims_create"), 3, TY_Int, FN_("nnodes"), TY_Int, FN_("ndims"), TY_Array, FN_("dims"), 
-		_Public|_Static, _F(k_MPI_Errhandler_create), TY_Int, TY_MPI, MN_("MPI_Errhandler_create"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_free), TY_Int, TY_MPI, MN_("MPI_Errhandler_free"), 1, TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_get), TY_Int, TY_MPI, MN_("MPI_Errhandler_get"), 2, TY_Int, FN_("comm"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Errhandler_set), TY_Int, TY_MPI, MN_("MPI_Errhandler_set"), 2, TY_Int, FN_("comm"), TY_Int, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Error_class), TY_Int, TY_MPI, MN_("MPI_Error_class"), 2, TY_Int, FN_("errorcode"), TY_Array, FN_("errorclass"), 
-		_Public|_Static, _F(k_MPI_Error_string), TY_Int, TY_MPI, MN_("MPI_Error_string"), 3, TY_Int, FN_("errorcode"), TY_Array, FN_("string"), TY_Array, FN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Exscan), TY_Int, TY_MPI, MN_("MPI_Exscan"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_File_call_errhandler), TY_Int, TY_MPI, MN_("MPI_File_call_errhandler"), 2, TY_Object, FN_("fh"), TY_Int, FN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_File_close), TY_Int, TY_MPI, MN_("MPI_File_close"), 1, TY_Array, FN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_create_errhandler), TY_Int, TY_MPI, MN_("MPI_File_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_delete), TY_Int, TY_MPI, MN_("MPI_File_delete"), 2, TY_Array, FN_("filename"), TY_Int, FN_("info"), 
-		_Public|_Static, _F(k_MPI_File_get_amode), TY_Int, TY_MPI, MN_("MPI_File_get_amode"), 2, TY_Object, FN_("fh"), TY_Array, FN_("amode"), 
-		_Public|_Static, _F(k_MPI_File_get_atomicity), TY_Int, TY_MPI, MN_("MPI_File_get_atomicity"), 2, TY_Object, FN_("fh"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_File_get_byte_offset), TY_Int, TY_MPI, MN_("MPI_File_get_byte_offset"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("disp"), 
-		_Public|_Static, _F(k_MPI_File_get_errhandler), TY_Int, TY_MPI, MN_("MPI_File_get_errhandler"), 2, TY_Object, FN_("file"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_get_group), TY_Int, TY_MPI, MN_("MPI_File_get_group"), 2, TY_Object, FN_("fh"), TY_Array, FN_("group"), 
-		_Public|_Static, _F(k_MPI_File_get_info), TY_Int, TY_MPI, MN_("MPI_File_get_info"), 2, TY_Object, FN_("fh"), TY_Array, FN_("info_used"), 
-		_Public|_Static, _F(k_MPI_File_get_position), TY_Int, TY_MPI, MN_("MPI_File_get_position"), 2, TY_Object, FN_("fh"), TY_Array, FN_("offset"), 
-		_Public|_Static, _F(k_MPI_File_get_position_shared), TY_Int, TY_MPI, MN_("MPI_File_get_position_shared"), 2, TY_Object, FN_("fh"), TY_Array, FN_("offset"), 
-		_Public|_Static, _F(k_MPI_File_get_size), TY_Int, TY_MPI, MN_("MPI_File_get_size"), 2, TY_Object, FN_("fh"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_File_get_type_extent), TY_Int, TY_MPI, MN_("MPI_File_get_type_extent"), 3, TY_Object, FN_("fh"), TY_Int, FN_("datatype"), TY_Array, FN_("extent"), 
-		_Public|_Static, _F(k_MPI_File_get_view), TY_Int, TY_MPI, MN_("MPI_File_get_view"), 5, TY_Object, FN_("fh"), TY_Array, FN_("disp"), TY_Array, FN_("etype"), TY_Array, FN_("filetype"), TY_Array, FN_("datarep"), 
-		_Public|_Static, _F(k_MPI_File_iread), TY_Int, TY_MPI, MN_("MPI_File_iread"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iread_at), TY_Int, TY_MPI, MN_("MPI_File_iread_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iread_shared), TY_Int, TY_MPI, MN_("MPI_File_iread_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iwrite), TY_Int, TY_MPI, MN_("MPI_File_iwrite"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_File_iwrite_at), TY_Int, TY_MPI, MN_("MPI_File_iwrite_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_File_open), TY_Int, TY_MPI, MN_("MPI_File_open"), 5, TY_Int, FN_("comm"), TY_Array, FN_("filename"), TY_Int, FN_("amode"), TY_Int, FN_("info"), TY_Array, FN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_preallocate), TY_Int, TY_MPI, MN_("MPI_File_preallocate"), 2, TY_Object, FN_("fh"), TY_Int, FN_("size"), 
-		_Public|_Static, _F(k_MPI_File_read), TY_Int, TY_MPI, MN_("MPI_File_read"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_all), TY_Int, TY_MPI, MN_("MPI_File_read_all"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_all_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at), TY_Int, TY_MPI, MN_("MPI_File_read_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all), TY_Int, TY_MPI, MN_("MPI_File_read_at_all"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_begin"), 5, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_read_at_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered), TY_Int, TY_MPI, MN_("MPI_File_read_ordered"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_read_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_read_ordered_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_read_shared), TY_Int, TY_MPI, MN_("MPI_File_read_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_seek), TY_Int, TY_MPI, MN_("MPI_File_seek"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Int, FN_("whence"), 
-		_Public|_Static, _F(k_MPI_File_seek_shared), TY_Int, TY_MPI, MN_("MPI_File_seek_shared"), 3, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Int, FN_("whence"), 
-		_Public|_Static, _F(k_MPI_File_set_atomicity), TY_Int, TY_MPI, MN_("MPI_File_set_atomicity"), 2, TY_Object, FN_("fh"), TY_Int, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_File_set_errhandler), TY_Int, TY_MPI, MN_("MPI_File_set_errhandler"), 2, TY_Object, FN_("file"), TY_Int, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_File_set_info), TY_Int, TY_MPI, MN_("MPI_File_set_info"), 2, TY_Object, FN_("fh"), TY_Int, FN_("info"), 
-		_Public|_Static, _F(k_MPI_File_set_size), TY_Int, TY_MPI, MN_("MPI_File_set_size"), 2, TY_Object, FN_("fh"), TY_Int, FN_("size"), 
-		_Public|_Static, _F(k_MPI_File_set_view), TY_Int, TY_MPI, MN_("MPI_File_set_view"), 6, TY_Object, FN_("fh"), TY_Int, FN_("disp"), TY_Int, FN_("etype"), TY_Int, FN_("filetype"), TY_Array, FN_("datarep"), TY_Int, FN_("info"), 
-		_Public|_Static, _F(k_MPI_File_sync), TY_Int, TY_MPI, MN_("MPI_File_sync"), 1, TY_Object, FN_("fh"), 
-		_Public|_Static, _F(k_MPI_File_write), TY_Int, TY_MPI, MN_("MPI_File_write"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_all), TY_Int, TY_MPI, MN_("MPI_File_write_all"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_all_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at), TY_Int, TY_MPI, MN_("MPI_File_write_at"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all), TY_Int, TY_MPI, MN_("MPI_File_write_at_all"), 6, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all_begin), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_begin"), 5, TY_Object, FN_("fh"), TY_Int, FN_("offset"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_at_all_end), TY_Int, TY_MPI, MN_("MPI_File_write_at_all_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered), TY_Int, TY_MPI, MN_("MPI_File_write_ordered"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered_begin), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_begin"), 4, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_File_write_ordered_end), TY_Int, TY_MPI, MN_("MPI_File_write_ordered_end"), 3, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_File_write_shared), TY_Int, TY_MPI, MN_("MPI_File_write_shared"), 5, TY_Object, FN_("fh"), TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Finalize), TY_Int, TY_MPI, MN_("MPI_Finalize"), 0, 
-		_Public|_Static, _F(k_MPI_Finalized), TY_Int, TY_MPI, MN_("MPI_Finalized"), 1, TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Free_mem), TY_Int, TY_MPI, MN_("MPI_Free_mem"), 1, TY_Array, FN_("base"), 
-		_Public|_Static, _F(k_MPI_Gather), TY_Int, TY_MPI, MN_("MPI_Gather"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Gatherv), TY_Int, TY_MPI, MN_("MPI_Gatherv"), 9, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Array, FN_("displs"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Get_address), TY_Int, TY_MPI, MN_("MPI_Get_address"), 2, TY_Array, FN_("location"), TY_Array, FN_("address"), 
-		_Public|_Static, _F(k_MPI_Get_count), TY_Int, TY_MPI, MN_("MPI_Get_count"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Array, FN_("count"), 
-		_Public|_Static, _F(k_MPI_Get_elements), TY_Int, TY_MPI, MN_("MPI_Get_elements"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Array, FN_("count"), 
-		_Public|_Static, _F(k_MPI_Get_processor_name), TY_Int, TY_MPI, MN_("MPI_Get_processor_name"), 2, TY_Array, FN_("name"), TY_Array, FN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Get_version), TY_Int, TY_MPI, MN_("MPI_Get_version"), 2, TY_Array, FN_("version"), TY_Array, FN_("subversion"), 
-		_Public|_Static, _F(k_MPI_Graph_create), TY_Int, TY_MPI, MN_("MPI_Graph_create"), 6, TY_Int, FN_("comm_old"), TY_Int, FN_("nnodes"), TY_Array, FN_("index"), TY_Array, FN_("edges"), TY_Int, FN_("reorder"), TY_Array, FN_("comm_graph"), 
-		_Public|_Static, _F(k_MPI_Graph_get), TY_Int, TY_MPI, MN_("MPI_Graph_get"), 5, TY_Int, FN_("comm"), TY_Int, FN_("maxindex"), TY_Int, FN_("maxedges"), TY_Array, FN_("index"), TY_Array, FN_("edges"), 
-		_Public|_Static, _F(k_MPI_Graph_map), TY_Int, TY_MPI, MN_("MPI_Graph_map"), 5, TY_Int, FN_("comm"), TY_Int, FN_("nnodes"), TY_Array, FN_("index"), TY_Array, FN_("edges"), TY_Array, FN_("newrank"), 
-		_Public|_Static, _F(k_MPI_Graph_neighbors), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors"), 4, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Int, FN_("maxneighbors"), TY_Array, FN_("neighbors"), 
-		_Public|_Static, _F(k_MPI_Graph_neighbors_count), TY_Int, TY_MPI, MN_("MPI_Graph_neighbors_count"), 3, TY_Int, FN_("comm"), TY_Int, FN_("rank"), TY_Array, FN_("nneighbors"), 
-		_Public|_Static, _F(k_MPI_Graphdims_get), TY_Int, TY_MPI, MN_("MPI_Graphdims_get"), 3, TY_Int, FN_("comm"), TY_Array, FN_("nnodes"), TY_Array, FN_("nedges"), 
-		_Public|_Static, _F(k_MPI_Grequest_complete), TY_Int, TY_MPI, MN_("MPI_Grequest_complete"), 1, TY_Int, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Grequest_start), TY_Int, TY_MPI, MN_("MPI_Grequest_start"), 5, TY_Array, FN_("query_fn"), TY_Array, FN_("free_fn"), TY_Array, FN_("cancel_fn"), TY_Array, FN_("extra_state"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Group_compare), TY_Int, TY_MPI, MN_("MPI_Group_compare"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("result"), 
-		_Public|_Static, _F(k_MPI_Group_difference), TY_Int, TY_MPI, MN_("MPI_Group_difference"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_excl), TY_Int, TY_MPI, MN_("MPI_Group_excl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranks"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_free), TY_Int, TY_MPI, MN_("MPI_Group_free"), 1, TY_Array, FN_("group"), 
-		_Public|_Static, _F(k_MPI_Group_incl), TY_Int, TY_MPI, MN_("MPI_Group_incl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranks"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_intersection), TY_Int, TY_MPI, MN_("MPI_Group_intersection"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_range_excl), TY_Int, TY_MPI, MN_("MPI_Group_range_excl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranges"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_range_incl), TY_Int, TY_MPI, MN_("MPI_Group_range_incl"), 4, TY_Int, FN_("group"), TY_Int, FN_("n"), TY_Array, FN_("ranges"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Group_rank), TY_Int, TY_MPI, MN_("MPI_Group_rank"), 2, TY_Int, FN_("group"), TY_Array, FN_("rank"), 
-		_Public|_Static, _F(k_MPI_Group_size), TY_Int, TY_MPI, MN_("MPI_Group_size"), 2, TY_Int, FN_("group"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Group_translate_ranks), TY_Int, TY_MPI, MN_("MPI_Group_translate_ranks"), 5, TY_Int, FN_("group1"), TY_Int, FN_("n"), TY_Array, FN_("ranks1"), TY_Int, FN_("group2"), TY_Array, FN_("ranks2"), 
-		_Public|_Static, _F(k_MPI_Group_union), TY_Int, TY_MPI, MN_("MPI_Group_union"), 3, TY_Int, FN_("group1"), TY_Int, FN_("group2"), TY_Array, FN_("newgroup"), 
-		_Public|_Static, _F(k_MPI_Ibsend), TY_Int, TY_MPI, MN_("MPI_Ibsend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Info_create), TY_Int, TY_MPI, MN_("MPI_Info_create"), 1, TY_Array, FN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_delete), TY_Int, TY_MPI, MN_("MPI_Info_delete"), 2, TY_Int, FN_("info"), TY_Array, FN_("key"), 
-		_Public|_Static, _F(k_MPI_Info_dup), TY_Int, TY_MPI, MN_("MPI_Info_dup"), 2, TY_Int, FN_("info"), TY_Array, FN_("newinfo"), 
-		_Public|_Static, _F(k_MPI_Info_free), TY_Int, TY_MPI, MN_("MPI_Info_free"), 1, TY_Array, FN_("info"), 
-		_Public|_Static, _F(k_MPI_Info_get), TY_Int, TY_MPI, MN_("MPI_Info_get"), 5, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Int, FN_("valuelen"), TY_Array, FN_("value"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Info_get_nkeys), TY_Int, TY_MPI, MN_("MPI_Info_get_nkeys"), 2, TY_Int, FN_("info"), TY_Array, FN_("nkeys"), 
-		_Public|_Static, _F(k_MPI_Info_get_nthkey), TY_Int, TY_MPI, MN_("MPI_Info_get_nthkey"), 3, TY_Int, FN_("info"), TY_Int, FN_("n"), TY_Array, FN_("key"), 
-		_Public|_Static, _F(k_MPI_Info_get_valuelen), TY_Int, TY_MPI, MN_("MPI_Info_get_valuelen"), 4, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Array, FN_("valuelen"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Info_set), TY_Int, TY_MPI, MN_("MPI_Info_set"), 3, TY_Int, FN_("info"), TY_Array, FN_("key"), TY_Array, FN_("value"), 
-		_Public|_Static, _F(k_MPI_Init), TY_Int, TY_MPI, MN_("MPI_Init"), 2, TY_Array, FN_("argc"), TY_Array, FN_("argv"), 
-		_Public|_Static, _F(k_MPI_Init_thread), TY_Int, TY_MPI, MN_("MPI_Init_thread"), 4, TY_Array, FN_("argc"), TY_Array, FN_("argv"), TY_Int, FN_("required"), TY_Array, FN_("provided"), 
-		_Public|_Static, _F(k_MPI_Initialized), TY_Int, TY_MPI, MN_("MPI_Initialized"), 1, TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Intercomm_create), TY_Int, TY_MPI, MN_("MPI_Intercomm_create"), 6, TY_Int, FN_("local_comm"), TY_Int, FN_("local_leader"), TY_Int, FN_("peer_comm"), TY_Int, FN_("remote_leader"), TY_Int, FN_("tag"), TY_Array, FN_("newintercomm"), 
-		_Public|_Static, _F(k_MPI_Iprobe), TY_Int, TY_MPI, MN_("MPI_Iprobe"), 5, TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Irecv), TY_Int, TY_MPI, MN_("MPI_Irecv"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Irsend), TY_Int, TY_MPI, MN_("MPI_Irsend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Is_thread_main), TY_Int, TY_MPI, MN_("MPI_Is_thread_main"), 1, TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Isend), TY_Int, TY_MPI, MN_("MPI_Isend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Issend), TY_Int, TY_MPI, MN_("MPI_Issend"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Keyval_create), TY_Int, TY_MPI, MN_("MPI_Keyval_create"), 4, TY_Array, FN_("copy_fn"), TY_Array, FN_("delete_fn"), TY_Array, FN_("keyval"), TY_Array, FN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Keyval_free), TY_Int, TY_MPI, MN_("MPI_Keyval_free"), 1, TY_Array, FN_("keyval"), 
-		_Public|_Static, _F(k_MPI_Lookup_name), TY_Int, TY_MPI, MN_("MPI_Lookup_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Op_create), TY_Int, TY_MPI, MN_("MPI_Op_create"), 3, TY_Array, FN_("function"), TY_Int, FN_("commute"), TY_Array, FN_("op"), 
-		_Public|_Static, _F(k_MPI_Op_free), TY_Int, TY_MPI, MN_("MPI_Op_free"), 1, TY_Array, FN_("op"), 
-		_Public|_Static, _F(k_MPI_Open_port), TY_Int, TY_MPI, MN_("MPI_Open_port"), 2, TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Pack), TY_Int, TY_MPI, MN_("MPI_Pack"), 7, TY_Array, FN_("inbuf"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("outbuf"), TY_Int, FN_("outsize"), TY_Array, FN_("position"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Pack_external), TY_Int, TY_MPI, MN_("MPI_Pack_external"), 7, TY_Array, FN_("datarep"), TY_Array, FN_("inbuf"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("outbuf"), TY_Int, FN_("outsize"), TY_Array, FN_("position"), 
-		_Public|_Static, _F(k_MPI_Pack_external_size), TY_Int, TY_MPI, MN_("MPI_Pack_external_size"), 4, TY_Array, FN_("datarep"), TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Pack_size), TY_Int, TY_MPI, MN_("MPI_Pack_size"), 4, TY_Int, FN_("incount"), TY_Int, FN_("datatype"), TY_Int, FN_("comm"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Probe), TY_Int, TY_MPI, MN_("MPI_Probe"), 4, TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Publish_name), TY_Int, TY_MPI, MN_("MPI_Publish_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Query_thread), TY_Int, TY_MPI, MN_("MPI_Query_thread"), 1, TY_Array, FN_("provided"), 
-		_Public|_Static, _F(k_MPI_Recv), TY_Int, TY_MPI, MN_("MPI_Recv"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Recv_init), TY_Int, TY_MPI, MN_("MPI_Recv_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("source"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Reduce), TY_Int, TY_MPI, MN_("MPI_Reduce"), 7, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Reduce_local), TY_Int, TY_MPI, MN_("MPI_Reduce_local"), 5, TY_Array, FN_("inbuf"), TY_Array, FN_("inoutbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), 
-		_Public|_Static, _F(k_MPI_Reduce_scatter), TY_Int, TY_MPI, MN_("MPI_Reduce_scatter"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Array, FN_("recvcounts"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Register_datarep), TY_Int, TY_MPI, MN_("MPI_Register_datarep"), 5, TY_Array, FN_("datarep"), TY_Array, FN_("read_conversion_fn"), TY_Array, FN_("write_conversion_fn"), TY_Array, FN_("dtype_file_extent_fn"), TY_Array, FN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Request_free), TY_Int, TY_MPI, MN_("MPI_Request_free"), 1, TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Request_get_status), TY_Int, TY_MPI, MN_("MPI_Request_get_status"), 3, TY_Int, FN_("request"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Rsend), TY_Int, TY_MPI, MN_("MPI_Rsend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Rsend_init), TY_Int, TY_MPI, MN_("MPI_Rsend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Scan), TY_Int, TY_MPI, MN_("MPI_Scan"), 6, TY_Array, FN_("sendbuf"), TY_Array, FN_("recvbuf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("op"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Scatter), TY_Int, TY_MPI, MN_("MPI_Scatter"), 8, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Scatterv), TY_Int, TY_MPI, MN_("MPI_Scatterv"), 9, TY_Array, FN_("sendbuf"), TY_Array, FN_("sendcounts"), TY_Array, FN_("displs"), TY_Int, FN_("sendtype"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("root"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Send), TY_Int, TY_MPI, MN_("MPI_Send"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Send_init), TY_Int, TY_MPI, MN_("MPI_Send_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		//_Public|_Static, _F(k_MPI_Sendrecv), TY_Int, TY_MPI, MN_("MPI_Sendrecv"), 12, TY_Array, FN_("sendbuf"), TY_Int, FN_("sendcount"), TY_Int, FN_("sendtype"), TY_Int, FN_("dest"), TY_Int, FN_("sendtag"), TY_Array, FN_("recvbuf"), TY_Int, FN_("recvcount"), TY_Int, FN_("recvtype"), TY_Int, FN_("source"), TY_Int, FN_("recvtag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Sendrecv_replace), TY_Int, TY_MPI, MN_("MPI_Sendrecv_replace"), 9, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("sendtag"), TY_Int, FN_("source"), TY_Int, FN_("recvtag"), TY_Int, FN_("comm"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Ssend), TY_Int, TY_MPI, MN_("MPI_Ssend"), 6, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Ssend_init), TY_Int, TY_MPI, MN_("MPI_Ssend_init"), 7, TY_Array, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("datatype"), TY_Int, FN_("dest"), TY_Int, FN_("tag"), TY_Int, FN_("comm"), TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Start), TY_Int, TY_MPI, MN_("MPI_Start"), 1, TY_Array, FN_("request"), 
-		_Public|_Static, _F(k_MPI_Startall), TY_Int, TY_MPI, MN_("MPI_Startall"), 2, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), 
-		_Public|_Static, _F(k_MPI_Status_set_cancelled), TY_Int, TY_MPI, MN_("MPI_Status_set_cancelled"), 2, TY_Array, FN_("status"), TY_Int, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Status_set_elements), TY_Int, TY_MPI, MN_("MPI_Status_set_elements"), 3, TY_Array, FN_("status"), TY_Int, FN_("datatype"), TY_Int, FN_("count"), 
-		_Public|_Static, _F(k_MPI_Test), TY_Int, TY_MPI, MN_("MPI_Test"), 3, TY_Array, FN_("request"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Test_cancelled), TY_Int, TY_MPI, MN_("MPI_Test_cancelled"), 2, TY_Array, FN_("status"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Testall), TY_Int, TY_MPI, MN_("MPI_Testall"), 4, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("flag"), TY_Array, FN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Testany), TY_Int, TY_MPI, MN_("MPI_Testany"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("index"), TY_Array, FN_("flag"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Testsome), TY_Int, TY_MPI, MN_("MPI_Testsome"), 5, TY_Int, FN_("incount"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("outcount"), TY_Array, FN_("array_of_indices"), TY_Array, FN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Topo_test), TY_Int, TY_MPI, MN_("MPI_Topo_test"), 2, TY_Int, FN_("comm"), TY_Array, FN_("top_type"), 
-		_Public|_Static, _F(k_MPI_Type_commit), TY_Int, TY_MPI, MN_("MPI_Type_commit"), 1, TY_Array, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_contiguous), TY_Int, TY_MPI, MN_("MPI_Type_contiguous"), 3, TY_Int, FN_("count"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_darray), TY_Int, TY_MPI, MN_("MPI_Type_create_darray"), 10, TY_Int, FN_("size"), TY_Int, FN_("rank"), TY_Int, FN_("ndims"), TY_Array, FN_("array_of_gsizes"), TY_Array, FN_("array_of_distribs"), TY_Array, FN_("array_of_dargs"), TY_Array, FN_("array_of_psizes"), TY_Int, FN_("order"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_create_hindexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_hvector), TY_Int, TY_MPI, MN_("MPI_Type_create_hvector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_indexed_block), TY_Int, TY_MPI, MN_("MPI_Type_create_indexed_block"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_keyval), TY_Int, TY_MPI, MN_("MPI_Type_create_keyval"), 4, TY_Array, FN_("type_copy_attr_fn"), TY_Array, FN_("type_delete_attr_fn"), TY_Array, FN_("type_keyval"), TY_Array, FN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Type_create_resized), TY_Int, TY_MPI, MN_("MPI_Type_create_resized"), 4, TY_Int, FN_("oldtype"), TY_Int, FN_("lb"), TY_Int, FN_("extent"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_struct), TY_Int, TY_MPI, MN_("MPI_Type_create_struct"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Array, FN_("array_of_types"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_create_subarray), TY_Int, TY_MPI, MN_("MPI_Type_create_subarray"), 7, TY_Int, FN_("ndims"), TY_Array, FN_("array_of_sizes"), TY_Array, FN_("array_of_subsizes"), TY_Array, FN_("array_of_starts"), TY_Int, FN_("order"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_delete_attr), TY_Int, TY_MPI, MN_("MPI_Type_delete_attr"), 2, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), 
-		_Public|_Static, _F(k_MPI_Type_dup), TY_Int, TY_MPI, MN_("MPI_Type_dup"), 2, TY_Int, FN_("type"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_extent), TY_Int, TY_MPI, MN_("MPI_Type_extent"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("extent"), 
-		_Public|_Static, _F(k_MPI_Type_free), TY_Int, TY_MPI, MN_("MPI_Type_free"), 1, TY_Array, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Type_free_keyval), TY_Int, TY_MPI, MN_("MPI_Type_free_keyval"), 1, TY_Array, FN_("type_keyval"), 
-		_Public|_Static, _F(k_MPI_Type_get_attr), TY_Int, TY_MPI, MN_("MPI_Type_get_attr"), 4, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Type_get_contents), TY_Int, TY_MPI, MN_("MPI_Type_get_contents"), 7, TY_Int, FN_("datatype"), TY_Int, FN_("max_integers"), TY_Int, FN_("max_addresses"), TY_Int, FN_("max_datatypes"), TY_Array, FN_("array_of_integers"), TY_Array, FN_("array_of_addresses"), TY_Array, FN_("array_of_datatypes"), 
-		_Public|_Static, _F(k_MPI_Type_get_envelope), TY_Int, TY_MPI, MN_("MPI_Type_get_envelope"), 5, TY_Int, FN_("datatype"), TY_Array, FN_("num_integers"), TY_Array, FN_("num_addresses"), TY_Array, FN_("num_datatypes"), TY_Array, FN_("combiner"), 
-		_Public|_Static, _F(k_MPI_Type_get_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_extent"), 3, TY_Int, FN_("datatype"), TY_Array, FN_("lb"), TY_Array, FN_("extent"), 
-		_Public|_Static, _F(k_MPI_Type_get_name), TY_Int, TY_MPI, MN_("MPI_Type_get_name"), 3, TY_Int, FN_("type"), TY_Array, FN_("type_name"), TY_Array, FN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Type_get_true_extent), TY_Int, TY_MPI, MN_("MPI_Type_get_true_extent"), 3, TY_Int, FN_("datatype"), TY_Array, FN_("true_lb"), TY_Array, FN_("true_extent"), 
-		_Public|_Static, _F(k_MPI_Type_hindexed), TY_Int, TY_MPI, MN_("MPI_Type_hindexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_hvector), TY_Int, TY_MPI, MN_("MPI_Type_hvector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_indexed), TY_Int, TY_MPI, MN_("MPI_Type_indexed"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_lb), TY_Int, TY_MPI, MN_("MPI_Type_lb"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("displacement"), 
-		_Public|_Static, _F(k_MPI_Type_match_size), TY_Int, TY_MPI, MN_("MPI_Type_match_size"), 3, TY_Int, FN_("typeclass"), TY_Int, FN_("size"), TY_Array, FN_("type"), 
-		_Public|_Static, _F(k_MPI_Type_set_attr), TY_Int, TY_MPI, MN_("MPI_Type_set_attr"), 3, TY_Int, FN_("type"), TY_Int, FN_("type_keyval"), TY_Array, FN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Type_set_name), TY_Int, TY_MPI, MN_("MPI_Type_set_name"), 2, TY_Int, FN_("type"), TY_Array, FN_("type_name"), 
-		_Public|_Static, _F(k_MPI_Type_size), TY_Int, TY_MPI, MN_("MPI_Type_size"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("size"), 
-		_Public|_Static, _F(k_MPI_Type_struct), TY_Int, TY_MPI, MN_("MPI_Type_struct"), 5, TY_Int, FN_("count"), TY_Array, FN_("array_of_blocklengths"), TY_Array, FN_("array_of_displacements"), TY_Array, FN_("array_of_types"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Type_ub), TY_Int, TY_MPI, MN_("MPI_Type_ub"), 2, TY_Int, FN_("datatype"), TY_Array, FN_("displacement"), 
-		_Public|_Static, _F(k_MPI_Type_vector), TY_Int, TY_MPI, MN_("MPI_Type_vector"), 5, TY_Int, FN_("count"), TY_Int, FN_("blocklength"), TY_Int, FN_("stride"), TY_Int, FN_("oldtype"), TY_Array, FN_("newtype"), 
-		_Public|_Static, _F(k_MPI_Unpack), TY_Int, TY_MPI, MN_("MPI_Unpack"), 7, TY_Array, FN_("inbuf"), TY_Int, FN_("insize"), TY_Array, FN_("position"), TY_Array, FN_("outbuf"), TY_Int, FN_("outcount"), TY_Int, FN_("datatype"), TY_Int, FN_("comm"), 
-		_Public|_Static, _F(k_MPI_Unpack_external), TY_Int, TY_MPI, MN_("MPI_Unpack_external"), 7, TY_Array, FN_("datarep"), TY_Array, FN_("inbuf"), TY_Int, FN_("insize"), TY_Array, FN_("position"), TY_Array, FN_("outbuf"), TY_Int, FN_("outcount"), TY_Int, FN_("datatype"), 
-		_Public|_Static, _F(k_MPI_Unpublish_name), TY_Int, TY_MPI, MN_("MPI_Unpublish_name"), 3, TY_Array, FN_("service_name"), TY_Int, FN_("info"), TY_Array, FN_("port_name"), 
-		_Public|_Static, _F(k_MPI_Wait), TY_Int, TY_MPI, MN_("MPI_Wait"), 2, TY_Array, FN_("request"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Waitall), TY_Int, TY_MPI, MN_("MPI_Waitall"), 3, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Waitany), TY_Int, TY_MPI, MN_("MPI_Waitany"), 4, TY_Int, FN_("count"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("index"), TY_Array, FN_("status"), 
-		_Public|_Static, _F(k_MPI_Waitsome), TY_Int, TY_MPI, MN_("MPI_Waitsome"), 5, TY_Int, FN_("incount"), TY_Array, FN_("array_of_requests"), TY_Array, FN_("outcount"), TY_Array, FN_("array_of_indices"), TY_Array, FN_("array_of_statuses"), 
-		_Public|_Static, _F(k_MPI_Win_call_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_call_errhandler"), 2, TY_Int, FN_("win"), TY_Int, FN_("errorcode"), 
-		_Public|_Static, _F(k_MPI_Win_create_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_create_errhandler"), 2, TY_Array, FN_("function"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_create_keyval), TY_Int, TY_MPI, MN_("MPI_Win_create_keyval"), 4, TY_Array, FN_("win_copy_attr_fn"), TY_Array, FN_("win_delete_attr_fn"), TY_Array, FN_("win_keyval"), TY_Array, FN_("extra_state"), 
-		_Public|_Static, _F(k_MPI_Win_delete_attr), TY_Int, TY_MPI, MN_("MPI_Win_delete_attr"), 2, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), 
-		_Public|_Static, _F(k_MPI_Win_fence), TY_Int, TY_MPI, MN_("MPI_Win_fence"), 2, TY_Int, FN_("assert"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_free), TY_Int, TY_MPI, MN_("MPI_Win_free"), 1, TY_Array, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_free_keyval), TY_Int, TY_MPI, MN_("MPI_Win_free_keyval"), 1, TY_Array, FN_("win_keyval"), 
-		_Public|_Static, _F(k_MPI_Win_get_attr), TY_Int, TY_MPI, MN_("MPI_Win_get_attr"), 4, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), TY_Array, FN_("attribute_val"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Win_get_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_get_errhandler"), 2, TY_Int, FN_("win"), TY_Array, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_get_name), TY_Int, TY_MPI, MN_("MPI_Win_get_name"), 3, TY_Int, FN_("win"), TY_Array, FN_("win_name"), TY_Array, FN_("resultlen"), 
-		_Public|_Static, _F(k_MPI_Win_lock), TY_Int, TY_MPI, MN_("MPI_Win_lock"), 4, TY_Int, FN_("lock_type"), TY_Int, FN_("rank"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_post), TY_Int, TY_MPI, MN_("MPI_Win_post"), 3, TY_Int, FN_("group"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_set_attr), TY_Int, TY_MPI, MN_("MPI_Win_set_attr"), 3, TY_Int, FN_("win"), TY_Int, FN_("win_keyval"), TY_Array, FN_("attribute_val"), 
-		_Public|_Static, _F(k_MPI_Win_set_errhandler), TY_Int, TY_MPI, MN_("MPI_Win_set_errhandler"), 2, TY_Int, FN_("win"), TY_Int, FN_("errhandler"), 
-		_Public|_Static, _F(k_MPI_Win_set_name), TY_Int, TY_MPI, MN_("MPI_Win_set_name"), 2, TY_Int, FN_("win"), TY_Array, FN_("win_name"), 
-		_Public|_Static, _F(k_MPI_Win_start), TY_Int, TY_MPI, MN_("MPI_Win_start"), 3, TY_Int, FN_("group"), TY_Int, FN_("assert"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_test), TY_Int, TY_MPI, MN_("MPI_Win_test"), 2, TY_Int, FN_("win"), TY_Array, FN_("flag"), 
-		_Public|_Static, _F(k_MPI_Win_unlock), TY_Int, TY_MPI, MN_("MPI_Win_unlock"), 2, TY_Int, FN_("rank"), TY_Int, FN_("win"), 
-		_Public|_Static, _F(k_MPI_Win_wait), TY_Int, TY_MPI, MN_("MPI_Win_wait"), 1, TY_Int, FN_("win"), 
+		/* class MPI */
+		_Public|_Static, _F(MPI_getWtime), TY_Float, TY_MPI, MN_("getWtime"), 0,
 
+		/* class MPIComm */
+		_Public|_Static, _F(MPIComm_getWorld), TY_MPIComm, TY_MPIComm, MN_("getWorld"), 0,
+		_Public, _F(MPIComm_getRank), TY_Int, TY_MPIComm, MN_("getRank"), 0,
+		_Public, _F(MPIComm_getSize), TY_Int, TY_MPIComm, MN_("getSize"), 0,
+		_Public, _F(MPIComm_barrier), TY_Int, TY_MPIComm, MN_("barrier"), 0,
+		_Public, _F(MPIComm_send), TY_Boolean, TY_MPIComm, MN_("send"), 4,
+			TY_MPIData, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("dest"), TY_Int, FN_("tag"),
+		_Public, _F(MPIComm_recv), TY_Boolean, TY_MPIComm, MN_("recv"), 4,
+			TY_MPIData, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("src"), TY_Int, FN_("tag"),
+		_Public, _F(MPIComm_iSend), TY_MPIRequest, TY_MPIComm, MN_("iSend"), 4,
+			TY_MPIData, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("dest"), TY_Int, FN_("tag"),
+		_Public, _F(MPIComm_iRecv), TY_MPIRequest, TY_MPIComm, MN_("iRecv"), 4,
+			TY_MPIData, FN_("buf"), TY_Int, FN_("count"), TY_Int, FN_("src"), TY_Int, FN_("tag"),
+		_Public, _F(MPIComm_bcast), TY_Boolean, TY_MPIComm, MN_("bcast"), 3,
+			TY_MPIData, FN_("sdata"), TY_Int, FN_("count"), TY_Int, FN_("root"),
+		_Public, _F(MPIComm_scatter), TY_Boolean, TY_MPIComm, MN_("scatter"), 5,
+			TY_MPIData, FN_("sdata"), TY_Int, FN_("scount"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"), TY_Int, FN_("root"),
+		_Public, _F(MPIComm_gather), TY_Boolean, TY_MPIComm, MN_("gather"), 5,
+			TY_MPIData, FN_("sdata"), TY_Int, FN_("scount"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"), TY_Int, FN_("root"),
+		_Public, _F(MPIComm_allGather), TY_Boolean, TY_MPIComm, MN_("allGather"), 4,
+			TY_MPIData, FN_("sdata"), TY_Int, FN_("scount"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"),
+		_Public, _F(MPIComm_allToAll), TY_Boolean, TY_MPIComm, MN_("allToAll"), 4,
+			TY_MPIData, FN_("sdata"), TY_Int, FN_("scount"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"),
+		_Public, _F(MPIComm_reduce), TY_Boolean, TY_MPIComm, MN_("reduce"), 5,
+			TY_MPIData, FN_("sdata"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"), TY_MPIOp, FN_("op"), TY_Int, FN_("root"),
+		_Public, _F(MPIComm_allReduce), TY_Boolean, TY_MPIComm, MN_("allReduce"), 4,
+			TY_MPIData, FN_("sdata"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"), TY_MPIOp, FN_("op"),
+		_Public, _F(MPIComm_scan), TY_Boolean, TY_MPIComm, MN_("scan"), 4,
+			TY_MPIData, FN_("sdata"), TY_MPIData, FN_("rdata"), TY_Int, FN_("rcount"), TY_MPIOp, FN_("op"),
+
+		/* class MPIRequest */
+		_Public, _F(MPIRequest_wait), TY_Boolean, TY_MPIRequest, MN_("wait"), 0,
+		_Public, _F(MPIRequest_test), TY_Boolean, TY_MPIRequest, MN_("test"), 0,
+		_Public, _F(MPIRequest_cancel), TY_Boolean, TY_MPIRequest, MN_("cancel"), 0,
+
+		/* class MPIData */
+		_Public|_Static, _F(MPIData_fromBytes), TY_MPIData, TY_MPIData, MN_("fromBytes"), 1, TY_Bytes, FN_("b"),
+		//_Public|_Static, _F(MPIData_fromIntArray), TY_MPIData, TY_MPIData, MN_("fromIntArray"), 1, TY_Array, FN_("b"),
+		//_Public|_Static, _F(MPIData_fromFloatArray), TY_MPIData, TY_MPIData, MN_("fromFloatArray"), 1, TY_Array, FN_("b"),
+		_Public|_Static, _F(MPIData_newFloatArray), TY_MPIData, TY_MPIData, MN_("newFloatArray"), 1, TY_Int, FN_("n"),
+		_Public|_Static, _F(MPIData_newIntArray), TY_MPIData, TY_MPIData, MN_("newIntArray"), 1, TY_Int, FN_("n"),
+		_Public, _F(MPIData_toBytes), TY_Bytes, TY_MPIData, MN_("toBytes"), 0,
+		//_Public, _F(MPIData_toIntArray), TY_Array, TY_MPIData, MN_("toIntArray"), 0,
+		//_Public, _F(MPIData_toFloatArray), TY_Array, TY_MPIData, MN_("toFloatArray"), 0,
+		_Public, _F(MPIData_getf), TY_Float, TY_MPIData, MN_("getf"), 1, TY_Int, FN_("n"),
+		_Public, _F(MPIData_setf), TY_Float, TY_MPIData, MN_("setf"), 2, TY_Int, FN_("n"), TY_Float, FN_("v"),
+		_Public, _F(MPIData_geti), TY_Int, TY_MPIData, MN_("geti"), 1, TY_Int, FN_("n"),
+		_Public, _F(MPIData_seti), TY_Int, TY_MPIData, MN_("seti"), 2, TY_Int, FN_("n"), TY_Int, FN_("v"),
+		_Public, _F(MPIData_setOffset), TY_void, TY_MPIData, MN_("setOffset"), 1, TY_Int, FN_("offset"),
+		_Public, _F(MPIData_getOffset), TY_Int, TY_MPIData, MN_("getOffset"), 0,
+		_Public, _F(MPIData_getSize), TY_Int, TY_MPIData, MN_("getSize"), 0, 
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);
+	KDEFINE_INT_CONST OpData[] = {
+			{"MAX",  TY_MPIOp, (kint_t)MPI_MAX},
+			{"MIN",  TY_MPIOp, (kint_t)MPI_MIN},
+			{"SUM",  TY_MPIOp, (kint_t)MPI_SUM},
+			{"PROD", TY_MPIOp, (kint_t)MPI_PROD},
+			{"LAND", TY_MPIOp, (kint_t)MPI_LAND},
+			{"BAND", TY_MPIOp, (kint_t)MPI_BAND},
+			{"LOD",  TY_MPIOp, (kint_t)MPI_LOR},
+			{"BOR",  TY_MPIOp, (kint_t)MPI_BOR},
+			{"LXOR", TY_MPIOp, (kint_t)MPI_LXOR},
+			{"BXOR", TY_MPIOp, (kint_t)MPI_BXOR},
+			{}
+	};
+	kKonohaSpace_loadConstData(ks, OpData, pline);
 	return true;
 }
 
