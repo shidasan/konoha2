@@ -415,6 +415,7 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 		case VMT_U:
 			DUMP_P("u%lu", c->data[i]); break;
 		case VMT_I:
+		case VMT_INT:
 			DUMP_P("i%ld", c->data[i]); break;
 		case VMT_F:
 			DUMP_P("function(%p)", c->p[i]); break;
@@ -713,7 +714,7 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		DBG_P("LET TEXPR_STACKTOP a=%d, espidx=%d", exprL->index + espidx, espidx);
 		EXPR_asm(_ctx, exprL->index + espidx, exprR, espidx);
 		if(a != exprL->index + espidx) {
-			NMOV_asm(_ctx, a, exprL->ty, espidx);
+			NMOV_asm(_ctx, a, exprL->ty, exprL->index + espidx);
 		}
 	}
 	else{
