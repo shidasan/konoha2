@@ -79,7 +79,6 @@ void test_gc(CTX)
         assert(__trace__ == -1);
         MODGC_gc_invoke(_ctx, 0);
     }
-
     int small_object_count = __init__;
     /* middle size */
     for (i = 0; i < 100; ++i) {

@@ -63,6 +63,8 @@ extern "C" {
 #define MIN_ALIGN (ONE << SUBHEAP_KLASS_MIN)
 #define SEGMENT_LEVEL 3
 #define GENGC_MAX_AGE 3
+#define setYoung(o)  ((o)->h.refc = 0)
+#define setAge(o)    ((o)->h.refc = ((o)->h.refc % (GENGC_MAX_AGE+1)))
 
 #define KlassBlockSize(klass) (ONE << klass)
 #define SUBHEAP_KLASS_SIZE_MIN KlassBlockSize(SUBHEAP_KLASS_MIN)
@@ -403,10 +405,6 @@ static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
 {\
 	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
 }\
-static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
-{\
-	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
-}
 
 #define DEF_BM_OP1(N, L0, L1, L2)\
 static inline void BITPTRS_SET_BASE##N (bitmap_t **base, bitmap_t *bitmap)\
@@ -422,12 +420,6 @@ static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
 	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
 	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
 }\
-static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
-{\
-	struct BM##N *bm = (struct BM##N *)bitmap;\
-	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
-	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
-}
 
 #define DEF_BM_OP2(N, L0, L1, L2)\
 static inline void BITPTRS_SET_BASE##N (bitmap_t **base, bitmap_t *bitmap)\
@@ -444,13 +436,6 @@ static inline void BITMAP_SET_LIMIT##N (bitmap_t *const bitmap)\
 	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
 	bm->m2.bm[L2-1] = BM_SENTINEL_L2_##N;\
 }\
-static inline void BITMAP_SET_LIMIT_AND_CPY##N (bitmap_t *const bitmap, bitmap_t *const snapshot)\
-{\
-	struct BM##N *bm = (struct BM##N *)bitmap;\
-	bitmap[L0-1] = BM_SENTINEL_L0_##N;\
-	bm->m1.bm[L1-1] = BM_SENTINEL_L1_##N;\
-	bm->m2.bm[L2-1] = BM_SENTINEL_L2_##N;\
-}
 
 #define DEF_BM_OP0_(N, S) \
 	DEF_BM_OP0(N, BITMAP_L0_SIZE(N)+S, BITMAP_L1_SIZE(N), BITMAP_L2_SIZE(N))
@@ -511,18 +496,6 @@ static inline void BITMAP_SET_LIMIT(bitmap_t *const bitmap, size_t klass)
 	BM_SET(bitmap[0], 1);
 }
 
-typedef void (*fBITMAP_SET_LIMIT_AND_CPY)(bitmap_t *const bm, bitmap_t *const snapshot);
-static void BITMAP_SET_LIMIT_AND_CPY_(bitmap_t *const bm, bitmap_t *const snapshot) {
-	(void)bm;(void)snapshot;
-}
-static const fBITMAP_SET_LIMIT_AND_CPY BITMAP_SET_LIMIT_AND_CPY__[] = {
-	BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_,
-	BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY_, BITMAP_SET_LIMIT_AND_CPY5,
-	BITMAP_SET_LIMIT_AND_CPY6, BITMAP_SET_LIMIT_AND_CPY7, BITMAP_SET_LIMIT_AND_CPY8,
-	BITMAP_SET_LIMIT_AND_CPY9, BITMAP_SET_LIMIT_AND_CPY10, BITMAP_SET_LIMIT_AND_CPY11,
-	BITMAP_SET_LIMIT_AND_CPY12
-};
-
 static inline void BITPTRS_INIT(BitPtr bitptrs[SEGMENT_LEVEL], Segment *seg, size_t klass)
 {
 	size_t i;
@@ -568,7 +541,7 @@ static void bitmapMarkingGC(CTX, HeapManager *mng);
 static void HeapManager_init(CTX, HeapManager *mng, size_t heap_size);
 static void HeapManager_delete(CTX, HeapManager *mng);
 static void HeapManager_final_free(CTX, HeapManager *mng);
-static inline void bmgc_Object_free(CTX, kObject *o);
+static inline void bmgc_Object_free(CTX, struct _kObject *o);
 static bool findNextFreeBlock(AllocationPointer *p);
 static HeapManager *BMGC_init(CTX);
 static void BMGC_exit(CTX, HeapManager *mng);
@@ -1482,7 +1455,7 @@ static bool DBG_CHECK_OBJECT_IN_HEAP(kObject *o, SubHeap *h)
 static void deferred_sweep(CTX, kObject *o)
 {
 	memshare(_ctx)->collectedObject++;
-	bmgc_Object_free(_ctx, o);
+	bmgc_Object_free(_ctx, (struct _kObject*)o);
 	CLEAR_GCINFO(o);
 }
 
@@ -1536,7 +1509,7 @@ static void copyBitMapsAndCount(HeapManager *mng, SubHeap *h)
 		do_memcpy(s->bitmap[0], s->bitmap[GENGC_MAX_AGE-1], BM_SIZE[s->heap_klass]);
 		int live_count = 0;
 		for (k = 0; k < (BM_SIZE[s->heap_klass] / sizeof(uintptr_t)); k++) {
-			live_count += bitcount(s->bitmap[GENGC_MAX_AGE-1][k]);
+			live_count += bitcount(s->bitmap[GENGC_MAX_AGE][k]);
 		}
 		BITMAP_SET_LIMIT(s->bitmap[0], h->heap_klass);
 		s->live_count = live_count;
@@ -1586,7 +1559,7 @@ static void b0_final_sweep(CTX, bitmap_t bm, size_t idx, Segment *seg)
 			global_gc_stat.collected[seg->heap_klass] += 1;
 		}
 #endif
-		bmgc_Object_free(_ctx, o);
+		bmgc_Object_free(_ctx, (struct _kObject*)o);
 		NEXT_MASK(bm, mask);
 	}
 }
@@ -1757,6 +1730,7 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 	DBG_ASSERT(DBG_CHECK_BITMAP(seg, bm));
 	if (!BM_TEST(*bm, bpmask)) {
 		BM_SET(*bm, bpmask);
+		setAge((struct _kObject*)o);
 		bitmap_mark(*bm, seg, bpidx, bpmask);
 		++(seg->live_count);
 		ostack_push(_ctx, ostack, o);
@@ -1870,13 +1844,13 @@ void *bm_realloc(CTX, void *ptr, size_t os, size_t ns)
 } while (0)
 static void save_snapshot(Segment *s) {
 	size_t j, k;
-	for (j = 0; j < GENGC_MAX_AGE-1; j++) {
+	for (j = 0; j < GENGC_MAX_AGE; j++) {
 		for (k = 0; k < (BM_SIZE[s->heap_klass] / sizeof(uintptr_t)); k++) {
 			s->bitmap[j+1][k] &= s->bitmap[j][k];
 		}
 	}
 	bitmap_t *bitmap = s->bitmap[GENGC_MAX_AGE];
-	for (j = 0; j < GENGC_MAX_AGE-1; j++) {
+	for (j = 0; j < GENGC_MAX_AGE; j++) {
 		s->bitmap[j+1] = s->bitmap[j];
 	}
 	s->bitmap[0] = bitmap;
@@ -1892,8 +1866,10 @@ static bool rearrangeSegList(CTX, SubHeap *h, size_t klass)
 		Segment *s = h->seglist[i];
 		size_t dead = SegmentBlockCount[klass] - s->live_count;
 		count_dead += dead;
-		if (dead > 0)
+		if (dead > 0) {
 			LIST_PUSH(unfilled_tail, s);
+		}
+		save_snapshot(s);
 	}
 	*unfilled_tail = NULL;
 	h->freelist = unfilled;
@@ -2000,7 +1976,7 @@ static void bitmapMarkingGC(CTX, HeapManager *mng)
 
 /* ------------------------------------------------------------------------ */
 
-static inline void bmgc_Object_free(CTX, kObject *o)
+static inline void bmgc_Object_free(CTX, struct _kObject *o)
 {
 	kclass_t *ct = O_ct(o);
 	if (ct) {
@@ -2010,6 +1986,7 @@ static inline void bmgc_Object_free(CTX, kObject *o)
 		//ctx->stat->gcObjectCount += 1;
 		K_OZERO(o);
 		STAT_dObject(ctx, ct);
+		setYoung(o);
 #ifdef GCSTAT
 		Segment *seg;
 		uintptr_t klass, index;
