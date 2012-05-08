@@ -2,8 +2,8 @@
 
 K.importPackage("konoha.bytes");
 
-void f () {
-	int s = 'h';
+void f() {
+	int s = 'hogehoge';
 	p(s);
 }
 f();
