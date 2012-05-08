@@ -1,0 +1,2 @@
+ - (error) (SingleQuoteErr.k:6) single quote doesn't accept multi characters, 'hogehoge'
+Q.E.D.

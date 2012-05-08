@@ -175,6 +175,11 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 #define CONV_BUFSIZE 4096 // 4K
 #define MAX_STORE_BUFSIZE (CONV_BUFSIZE * 1024)// 4M
 
+//static kbool_t encodeFromTo (const char *from, const char *to, const char *text, size_t len, kwb_t *wb)
+//{
+//
+//}
+
 static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
@@ -385,7 +390,9 @@ static KMETHOD ExprTyCheck_Squote(CTX, ksfp_t *sfp _RIX)
 		int ch = S_text(s)[0];
 		RETURN_(kExpr_setNConstValue(expr, TY_Int, ch));
 	} else {
-		kreportf(ERR_, tk->uline, "single quote cannot accepts multi characters, '%s'", S_text(s));
+		kline_t uline = SUGAR Expr_uline(_ctx, expr, 1);
+		int lpos = -1;/*why?*/
+		SUGAR p(_ctx, ERR_, uline, lpos, "single quote doesn't accept multi characters, '%s'", S_text(s));
 	}
 	RETURN_(K_NULLEXPR);
 }
