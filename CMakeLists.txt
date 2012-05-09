@@ -94,6 +94,7 @@ endif(KONOHA_VM_MODULE)
 set(PACKAGES
 	sugar
 	konoha
+	konoha.math
 	konoha.string
 	konoha.float
 ##	konoha.int
