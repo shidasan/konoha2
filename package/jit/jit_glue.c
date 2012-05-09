@@ -665,7 +665,6 @@ static kbool_t jit_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	KINITv(base->global_value, new_(Array, 18));
 	KINITv(base->constPool, new_(Array, 0));
 	Konoha_setModule(MOD_jit, &base->h, pline);
-	KSET_KLIB2(Method_genCode, pline);
 
 #define _Public   kMethod_Public
 #define _Static   kMethod_Static
@@ -750,6 +749,7 @@ static kbool_t jit_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	l->KMethod_genCode = GenCodeDefault;
 	kKonohaSpace_syncMethods();
 	l->KMethod_genCode = KMethod_genCode;
+	//KSET_KLIB2(Method_genCode, pline);
 
 	return true;
 }
