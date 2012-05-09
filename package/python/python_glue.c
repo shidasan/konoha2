@@ -385,7 +385,7 @@ static KMETHOD Python_eval(CTX, ksfp_t *sfp _RIX)
 
 #define DEFAULT_SIZE 16
 
-char** pymod_split(char* line, char target)
+char** pyenv_split(char* line, char target)
 {
 	char* c = line;
 	size_t slen, size = 0, maxsize = DEFAULT_SIZE;
@@ -429,7 +429,7 @@ static KMETHOD System_importPyModule(CTX, ksfp_t *sfp _RIX)
 	char *path = getenv("PYTHONPATH"); // add home dir to python search path.
 	if (path != NULL) {
 		size_t i;
-		char** pathes = pymod_split(path, ':');
+		char** pathes = pyenv_split(path, ':');
 		for (i = 0; pathes[i] != NULL; i++) {
 			PyList_Append((PyObject*)ppath, PyString_FromString(pathes[i]));
 			free(pathes[i]);
