@@ -1694,33 +1694,30 @@ static void mark_ostack(CTX, HeapManager *mng, kObject *o, knh_ostack_t *ostack)
 	}
 }
 
-#define context_reset_refs(memlocal) do {\
-	memlocal->refs = memlocal->ref_buf;\
-	memlocal->ref_size = 0;\
-} while (0)
+#define context_reset_refs(_ctx) _ctx->stack->reftail = _ctx->stack->ref.refhead
 
 static void bmgc_gc_mark(CTX, HeapManager *mng, int needsCStackTrace)
 {
 	long i;
 	knh_ostack_t ostackbuf, *ostack = ostack_init(_ctx, &ostackbuf);
+	kstack_t *stack = _ctx->stack;
 	kObject *ref = NULL;
-	kmemlocal_t *memlocal = memlocal(_ctx);
 
-	knh_ensurerefs(_ctx, memlocal->ref_buf, K_PAGESIZE);
-	context_reset_refs(memlocal);
+	context_reset_refs(_ctx);
 	KRUNTIME_reftraceAll(_ctx);
 	if (needsCStackTrace) {
 		cstack_mark(_ctx);
 	}
+	size_t ref_size = stack->reftail - stack->ref.refhead;
 	goto L_INLOOP;
 	while((ref = ostack_next(ostack)) != NULL) {
-		context_reset_refs(memlocal);
+		context_reset_refs(_ctx);
 		KONOHA_reftraceObject(_ctx, ref);
-		if(memlocal->ref_size > 0) {
+		ref_size = stack->reftail - stack->ref.refhead;
+		if(ref_size > 0) {
 			L_INLOOP:;
-			prefetch_(memlocal->refs[0], 0, 1);
-			for(i = memlocal->ref_size - 1; i >= 0; --i) {
-				mark_ostack(_ctx, mng, memlocal->refs[i], ostack);
+			for (i = ref_size-1; i >= 0; --i) {
+				mark_ostack(_ctx, mng, stack->ref.refhead[i], ostack);
 			}
 		}
 	}

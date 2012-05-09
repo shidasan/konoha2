@@ -442,6 +442,12 @@ static kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
 
 static void DEFAULT_init(CTX, kObject *o, void *conf)
 {
+	(void)_ctx;(void)o;(void)conf;
+}
+
+static void DEFAULT_reftrace(CTX, kObject *o)
+{
+	(void)_ctx;(void)o;
 }
 
 static void DEFAULT_free(CTX, kObject *o)
@@ -524,7 +530,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		}
 		// function
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
-		ct->reftrace = s->reftrace;
+		ct->reftrace = (s->reftrace != NULL) ? s->reftrace : DEFAULT_reftrace;
 		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
 		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
