@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-typedef struct {
+typedef struct kMPIComm {
 	MPI_Comm comm;
 } kMPIComm;
 
@@ -13,7 +13,7 @@ enum {
 	KMPI_IARRAY,
 };
 
-typedef struct {
+typedef struct kMPIData {
 	union {
 		kBytes *b;
 		kArray *a;
@@ -26,7 +26,7 @@ typedef struct {
 	size_t size; // for fa/ia
 } kMPIData;
 
-typedef struct {
+typedef struct kMPIRequest {
 	MPI_Request req;
 } kMPIRequest;
 
