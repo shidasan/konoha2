@@ -705,6 +705,7 @@ static KMETHOD ExprTyCheck_Block(CTX, ksfp_t *sfp _RIX)
 	}
 	if(lastExpr != NULL) {
 		int lvarsize = gma->genv->l.varsize;
+		size_t i, atop = kArray_size(gma->genv->lvarlst);
 		kExpr *lvar = new_Variable(LOCAL_, TY_var, addGammaStack(_ctx, &gma->genv->l, TY_var, 0/*FN_*/), gma);
 		if(!Block_tyCheckAll(_ctx, bk, gma)) {
 			RETURN_(texpr);
@@ -716,6 +717,13 @@ static KMETHOD ExprTyCheck_Block(CTX, ksfp_t *sfp _RIX)
 			kExpr *letexpr = new_TypedConsExpr(_ctx, TEXPR_LET, TY_void, 3, K_NULL, lvar, rexpr);
 			kObject_setObject(lastExpr, KW_Expr, letexpr);
 			texpr = kExpr_setVariable(expr, BLOCK_, ty, lvarsize, gma);
+		}
+		for(i = atop; i < kArray_size(gma->genv->lvarlst); i++) {
+			struct _kExpr *v = gma->genv->lvarlst->Wexprs[i];
+			if(v->build == TEXPR_LOCAL_ && v->index >= lvarsize) {
+				v->build = TEXPR_STACKTOP; v->index = v->index - lvarsize;
+				DBG_P("v->index=%d", v->index);
+			}
 		}
 		if(lvarsize < gma->genv->l.varsize) {
 			gma->genv->l.varsize = lvarsize;
@@ -1113,6 +1121,7 @@ static void Gamma_shiftBlockIndex(CTX, gmabuf_t *genv)
 	int shift = genv->f.varsize;
 	for(i = genv->lvarlst_top; i < size; i++) {
 		struct _kExpr *expr = a->Wexprs[i];
+		if(expr->build == TEXPR_STACKTOP) continue;
 		DBG_ASSERT(expr->build < TEXPR_UNTYPED);
 		expr->index += shift;
 		expr->build += TEXPR_shift;

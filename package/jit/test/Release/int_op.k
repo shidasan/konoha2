@@ -1,5 +1,6 @@
 // written by imasahiro
 K.importPackage("jit");
+
 void f() {
     int x = 10;
     int y = 10;

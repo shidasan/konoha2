@@ -2,6 +2,7 @@
 #ifndef CLASSICVM_H_
 #define CLASSICVM_H_
 
+static void BUILD_asm(CTX, kopl_t *op, size_t opsize);
 #define MN_isNotNull MN_("isNotNull")
 #define MN_isNull    MN_("isNull")
 #define MN_get    MN_("get")

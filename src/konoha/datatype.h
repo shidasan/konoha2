@@ -442,6 +442,12 @@ static kclass_t* Kclass(CTX, kcid_t cid, kline_t pline)
 
 static void DEFAULT_init(CTX, kObject *o, void *conf)
 {
+	(void)_ctx;(void)o;(void)conf;
+}
+
+static void DEFAULT_reftrace(CTX, kObject *o)
+{
+	(void)_ctx;(void)o;
 }
 
 static void DEFAULT_free(CTX, kObject *o)
@@ -524,7 +530,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		}
 		// function
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
-		ct->reftrace = s->reftrace;
+		ct->reftrace = (s->reftrace != NULL) ? s->reftrace : DEFAULT_reftrace;
 		ct->p     = (s->p != NULL) ? s->p : DEFAULT_p;
 		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
@@ -921,6 +927,7 @@ static void KCLASSTABLE_loadMethod(CTX)
 		_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
 		_Public|_Immutable, _F(System_assert), TY_void, TY_System, MN_("assert"), 1, TY_Boolean, FN_x,
 		_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
+		_Public|_Immutable, _F(System_gc), TY_void, TY_System, MN_("gc"), 0,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);

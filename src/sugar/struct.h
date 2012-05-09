@@ -80,6 +80,9 @@ static void KonohaSpace_free(CTX, kObject *o)
 	if(ks->syntaxMapNN != NULL) {
 		kmap_free(ks->syntaxMapNN, syntax_free);
 	}
+	if(ks->fmat != NULL) {
+		KFREE(ks->fmat, KCHAR_MAX * sizeof(Ftokenizer));
+	}
 	KARRAY_FREE(&ks->cl);
 }
 
@@ -979,7 +982,7 @@ static void Block_reftrace(CTX, kObject *o)
 
 static void Block_insertAfter(CTX, kBlock *bk, kStmt *target, kStmt *stmt)
 {
-	DBG_ASSERT(stmt->parentNULL == NULL);
+	//DBG_ASSERT(stmt->parentNULL == NULL);
 	KSETv(((struct _kStmt*)stmt)->parentNULL, bk);
 	size_t i;
 	for(i = 0; i < kArray_size(bk->blocks); i++) {
