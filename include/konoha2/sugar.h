@@ -75,7 +75,7 @@ struct _kpackage {
 };
 
 // tokenizer
-
+#define KCHAR_MAX  41
 struct tenv_t;
 typedef int (*Ftokenizer)(CTX, struct _kToken *, struct tenv_t *, int, kMethod *thunk);
 

@@ -101,7 +101,7 @@ set(PACKAGES
 ##	konoha.pcre
 ##	konoha.io
 	konoha.while
-##	konoha.class
+	konoha.class
 	konoha.assignment
 	konoha.i
 ##	konoha.assert
