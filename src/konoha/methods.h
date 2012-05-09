@@ -168,6 +168,12 @@ static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
 	kreportf(PRINT_, uline, "%s", S_text(sfp[1].s));
 }
 
+//## method void System.gc();
+static KMETHOD System_gc(CTX, ksfp_t *sfp _RIX)
+{
+	MODGC_gc_invoke(_ctx, 1/* needsCStackTrace */);
+}
+
 #ifdef __cplusplus
 }
 #endif
