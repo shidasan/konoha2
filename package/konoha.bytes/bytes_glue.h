@@ -29,34 +29,7 @@
 #include <konoha2/bytes.h>
 
 #include <errno.h> // include this because of E2BIG
-#include <string.h>
-#include <langinfo.h>
-#include <locale.h>
-#ifdef K_USING_ICONV
-#include <iconv.h>
-typedef iconv_t kiconv_t;
-#else
-typedef long    kiconv_t;
-#endif
 
-typedef kiconv_t (*ficonv_open)(const char *, const char *);
-typedef size_t (*ficonv)(kiconv_t, const char **, size_t *, char **, size_t *);
-typedef int    (*ficonv_close)(kiconv_t);
-
-typedef struct {
-    kmodshare_t h;
-    kclass_t     *cBytes;
-    kbool_t      (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
-    const char*  fmt;
-    const char*  locale;
-    kiconv_t     (*ficonv_open)(const char *, const char*);
-    size_t       (*ficonv)(kiconv_t, const char **, size_t *, char**, size_t *);
-    int          (*ficonv_close)(kiconv_t);
-} kmodiconv_t;
-
-typedef struct {
-    kmodlocal_t h;
-} ctxiconv_t;
 
 /* ------------------------------------------------------------------------ */
 /* [util] */
@@ -304,9 +277,33 @@ static KMETHOD Bytes_set(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes *ba = sfp[0].ba;
 	size_t n = check_index(_ctx, sfp[1].ivalue, ba->bytesize, sfp[K_RTNIDX].uline);
-	ba->ubuf[n] = (const char) sfp[2].ivalue;
+	ba->buf[n] = sfp[2].ivalue;
 	RETURNi_(ba->utext[n]);
 }
+
+static KMETHOD Bytes_setAll(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes *ba = sfp[0].ba;
+	int bytesize = ba->bytesize;
+	int i;
+	for (i = 0; i < bytesize; i++) {
+		ba->buf[i] = sfp[2].ivalue;
+	}
+	RETURNvoid_();
+
+}
+static KMETHOD Bytes_getSize(CTX, ksfp_t *sfp _RIX)
+{
+	kBytes *ba = sfp[0].ba;
+	RETURNi_(ba->bytesize);
+}
+
+static KMETHOD Bytes_new(CTX, ksfp_t *sfp _RIX)
+{
+	DBG_P("bytes new called, with size=%d", sfp[1].ivalue);
+	RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), sfp[1].ivalue));
+}
+
 /* ------------------------------------------------------------------------ */
 
 #define _Public   kMethod_Public
@@ -335,6 +332,7 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 	int FN_encoding = FN_("encoding");
 	int FN_x = FN_("x");
 	int FN_c = FN_("c");
+	int FN_size = FN_("size");
 	intptr_t methoddata[] = {
 		_Public|_Im|_Coercion, _F(String_toBytes), TY_Bytes,  TY_String, MN_("toBytes"),   0,
 		_Public|_Const|_Im|_Coercion, _F(Bytes_toString), TY_String, TY_Bytes,  MN_("toString"),  0,
@@ -342,7 +340,9 @@ static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		_Public|_Const,     _F(Bytes_decodeFrom),   TY_String, TY_Bytes,  MN_("decodeFrom"),    1, TY_String, FN_encoding,
 		_Public|_Const|_Im,     _F(Bytes_get), TY_Int, TY_Bytes, MN_("get"), 1, TY_Int, FN_x,
 		_Public|_Const|_Im,     _F(Bytes_set), TY_Int, TY_Bytes, MN_("set"), 2, TY_Int, FN_x, TY_Int, FN_c,
-
+		_Public|_Const|_Im,     _F(Bytes_setAll), TY_void, TY_Bytes, MN_("setAll"), 1, TY_Int, FN_x,
+		_Public|_Const|_Im,     _F(Bytes_getSize), TY_Int, TY_Bytes, MN_("getSize"), 0,
+		_Public|_Const|_Im,     _F(Bytes_new), TY_Bytes, TY_Bytes, MN_("new"), 1, TY_Int, FN_size,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, methoddata);
