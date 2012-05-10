@@ -153,11 +153,12 @@ static KMETHOD Math_atanh(CTX, ksfp_t *sfp _RIX)
 
 static	kbool_t math_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	static KDEFINE_CLASS MathDef = {
-		.structname = "Math"/*structname*/,
-		.cid = CLASS_newid/*cid*/,
-	};
-	kclass_t *cMath = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MathDef, pline);
+	if(IS_defineFloat()) {
+		static KDEFINE_CLASS MathDef = {
+			.structname = "Math"/*structname*/,
+			.cid = CLASS_newid/*cid*/,
+		};
+		kclass_t *cMath = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &MathDef, pline);
 
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
@@ -166,13 +167,11 @@ static	kbool_t math_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 #define _KVf(T) #T, TY_Float, T
 #define TY_Math  (cMath->cid)
 
-	//	KREQUIRE("konoha.float");
-	//	int FN_methodname = FN_("x");
+//		KREQUIRE("konoha.float");
+//		int FN_methodname = FN_("x");
 
-	int FN_x = FN_("x");
-	int FN_y = FN_("y");
-
-	if(IS_defineFloat()) {
+		int FN_x = FN_("x");
+		int FN_y = FN_("y");
 		intptr_t MethodData[] = {
 			_Public, _F(Math_abs), TY_Int, TY_Math, MN_("abs"), 1, TY_Int, FN_x,
 			_Public, _F(Math_fabs), TY_Float, TY_Math, MN_("fabs"), 1, TY_Float, FN_x,
@@ -207,12 +206,12 @@ static	kbool_t math_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 			_Public, _F(Math_atanh), TY_Float, TY_Math, MN_("atanh"), 1, TY_Float, FN_x,
 #endif
 
-			//		_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
-			//		_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
-			//		_Public, _F(Stmt_tyCheckExpr), TY_Boolean, TY_Stmt, MN_("tyCheckExpr"), 4, TY_String, FN_key, TY_Gamma, FN_gma, TY_Int, FN_typeid, TY_Int, FN_pol,
-			//		_Public, _F(Block_tyCheckAll), TY_Boolean, TY_Block, MN_("tyCheckAll"), 1, TY_Gamma, FN_gma,
-			//		_Public, _F(KonohaSpace_defineSyntaxRule), TY_void, TY_KonohaSpace, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
-			//		_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
+//			_Public, _F(Stmt_setBuild), TY_void, TY_Stmt, MN_("setBuild"), 1, TY_Int, FN_buildid,
+//			_Public, _F(Stmt_getBlock), TY_Block, TY_Stmt, MN_("getBlock"), 2, TY_String, FN_key, TY_Block, FN_defval,
+//			_Public, _F(Stmt_tyCheckExpr), TY_Boolean, TY_Stmt, MN_("tyCheckExpr"), 4, TY_String, FN_key, TY_Gamma, FN_gma, TY_Int, FN_typeid, TY_Int, FN_pol,
+//			_Public, _F(Block_tyCheckAll), TY_Boolean, TY_Block, MN_("tyCheckAll"), 1, TY_Gamma, FN_gma,
+//			_Public, _F(KonohaSpace_defineSyntaxRule), TY_void, TY_KonohaSpace, MN_("defineSyntaxRule"),   2, TY_String, FN_key, TY_String, FN_("rule"),
+//			_Public, _F(KonohaSpace_defineStmtTyCheck), TY_void, TY_KonohaSpace, MN_("defineStmtTyCheck"), 2, TY_String, FN_key, TY_String, FN_methodname,
 			DEND,
 		};
 		kKonohaSpace_loadMethodData(NULL, MethodData);
