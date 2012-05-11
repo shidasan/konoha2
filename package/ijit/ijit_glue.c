@@ -820,7 +820,7 @@ static kbool_t ijit_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	l->KMethod_genCode = GenCodeDefault;
 	kKonohaSpace_syncMethods();
 	l->KMethod_genCode = KMethod_genCode;
-	//KSET_KLIB2(Method_genCode, pline);
+	//KSET_KLIB(Method_genCode, pline);
 
 	return true;
 }

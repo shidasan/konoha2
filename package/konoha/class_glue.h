@@ -243,6 +243,7 @@ static	kbool_t class_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
+	KSET_KLIB2(Method_indexOfField, KLIB2_Method_indexOfField, pline);
 	return true;
 }
 
@@ -448,7 +449,7 @@ static void CT_checkMethodDecl(CTX, kToken *tkC, kBlock *bk, kStmt **lastStmtRef
 			lastStmtRef[0] = stmt;
 		}
 		else {
-			SUGAR p(_ctx, WARN_, stmt->uline, "%s is not available within class clause", T_kw(stmt->syn->kw));
+			SUGAR p(_ctx, WARN_, stmt->uline, -1, "%s is not available within class clause", T_kw(stmt->syn->kw));
 		}
 	}
 }
