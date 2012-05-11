@@ -92,6 +92,7 @@ static void RETURN_PyObject_(CTX, ksfp_t *sfp, PyObject *pyo _RIX)
 // [TODO] add following konoha to python type transfer function.
 // it is difficult to transfer UCS2 to konoha String.
 // Do not forget test ...
+
 static KMETHOD Int_toPyObject(CTX, ksfp_t *sfp _RIX)
 {
 	RETURN_PyObject(PyInt_FromLong(sfp[0].ivalue));
@@ -228,32 +229,31 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 #define _BITS 8
 #define PY_SSIZE_MAX (size_t)(1 << 31)
 
-static KMETHOD List_toPyObject(CTX, ksfp_t *sfp _RIX)
-{
-	kArray *a = sfp[0].a;
-	size_t i, n = check_index(_ctx, sfp[1].ivalue, kArray_size(a), sfp[K_RTNIDX].uline);
-	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
-	PyObject* pa = PyList_New((Py_ssize_t)n);
-	if (kArray_isUnboxData(a)) {
-		for (i = 0; i < pa_size; i++) {
-			// [TODO] transfer array element to PyObject
-			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
-		}
-	}
-	else {
-		for (i = 0; i < pa_size; i++) {
-			// [TODO] transfer array element to PyObject
-			//PyList_SetItem(pa, i, a->list[n]);
-		}
-	}
-	RETURN_PyObject(pa);
-}
+//static KMETHOD List_toPyObject(CTX, ksfp_t *sfp _RIX)
+//{
+//	kArray *a = sfp[0].a;
+//	size_t i, n = kArray_size(a);
+//	PyObject* pa = PyList_New((Py_ssize_t)n);
+//	if (kArray_isUnboxData(a)) {
+//		for (i = 0; i < pa_size; i++) {
+//			// [TODO] transfer array element to PyObject
+//			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
+//		}
+//	}
+//	else {
+//		for (i = 0; i < pa_size; i++) {
+//			// [TODO] transfer array element to PyObject
+//			//PyList_SetItem(pa, i, a->list[n]);
+//		}
+//	}
+//	RETURN_PyObject(pa);
+//}
 
-static KMETHOD PyObject_toList(CTX, ksfp_t *sfp _RIX)
-{
-	//kPyObject *po = (kPyObject*)sfp[0].o;
-	//RETURNb_(po->self == Py_True ? 1 : 0);
-}
+//static KMETHOD PyObject_toList(CTX, ksfp_t *sfp _RIX)
+//{
+//	//kPyObject *po = (kPyObject*)sfp[0].o;
+//	//RETURNb_(po->self == Py_True ? 1 : 0);
+//}
 
 //static KMETHOD Dict_toPyObject(CTX, ksfp_t *sfp _RIX)
 //{
