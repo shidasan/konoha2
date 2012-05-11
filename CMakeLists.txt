@@ -111,7 +111,7 @@ set(PACKAGES
 	konoha.rope
 ##	konoha.mpi
 	konoha.bytes
-	jit
+	ijit
 	native
 	python
 )

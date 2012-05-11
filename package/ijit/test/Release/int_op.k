@@ -1,5 +1,5 @@
 // written by imasahiro
-K.importPackage("jit");
+K.importPackage("ijit");
 
 void f() {
     int x = 10;

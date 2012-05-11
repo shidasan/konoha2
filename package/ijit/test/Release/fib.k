@@ -1,5 +1,5 @@
 // written by imasahiro
-K.importPackage("jit");
+K.importPackage("ijit");
 
 int fibo(int n) {
     if(n < 3) {
