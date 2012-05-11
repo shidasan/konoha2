@@ -176,7 +176,7 @@ endif(TEST_COVERAGE)
 
 # for .k script test
 enable_testing()
-set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha2)
+set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/konoha)
 set(PARENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE test_files ${CMAKE_CURRENT_SOURCE_DIR}/test/*.k)
 foreach(f ${test_files})
@@ -192,7 +192,7 @@ set(ExtraLibs ${ExtraLibs} konoha2)
 
 add_executable(konoha2_bin src/tool/command.c)
 target_link_libraries(konoha2_bin ${ExtraLibs})
-set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha2)
+set_target_properties(konoha2_bin PROPERTIES OUTPUT_NAME konoha)
 
 # package
 
@@ -266,12 +266,12 @@ endforeach()
 add_executable(test_konoha src/tool/test_konoha.c)
 target_link_libraries(test_konoha ${ExtraLibs})
 
-macro(add_konoha_test scr)
-set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)
-set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/test_konoha)
-add_test(${scr} ${TEST_BIN} ${TEST_DIR}
-		${CMAKE_CURRENT_BINARY_DIR} ${scr})
-endmacro(add_konoha_test scr)
+#macro(add_konoha_test scr)
+#set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)
+#set(TEST_BIN ${CMAKE_CURRENT_BINARY_DIR}/test_konoha)
+#add_test(${scr} ${TEST_BIN} ${TEST_DIR}
+#		${CMAKE_CURRENT_BINARY_DIR} ${scr})
+#endmacro(add_konoha_test scr)
 
 #file(GLOB test_files "${CMAKE_CURRENT_SOURCE_DIR}/test/parser/*.k")
 #foreach(f ${test_files})
