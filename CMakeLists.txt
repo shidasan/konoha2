@@ -112,7 +112,6 @@ set(PACKAGES
 ##	konoha.mpi
 	konoha.bytes
 	ijit
-	native
 	python
 )
 

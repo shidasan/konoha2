@@ -1,9 +1,8 @@
 K.importPackage("sugar");
 K.importPackage("konoha.float");
-K.importPackage("konoha.llvm");
+K.importPackage("llvm");
 K.importPackage("konoha.assignment");
 K.importPackage("konoha.string");
-K.importPackage("native");
 
 //enum ctype {
 //	/*TY_VOID*/1,
@@ -28,49 +27,49 @@ K.importPackage("native");
 
 int Expr.getBuild() {
 	int x = this.getAddr();
-	return Pointer.get(x, 36, 16);
+	return System.getPointer(x, 36, 16);
 }
 
 Object Expr.getData() {
 	int x = this.getAddr();
-	int addr = Pointer.get(x, 48, 64);
-	return Pointer.convertToObject(addr);
+	int addr = System.getPointer(x, 48, 64);
+	return System.convertToObject(addr);
 }
 
 int Expr.getIndex() {
 	int x = this.getAddr();
-	return Pointer.get(x, 56, 64);
+	return System.getPointer(x, 56, 64);
 }
 
 int Expr.getNdata() {
 	int x = this.getAddr();
-	return Pointer.get(x, 56, 64);
+	return System.getPointer(x, 56, 64);
 }
 
 int Expr.getType() {
 	int x = this.getAddr();
-	return Pointer.get(x, 32, 16);
+	return System.getPointer(x, 32, 16);
 }
 
 Array Expr.getCons() {
 	int x = this.getAddr();
-	int ptr = Pointer.get(x, 48, 64);
-	return Pointer.convertToArray(ptr);
+	int ptr = System.getPointer(x, 48, 64);
+	return System.convertToArray(ptr);
 }
 Method Object.toMethod() {
 	int ptr = this.getAddr();
-	return Pointer.convertToMethod(ptr);
+	return System.convertToMethod(ptr);
 }
 
 int Method.getCid() {
 	int x = this.getAddr();
-	return Pointer.get(x, 56, 16);
+	return System.getPointer(x, 56, 16);
 }
 
 int Object.getCid() {
 	int x = this.getAddr();
-	int ct = Pointer.get(x, 8, 64);
-	int cid = Pointer.get(ct, 88, 16);
+	int ct = System.getPointer(x, 8, 64);
+	int cid = System.getPointer(ct, 88, 16);
 	return cid;
 }
 
@@ -81,7 +80,7 @@ Expr Expr.at(int i) {
 
 void Method.setFunc(int faddr) {
 	int x = this.getAddr();
-	Pointer.set(x, 32, 64, faddr);
+	System.setPointer(x, 32, 64, faddr);
 }
 
 String method2string(Method mtd) {
@@ -790,7 +789,7 @@ Value letexpr_asm(int a, Expr expr, int espidx) {
 
 void errstmt_asm(Stmt stmt, int espidx) {
 	Object o = stmt.getObjectNULL(0);
-	String msg = Pointer.convertToString(o.getAddr());
+	String msg = System.convertToString(o.getAddr());
 	System.p("TODO");
 	assert(false);
 	//DBG_ASSERT(IS_String(msg));
@@ -799,8 +798,8 @@ void errstmt_asm(Stmt stmt, int espidx) {
 
 Boolean isExpr(Expr expr) {
 	int x   = expr.getAddr();
-	int ct  = Pointer.get(x, 8, 64);
-	int cid = Pointer.get(ct, 88, 16);
+	int ct  = System.getPointer(x, 8, 64);
+	int cid = System.getPointer(ct, 88, 16);
 	return cid == 15/*TY_Expr*/;
 }
 Expr Stmt.getExpr(int id, Expr def) {

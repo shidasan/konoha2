@@ -69,5 +69,5 @@ message(FATAL ERROR
 endif(${LLVM_VERSION} VERSION_LESS "2.8")
 
 set(PACKAGE_EXTRA_LIBRARY ${ExtraLibs})
-add_konoha_package(konoha.llvm)
+add_konoha_package(llvm)
 endif(LLVM_CONFIG)
