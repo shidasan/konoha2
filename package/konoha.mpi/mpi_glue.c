@@ -60,8 +60,8 @@ static void *getbuf(kMPIData *p) {
 	}
 } 
 
-static void mpidata_extend(CTX, kMPIData *p, int count) {
-	size_t newSize = p->offset + count;
+static void MPIData_extend(CTX, kMPIData *p, int size) {
+	size_t newSize = p->offset + size;
 	if(p->size < newSize) {
 		switch(p->cid) {
 		case KMPI_BYTES: {
@@ -181,7 +181,7 @@ static KMETHOD MPIComm_recv(CTX, ksfp_t *sfp _RIX)
 	int count = sfp[2].ivalue;
 	int src = sfp[3].ivalue;
 	int tag = sfp[4].ivalue;
-	mpidata_extend(_ctx, data, count);
+	MPIData_extend(_ctx, data, count);
 	MPI_Status stat;
 	RETURNb_(MPI_Recv(getbuf(data), count, data->type, src, tag, comm->comm, &stat));
 }
@@ -208,7 +208,7 @@ static KMETHOD MPIComm_iRecv(CTX, ksfp_t *sfp _RIX)
 	int src = sfp[3].ivalue;
 	int tag = sfp[4].ivalue;
 	kMPIRequest *ret = newMPIRequest(_ctx);
-	mpidata_extend(_ctx, data, count);
+	MPIData_extend(_ctx, data, count);
 	MPI_Irecv(getbuf(data), count, data->type, src, tag, comm->comm, &ret->req);
 	RETURN_(new_ReturnCppObject(_ctx, sfp, WRAP(ret) K_RIXPARAM));
 }
@@ -233,7 +233,7 @@ static KMETHOD MPIComm_scatter(CTX, ksfp_t *sfp _RIX)
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
 	int rcount = sfp[4].ivalue;
 	int root = sfp[5].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Scatter(getbuf(sdata), scount, sdata->type, 
 			getbuf(rdata), rcount, rdata->type, root, comm->comm));
 }
@@ -247,7 +247,7 @@ static KMETHOD MPIComm_gather(CTX, ksfp_t *sfp _RIX)
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
 	int rcount = sfp[4].ivalue;
 	int root = sfp[5].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Gather(getbuf(sdata), scount, sdata->type, 
 			getbuf(rdata), rcount, rdata->type, root, comm->comm));
 }
@@ -260,7 +260,7 @@ static KMETHOD MPIComm_allGather(CTX, ksfp_t *sfp _RIX)
 	int scount = sfp[2].ivalue;
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
 	int rcount = sfp[4].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Allgather(getbuf(sdata), scount, sdata->type, getbuf(rdata),
 			rcount, rdata->type, comm->comm));
 }
@@ -273,7 +273,7 @@ static KMETHOD MPIComm_allToAll(CTX, ksfp_t *sfp _RIX)
 	int scount = sfp[2].ivalue;
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[3].o);
 	int rcount = sfp[4].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Alltoall(getbuf(sdata), scount, sdata->type, getbuf(rdata), 
 			rcount, rdata->type, comm->comm));
 }
@@ -287,7 +287,7 @@ static KMETHOD MPIComm_reduce(CTX, ksfp_t *sfp _RIX)
 	int rcount = sfp[3].ivalue;
 	MPI_Op op = (MPI_Op)sfp[4].ivalue;
 	int root = sfp[5].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Reduce(getbuf(sdata), getbuf(rdata), rcount, rdata->type, 
 			op, root, comm->comm));
 }
@@ -300,7 +300,7 @@ static KMETHOD MPIComm_allReduce(CTX, ksfp_t *sfp _RIX)
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[2].o);
 	int rcount = sfp[3].ivalue;
 	MPI_Op op = (MPI_Op)sfp[4].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Allreduce(getbuf(sdata), getbuf(rdata), rcount, rdata->type, 
 			op, comm->comm));
 }
@@ -313,7 +313,7 @@ static KMETHOD MPIComm_scan(CTX, ksfp_t *sfp _RIX)
 	kMPIData *rdata = toRawPtr(kMPIData *, sfp[2].o);
 	int rcount = sfp[3].ivalue;
 	MPI_Op op = (MPI_Op)sfp[4].ivalue;
-	mpidata_extend(_ctx, rdata, rcount);
+	MPIData_extend(_ctx, rdata, rcount);
 	RETURNb_(MPI_Scan(getbuf(sdata), getbuf(rdata), rcount, rdata->type, op, comm->comm));
 }
 
@@ -657,9 +657,9 @@ static kbool_t mpi_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 		//_Public, _F(MPIData_toIntArray), TY_Array, TY_MPIData, MN_("toIntArray"), 0,
 		//_Public, _F(MPIData_toFloatArray), TY_Array, TY_MPIData, MN_("toFloatArray"), 0,
 		_Public, _F(MPIData_getf), TY_Float, TY_MPIData, MN_("getf"), 1, TY_Int, FN_("n"),
-		_Public, _F(MPIData_setf), TY_Float, TY_MPIData, MN_("setf"), 2, TY_Int, FN_("n"), TY_Float, FN_("v"),
+		_Public, _F(MPIData_setf), TY_void, TY_MPIData, MN_("setf"), 2, TY_Int, FN_("n"), TY_Float, FN_("v"),
 		_Public, _F(MPIData_geti), TY_Int, TY_MPIData, MN_("geti"), 1, TY_Int, FN_("n"),
-		_Public, _F(MPIData_seti), TY_Int, TY_MPIData, MN_("seti"), 2, TY_Int, FN_("n"), TY_Int, FN_("v"),
+		_Public, _F(MPIData_seti), TY_void, TY_MPIData, MN_("seti"), 2, TY_Int, FN_("n"), TY_Int, FN_("v"),
 		_Public, _F(MPIData_setOffset), TY_void, TY_MPIData, MN_("setOffset"), 1, TY_Int, FN_("offset"),
 		_Public, _F(MPIData_getOffset), TY_Int, TY_MPIData, MN_("getOffset"), 0,
 		_Public, _F(MPIData_getSize), TY_Int, TY_MPIData, MN_("getSize"), 0, 

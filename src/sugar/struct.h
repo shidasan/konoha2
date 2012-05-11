@@ -81,7 +81,7 @@ static void KonohaSpace_free(CTX, kObject *o)
 		kmap_free(ks->syntaxMapNN, syntax_free);
 	}
 	if(ks->fmat != NULL) {
-		KFREE(ks->fmat, KCHAR_MAX * sizeof(Ftokenizer));
+		KFREE((void*)ks->fmat, KCHAR_MAX * sizeof(Ftokenizer));
 	}
 	KARRAY_FREE(&ks->cl);
 }

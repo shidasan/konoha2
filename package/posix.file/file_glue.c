@@ -24,18 +24,22 @@
 
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
-#include<konoha2/float.h>
 
-#include"math_glue.h"
+#include <unistd.h>
+#include <konoha2/bytes.h>
 
-KDEFINE_PACKAGE* math_init(void)
+#include"file_glue.h"
+
+// --------------------------------------------------------------------------
+
+KDEFINE_PACKAGE* file_init(void)
 {
 	static KDEFINE_PACKAGE d = {
-		KPACKNAME("math", "1.0"),
-		.initPackage = math_initPackage,
-		.setupPackage = math_setupPackage,
-		.initKonohaSpace = math_initKonohaSpace,
-		.setupKonohaSpace = math_setupKonohaSpace,
+		KPACKNAME("file", "1.0"),
+		.initPackage = file_initPackage,
+		.setupPackage = file_setupPackage,
+		.initKonohaSpace = file_initKonohaSpace,
+		.setupKonohaSpace = file_setupKonohaSpace,
 	};
 	return &d;
 }

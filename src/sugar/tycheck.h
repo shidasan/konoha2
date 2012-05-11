@@ -156,7 +156,6 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 	size_t i, size = kArray_size(cons), psize = size - 2;
 	kMethod *mtd = cons->methods[0];
 	BEGIN_LOCAL(lsfp, K_CALLDELTA + psize);
-	kExpr_p(expr, DEBUG_, "constant folding of %s", T_ty(expr->ty));
 	for(i = 1; i < size; i++) {
 		Expr_putConstValue(_ctx, cons->exprs[i], lsfp + K_CALLDELTA + i - 1);
 	}

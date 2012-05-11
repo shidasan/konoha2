@@ -936,24 +936,25 @@ static void ostack_free(CTX, knh_ostack_t *ostack)
 	memlocal(wctx)->queue_log2 = ostack->capacity_log2;
 }
 
-static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
-{
-	size_t ref_size = tail - memlocal(_ctx)->ref_buf;
-	if(unlikely(memlocal(_ctx)->ref_capacity < size + ref_size)) {
-		kcontext_t *wctx = (kcontext_t*) _ctx;
-		size_t oldsize = memlocal(_ctx)->ref_capacity;
-		size_t newsize = (oldsize == 0) ? 8 : oldsize * 2;
-		while(newsize < size + ref_size) {
-			newsize *= 2;
-		}
-		memlocal(wctx)->ref_buf = (kObject**) do_realloc(memlocal(_ctx)->ref_buf,
-				oldsize * sizeof(kObject*), newsize * sizeof(kObject*));
-		memlocal(wctx)->ref_capacity = newsize;
-		memlocal(wctx)->refs = memlocal(_ctx)->ref_buf;
-		tail = memlocal(_ctx)->ref_buf + ref_size;
-	}
-	return tail;
-}
+//FIXME: 'defined but not used'
+//static kObject** knh_ensurerefs(CTX, kObject** tail, size_t size)
+//{
+//	size_t ref_size = tail - memlocal(_ctx)->ref_buf;
+//	if(unlikely(memlocal(_ctx)->ref_capacity < size + ref_size)) {
+//		kcontext_t *wctx = (kcontext_t*) _ctx;
+//		size_t oldsize = memlocal(_ctx)->ref_capacity;
+//		size_t newsize = (oldsize == 0) ? 8 : oldsize * 2;
+//		while(newsize < size + ref_size) {
+//			newsize *= 2;
+//		}
+//		memlocal(wctx)->ref_buf = (kObject**) do_realloc(memlocal(_ctx)->ref_buf,
+//				oldsize * sizeof(kObject*), newsize * sizeof(kObject*));
+//		memlocal(wctx)->ref_capacity = newsize;
+//		memlocal(wctx)->refs = memlocal(_ctx)->ref_buf;
+//		tail = memlocal(_ctx)->ref_buf + ref_size;
+//	}
+//	return tail;
+//}
 
 
 static HeapManager *BMGC_init(CTX)

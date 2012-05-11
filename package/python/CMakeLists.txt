@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 set(PACKAGE_SOURCE_CODE python_glue.c)
 set(PACKAGE_SCRIPT_CODE python_glue.k)
 find_library(PACKAGE_EXTRA_LIBRARY python)
+
 if(PACKAGE_EXTRA_LIBRARY)
+set(PACKAGE_ENV "PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_SOURCE_DIR}/test/")
 add_konoha_package(python)
 endif(PACKAGE_EXTRA_LIBRARY)

@@ -1,8 +1,6 @@
 K.import("konoha");
 K.import("konoha.bytes");
-K.import("konoha.string");
 K.import("konoha.mpi");
-K.import("konoha.while");
 
 float fabs(float f) {
 	if(f < 0.0) return 0.0 - f;

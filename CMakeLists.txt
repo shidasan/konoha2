@@ -94,6 +94,7 @@ endif(KONOHA_VM_MODULE)
 set(PACKAGES
 	sugar
 	konoha
+	konoha.math
 	konoha.string
 	konoha.float
 ##	konoha.int
@@ -214,6 +215,9 @@ macro(create_package_project _PKGNAME)
 		string(REPLACE /test "" test_name ${test_name})
 		add_test(${test_name} ${TEST_BIN} --test-with ${f})
 		set_tests_properties(${test_name} PROPERTIES TIMEOUT 10)
+		if (PACKAGE_ENV)
+			set_tests_properties(${test_name} PROPERTIES ENVIRONMENT ${PACKAGE_ENV})
+		endif (PACKAGE_ENV)
 	endforeach(f ${test_files})
 	set(CMAKE_BUILD_TYPE ${KONOHA_BUILD_TYPE})
 	PKGNAME(${_PKGNAME} _PACKAGE_NAME)
@@ -279,7 +283,7 @@ endmacro(add_konoha_test scr)
 macro(add_clib_test test_name)
 	add_executable(${test_name} ${ARGN})
 	target_link_libraries(${test_name} ${ExtraLibs})
-	add_test(${test_name} ${test_name})
+	add_test(Clib/Release/${test_name} ${test_name})
 endmacro(add_clib_test sources)
 
 add_clib_test(test_sizeof  ./test/src/test_sizeof.c)
@@ -292,6 +296,14 @@ add_clib_test(test_Kwb     ./test/src/test_Kwb.c)
 add_clib_test(test_map     ./test/src/test_map.c)
 add_clib_test(test_string  ./test/src/test_string.c)
 add_clib_test(test_cpp     ./test/src/test_cpp.cpp)
+
+macro(add_builtin_test test_name args)
+	add_test(Builtin/${test_name} ${TEST_BIN} ${args})
+endmacro(add_builtin_test test_name args)
+
+add_builtin_test(Release/Logger  --builtin-test=test_logger)
+add_builtin_test(Release/Kwb     --builtin-test=test_kwb)
+add_builtin_test(Release/Kvproto --builtin-test=test_kvproto)
 
 install(TARGETS konoha2 konoha2_bin
 		RUNTIME DESTINATION bin

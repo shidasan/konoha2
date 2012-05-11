@@ -81,12 +81,11 @@ static KMETHOD StmtTyCheck_break(CTX, ksfp_t *sfp _RIX)
 		if(FLAG_is(p->syn->flag, SYNFLAG_StmtJumpSkip)) {
 			kObject_setObject(stmt, syn->kw, p);
 			kStmt_typed(stmt, JUMP);
+			RETURNb_(true);
 		}
 	}
-	if(p == NULL) {
-		SUGAR p(_ctx, ERR_, stmt->uline, -1, "break statement not within a loop");
-	}
-	RETURNb_(true);
+	SUGAR p(_ctx, ERR_, stmt->uline, -1, "break statement not within a loop");
+	RETURNb_(false);
 }
 
 static KMETHOD StmtTyCheck_continue(CTX, ksfp_t *sfp _RIX)
@@ -99,12 +98,11 @@ static KMETHOD StmtTyCheck_continue(CTX, ksfp_t *sfp _RIX)
 		if(FLAG_is(p->syn->flag, SYNFLAG_StmtJumpAhead)) {
 			kObject_setObject(stmt, syn->kw, p);
 			kStmt_typed(stmt, JUMP);
+			RETURNb_(true);
 		}
 	}
-	if(p == NULL) {
-		SUGAR p(_ctx, ERR_, stmt->uline, -1, "continue statement not within a loop");
-	}
-	RETURNb_((p != NULL));
+	SUGAR p(_ctx, ERR_, stmt->uline, -1, "continue statement not within a loop");
+	RETURNb_((false));
 }
 
 #define _LOOP .flag = (SYNFLAG_StmtJumpAhead|SYNFLAG_StmtJumpSkip)

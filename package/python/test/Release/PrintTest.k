@@ -1,4 +1,3 @@
-K.importPackage("konoha.string");
 K.importPackage("python");
 
 System.p(System.importPyModule("ktest").retInt());

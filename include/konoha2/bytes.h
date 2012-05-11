@@ -36,4 +36,32 @@
 
 #define IS_Bytes(O)      ((O)->h.ct == CT_Bytes)
 
+#include <string.h>
+#include <langinfo.h>
+#include <locale.h>
+#ifdef K_USING_ICONV
+#include <iconv.h>
+typedef iconv_t kiconv_t;
+#else
+typedef long    kiconv_t;
+#endif
+
+typedef kiconv_t (*ficonv_open)(const char *, const char *);
+typedef size_t (*ficonv)(kiconv_t, const char **, size_t *, char **, size_t *);
+typedef int    (*ficonv_close)(kiconv_t);
+
+typedef struct {
+    kmodshare_t h;
+    kclass_t     *cBytes;
+    kbool_t      (*encode)(const char* from, const char* to, const char* text, size_t len, kwb_t* wb);
+    const char*  fmt;
+    const char*  locale;
+    kiconv_t     (*ficonv_open)(const char *, const char*);
+    size_t       (*ficonv)(kiconv_t, const char **, size_t *, char**, size_t *);
+    int          (*ficonv_close)(kiconv_t);
+} kmodiconv_t;
+
+typedef struct {
+    kmodlocal_t h;
+} ctxiconv_t;
 #endif /* MODICONV_H_ */
