@@ -311,6 +311,15 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
+static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	DBG_P("typing null as %s", T_ty(reqty));
+	if(reqty == TY_var) reqty = CLASS_Object;
+	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
+}
+
 // ----------------------------------------------------------------------------
 
 typedef struct {
@@ -491,6 +500,7 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
+		{ TOKEN("null"), _TERM, ExprTyCheck_(null), },
 		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
 		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },

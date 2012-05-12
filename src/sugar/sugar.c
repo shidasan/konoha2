@@ -83,7 +83,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("void"), .type = TY_void, .rule ="$type [$USYMBOL \".\"] $SYMBOL $params [$block]", TopStmtTyCheck_(MethodDecl)},
 		{ TOKEN("boolean"), .type = TY_Boolean, },
 		{ TOKEN("int"),     .type = TY_Int, },
-		{ TOKEN("null"), _TERM, ExprTyCheck_(null),},
+//		{ TOKEN("null"), _TERM, ExprTyCheck_(null),},
 		{ TOKEN("true"),  _TERM, ExprTyCheck_(true),},
 		{ TOKEN("false"),  _TERM, ExprTyCheck_(false),},
 		{ TOKEN("if"), .rule ="\"if\" \"(\" $expr \")\" $block [\"else\" else: $block]", TopStmtTyCheck_(if), StmtTyCheck_(if), },
@@ -274,13 +274,15 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	KINITv(base->ParseExpr_Term, new_kMethod(0, 0, 0, NULL, ParseExpr_Term));
 
 	defineDefaultSyntax(_ctx, base->rootks);
+	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
+	syn->ty = TY_void; // it's not cool, but necessary
 	DBG_ASSERT(KW_("$params") == KW_Params);
 	DBG_ASSERT(KW_(".") == KW_DOT);
 	DBG_ASSERT(KW_(",") == KW_COMMA);
-	DBG_ASSERT(KW_("void") == KW_void);  // declmethod
-	DBG_ASSERT(KW_("return") == KW_return);  // declmethod
-	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
-	syn->ty = TY_void; // it's not cool, but necessary
+	DBG_ASSERT(KW_("void") == KW_void);
+	DBG_ASSERT(KW_("return") == KW_return);
+	keyword(_ctx, "new", sizeof("new")-1, FN_NEWID);
+	DBG_ASSERT(KW_("new") == KW_new);
 	EXPORT_SUGAR(base);
 }
 
