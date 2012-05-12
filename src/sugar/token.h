@@ -517,7 +517,7 @@ static kbool_t makeSyntaxRule(CTX, kArray *tls, int s, int e, kArray *adst)
 	int i;
 	char nbuf[80];
 	ksymbol_t nameid = 0;
-	dumpTokenArray(_ctx, 0, tls, s, e);
+//	dumpTokenArray(_ctx, 0, tls, s, e);
 	for(i = s; i < e; i++) {
 		struct _kToken *tk = tls->Wtoks[i];
 		if(tk->tt == TK_INDENT) continue;

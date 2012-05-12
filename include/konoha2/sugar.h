@@ -270,7 +270,7 @@ struct _kToken {
 };
 
 typedef enum {
-	MNTYPE_method, MNTYPE_unary, MNTYPE_binary
+	MNTYPE_method, MNTYPE_unary, MNTYPE_binary,
 } mntype_t;
 
 static inline void kToken_setmn(kToken *tk, kmethodn_t mn, mntype_t mn_type)
@@ -672,6 +672,11 @@ static inline void Stmt_setsyn(CTX, kStmt *stmt, ksyntax_t *syn)
 static inline void Stmt_typed(kStmt *stmt, int build)
 {
 	((struct _kStmt*)stmt)->build = build;
+}
+
+static inline void kExpr_setsyn(kExpr *expr, ksyntax_t *syn)
+{
+	((struct _kExpr*)expr)->syn = syn;
 }
 
 #define kExpr_typed(E, B, TY)   Expr_typed(E, TEXPR_##B, TY)

@@ -259,7 +259,7 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->cStmt  = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defStmt, 0);
 	base->cBlock = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defBlock, 0);
 	base->cGamma = Konoha_addClassDef(PN_sugar, PN_sugar, NULL, &defGamma, 0);
-	base->cTokenArray = CT_P0(_ctx, CT_Array, base->cToken->cid);
+	base->cTokenArray = CT_p0(_ctx, CT_Array, base->cToken->cid);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
 	knull(base->cToken);

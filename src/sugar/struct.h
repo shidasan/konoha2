@@ -107,7 +107,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	}
 	L_NEW:;
 	if(isnew == 1) {
-		DBG_P("creating new syntax %s old=%p", T_kw(kw), parent);
+		//DBG_P("creating new syntax %s old=%p", T_kw(kw), parent);
 		if(ks0->syntaxMapNN == NULL) {
 			((struct _kKonohaSpace*)ks0)->syntaxMapNN = kmap_init(0);
 		}
@@ -190,7 +190,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		DBG_ASSERT(syn == SYN_(ks, kw));
 		syndef++;
 	}
-	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
+	//DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
 }
 
 #define T_statement(kw)  T_statement_(_ctx, kw)
@@ -563,7 +563,6 @@ static const char *T_tt(ktoken_t t)
 #define kToken_s(tk) kToken_s_(_ctx, tk)
 static const char *kToken_s_(CTX, kToken *tk)
 {
-	DBG_P("T_tt=%s", T_tt(tk->tt));
 	switch((int)tk->tt) {
 	case TK_INDENT: return "end of line";
 	case TK_CODE: ;

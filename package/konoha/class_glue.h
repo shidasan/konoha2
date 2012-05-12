@@ -271,13 +271,20 @@ static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	assert(s == c);
 	kToken *tkNEW = tls->toks[s];
+	DBG_P("parse new!!");
 	if(s + 2 < kArray_size(tls)) {
 		kToken *tk1 = tls->toks[s+1];
 		kToken *tk2 = tls->toks[s+2];
-		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {
+		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {  // new C (...)
 			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall);
 			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, TK_type(tk1), 0));
-			DBG_P("NEW syn=%p", expr->syn);
+			RETURN_(expr);
+		}
+		if(TK_isType(tk1) && tk2->tt == AST_BRANCET) {     // new C [...]
+			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_new);
+			kclass_t *ct = CT_p0(_ctx, CT_Array, TK_type(tk1));
+			kToken_setmn(tkNEW, MN_("newArray"), MNTYPE_method);
+			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, ct->cid, 0));
 			RETURN_(expr);
 		}
 	}
