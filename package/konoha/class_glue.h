@@ -243,6 +243,7 @@ static	kbool_t class_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
+	KSET_KLIB2(Method_indexOfField, KLIB2_Method_indexOfField, pline);
 	return true;
 }
 
@@ -308,6 +309,15 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 		SUGAR p(_ctx, ERR_, tkN->uline, tkN->lpos, "undefined field: %s", S_text(tkN->text));
 	}
 	RETURN_(K_NULLEXPR);
+}
+
+static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	DBG_P("typing null as %s", T_ty(reqty));
+	if(reqty == TY_var) reqty = CLASS_Object;
+	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
 }
 
 // ----------------------------------------------------------------------------
@@ -448,7 +458,7 @@ static void CT_checkMethodDecl(CTX, kToken *tkC, kBlock *bk, kStmt **lastStmtRef
 			lastStmtRef[0] = stmt;
 		}
 		else {
-			SUGAR p(_ctx, WARN_, stmt->uline, "%s is not available within class clause", T_kw(stmt->syn->kw));
+			SUGAR p(_ctx, WARN_, stmt->uline, -1, "%s is not available within class clause", T_kw(stmt->syn->kw));
 		}
 	}
 }
@@ -490,6 +500,7 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
+		{ TOKEN("null"), _TERM, ExprTyCheck_(null), },
 		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
 		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },

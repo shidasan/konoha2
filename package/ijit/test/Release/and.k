@@ -1,5 +1,5 @@
 // written by imasahiro
-K.importPackage("jit");
+K.importPackage("ijit");
 
 boolean and_1(boolean b1, boolean b2, boolean b3, boolean b4) {
     return b1 && b2;

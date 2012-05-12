@@ -414,6 +414,11 @@ static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, kPara
 	return mtd;
 }
 
+static intptr_t STUB_Method_indexOfField(kMethod *mtd)
+{
+	return -1;
+}
+
 // ---------------
 // System
 
@@ -788,6 +793,7 @@ static void KCLASSTABLE_initklib2(struct _klib2 *l)
 	l->KArray_clear  = Array_clear;
 	l->Knew_Param    = new_Param;
 	l->Knew_Method   = new_Method;
+	l->KMethod_indexOfField = STUB_Method_indexOfField;
 	l->KaddClassDef  = addClassDef;
 	l->Knull = CT_null;
 	l->KCT_shortName = CT_shortName;

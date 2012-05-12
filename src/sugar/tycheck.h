@@ -270,14 +270,6 @@ static KMETHOD ExprTyCheck_Text(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setConstValue(expr, TY_String, tk->text));
 }
 
-static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
-{
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	DBG_P("typing null as %s", T_ty(reqty));
-	if(reqty == TY_var) reqty = CLASS_Object;
-	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
-}
-
 static KMETHOD ExprTyCheck_Type(CTX, ksfp_t *sfp _RIX)
 {
 	VAR_ExprTyCheck(expr, syn, gma, reqty);

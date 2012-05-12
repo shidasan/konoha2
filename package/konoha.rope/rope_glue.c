@@ -302,7 +302,7 @@ static kbool_t rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 	KSET_CLASSFUNC(CT_String, unbox, String2, pline);
 	KSET_CLASSFUNC(CT_String, free, String2, pline);
 	KSET_CLASSFUNC(CT_String, reftrace, String2, pline);
-	KSET_KLIB2(new_String, pline);
+	KSET_KLIB(new_String, pline);
 	return true;
 }
 

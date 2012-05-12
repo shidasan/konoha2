@@ -1084,6 +1084,7 @@ struct _klib2 {
 	kMethod *  (*Knew_Method)(CTX, uintptr_t, kcid_t, kmethodn_t, kParam*, knh_Fmethod);
 	void       (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
 	void       (*KMethod_genCode)(CTX, kMethod*, const struct _kBlock *bk);
+	intptr_t   (*KMethod_indexOfField)(kMethod *);
 
 	kbool_t    (*KsetModule)(CTX, int, struct kmodshare_t *, kline_t);
 	kclass_t*  (*KaddClassDef)(CTX, kpack_t, kpack_t, kString *, KDEFINE_CLASS *, kline_t);
@@ -1242,11 +1243,19 @@ typedef enum {
 #define kreportf(LEVEL, UL, fmt, ...)  (KPI)->Kreportf(_ctx, LEVEL, UL, fmt, ## __VA_ARGS__)
 #define kraise(PARAM)                  (KPI)->Kraise(_ctx, PARAM)
 
-#define KSET_KLIB2(T, UL)   do {\
+#define KSET_KLIB(T, UL)   do {\
 		void *func = _ctx->lib2->K##T;\
 		((struct _klib2*)_ctx->lib2)->K##T = K##T;\
 		if(func != NULL) {\
-			kreportf(INFO_, UL, "override of klib2->" #T ", file=%s, line=%d", __FILE__, __LINE__);\
+			kreportf(DEBUG_, UL, "override of klib2->" #T ", file=%s, line=%d", __FILE__, __LINE__);\
+		}\
+	}while(0)\
+
+#define KSET_KLIB2(T, F, UL)   do {\
+		void *func = _ctx->lib2->K##T;\
+		((struct _klib2*)_ctx->lib2)->K##T = F;\
+		if(func != NULL) {\
+			kreportf(DEBUG_, UL, "override of klib2->" #T ", file=%s, line=%d", __FILE__, __LINE__);\
 		}\
 	}while(0)\
 
@@ -1254,7 +1263,7 @@ typedef enum {
 		void *func = ct->T;\
 		((struct _kclass*)ct)->T = PREFIX##_##T;\
 		if(func != NULL) {\
-			kreportf(INFO_, UL, "override of %s->" #T ", file=%s, line=%d", T_CT(ct), __FILE__, __LINE__);\
+			kreportf(DEBUG_, UL, "override of %s->" #T ", file=%s, line=%d", T_CT(ct), __FILE__, __LINE__);\
 		}\
 	}while(0)\
 

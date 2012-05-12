@@ -469,13 +469,14 @@ struct _kGamma {
 #define KW_StmtMethodDecl          KW_void
 #define KW_boolean   (1+KW_void)
 #define KW_int       (2+KW_void)
-#define KW_null      (3+KW_void)
-#define KW_true      (4+KW_void)
-#define KW_false     (5+KW_void)
-#define KW_if        (6+KW_void)
-#define KW_else      (7+KW_void)
-#define KW_return    (8+KW_void)
-
+//#define KW_null      (3+KW_void)
+#define KW_true      (3+KW_void)
+#define KW_false     (4+KW_void)
+#define KW_if        (5+KW_void)
+#define KW_else      (6+KW_void)
+#define KW_return    (7+KW_void)
+// reserved
+#define KW_new       (8+KW_void)
 #define FN_this      FN_("this")
 
 struct _kKonohaSpace;

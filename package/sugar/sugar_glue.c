@@ -52,6 +52,7 @@ static KMETHOD Stmt_getBlock(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kStmt_block(sfp[0].stmt, KW_s(sfp[1].s), sfp[2].bk));
 }
 
+
 //## boolean Stmt.tyCheckExpr(String key, Gamma gma, int typeid, int pol);
 static KMETHOD Stmt_tyCheckExpr(CTX, ksfp_t *sfp _RIX)
 {
@@ -209,29 +210,29 @@ static KMETHOD KonohaSpace_addExprTyCheck(CTX, ksfp_t *sfp _RIX)
 //	return syn;
 //}
 
-//## Expr Token.printSyntaxError();
-static KMETHOD Token_printSyntaxError(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	kToken *tk  = sfp[0].tk;
-	if(IS_String(tk->text)) {
-		SUGAR p(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: %s", S_text(tk->text));
-	}
-	else {
-		SUGAR p(_ctx, ERR_, tk->uline, tk->lpos, "syntax error");
-	}
-	RETURN_(K_NULLEXPR);
-}
+////## Expr Token.printSyntaxError();
+//static KMETHOD Token_printSyntaxError(CTX, ksfp_t *sfp _RIX)
+//{
+//	USING_SUGAR;
+//	kToken *tk  = sfp[0].tk;
+//	if(IS_String(tk->text)) {
+//		SUGAR p(_ctx, ERR_, tk->uline, tk->lpos, "syntax error: %s", S_text(tk->text));
+//	}
+//	else {
+//		SUGAR p(_ctx, ERR_, tk->uline, tk->lpos, "syntax error");
+//	}
+//	RETURN_(K_NULLEXPR);
+//}
 
-//## Expr Stmt.newBlock(Token[] tls, int s, int e);
-static KMETHOD Stmt_newBlock(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	kStmt *stmt  = sfp[0].stmt;
-	kArray *tls  = sfp[1].a;
-	int s = sfp[2].ivalue, e = sfp[3].ivalue;
-	RETURN_(SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, tls, s, e, ';'));
-}
+////## Expr Stmt.newBlock(Token[] tls, int s, int e);
+//static KMETHOD Stmt_newBlock(CTX, ksfp_t *sfp _RIX)
+//{
+//	USING_SUGAR;
+//	kStmt *stmt  = sfp[0].stmt;
+//	kArray *tls  = sfp[1].a;
+//	int s = sfp[2].ivalue, e = sfp[3].ivalue;
+//	RETURN_(SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, tls, s, e, ';'));
+//}
 
 //## Expr Stmt.newExpr(Token[] tls, int s, int e);
 static KMETHOD Stmt_newExpr(CTX, ksfp_t *sfp _RIX)
@@ -243,50 +244,50 @@ static KMETHOD Stmt_newExpr(CTX, ksfp_t *sfp _RIX)
 	RETURN_(SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, e));
 }
 
-//## Expr Stmt.newMethodCallExpr(Token key, Token self);
-static KMETHOD Stmt_newMethodCallExpr(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	kStmt *stmt  = sfp[0].stmt;
-	kToken *tk   = sfp[1].tk;
-	assert(tk->kw != 0);
-	struct _kExpr *expr = new_W(Expr, SYN_(kStmt_ks(stmt), tk->kw));
-	KSETv(expr->tk, tk);
-	KSETv(expr->cons, new_(Array, 8));
-	RETURN_(expr);
-}
+////## Expr Stmt.newMethodCallExpr(Token key, Token self);
+//static KMETHOD Stmt_newMethodCallExpr(CTX, ksfp_t *sfp _RIX)
+//{
+//	USING_SUGAR;
+//	kStmt *stmt  = sfp[0].stmt;
+//	kToken *tk   = sfp[1].tk;
+//	assert(tk->kw != 0);
+//	struct _kExpr *expr = new_W(Expr, SYN_(kStmt_ks(stmt), tk->kw));
+//	KSETv(expr->tk, tk);
+//	KSETv(expr->cons, new_(Array, 8));
+//	RETURN_(expr);
+//}
 
-//## Expr Stmt.addExprParam(Token tk);
-static KMETHOD Stmt_addExprParam(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	kStmt *stmt  = sfp[0].stmt;
-	kExpr *expr  = sfp[1].expr;
-	kToken *tk     = sfp[2].tk;
-	if(tk->tt != AST_PARENTHESIS || tk->tt != AST_BRANCET) {
-		SUGAR p(_ctx, WARN_, tk->uline, tk->lpos, "not parameter token");
-		kObject_setNullObject(expr, 1);
-	}
-	if(IS_NOTNULL(expr)) {
-		assert(IS_Array(tk->sub));
-		expr = SUGAR Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
-	}
-	RETURN_(expr);
-}
+////## Expr Stmt.addExprParam(Token tk);
+//static KMETHOD Stmt_addExprParam(CTX, ksfp_t *sfp _RIX)
+//{
+//	USING_SUGAR;
+//	kStmt *stmt  = sfp[0].stmt;
+//	kExpr *expr  = sfp[1].expr;
+//	kToken *tk     = sfp[2].tk;
+//	if(tk->tt != AST_PARENTHESIS || tk->tt != AST_BRANCET) {
+//		SUGAR p(_ctx, WARN_, tk->uline, tk->lpos, "not parameter token");
+//		kObject_setNullObject(expr, 1);
+//	}
+//	if(IS_NOTNULL(expr)) {
+//		assert(IS_Array(tk->sub));
+//		expr = SUGAR Stmt_addExprParams(_ctx, stmt, expr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
+//	}
+//	RETURN_(expr);
+//}
 
-//## Expr Expr.addExpr(Expr expr, Expr o);
-static KMETHOD Expr_addExpr(CTX, ksfp_t *sfp _RIX)
-{
-	kExpr *expr  = sfp[0].expr;
-	kExpr *o     = sfp[1].expr;
-	if(IS_NULL(o) && IS_Array(expr->cons)) {
-		kObject_setNullObject(expr, 1);
-	}
-	if(IS_NOTNULL(expr)) {
-		kArray_add(expr->cons, o);
-	}
-	RETURN_(expr);
-}
+////## Expr Expr.addExpr(Expr expr, Expr o);
+//static KMETHOD Expr_addExpr(CTX, ksfp_t *sfp _RIX)
+//{
+//	kExpr *expr  = sfp[0].expr;
+//	kExpr *o     = sfp[1].expr;
+//	if(IS_NULL(o) && IS_Array(expr->cons)) {
+//		kObject_setNullObject(expr, 1);
+//	}
+//	if(IS_NOTNULL(expr)) {
+//		kArray_add(expr->cons, o);
+//	}
+//	RETURN_(expr);
+//}
 
 // --------------------------------------------------------------------------
 
@@ -303,7 +304,7 @@ static	kbool_t sugar_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 	int FN_buildid = FN_("buildid"), FN_key = FN_("key"), FN_defval = FN_("defval");
 	int FN_typeid = FN_("typeid"), FN_gma = FN_("gma"), FN_pol = FN_("pol");
 	int FN_name = FN_("name");
-	int FN_tls = FN_("tokens"), FN_s = FN_("s"), FN_e = FN_("e");
+//	int FN_tls = FN_("tokens"), FN_s = FN_("s"), FN_e = FN_("e");
 	intptr_t MethodData[] = {
 		_Public, _F(Token_isTypeName), TY_Boolean, TY_Token, MN_("isTypeName"), 0,
 		_Public, _F(Token_isParenthesis), TY_Boolean, TY_Token, MN_("isParenthesis"), 0,
