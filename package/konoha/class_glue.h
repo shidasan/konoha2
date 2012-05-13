@@ -124,7 +124,6 @@ static void setfield(CTX, KDEFINE_CLASS *ct, int fctsize, kclass_t *supct)
 		if(supct->fsize > 0) {
 			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*ct->fsize);
 		}
-
 	}
 }
 
@@ -198,33 +197,6 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
-/**
-sugar "new" ...
-
-Expr Stmt.ParseNewExpr(Token[] tls, int s, int c, int e)
-{
-	Token tkNEW = tls[s];
-	if(s + 2 < e) {
-		Token tk1 = tls[s+1];
-		Token tk2 = tls[s+2];
-		if(tk1.isTypeName() && tk2.isParenthesis()) {
-			Expr expr = newMethodCallExpr(tkNEW, tk1);
-			expr = addExprParam(expr, tk2);
-			return expr;
-		}
-	}
-	return tk.error();
-}
-
-Expr Expr.tyCheckNewExpr(Gamma gma, int ty)
-{
-	return tyCheckAsMethodCall(gma, ty);
-}
-
-KonohaSpace.addParseExpr("new", "ParseNewExpr");
-KonohaSpace.addExprTyCheck("new", "tyCheckNewExpr");
-**/
-
 // --------------------------------------------------------------------------
 
 #define _Public   kMethod_Public
@@ -271,7 +243,6 @@ static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	assert(s == c);
 	kToken *tkNEW = tls->toks[s];
-	DBG_P("parse new!!");
 	if(s + 2 < kArray_size(tls)) {
 		kToken *tk1 = tls->toks[s+1];
 		kToken *tk2 = tls->toks[s+2];
@@ -305,7 +276,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	ksymbol_t fn = tosymbolUM(_ctx, tkN);
 	kExpr *self = SUGAR Expr_tyCheckAt(_ctx, expr, 1, gma, TY_var, 0);
 	if(self != K_NULLEXPR) {
-		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toSETTER(fn));
+		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toGETTER(fn));
 		if(mtd == NULL) {
 			mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toISBOOL(fn));
 		}
@@ -459,7 +430,7 @@ static kbool_t CT_addClassFields(CTX, struct _kclass *ct, kGamma *gma, kBlock *b
 	for(i = 0; i < kArray_size(bk->blocks); i++) {
 		kStmt *stmt = bk->blocks->stmts[i];
 		if(stmt->syn->kw == KW_StmtTypeDecl) {
-			kflag_t flag = 0;
+			kflag_t flag = kField_Getter | kField_Setter;
 			kToken *tk  = kStmt_token(stmt, KW_Type, NULL);
 			kExpr *expr = kStmt_expr(stmt, KW_Expr, NULL);
 			if(!CT_declType(_ctx, ct, gma, expr, flag, TK_type(tk), pline)) {
