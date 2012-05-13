@@ -318,14 +318,35 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
-static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
+// ----------------------------------------------------------------------------
+
+static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkN)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	DBG_P("typing null as %s", T_ty(reqty));
-	if(reqty == TY_var) reqty = CLASS_Object;
-	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
+	kToken *tkP = (kToken*)kObject_getObject(stmt, KW_Block, NULL);
+	if(tkP != NULL && tkP->tt == TK_CODE) {
+		kArray *a = ctxsugar->tokens;
+		size_t atop = kArray_size(a), s, i;
+		SUGAR KonohaSpace_tokenize(_ctx, kStmt_ks(stmt), S_text(tkP->text), tkP->uline, a);
+		s = kArray_size(a);
+		for(i = atop; i < s; i++) {
+			kToken *tk = a->toks[i];
+			if(tk->topch == '(' && tkP->tt == TK_USYMBOL && strcmp(S_text(tkN), S_text(tkP)) == 0) {
+				struct _kToken *tkNEW = new_W(Token, 0);
+				tkNEW->tt = TK_SYMBOL;
+				KSETv(tkNEW->text, S_fn(MN_new));
+				tkNEW->uline = tkP->uline;
+				kArray_add(a, tkNEW);
+			}
+			kArray_add(a, tk);
+			tkP = tk;
+		}
+		kBlock *bk = SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, a, s, kArray_size(a), ';');
+		kObject_setObject(stmt, KW_Block, bk);
+		kArray_clear(a, atop);
+	}
 }
+
 
 // ----------------------------------------------------------------------------
 
@@ -490,6 +511,7 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
+	Stmt_parseClassBlock(_ctx, stmt, tkC);
 	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
 	CT_setField(_ctx, ct, supct, checkFieldSize(_ctx, bk));
 	if(!CT_addClassFields(_ctx, ct, gma, bk, stmt->uline)) {
@@ -507,7 +529,6 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
-		{ TOKEN("null"), _TERM, ExprTyCheck_(null), },
 		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
 		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },

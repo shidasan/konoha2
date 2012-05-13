@@ -27,6 +27,7 @@
 #include<konoha2/float.h>
 
 // operator only
+#include"null_glue.h"
 #include"assignment_glue.h"
 #include"while_glue.h"
 
@@ -52,6 +53,7 @@ static int loading_float = 0;
 
 static	kbool_t konoha_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
+	null_initPackage(_ctx, ks, argc, args, pline);
 	assignment_initPackage(_ctx, ks, argc, args, pline);
 	while_initPackage(_ctx, ks, argc, args, pline);
 	class_initPackage(_ctx, ks, argc, args, pline);
@@ -69,6 +71,7 @@ static	kbool_t konoha_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 
 static kbool_t konoha_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 {
+	null_setupPackage(_ctx, ks, pline);
 	assignment_setupPackage(_ctx, ks, pline);
 	while_setupPackage(_ctx, ks, pline);
 	class_setupPackage(_ctx, ks, pline);
@@ -84,6 +87,7 @@ static kbool_t konoha_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t konoha_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
+	null_initKonohaSpace(_ctx, ks, pline);
 	assignment_initKonohaSpace(_ctx, ks, pline);
 	while_initKonohaSpace(_ctx, ks, pline);
 	class_initKonohaSpace(_ctx, ks, pline);
@@ -99,6 +103,7 @@ static kbool_t konoha_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t konoha_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
+	null_setupKonohaSpace(_ctx, ks, pline);
 	assignment_setupKonohaSpace(_ctx, ks, pline);
 	while_setupKonohaSpace(_ctx, ks, pline);
 	class_setupKonohaSpace(_ctx, ks, pline);

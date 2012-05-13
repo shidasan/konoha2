@@ -831,6 +831,7 @@ static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 	PN_("sugar");     // PKG_sugar
 	UN_("T");         // UN_T
 	FN_("");          // MN_
+	FN_("new");       // MN_new
 	initStructData(_ctx);
 }
 

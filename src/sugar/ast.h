@@ -174,7 +174,7 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk, kKonohaSpace *ks)
 		INIT_GCSTACK();
 		kArray *a = new_(TokenArray, 0);
 		PUSH_GCSTACK(a);
-		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline,a);
+		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline, a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
