@@ -100,23 +100,23 @@ static void keyIntHandler(int sig) { kill(fgPid, SIGINT); }
 /* ------------------------------------------------------------------------ */
 
 // child process IO mode
-#define M_DEFAULT          -2              // initialization state
-#define M_NREDIRECT        -1              // parent process succession
-#define M_PIPE             0               // pipe
-#define M_STDOUT           1               // standard OUT
-#define M_FILE             2               // file
+#define M_DEFAULT          -2			// initialization state
+#define M_NREDIRECT        -1			// parent process succession
+#define M_PIPE             0			// pipe
+#define M_STDOUT           1			// standard OUT
+#define M_FILE             2			// file
 
 // child process status code
-#define S_RUNNING          -300            // running
-#define S_PREEXECUTION     -400            // preexecution
-#define S_TIMEOUT          -500            // tiomeout
-#define S_EXIT             0               // terminate
+#define S_RUNNING          -300			// running
+#define S_PREEXECUTION     -400			// preexecution
+#define S_TIMEOUT          -500			// tiomeout
+#define S_EXIT             0			// terminate
 
 // subproc macro
-#define MAXARGS            128             // the number maximum of parameters for spSplit
-#define BUFSIZE            64 * 1024       // the reading buffer size maximum for pipe
-#define DELAY              1000            // the adjustment value at the time of signal transmission
-#define DEF_TIMEOUT        60 * 1000       // default timeout value
+#define MAXARGS            128				// the number maximum of parameters for spSplit
+#define BUFSIZE            64 * 1024		// the reading buffer size maximum for pipe
+#define DELAY              1000				// the adjustment value at the time of signal transmission
+#define DEF_TIMEOUT        10 * 1000		// default timeout value
 #define ONEXEC(p)          ( (p != NULL) && (p->cpid > 0) ) ? 1 : 0
 #define PREEXEC(p)         ( (p != NULL) && (p->cpid == -1) ) ? 1 : 0
 #define WORD2INT(val)      (sizeof(val)==8) ? (val&0x7FFFFFFF)|((val>>32)&0x80000000) : val
@@ -267,19 +267,43 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		// child process normal route
 		if ( wmode == M_PIPE ) {
 			close(0);
-			dup2(p2c[0], 0);
+			if (dup2(p2c[0], 0) == -1) {
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "dup2"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+						);
+			}
 			close(p2c[0]); close(p2c[1]);
 		} else if ( wmode == M_FILE ) {
 			close(0);
-			dup2(fileno(spd->w.fp), 0);
+			if (dup2(fileno(spd->w.fp), 0) == -1) {
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "dup2"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+						);
+			}
 		}
 		if ( rmode == M_PIPE ) {
 			close(1);
-			dup2(c2p[1], 1);
+			if (dup2(c2p[1], 1) == -1) {
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "dup2"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+						);
+			}
 			close(c2p[0]); close(c2p[1]);
 		} else if ( rmode == M_FILE ) {
 			close(1);
-			dup2(fileno(spd->r.fp), 1);
+			if (dup2(fileno(spd->r.fp), 1) == -1) {
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "dup2"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+						);
+			}
 		}
 		if ( emode == M_PIPE ) {
 			close(2);
@@ -301,7 +325,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			} while ( ++cfd < maxFd );
 		}
 //      setsid(); // separation from tty
-		if (spd->cwd != NULL) { // TODO!!
+		if (!IS_NULL(spd->cwd)) { // TODO!!
 			if ( chdir(S_text((spd->cwd))) != 0 ) {
 				ktrace(_ScriptFault,
 						KEYVALUE_s("@", "chdir"),
@@ -334,16 +358,42 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				envs[i] = (char*)S_text(a->strings[i]);
 			}
 			envs[num] = NULL;
+			// exec load new process image if success.
+			// if its not, they will return with -1.
 			if ( spd->shell == 0 ) {
-				execve(args[0], args, envs);
+				if (execve(args[0], args, envs) == -1) {
+					ktrace(_SystemFault | _ScriptFault,
+							KEYVALUE_s("@", "execve"),
+							KEYVALUE_u("errno", errno),
+							KEYVALUE_s("errstr", strerror(errno))
+							);
+				}
 			} else {
-				execle("/bin/sh", "sh", "-c", S_text(command), NULL, envs);
+				if (execle("/bin/sh", "sh", "-c", S_text(command), NULL, envs) == -1) {
+					ktrace(_SystemFault | _ScriptFault,
+							KEYVALUE_s("@", "execle"),
+							KEYVALUE_u("errno", errno),
+							KEYVALUE_s("errstr", strerror(errno))
+							);
+				}
 			}
 		} else {
 			if ( spd->shell == 0 ) {
-				execvp(args[0], args);
+				if (execvp(args[0], args) == -1) {
+					ktrace(_SystemFault | _ScriptFault,
+							KEYVALUE_s("@", "execvp"),
+							KEYVALUE_u("errno", errno),
+							KEYVALUE_s("errstr", strerror(errno))
+							);
+				}
 			} else {
-				execlp("sh", "sh", "-c", S_text(command), NULL);
+				if (execlp("sh", "sh", "-c", S_text(command), NULL) == -1) {
+					ktrace(_SystemFault | _ScriptFault,
+							KEYVALUE_s("@", "execlp"),
+							KEYVALUE_u("errno", errno),
+							KEYVALUE_s("errstr", strerror(errno))
+							);
+				}
 			}
 		}
 		perror("knh_popen :");
@@ -371,23 +421,32 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 /**
  * @return termination status of a child process
  */
-static int knh_wait( int pid, int bg, int timeout, int *status ) {
+static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 
 #ifndef __APPLE__
 	__sighandler_t alarm_oldset  = SIG_ERR;
 	__sighandler_t keyInt_oldset = SIG_ERR;
+	__sighandler_t ret = SIG_ERR;
 #else
 	sig_t alarm_oldset  = SIG_ERR;
 	sig_t keyInt_oldset = SIG_ERR;
+	sig_t ret = SIG_ERR;
 #endif
 	if ( timeout > 0 ) {
 		if( sigsetjmp(env, 1) ) {
 			// wait timeout return route
 			setitimer(ITIMER_REAL, NULL, NULL);
 			if ( alarm_oldset != SIG_ERR ) {
-				signal(SIGALRM, alarm_oldset);
+				ret = signal(SIGALRM, alarm_oldset);
 			} else {
-				signal(SIGALRM, SIG_DFL);
+				ret = signal(SIGALRM, SIG_DFL);
+			}
+			if (ret == SIG_ERR) {
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "signal"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+						);
 			}
 			return S_TIMEOUT;
 		}
@@ -421,9 +480,16 @@ static int knh_wait( int pid, int bg, int timeout, int *status ) {
 	if ( bg != 1 ) {
 		// SIGINT release
 		if ( keyInt_oldset != SIG_ERR ) {
-			signal(SIGINT, keyInt_oldset);
+			ret = signal(SIGINT, keyInt_oldset);
 		} else {
-			signal(SIGINT, SIG_DFL);
+			ret = signal(SIGINT, SIG_DFL);
+		}
+		if (ret == SIG_ERR) {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "signal"),
+					KEYVALUE_u("errno", errno),
+					KEYVALUE_s("errstr", strerror(errno))
+					);
 		}
 	}
 	if ( status != NULL ) {
@@ -451,7 +517,7 @@ static int proc_start(CTX, subprocData_t *sp ) {
 		sp->cpid  = pid;
 		DBG_P("pid=%d", pid);
 		if (sp->bg != 1) {
-			ret = knh_wait( sp->cpid, sp->bg, sp->timeout, &sp->status );
+			ret = knh_wait(_ctx, sp->cpid, sp->bg, sp->timeout, &sp->status );
 		} else {
 			// nomal end status for bg
 			ret = 0;
@@ -493,9 +559,9 @@ static void clearFd(pfd_t *p) {
 
 // for new
 static void initData (CTX, subprocData_t* p ) {
-//    p->command     = (kString*)KNH_NULVAL(CLASS_String);
-//    p->cwd         = (kString*)KNH_NULVAL(CLASS_String);
-//    p->env         = (kArray*)KNH_NULVAL(CLASS_Array);
+    p->command     = KNULL(String);
+    p->cwd         = KNULL(String);
+    p->env         = KNULL(Array);
 	p->cpid        = -1;
 	p->closefds    = 0;
 	p->bg          = 0;
@@ -532,7 +598,7 @@ static KMETHOD Subproc_new(CTX, ksfp_t *sfp _RIX)
 	if ( p != NULL ) {
 		initData(_ctx, p);
 		p->command = (S_size(sfp[1].s) > 0) ? new_kString(S_text(sfp[1].s), S_size(sfp[1].s), 0)
-											   : NULL;
+											   : KNULL(String);
 //		DBG_P("p->command:%s", S_text(p->command));
 		p->closefds = sfp[2].bvalue;
 	}
@@ -579,43 +645,60 @@ KMETHOD Subproc_exec(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	kString *ret_s;
+	kString *ret_s = KNULL(String);
 	if ( PREEXEC(p) ) {
-        p->timeoutKill = 0;
-        kString *command = (S_size(sfp[1].s) > 0) ? new_kString(S_text(sfp[1].s),S_size(sfp[1].s), 0) :
-                                                     NULL; // TODO!!
-        int pid = knh_popen(_ctx, command, p, M_PIPE );
-        if ( pid > 0 ) {
-            if ( knh_wait( pid, 0, p->timeout, NULL ) == S_TIMEOUT ) {
-                p->timeoutKill = 1;
-                killWait(pid);
-                clearFd(&p->r);
-                clearFd(&p->w);
-                clearFd(&p->e);
-//                KNH_NTHROW2(_ctx, sfp, "Script!!", "subproc.exec :: timeout", K_FAILED, KNH_LDATA0);
-            } else if ( (p->r.mode == M_PIPE) || (p->r.mode == M_DEFAULT) ) {
-                char buf[BUFSIZE];
-                memset(buf, 0x00, sizeof(buf));
-                if( fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0 ) {
-                    ret_s = new_kString(buf, strlen(buf), 0);
-                } else {
-//                    KNH_NTRACE2(_ctx, "package.subprocess.exec.fread ", K_PERROR, KNH_LDATA0);
-                }
-                clearFd(&p->r);
-                clearFd(&p->w);
-                clearFd(&p->e);
-            } else if ( p->r.mode == M_FILE ) {
-                char *msg = " will be ignored.";
-                char *cmd = S_text(sfp[1].s);
-                char mbuf[strlen(msg)+strlen(cmd)+1];
-                snprintf(mbuf, sizeof(mbuf), "'%s'%s", cmd, msg);
-//                WARN_PackageMessage(_ctx, mbuf );
-            }
-        } else {
-//            KNH_NTRACE2(_ctx, "package.subproc.exec ", K_PERROR, KNH_LDATA0);
-        }
-    }
-    RETURN_( ret_s );
+		p->timeoutKill = 0;
+		kString *command = (S_size(sfp[1].s) > 0) ? new_kString(S_text(sfp[1].s),S_size(sfp[1].s), 0) :
+													 KNULL(String);
+		int pid = knh_popen(_ctx, command, p, M_PIPE );
+		if ( pid > 0 ) {
+			if ( knh_wait(_ctx, pid, 0, p->timeout, NULL ) == S_TIMEOUT ) {
+				p->timeoutKill = 1;
+				killWait(pid);
+				clearFd(&p->r);
+				clearFd(&p->w);
+				clearFd(&p->e);
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "TIMEOUT"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+				);
+			} else if ( (p->r.mode == M_PIPE) || (p->r.mode == M_DEFAULT) ) {
+				char buf[BUFSIZE];
+				memset(buf, 0x00, sizeof(buf));
+				if( fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0 ) {
+					ret_s = new_kString(buf, strlen(buf), 0);
+				} else {
+					if (ferror(p->r.fp)) {
+						ktrace(_SystemFault,
+								KEYVALUE_s("@", "fread"),
+								KEYVALUE_u("errno", errno),
+								KEYVALUE_s("errstr", strerror(errno))
+						);
+					} else {
+						// reached eof?
+						// do nothing
+					}
+				}
+				clearFd(&p->r);
+				clearFd(&p->w);
+				clearFd(&p->e);
+			} else if ( p->r.mode == M_FILE ) {
+				char *msg = " will be ignored.";
+				char *cmd = (char*)S_text(sfp[1].s);
+				char mbuf[strlen(msg)+strlen(cmd)+1];
+				snprintf(mbuf, sizeof(mbuf), "'%s'%s", cmd, msg);
+			}
+		} else {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "knh_wait"),
+					KEYVALUE_u("errno", errno),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
+//		KNH_NTRACE2(_ctx, "package.subproc.exec ", K_PERROR, KNH_LDATA0);
+	}
+	RETURN_( ret_s );
 }
 
 //## @Throwable String[] Subproc.communicate(String input);
@@ -645,7 +728,7 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 				signal(SIGPIPE, oldset);
 			}
 		}
-		if ( knh_wait( p->cpid, p->bg, p->timeout, &p->status ) == S_TIMEOUT ) {
+		if ( knh_wait(_ctx, p->cpid, p->bg, p->timeout, &p->status ) == S_TIMEOUT ) {
 			p->timeoutKill = 1;
 			killWait(p->cpid);
 //            KNH_NTHROW2(ctx, sfp, "Script!!", "subproc.communicate :: timeout", K_FAILED, KNH_LDATA0);
