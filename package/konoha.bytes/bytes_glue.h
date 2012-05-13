@@ -51,7 +51,20 @@ static const char *getSystemEncoding(void)
 #endif
 }
 
+#ifdef HAVE_ICONV_H
+#include <iconv.h>
+#endif /* HAVE_ICONV_H */
 
+#ifdef _ICONV_H
+static kbool_t kloadIconv(CTX, kmodiconv_t *base, kline_t pline)
+{
+	base->ficonv_open = (ficonv_open)iconv_open;
+	base->ficonv = (ficonv)iconv;
+	base->ficonv_close = (ficonv_close)iconv_close;
+	KNH_ASSERT(base->ficonv != NULL && base->ficonv_close != NULL);
+	return true;
+}
+#else
 static kbool_t klinkDynamicIconv(CTX, kmodiconv_t *base, kline_t pline)
 {
 	void *handler = dlopen("libiconv" K_OSDLLEXT, RTLD_LAZY);
@@ -69,6 +82,7 @@ static kbool_t klinkDynamicIconv(CTX, kmodiconv_t *base, kline_t pline)
 	kreportf(WARN_, pline, "cannot find libiconv");
 	return false;
 }
+#endif /* _ICONV_H */
 
 /* ------------------------------------------------------------------------ */
 
@@ -315,7 +329,11 @@ static KMETHOD Bytes_new(CTX, ksfp_t *sfp _RIX)
 static kbool_t bytes_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	kmodiconv_t *base = (kmodiconv_t*)KCALLOC(sizeof(kmodiconv_t), 1);
+#ifdef _ICONV_H
+	base->h.name     = kloadIconv(_ctx, base, pline) ? "iconv" : "noconv";
+#else
 	base->h.name     = 	klinkDynamicIconv(_ctx, base, pline) ? "iconv" : "noconv";
+#endif /* _ICONV_H */
 	base->h.setup    = kmodiconv_setup;
 	base->h.reftrace = kmodiconv_reftrace;
 	base->h.free     = kmodiconv_free;
