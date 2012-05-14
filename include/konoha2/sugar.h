@@ -270,7 +270,7 @@ struct _kToken {
 };
 
 typedef enum {
-	MNTYPE_method, MNTYPE_unary, MNTYPE_binary,
+	MNTYPE_method, MNTYPE_unary, MNTYPE_binary
 } mntype_t;
 
 static inline void kToken_setmn(kToken *tk, kmethodn_t mn, mntype_t mn_type)
