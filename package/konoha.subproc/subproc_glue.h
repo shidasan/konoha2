@@ -78,6 +78,7 @@ struct _kSubproc {
 	kObjectHeader h;
 	subprocData_t *spd;
 };
+
 /* ------------------------------------------------------------------------ */
 /* [class defs] */
 

@@ -583,32 +583,34 @@ static void KonohaSpace_merge(CTX, kKonohaSpace *ks, kKonohaSpace *target, kline
 	}
 }
 
-static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kpack_t packid, kline_t pline)
+static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, const char *name, kline_t pline)
 {
 	kbool_t res = 0;
+	kpack_t packid = kpack(name, strlen(name), 0, _NEWID);
 	kpackage_t *pack = getPackageNULL(_ctx, packid, pline);
 	if(pack != NULL) {
 		res = 1;
-		DBG_P("merging.. packid=%p,%d", ks, packid);
-		KonohaSpace_merge(_ctx, ks, pack->ks, pline);
-		if(pack->packdef->initKonohaSpace != NULL) {
-			res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
-		}
-		if(res && pack->export_script != 0) {
-			kString *fname = S_file(pack->export_script);
-			kline_t uline = pack->export_script | (kline_t)1;
-			FILE *fp = fopen(S_text(fname), "r");
-			if(fp != NULL) {
-				res = (KonohaSpace_loadstream(_ctx, ks, fp, uline, pline) == K_CONTINUE);
-				fclose(fp);
+		if(ks != NULL) {
+			KonohaSpace_merge(_ctx, ks, pack->ks, pline);
+			if(pack->packdef->initKonohaSpace != NULL) {
+				res = pack->packdef->initKonohaSpace(_ctx, ks, pline);
 			}
-			else {
-				kreportf(WARN_, pline, "script not found: %s", S_text(fname));
-				res = 0;
+			if(res && pack->export_script != 0) {
+				kString *fname = S_file(pack->export_script);
+				kline_t uline = pack->export_script | (kline_t)1;
+				FILE *fp = fopen(S_text(fname), "r");
+				if(fp != NULL) {
+					res = (KonohaSpace_loadstream(_ctx, ks, fp, uline, pline) == K_CONTINUE);
+					fclose(fp);
+				}
+				else {
+					kreportf(WARN_, pline, "script not found: %s", S_text(fname));
+					res = 0;
+				}
 			}
-		}
-		if(res && pack->packdef->setupKonohaSpace != NULL) {
-			res = pack->packdef->setupKonohaSpace(_ctx, ks, pline);
+			if(res && pack->packdef->setupKonohaSpace != NULL) {
+				res = pack->packdef->setupKonohaSpace(_ctx, ks, pline);
+			}
 		}
 	}
 	return res;
@@ -617,8 +619,7 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, kpack_t packid, 
 // boolean KonohaSpace.importPackage(String pkgname);
 static KMETHOD KonohaSpace_importPackage_(CTX, ksfp_t *sfp _RIX)
 {
-	kpack_t packid = kpack(S_text(sfp[1].s), S_size(sfp[1].s), 0, _NEWID);
-	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].ks, packid, sfp[K_RTNIDX].uline));
+	RETURNb_(KonohaSpace_importPackage(_ctx, sfp[0].ks, S_text(sfp[1].s), sfp[K_RTNIDX].uline));
 }
 
 // boolean KonohaSpace.loadScript(String path);
@@ -655,12 +656,7 @@ void MODSUGAR_loadMethod(CTX)
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(NULL, MethodData);
-//	KDEFINE_INT_CONST IntData[] = {
-//		{"INT_MAX", TY_Int, KINT_MAX},
-//		{"INT_MIN", TY_Int, KINT_MIN},
-//		{NULL},
-//	};
-//	kKonohaSpace_loadConstData(kmodsugar->rootks, IntData, 0);
+	KSET_KLIB2(importPackage, KonohaSpace_importPackage, 0);
 #ifdef WITH_ECLIPSE
 	KDEFINE_PACKAGE *d = konoha_init();
 	d->initPackage(_ctx, kmodsugar->rootks, 0, NULL, 0);

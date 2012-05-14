@@ -291,7 +291,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 
 // ----------------------------------------------------------------------------
 
-static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkN)
+static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname)
 {
 	USING_SUGAR;
 	kToken *tkP = (kToken*)kObject_getObject(stmt, KW_Block, NULL);
@@ -302,7 +302,8 @@ static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkN)
 		s = kArray_size(a);
 		for(i = atop; i < s; i++) {
 			kToken *tk = a->toks[i];
-			if(tk->topch == '(' && tkP->tt == TK_USYMBOL && strcmp(S_text(tkN), S_text(tkP)) == 0) {
+			DBG_P("cname='%s'", cname);
+			if(tk->topch == '(' && tkP->tt == TK_USYMBOL && strcmp(cname, S_text(tkP->text)) == 0) {
 				struct _kToken *tkNEW = new_W(Token, 0);
 				tkNEW->tt = TK_SYMBOL;
 				KSETv(tkNEW->text, S_fn(MN_new));
@@ -482,7 +483,7 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
-	Stmt_parseClassBlock(_ctx, stmt, tkC);
+	Stmt_parseClassBlock(_ctx, stmt, S_text(tkC->text));
 	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
 	CT_setField(_ctx, ct, supct, checkFieldSize(_ctx, bk));
 	if(!CT_addClassFields(_ctx, ct, gma, bk, stmt->uline)) {
