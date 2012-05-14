@@ -428,14 +428,14 @@ static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid,
 
 static kbool_t KonohaSpace_defineMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kline_t pline)
 {
-	if(pline != 0) {
-		kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, ks, mtd->cid, mtd->mn);
-		if(mtdOLD != NULL) {
-			char mbuf[128];
-			kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
-			return 0;
-		}
-	}
+	//if(pline != 0) {
+	//	kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, ks, mtd->cid, mtd->mn);
+	//	if(mtdOLD != NULL) {
+	//		char mbuf[128];
+	//		kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	//		return 0;
+	//	}
+	//}
 	if(mtd->packid == 0) {
 		((struct _kMethod*)mtd)->packid = ks->packid;
 	}

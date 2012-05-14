@@ -639,6 +639,8 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	}
 }
 
+static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX);
+
 static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 {
 	kMethod *mtd = expr->cons->methods[0];
@@ -655,8 +657,9 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
-	if(kMethod_isVirtual(mtd)) {
-		//ASM(LDMTD, SFP_(thisidx), _LOOKUPMTD, {mtd->cid, mtd->mn}, mtd);
+	if (mtd->mn == MN_new && mtd->fcall_1 == Fmethod_abstract) {
+		/* do nothing */
+	} else if(kMethod_isVirtual(mtd)) {
 		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
 		ASM(CALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), knull(CT_(expr->ty)));
 	}
@@ -667,6 +670,9 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		else {
 			ASM(VCALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 		}
+	}
+	if (mtd->mn == MN_new) {
+		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
 	}
 }
 
@@ -957,9 +963,17 @@ static void KonohaCode_free(CTX, kObject *o)
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
-//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
-//	char mbuf[128];
-//	kreportf(WARN_, sfp[K_RTNIDX].uline, "calling abstract method: %s.%s", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+	ktype_t rtype = mtd->pa->rtype;
+	if (rtype != TY_void) {
+		if (TY_isUnbox(rtype)) {
+			RETURNi_(0);
+		} else {
+			kclass_t *ct = CT_(rtype);
+			kObject *nulval = ct->nulvalNUL;
+			RETURN_(nulval);
+		}
+	}
 	RETURNi_(0);
 }
 

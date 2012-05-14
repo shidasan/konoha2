@@ -58,8 +58,9 @@ static kMethod *new_FieldGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty, int 
 	return mtd;
 }
 
-static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t mn, ktype_t ty, int idx)
+static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t sym, ktype_t ty, int idx)
 {
+	kmethodn_t mn = (ty == TY_Boolean) ? MN_toISBOOL(sym) : MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldSetterN : Fmethod_FieldSetter;
 	kparam_t p = {ty, FN_("x")};
 	kParam *pa = new_kParam(ty, 1, &p);
@@ -173,7 +174,7 @@ static void defineField(CTX, struct _kclass *ct, int flag, ktype_t ty, kString *
 	}
 	else {
 		kObject *v = (IS_NULL(value)) ? knull(O_ct(value)) : value;
-		KSETv(ct->WnulvalNUL->ndata[pos], v);
+		KSETv(ct->WnulvalNUL->fields[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
 }
@@ -291,7 +292,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 
 // ----------------------------------------------------------------------------
 
-static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname)
+static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname, struct _kclass *ct)
 {
 	USING_SUGAR;
 	kToken *tkP = (kToken*)kObject_getObject(stmt, KW_Block, NULL);
@@ -314,6 +315,12 @@ static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname)
 			tkP = tk;
 		}
 		kBlock *bk = SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, a, s, kArray_size(a), ';');
+		struct _kToken *tkTY = new_W(Token, 0);
+		tkTY->kw = KW_Type;
+		tkTY->ty = ct->cid;
+		for (i = 0; i < kArray_size(bk->blocks); i++) {
+			kObject_setObject((kStmt*)bk->blocks->list[i], KW_Usymbol, tkTY);
+		}
 		kObject_setObject(stmt, KW_Block, bk);
 		kArray_clear(a, atop);
 	}
@@ -328,6 +335,15 @@ typedef struct {
 	kclass_t *ct;
 } KDEFINE_CLASS_CONST;
 
+static void ObjectField_init(CTX, const struct _kObject *o, void *conf)
+{
+	kclass_t *ct = o->h.ct;
+	if (ct->nulvalNUL != NULL) {
+		size_t fsize = ct->fsize;
+		memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
+	}
+}
+
 static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
 {
 	KDEFINE_CLASS defNewClass = {
@@ -335,6 +351,7 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		.cid    = CLASS_newid,
 		.bcid   = CLASS_Object,
 		.supcid = CLASS_Object,
+		.init   = ObjectField_init,
 	};
 	kclass_t *ct = Konoha_addClassDef(ks->packid, ks->packdom, name, &defNewClass, pline);
 	KDEFINE_CLASS_CONST ClassData[] = {
@@ -342,6 +359,10 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		{NULL},
 	};
 	kKonohaSpace_loadConstData(ks, ClassData, 0); // add class name to this namespace
+	kParam *pa = new_kParam(ct->cid, 0, NULL);
+	PUSH_GCSTACK(pa);
+	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, pa, NULL);
+	CT_addMethod(_ctx, ct, mtd);
 	return (struct _kclass*)ct;
 }
 
@@ -483,7 +504,7 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
-	Stmt_parseClassBlock(_ctx, stmt, S_text(tkC->text));
+	Stmt_parseClassBlock(_ctx, stmt, S_text(tkC->text), ct);
 	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
 	CT_setField(_ctx, ct, supct, checkFieldSize(_ctx, bk));
 	if(!CT_addClassFields(_ctx, ct, gma, bk, stmt->uline)) {
