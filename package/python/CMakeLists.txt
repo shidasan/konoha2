@@ -1,7 +1,20 @@
 cmake_minimum_required(VERSION 2.6)
 set(PACKAGE_SOURCE_CODE python_glue.c)
 set(PACKAGE_SCRIPT_CODE python_glue.k)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
+	${CMAKE_CURRENT_SOURCE_DIR}/config.h)
+
 find_library(PACKAGE_EXTRA_LIBRARY python)
+foreach(ver 2.7 2.6 2.5 2.4 2.3 2.2 2.1 2.0)
+	check_include_files(python${ver}/Python.h HAVE_PYTHON_H)
+	if(${HAVE_PYTHON_H})
+		message("find python ver: " ${ver})
+		set(PY_INCLUDE_DIRS /usr/include/python${ver})
+		include_directories(${PY_INCLUDE_DIRS})
+		break()
+	endif(${HAVE_PYTHON_H})
+endforeach(ver 2.7 2.6 2.5 2.4 2.3 2.2 2.1 2.0)
 
 if(PACKAGE_EXTRA_LIBRARY)
 set(PACKAGE_ENV "PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_SOURCE_DIR}/test/")
