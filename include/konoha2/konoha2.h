@@ -250,6 +250,7 @@ typedef kushort_t       kmethodn_t;
 
 #define CT_(t)              (_ctx->share->ca.cts[t])
 #define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UnboxType)
+#define CT_isUnbox(C)       FLAG_is(C->cflag, kClass_UnboxType)
 
 #define FN_NONAME          ((ksymbol_t)-1)
 #define FN_NEWID           ((ksymbol_t)-2)
@@ -1059,22 +1060,23 @@ struct _klib2 {
 	ksymbol_t   (*Ksymbol)(CTX, const char *, size_t, ksymbol_t def, int);
 	const char* (*KTsymbol)(CTX, char *, size_t, ksymbol_t mn);
 
-	kclass_t*  (*Kclass)(CTX, kcid_t, kline_t);
-	kString*   (*KCT_shortName)(CTX, kclass_t *ct);
-	kclass_t*  (*KCT_Generics)(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p);
+	kbool_t     (*KimportPackage)(CTX, const struct _kKonohaSpace*, const char *, kline_t);
+	kclass_t*   (*Kclass)(CTX, kcid_t, kline_t);
+	kString*    (*KCT_shortName)(CTX, kclass_t *ct);
+	kclass_t*   (*KCT_Generics)(CTX, kclass_t *ct, int psize, kparam_t *p);
 
-	kObject* (*Knew_Object)(CTX, kclass_t *, void *);
-	kObject* (*Knull)(CTX, kclass_t *);
-	kObject* (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
-	void (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
-	uintptr_t (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
-	void (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
-	void (*KObject_protoEach)(CTX, kObject *, void *thunk, void (*f)(CTX, void *, kvs_t *d));
-	void (*KObject_removeKey)(CTX, kObject *, ksymbol_t);
+	kObject*    (*Knew_Object)(CTX, kclass_t *, void *);
+	kObject*    (*Knull)(CTX, kclass_t *);
+	kObject*    (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
+	void        (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
+	uintptr_t   (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
+	void        (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
+	void        (*KObject_protoEach)(CTX, kObject *, void *thunk, void (*f)(CTX, void *, kvs_t *d));
+	void        (*KObject_removeKey)(CTX, kObject *, ksymbol_t);
 
-	kString* (*Knew_String)(CTX, const char *, size_t, int);
-	kString* (*Knew_Stringf)(CTX, int, const char *, ...);
-	kString* (*KString)(CTX, int, kString *, kString *);
+	kString*    (*Knew_String)(CTX, const char *, size_t, int);
+	kString*    (*Knew_Stringf)(CTX, int, const char *, ...);
+	kString*    (*KString)(CTX, int, kString *, kString *);
 
 	void (*KArray_add)(CTX, kArray *, kObject *);
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
@@ -1155,6 +1157,7 @@ struct _klib2 {
 #define KSYMBOL(T)                (KPI)->Ksymbol(_ctx, T, sizeof(T)-1, FN_NEWID, SYMPOL_RAW)
 #define FN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_NAME)
 #define MN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_METHOD)
+#define MN_new                    1  /* @see */
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
 
 #define FILEID_NATIVE             0
@@ -1195,8 +1198,11 @@ struct _klib2 {
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 #define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 
+#define KREQUIRE_PACKAGE(NAME, UL)                   (KPI)->KimportPackage(_ctx, NULL, NAME, UL)
+#define KEXPORT_PACKAGE(NAME, KS, UL)                (KPI)->KimportPackage(_ctx, KS, NAME, UL)
+
 #define KCLASS(cid)                          S_text(CT(cid)->name)
-#define kClassTable_Generics(CT, R, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, R, PSIZE, P)
+#define kClassTable_Generics(CT, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, PSIZE, P)
 #define Konoha_setModule(N,D,P)              (KPI)->KsetModule(_ctx, N, D, P)
 #define Konoha_addClassDef(PAC, DOM, NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, PAC, DOM, NAME, DEF, UL)
 #define kKonohaSpace_getCT(NS, THIS, S, L, C)      (KPI)->KS_getCT(_ctx, NS, THIS, S, L, C)

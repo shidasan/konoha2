@@ -1,4 +1,3 @@
-K.import("konoha.float");
 K.import("konoha.math");
 
 System.p(Math.abs(4));
@@ -24,11 +23,11 @@ System.p(Math.atan2(3.0, 5.0));
 System.p(Math.sinh(2.0));
 System.p(Math.cosh(3.0));
 System.p(Math.tanh(4.0));
-System.p(M_E);
-System.p(M_LOG2E);
-System.p(M_LOG10E);
-System.p(M_LN2);
-System.p(M_LN10);
-System.p(M_PI);
-System.p(M_SQRT2);
+System.p(MATH_E);
+System.p(MATH_LOG2E);
+System.p(MATH_LOG10E);
+System.p(MATH_LN2);
+System.p(MATH_LN10);
+System.p(MATH_PI);
+System.p(MATH_SQRT2);
 

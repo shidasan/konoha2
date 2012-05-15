@@ -76,32 +76,37 @@ static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 	return 0;
 }
 
-static struct _kToken* Token_resolveType(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
+static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
 {
-	size_t i, psize= 0, size = kArray_size(tkP->sub);
-	kparam_t p[size];
-	for(i = 0; i < size; i++) {
-		kToken *tkT = (tkP->sub->toks[i]);
-		if(TK_isType(tkT)) {
-			p[psize].ty = TK_type(tkT);
-			psize++;
+	if(tkP->tt == AST_BRANCET) {
+		size_t i, psize= 0, size = kArray_size(tkP->sub);
+		kparam_t p[size];
+		for(i = 0; i < size; i++) {
+			kToken *tkT = (tkP->sub->toks[i]);
+			if(TK_isType(tkT)) {
+				p[psize].ty = TK_type(tkT);
+				psize++;
+				continue;
+			}
+			if(tkT->topch == ',') continue;
+			return NULL; // new int[10];  // not generics
 		}
-		if(tkT->topch == ',') continue;
-	}
-	kclass_t *ct;
-	if(psize > 0) {
-		ct = CT_(TK_type(tk));
-		if(ct->cparam == K_NULLPARAM) {
-			SUGAR_P(ERR_, tk->uline, tk->lpos, "not generic type: %s", T_ty(TK_type(tk)));
-			return tk;
+		kclass_t *ct;
+		if(psize > 0) {
+			ct = CT_(TK_type(tk));
+			if(ct->cparam == K_NULLPARAM) {
+				SUGAR_P(ERR_, tk->uline, tk->lpos, "not generic type: %s", T_ty(TK_type(tk)));
+				return tk;
+			}
+			ct = kClassTable_Generics(ct, psize, p);
 		}
-		ct = kClassTable_Generics(ct, TY_void, psize, p);
+		else {
+			ct = CT_p0(_ctx, CT_Array, TK_type(tk));
+		}
+		tk->ty = ct->cid;
+		return tk;
 	}
-	else {
-		ct = CT_P0(_ctx, CT_Array, TK_type(tk));
-	}
-	tk->ty = ct->cid;
-	return tk;
+	return NULL;
 }
 
 static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArray *dst, kToken **tkERR)
@@ -134,20 +139,30 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 	else if(tk->tt == TK_CODE) {
 		tk->kw = KW_Brace;
 	}
-	if(TK_isType(tk)) {
+	if(TK_isType(tk)) {   // trying to resolve Type[Type, Type]
+		kArray_add(dst, tk);
 		while(next + 1 < e) {
-			kToken *tkN = tls->toks[next + 1];
-			if(tkN->topch != '[') break;
+			kToken *tkB = tls->toks[next + 1];
+			if(tkB->topch != '[') break;
 			kArray *abuf = ctxsugar->tokens;
 			size_t atop = kArray_size(abuf);
 			next = makeTree(_ctx, ks, AST_BRANCET, tls,  next+1, e, ']', abuf, tkERR);
-			if(kArray_size(abuf) > atop) {
-				tk = Token_resolveType(_ctx, ks, tk, abuf->toks[atop]);
-				kArray_clear(abuf, atop);
+			if(!(kArray_size(abuf) > atop)) return next;
+			tkB = abuf->toks[atop];
+			tk = TokenType_resolveGenerics(_ctx, ks, tk, tkB);
+			if(tk == NULL) {
+				DBG_P("APPEND tkB->tt=%s", T_tt(tkB->tt));
+				if(abuf != dst) {
+					kArray_add(dst, tkB);
+					kArray_clear(abuf, atop);
+				}
+				DBG_P("next=%d", next);
+				return next;
 			}
+			kArray_clear(abuf, atop);
 		}
 	}
-	if(tk->kw > KW_Expr) {
+	else if(tk->kw > KW_Expr) {
 		kArray_add(dst, tk);
 	}
 	return next;
@@ -159,7 +174,7 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk, kKonohaSpace *ks)
 		INIT_GCSTACK();
 		kArray *a = new_(TokenArray, 0);
 		PUSH_GCSTACK(a);
-		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline,a);
+		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline, a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
@@ -262,7 +277,6 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 		}
 		if(tk->tt == TK_INDENT) {
 			if(tk->lpos <= *indent) {
-				DBG_P("tk->lpos=%d, indent=%d", tk->lpos, *indent);
 				return i+1;
 			}
 			continue;
@@ -743,6 +757,7 @@ static KMETHOD ParseStmt_Expr(CTX, ksfp_t *sfp _RIX)
 	VAR_ParseStmt(stmt, syn, name, tls, s, e);
 	INIT_GCSTACK();
 	int r = -1;
+	dumpTokenArray(_ctx, 0, tls, s, e);
 	kExpr *expr = Stmt_newExpr2(_ctx, stmt, tls, s, e);
 	if(expr != K_NULLEXPR) {
 		dumpExpr(_ctx, 0, 0, expr);

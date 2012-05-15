@@ -44,51 +44,19 @@ struct _kFile {
 	kObjectHeader h;
 	FILE *fp;
 };
-/* ------------------------------------------------------------------------ */
-/* [class defs] */
-
-#define ctxfile         ((ctxfile_t*)_ctx->mod[MOD_file])
-#define kmodfile        ((kmodfile_t*)_ctx->modshare[MOD_file])
-#define IS_defineFile() (_ctx->modshare[MOD_file] != NULL)
-#define CT_File         kmodfile->cFile
-#define TY_File         kmodfile->cFile->cid
-
-#define IS_File(O)      ((O)->h.ct == CT_File)
-
-
-static void kmodfile_setup(CTX, struct kmodshare_t *def, int newctx)
-{
-}
-
-static void kmodfile_reftrace(CTX, struct kmodshare_t *baseh)
-{
-}
-
-static void kmodfile_free(CTX, struct kmodshare_t *baseh)
-{
-	KFREE(baseh, sizeof(kmodfile_t));
-}
 
 /* ------------------------------------------------------------------------ */
 
 static void File_init(CTX, kObject *o, void *conf)
 {
 	struct _kFile *file = (struct _kFile*)o;
-	DBG_P("conf=%p", conf);
-	if (conf != NULL) {
-		file->fp = conf;
-	} else {
-		file->fp = NULL;
-	}
-
+	file->fp = (conf != NULL) ? conf : NULL;
 }
 
 static void File_free(CTX, kObject *o)
 {
 	struct _kFile *file = (struct _kFile*)o;
-	if (file->fp != NULL)
-	{
-		DBG_P("close!!");
+	if (file->fp != NULL) {
 		fclose(file->fp);
 		file->fp = NULL;
 	}
@@ -97,7 +65,7 @@ static void File_free(CTX, kObject *o)
 
 static void File_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-
+	//TODO
 }
 
 /* ------------------------------------------------------------------------ */
@@ -116,14 +84,12 @@ static KMETHOD File_read(CTX, ksfp_t *sfp _RIX)
 	kFile *file = (kFile*)sfp[0].o;
 	FILE *fp = file->fp;
 	size_t size = 0;
-	DBG_P("fp=%p", fp);
 	if(fp != NULL) {
 		kBytes *ba = sfp[1].ba;
 		size_t offset = (size_t)sfp[2].ivalue;
 		size_t len = (size_t)sfp[3].ivalue;
 		size = ba->bytesize;
 		if(!(offset < size)) {
-			//THROW_OutOfRange(ctx, sfp, offset, size);
 			kline_t uline = sfp[K_RTNIDX].uline;
 			kreportf(CRIT_, uline, "OutOfRange!!, offset=%d, size=%d", offset, size);
 		}
@@ -185,7 +151,6 @@ static KMETHOD File_putC(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(0);
 }
 
-
 //## @Native boolean File.sync();
 KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 {
@@ -213,45 +178,35 @@ KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 #define _Im kMethod_Immutable
 #define _F(F)   (intptr_t)(F)
 
+#define CT_File         cFile
+#define TY_File         cFile->cid
+#define IS_File(O)      ((O)->h.ct == CT_File)
+
 static kbool_t file_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	kmodfile_t *base = (kmodfile_t *)KCALLOC(sizeof(kmodfile_t), 1);
-	base->h.name     = "file";
-	base->h.setup    = kmodfile_setup;
-	base->h.reftrace = kmodfile_reftrace;
-	base->h.free     = kmodfile_free;
-	Konoha_setModule(MOD_file, &base->h, pline);
-
 	KDEFINE_CLASS defFile = {
 		STRUCTNAME(File),
-		.cflag = 0,
+		.cflag = kClass_Final,
 		.init  = File_init,
 		.free  = File_free,
 		.p     = File_p,
 	};
 
-	base->cFile = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defFile, pline);
-
-	int FN_path = FN_("path");
-	int FN_mode = FN_("mode");
-	int FN_ch = FN_("ch");
+	kclass_t *cFile = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defFile, pline);
 	intptr_t MethodData[] = {
-		_Public|_Const|_Im, _F(System_fopen), TY_File, TY_System, MN_("fopen"), 2, TY_String, FN_path, TY_String, FN_mode,
+		_Public|_Const|_Im, _F(System_fopen), TY_File, TY_System, MN_("fopen"), 2, TY_String, FN_("path"), TY_String, FN_("mode"),
 		_Public|_Const|_Im, _F(File_close), TY_void, TY_File, MN_("close"), 0,
 		_Public|_Const|_Im, _F(File_sync), TY_Boolean, TY_File, MN_("sync"), 0,
 		_Public|_Const|_Im, _F(File_getC), TY_Int, TY_File, MN_("getC"), 0,
-		_Public|_Const|_Im, _F(File_putC), TY_Boolean, TY_File, MN_("putC"), 1, TY_Int, FN_ch,
+		_Public|_Const|_Im, _F(File_putC), TY_Boolean, TY_File, MN_("putC"), 1, TY_Int, FN_("ch"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
 	if (IS_defineBytes()) {
 		// the function below uses Bytes
-		int FN_buf = FN_("buf");
-		int FN_offset = FN_("offset");
-		int FN_len = FN_("len");
 		intptr_t MethodData2[] = {
-			_Public|_Const, _F(File_write), TY_Int, TY_File, MN_("write"), 3, TY_Bytes, FN_buf, TY_Int, FN_offset, TY_Int, FN_len,
-			_Public|_Const, _F(File_read), TY_Int, TY_File, MN_("read"), 3, TY_Bytes, FN_buf, TY_Int, FN_offset, TY_Int, FN_len,
+			_Public|_Const, _F(File_write), TY_Int, TY_File, MN_("write"), 3, TY_Bytes, FN_("buf"), TY_Int, FN_("offset"), TY_Int, FN_("len"),
+			_Public|_Const, _F(File_read), TY_Int, TY_File, MN_("read"), 3, TY_Bytes, FN_("buf"), TY_Int, FN_("offset"), TY_Int, FN_("len"),
 			DEND,
 		};
 		kKonohaSpace_loadMethodData(ks, MethodData2);

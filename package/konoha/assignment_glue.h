@@ -73,11 +73,27 @@ static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+//static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
+//{
+//	VAR_ParseExpr(stmt, syn, tls, s, c, e);   // a += 1
+//	kToken *tk = tls->toks[s];      // first token
+//	kToken *tkOp = tls->toks[c];    // "+="
+//	// a = (a) + 1
+//	size_t atop = kArray_size(tls);
+//	tk->tt = AST_PARENSIS;
+//	SETvtk->sub new_Array(TokenArray, 0);
+//	// @see makeTree AST_PARENTHESIS;
+//	expr = SUGAR Stmt_newExpr2(ctx, stmt, tls, atop, kArray_size(tls));
+//	kArray_clear(tls, atop);
+//	RETURN_(expr);
+//}
+
 static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("="), /*.op2 = "*", .priority_op2 = 4096,*/ ExprTyCheck_(assignment)},
+//		{ TOKEN("+="), /*.priority_op2 =*/ StmtParse_(AddAssignment), },
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

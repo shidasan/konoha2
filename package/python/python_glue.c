@@ -27,7 +27,7 @@
 #include<konoha2/float.h>
 //#include<../konoha.bytes/bytes_glue.h>
 //#include<../konoha.array/array_glue.h>
-#include<python2.7/Python.h>
+#include<Python.h>
 
 
 #define OB_TYPE(obj) (((PyObject*)obj->self)->ob_type)
@@ -55,7 +55,9 @@ static void PyObject_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 	// Now, level value has no effect.
 	PyObject *pyo =  ((kPyObject*)sfp[pos].o)->self;
 	PyObject* str = pyo->ob_type->tp_str(pyo);
+	Py_INCREF(str);
 	kwb_printf(wb, "%s", PyString_AsString(str));
+	Py_DECREF(str);
 }
 
 static void PyObject_free(CTX, kObject *o)
@@ -175,6 +177,7 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kPyObject *po = (kPyObject*)sfp[0].o;
 	kwb_t wb;
+	// assert
 	if(po->self == NULL) {
 		// [TODO] throw Exception
 	}
@@ -229,25 +232,26 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 #define _BITS 8
 #define PY_SSIZE_MAX (size_t)(1 << 31)
 
-//static KMETHOD List_toPyObject(CTX, ksfp_t *sfp _RIX)
-//{
-//	kArray *a = sfp[0].a;
-//	size_t i, n = kArray_size(a);
-//	PyObject* pa = PyList_New((Py_ssize_t)n);
-//	if (kArray_isUnboxData(a)) {
-//		for (i = 0; i < pa_size; i++) {
-//			// [TODO] transfer array element to PyObject
-//			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
-//		}
-//	}
-//	else {
-//		for (i = 0; i < pa_size; i++) {
-//			// [TODO] transfer array element to PyObject
-//			//PyList_SetItem(pa, i, a->list[n]);
-//		}
-//	}
-//	RETURN_PyObject(pa);
-//}
+static KMETHOD Array_toPyObject(CTX, ksfp_t *sfp _RIX)
+{
+	kArray *a = sfp[0].a;
+	size_t i, n = kArray_size(a);
+	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
+	PyObject* pa = PyList_New((Py_ssize_t)n);
+	if (kArray_isUnboxData(a)) {
+		for (i = 0; i < pa_size; i++) {
+			// [TODO] transfer array element to PyObject
+			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
+		}
+	}
+	else {
+		for (i = 0; i < pa_size; i++) {
+			// [TODO] transfer array element to PyObject
+			//PyList_Append(pa, i, a->list[n]);
+		}
+	}
+	RETURN_PyObject(pa);
+}
 
 //static KMETHOD PyObject_toList(CTX, ksfp_t *sfp _RIX)
 //{
@@ -503,6 +507,8 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im|_Coercion, _F(String_toPyObject), TY_PyObject, TY_String, MN_to(TY_PyObject), 0,
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_("toString"),  0,
 		// [TODO] add following konoha class.
+		//_Public|_Const|_Im|_Coercion, _F(PyObject_toList), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
+		//_Public|_Const|_Im|_Coercion, _F(List_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toComplex), TY_Complex, TY_PyObject, MN_to(TY_Complex), 0,
 		//_Public|_Const|_Im|_Coercion, _F(Complex_toPyObject), TY_PyObject, TY_Complex, MN_to(TY_PyObject), 0,
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toBuffer), TY_Buffer, TY_PyObject, MN_to(TY_Buffer), 0,
@@ -553,25 +559,6 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		};
 		kKonohaSpace_loadMethodData(ks, MethodData);
 	}
-	// [TODO] add TY_Bytes
-	//if(IS_defineBytes()) {
-	//	intptr_t MethodData[] = {
-	//		_Public|_Const|_Im|_Coercion, _F(PyObject_toByteArray), TY_Bytes, TY_PyObject, MN_to(TY_Bytes), 0,
-	//		_Public|_Const|_Im|_Coercion, _F(ByteArray_toPyObject), TY_PyObject, TY_Bytes, MN_to(TY_PyObject), 0,
-	//		DEND,
-	//	};
-	//	kKonohaSpace_loadMethodData(ks, MethodData);
-	//}
-	// [TODO] add TY_Array
-	//if(IS_defineArray()) {
-	//	intptr_t MethodData[] = {
-	//_Public|_Const|_Im|_Coercion, _F(PyObject_toList), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
-	//_Public|_Const|_Im|_Coercion, _F(List_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,
-	//		DEND,
-	//	};
-	//	kKonohaSpace_loadMethodData(ks, MethodData);
-	//}
-
 	return true;
 }
 

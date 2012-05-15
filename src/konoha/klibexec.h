@@ -331,7 +331,7 @@ static kline_t Kfileid(CTX, const char *name, size_t len, int spol, ksymbol_t de
 {
 	uintptr_t hcode = strhash(name, len);
 	kline_t uline = Kmap_getcode(_ctx, _ctx->share->fileidMapNN, _ctx->share->fileidList, name, len, hcode, spol, def);
-	DBG_P("name='%s', fileid=%d", name, uline);
+	//DBG_P("name='%s', fileid=%d", name, uline);
 	return uline << (sizeof(kshort_t) * 8);
 }
 

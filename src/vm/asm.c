@@ -68,25 +68,31 @@ static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
 
 #define ASMLINE  0
 
-#define ASM(T, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__}; \
-		BUILD_asm(_ctx, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define OP_T(T) union { kopl_t op; T op_; }
 
-#define ASMop(T, OP, ...) { \
-		klr_##T##_t op_ = {TADDR, OP, ASMLINE, ## __VA_ARGS__}; \
-		BUILD_asm(_ctx, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define ASM(T, ...) do {\
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BUILD_asm(_ctx, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
-#define ASMbranch(T, lb, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, NULL, ## __VA_ARGS__}; \
-		ASM_BRANCH_(_ctx, lb, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define ASMop(T, OP, ...) do {\
+	klr_##T##_t op_ = {TADDR, OP, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BUILD_asm(_ctx, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
-#define kBasicBlock_add(bb, T, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
-		BasicBlock_add(_ctx, bb, 0, (kopl_t*)(&op_), sizeof(klr_##T##_t));\
-	}\
+#define ASMbranch(T, lb, ...) do {\
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, NULL, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	ASM_BRANCH_(_ctx, lb, &tmp_.op, sizeof(klr_##T##_t)); \
+} while (0)
+
+#define kBasicBlock_add(bb, T, ...) do { \
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BasicBlock_add(_ctx, bb, 0, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
 #define NC_(sfpidx)    (((sfpidx) * 2) + 1)
 #define OC_(sfpidx)    ((sfpidx) * 2)
@@ -113,7 +119,7 @@ static void BasicBlock_add(CTX, struct _kBasicBlock *bb, kushort_t line, kopl_t 
 
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize)
 {
-	DBG_ASSERT(op->opcode != OPCODE_JMPF);
+	assert(op->opcode != OPCODE_JMPF);
 	BasicBlock_add(_ctx, ctxcode->WcurbbNC, ctxcode->uline, op, opsize);
 }
 
@@ -639,6 +645,8 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	}
 }
 
+static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX);
+
 static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 {
 	kMethod *mtd = expr->cons->methods[0];
@@ -655,8 +663,10 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
+//	if (mtd->mn == MN_new && mtd->fcall_1 == Fmethod_abstract) {
+//		/* do nothing */
+//	} else
 	if(kMethod_isVirtual(mtd)) {
-		//ASM(LDMTD, SFP_(thisidx), _LOOKUPMTD, {mtd->cid, mtd->mn}, mtd);
 		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
 		ASM(CALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), knull(CT_(expr->ty)));
 	}
@@ -668,6 +678,9 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 			ASM(VCALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 		}
 	}
+//	if (mtd->mn == MN_new) {
+//		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
+//	}
 }
 
 static void OR_asm(CTX, int a, kExpr *expr, int espidx)
@@ -901,7 +914,11 @@ static void Method_genCode(CTX, kMethod *mtd, kBlock *bk)
 	ASM_LABEL(_ctx, lbBEGIN);
 	BLOCK_asm(_ctx, bk);
 	ASM_LABEL(_ctx, ctxcode->lbEND);
+	if (mtd->mn == MN_new) {
+		ASM(NMOV, OC_(K_RTNIDX), OC_(0), CT_(mtd->cid));   // FIXME: Type 'This' must be resolved
+	}
 	ASM(RET);
+	assert(ctxcode->lbEND);/* scan-build: remove warning */
 //	BUILD_popLABEL(_ctx);
 	BUILD_compile(_ctx, mtd, lbINIT, ctxcode->lbEND);
 	ctxcode->lbEND = NULL;
@@ -957,9 +974,17 @@ static void KonohaCode_free(CTX, kObject *o)
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
-//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
-//	char mbuf[128];
-//	kreportf(WARN_, sfp[K_RTNIDX].uline, "calling abstract method: %s.%s", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+	ktype_t rtype = mtd->pa->rtype;
+	if (rtype != TY_void) {
+		if (TY_isUnbox(rtype)) {
+			RETURNi_(0);
+		} else {
+			kclass_t *ct = CT_(rtype);
+			kObject *nulval = ct->nulvalNUL;
+			RETURN_(nulval);
+		}
+	}
 	RETURNi_(0);
 }
 

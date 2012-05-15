@@ -121,10 +121,10 @@ static inline uintptr_t longid(kushort_t packdom, kushort_t un)
 	return (hcode << (sizeof(kshort_t)*8)) | un;
 }
 
-static inline kclass_t *CT_P0(CTX, kclass_t *ct, ktype_t ty)
+static inline kclass_t *CT_p0(CTX, kclass_t *ct, ktype_t ty)
 {
 	kparam_t p = {ty, 0};
-	return kClassTable_Generics(ct, TY_void, 1, &p);
+	return kClassTable_Generics(ct, 1, &p);
 }
 
 #define uNULL   ((uintptr_t)NULL)

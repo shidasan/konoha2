@@ -22,44 +22,38 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-// **************************************************************************
-// LIST OF CONTRIBUTERS
-//  shinpei - Shinpei Nakata, Yokohama National University, Japan
-//  kimio - Kimio Kuramitsu, Yokohama National University, Japan
-//  goccy - Masaaki Goshima, Yokohama National University, Japan
-// **************************************************************************
-
 #include<konoha2/konoha2.h>
 #include<konoha2/sugar.h>
-#include<konoha2/bytes.h>
 
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
-#include "socket_glue.h"
+#include <sys/time.h>
 
-#ifdef __cplusplus
-extern "C" {
+#ifndef __APPLE__
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
+#define __USE_LOCAL_PIPE2__
+#endif
 #endif
 
+#include"subproc_glue.h"
 
-KDEFINE_PACKAGE* socket_init(void)
+// --------------------------------------------------------------------------
+
+KDEFINE_PACKAGE* subproc_init(void)
 {
 	static KDEFINE_PACKAGE d = {
-		KPACKNAME("socket", "1.0"),
-		.initPackage = socket_initPackage,
-		.setupPackage = socket_setupPackage,
-		.initKonohaSpace = socket_initKonohaSpace,
-		.setupKonohaSpace = socket_setupKonohaSpace,
+		KPACKNAME("subproc", "1.0"),
+		.initPackage = subproc_initPackage,
+		.setupPackage = subproc_setupPackage,
+		.initKonohaSpace = subproc_initKonohaSpace,
+		.setupKonohaSpace = subproc_setupKonohaSpace,
 	};
 	return &d;
 }
-
-#undef new_T
-
-#ifdef __cplusplus
-}
-#endif
-

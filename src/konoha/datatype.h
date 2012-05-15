@@ -577,28 +577,28 @@ static kbool_t CParam_equals(kParam *cpa, int psize, kparam_t *p)
 	return true;
 }
 
-static kParam *new_CParam(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p)
+static kParam *new_CParam(CTX, kclass_t *ct, int psize, kparam_t *p)
 {
 	int i;
 	for( i = 0; i < psize; i++) {
 		p[i].fn = ct->cparam->p[i].fn;
 	}
-	return new_kParam(rtype, psize, p);
+	return new_kParam(TY_void, psize, p);
 }
 
-static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p)
+static kclass_t *CT_Generics(CTX, kclass_t *ct, int psize, kparam_t *p)
 {
 	kclass_t *ct0 = ct;
 	while(ct != NULL) {
 		kParam *cpa = ct->cparam;
-		if(cpa->psize ==  psize && cpa->rtype == rtype && CParam_equals(cpa, psize, p)) {
+		if(cpa->psize ==  psize && CParam_equals(cpa, psize, p)) {
 			return ct;
 		}
 		if(ct->searchSimilarClassNULL == NULL) break;
 		ct = ct->searchSimilarClassNULL;
 	}
 	struct _kclass *newct = new_CT(_ctx, ct, NULL, NOPLINE);
-	KINITv(newct->cparam, new_CParam(_ctx, ct, rtype, psize, p));
+	KINITv(newct->cparam, new_CParam(_ctx, ct, psize, p));
 	KINITv(newct->methods, K_EMPTYARRAY);
 	if(newct->searchSuperMethodClassNULL == NULL) {
 		newct->searchSuperMethodClassNULL = ct0;
@@ -807,7 +807,7 @@ static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&share->ca, K_CLASSTABLE_INIT * sizeof(kclass_t));
 	loadInitStructData(_ctx);
-//	share->cStringArray = CT_P0(_ctx, CT_Array, TY_String);
+//	share->cStringArray = CT_p0(_ctx, CT_Array, TY_String);
 	share->lcnameMapNN = kmap_init(0);
 	KINITv(share->fileidList, new_(StringArray, 8));
 	share->fileidMapNN = kmap_init(0);
@@ -831,6 +831,7 @@ static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 	PN_("sugar");     // PKG_sugar
 	UN_("T");         // UN_T
 	FN_("");          // MN_
+	FN_("new");       // MN_new
 	initStructData(_ctx);
 }
 

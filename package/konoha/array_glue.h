@@ -82,8 +82,9 @@ static KMETHOD ParseExpr_BRANCET(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
+	DBG_P("parse brancet!!");
 	kToken *tk = tls->toks[c];
-	if(s == c) {
+	if(s == c) {  // TODO
 		kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tk->sub, 0, kArray_size(tk->sub));
 		RETURN_(SUGAR Expr_rightJoin(_ctx, expr, stmt, tls, s+1, c+1, e));
 	}
@@ -92,18 +93,18 @@ static KMETHOD ParseExpr_BRANCET(CTX, ksfp_t *sfp _RIX)
 		if(lexpr == K_NULLEXPR) {
 			RETURN_(lexpr);
 		}
-//		if(lexpr->syn->kw == KW_NEW) {  // new int[100]
-//			lexpr = Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub));
-//			RETURN_(kExpr_rightJoin(lexpr, stmt, tls, s+1, c+1, e));
-//		}
-//		else {   // X[1] => get X 1
+		if(lexpr->syn->kw == KW_new) {  // new int[100]
+			kExpr_setsyn(lexpr, SYN_(kStmt_ks(stmt), KW_ExprMethodCall));
+			lexpr = SUGAR Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub), 0/*allowEmpty*/);
+		}
+		else {   // X[1] => get X 1
 			struct _kToken *tkN = new_W(Token, 0);
 			tkN->tt = TK_MN; tkN->mn = MN_toGETTER(0);
 			tkN->uline = tk->uline;
 			syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall);
 			lexpr  = SUGAR new_ConsExpr(_ctx, syn, 2, tkN, lexpr);
-//		}
-		lexpr = SUGAR Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
+			lexpr = SUGAR Stmt_addExprParams(_ctx, stmt, lexpr, tk->sub, 0, kArray_size(tk->sub), 1/*allowEmpty*/);
+		}
 		RETURN_(SUGAR Expr_rightJoin(_ctx, lexpr, stmt, tls, s+1, c+1, e));
 	}
 }

@@ -22,44 +22,51 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-// **************************************************************************
-// LIST OF CONTRIBUTERS
-//  shinpei - Shinpei Nakata, Yokohama National University, Japan
-//  kimio - Kimio Kuramitsu, Yokohama National University, Japan
-//  goccy - Masaaki Goshima, Yokohama National University, Japan
-// **************************************************************************
+#ifndef NULL_GLUE_H_
+#define NULL_GLUE_H_
 
-#include<konoha2/konoha2.h>
-#include<konoha2/sugar.h>
-#include<konoha2/bytes.h>
+// --------------------------------------------------------------------------
 
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <errno.h>
-#include <signal.h>
-#include "socket_glue.h"
+#define _Public   kMethod_Public
+#define _Const    kMethod_Const
+#define _Coercion kMethod_Coercion
+#define _F(F)   (intptr_t)(F)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-KDEFINE_PACKAGE* socket_init(void)
+static	kbool_t null_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	static KDEFINE_PACKAGE d = {
-		KPACKNAME("socket", "1.0"),
-		.initPackage = socket_initPackage,
-		.setupPackage = socket_setupPackage,
-		.initKonohaSpace = socket_initKonohaSpace,
-		.setupKonohaSpace = socket_setupKonohaSpace,
+	return true;
+}
+
+static kbool_t null_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
+}
+
+// --------------------------------------------------------------------------
+
+static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
+{
+	USING_SUGAR;
+	VAR_ExprTyCheck(expr, syn, gma, reqty);
+	DBG_P("typing null as %s", T_ty(reqty));
+	if(reqty == TY_var) reqty = TY_Object;
+	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
+}
+
+static kbool_t null_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
+{
+	USING_SUGAR;
+	KDEFINE_SYNTAX SYNTAX[] = {
+		{ TOKEN("null"), _TERM, ExprTyCheck_(null), },
+		{ .name = NULL, },
 	};
-	return &d;
+	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);
+	return true;
 }
 
-#undef new_T
-
-#ifdef __cplusplus
+static kbool_t null_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
+{
+	return true;
 }
-#endif
 
+#endif /* NULL_GLUE_H_ */

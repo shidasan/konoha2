@@ -58,8 +58,9 @@ static kMethod *new_FieldGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty, int 
 	return mtd;
 }
 
-static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t mn, ktype_t ty, int idx)
+static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t sym, ktype_t ty, int idx)
 {
+	kmethodn_t mn = /*(ty == TY_Boolean) ? MN_toISBOOL(sym) :*/ MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldSetterN : Fmethod_FieldSetter;
 	kparam_t p = {ty, FN_("x")};
 	kParam *pa = new_kParam(ty, 1, &p);
@@ -124,7 +125,6 @@ static void setfield(CTX, KDEFINE_CLASS *ct, int fctsize, kclass_t *supct)
 		if(supct->fsize > 0) {
 			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*ct->fsize);
 		}
-
 	}
 }
 
@@ -174,7 +174,7 @@ static void defineField(CTX, struct _kclass *ct, int flag, ktype_t ty, kString *
 	}
 	else {
 		kObject *v = (IS_NULL(value)) ? knull(O_ct(value)) : value;
-		KSETv(ct->WnulvalNUL->ndata[pos], v);
+		KSETv(ct->WnulvalNUL->fields[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
 }
@@ -197,33 +197,6 @@ static KMETHOD KonohaSpace_defineClassField(CTX, ksfp_t *sfp _RIX)
 		KLIB2_setGetterSetter(_ctx, ct);
 	}
 }
-
-/**
-sugar "new" ...
-
-Expr Stmt.ParseNewExpr(Token[] tls, int s, int c, int e)
-{
-	Token tkNEW = tls[s];
-	if(s + 2 < e) {
-		Token tk1 = tls[s+1];
-		Token tk2 = tls[s+2];
-		if(tk1.isTypeName() && tk2.isParenthesis()) {
-			Expr expr = newMethodCallExpr(tkNEW, tk1);
-			expr = addExprParam(expr, tk2);
-			return expr;
-		}
-	}
-	return tk.error();
-}
-
-Expr Expr.tyCheckNewExpr(Gamma gma, int ty)
-{
-	return tyCheckAsMethodCall(gma, ty);
-}
-
-KonohaSpace.addParseExpr("new", "ParseNewExpr");
-KonohaSpace.addExprTyCheck("new", "tyCheckNewExpr");
-**/
 
 // --------------------------------------------------------------------------
 
@@ -274,10 +247,16 @@ static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
 	if(s + 2 < kArray_size(tls)) {
 		kToken *tk1 = tls->toks[s+1];
 		kToken *tk2 = tls->toks[s+2];
-		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {
+		if(TK_isType(tk1) && tk2->tt == AST_PARENTHESIS) {  // new C (...)
 			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall);
 			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, TK_type(tk1), 0));
-			DBG_P("NEW syn=%p", expr->syn);
+			RETURN_(expr);
+		}
+		if(TK_isType(tk1) && tk2->tt == AST_BRANCET) {     // new C [...]
+			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_new);
+			kclass_t *ct = CT_p0(_ctx, CT_Array, TK_type(tk1));
+			kToken_setmn(tkNEW, MN_("newArray"), MNTYPE_method);
+			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, ct->cid, 0));
 			RETURN_(expr);
 		}
 	}
@@ -298,7 +277,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	ksymbol_t fn = tosymbolUM(_ctx, tkN);
 	kExpr *self = SUGAR Expr_tyCheckAt(_ctx, expr, 1, gma, TY_var, 0);
 	if(self != K_NULLEXPR) {
-		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toSETTER(fn));
+		kMethod *mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toGETTER(fn));
 		if(mtd == NULL) {
 			mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toISBOOL(fn));
 		}
@@ -311,14 +290,46 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 	RETURN_(K_NULLEXPR);
 }
 
-static KMETHOD ExprTyCheck_null(CTX, ksfp_t *sfp _RIX)
+// ----------------------------------------------------------------------------
+
+static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkC)
 {
 	USING_SUGAR;
-	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	DBG_P("typing null as %s", T_ty(reqty));
-	if(reqty == TY_var) reqty = CLASS_Object;
-	RETURN_(kExpr_setVariable(expr, NULL, reqty, 0, gma));
+	kToken *tkP = (kToken*)kObject_getObject(stmt, KW_Block, NULL);
+	if(tkP != NULL && tkP->tt == TK_CODE) {
+		kArray *a = ctxsugar->tokens;
+		size_t atop = kArray_size(a), s, i;
+		SUGAR KonohaSpace_tokenize(_ctx, kStmt_ks(stmt), S_text(tkP->text), tkP->uline, a);
+		s = kArray_size(a);
+		const char *cname = S_text(tkC->text);
+		for(i = atop; i < s; i++) {
+			kToken *tk = a->toks[i];
+			DBG_P("cname='%s'", cname);
+			if(tk->topch == '(' && tkP->tt == TK_USYMBOL && strcmp(cname, S_text(tkP->text)) == 0) {
+				struct _kToken *tkNEW = new_W(Token, 0);
+				tkNEW->tt = TK_SYMBOL;
+				KSETv(tkNEW->text, S_fn(MN_new));
+				tkNEW->uline = tkP->uline;
+				kArray_add(a, tkNEW);
+			}
+			kArray_add(a, tk);
+			tkP = tk;
+		}
+		kBlock *bk = SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, a, s, kArray_size(a), ';');
+//		struct _kToken *tkTY = new_W(Token, 0);
+//		tkTY->kw = KW_Type;
+//		tkTY->ty = ct->cid;
+		for (i = 0; i < kArray_size(bk->blocks); i++) {
+			kStmt *methodDecl = bk->blocks->stmts[i];
+			if(methodDecl->syn->kw == KW_StmtMethodDecl) {
+				kObject_setObject(methodDecl, KW_Usymbol, tkC);
+			}
+		}
+		kObject_setObject(stmt, KW_Block, bk);
+		kArray_clear(a, atop);
+	}
 }
+
 
 // ----------------------------------------------------------------------------
 
@@ -328,6 +339,14 @@ typedef struct {
 	kclass_t *ct;
 } KDEFINE_CLASS_CONST;
 
+static void ObjectField_init(CTX, const struct _kObject *o, void *conf)
+{
+	kclass_t *ct = O_ct(o);
+	DBG_ASSERT(ct->nulvalNUL != NULL);
+	size_t fsize = ct->fsize;
+	memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
+}
+
 static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
 {
 	KDEFINE_CLASS defNewClass = {
@@ -335,6 +354,7 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		.cid    = CLASS_newid,
 		.bcid   = CLASS_Object,
 		.supcid = CLASS_Object,
+//		.init   = ObjectField_init,
 	};
 	kclass_t *ct = Konoha_addClassDef(ks->packid, ks->packdom, name, &defNewClass, pline);
 	KDEFINE_CLASS_CONST ClassData[] = {
@@ -342,6 +362,10 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		{NULL},
 	};
 	kKonohaSpace_loadConstData(ks, ClassData, 0); // add class name to this namespace
+	kParam *pa = new_kParam(ct->cid, 0, NULL);
+	PUSH_GCSTACK(pa);
+	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, pa, NULL);
+	CT_addMethod(_ctx, ct, mtd);
 	return (struct _kclass*)ct;
 }
 
@@ -371,7 +395,8 @@ static void CT_setField(CTX, struct _kclass *ct, kclass_t *supct, int fctsize)
 	ct->cstruct_size = size64(fctsize * sizeof(kObject*) + sizeof(kObjectHeader));
 	DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
 	if(fsize > 0) {
-		ct->fnull(_ctx, ct);
+		ct->fnull(_ctx, ct);  //
+		ct->init = ObjectField_init;
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;
 		ct->fallocsize = fsize;
@@ -431,7 +456,7 @@ static kbool_t CT_addClassFields(CTX, struct _kclass *ct, kGamma *gma, kBlock *b
 	for(i = 0; i < kArray_size(bk->blocks); i++) {
 		kStmt *stmt = bk->blocks->stmts[i];
 		if(stmt->syn->kw == KW_StmtTypeDecl) {
-			kflag_t flag = 0;
+			kflag_t flag = kField_Getter | kField_Setter;
 			kToken *tk  = kStmt_token(stmt, KW_Type, NULL);
 			kExpr *expr = kStmt_expr(stmt, KW_Expr, NULL);
 			if(!CT_declType(_ctx, ct, gma, expr, flag, TK_type(tk), pline)) {
@@ -483,13 +508,14 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
+	((struct _kToken*)tkC)->kw = KW_Type;
+	((struct _kToken*)tkC)->ty = ct->cid;
+	Stmt_parseClassBlock(_ctx, stmt, tkC);
 	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
 	CT_setField(_ctx, ct, supct, checkFieldSize(_ctx, bk));
 	if(!CT_addClassFields(_ctx, ct, gma, bk, stmt->uline)) {
 		RETURNb_(false);
 	}
-	((struct _kToken*)tkC)->kw = KW_Type;
-	((struct _kToken*)tkC)->ty = ct->cid;
 	kStmt_done(stmt);
 	CT_checkMethodDecl(_ctx, tkC, bk, &stmt);
 	RETURNb_(true);
@@ -500,7 +526,6 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
-		{ TOKEN("null"), _TERM, ExprTyCheck_(null), },
 		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
 		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },

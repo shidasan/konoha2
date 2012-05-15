@@ -91,6 +91,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	kKonohaSpace *ks = ks0;
 	uintptr_t hcode = kw;
 	ksyntax_t *parent = NULL;
+	assert(ks0 != NULL);/* scan-build: remove warning */
 	while(ks != NULL) {
 		if(ks->syntaxMapNN != NULL) {
 			kmape_t *e = kmap_get(ks->syntaxMapNN, hcode);
@@ -107,7 +108,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	}
 	L_NEW:;
 	if(isnew == 1) {
-		DBG_P("creating new syntax %s old=%p", T_kw(kw), parent);
+		//DBG_P("creating new syntax %s old=%p", T_kw(kw), parent);
 		if(ks0->syntaxMapNN == NULL) {
 			((struct _kKonohaSpace*)ks0)->syntaxMapNN = kmap_init(0);
 		}
@@ -190,7 +191,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		DBG_ASSERT(syn == SYN_(ks, kw));
 		syndef++;
 	}
-	DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
+	//DBG_P("syntax size=%d, hmax=%d", ks->syntaxMapNN->size, ks->syntaxMapNN->hmax);
 }
 
 #define T_statement(kw)  T_statement_(_ctx, kw)
@@ -428,14 +429,14 @@ static kMethod* KonohaSpace_getCastMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid,
 
 static kbool_t KonohaSpace_defineMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kline_t pline)
 {
-	if(pline != 0) {
-		kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, ks, mtd->cid, mtd->mn);
-		if(mtdOLD != NULL) {
-			char mbuf[128];
-			kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
-			return 0;
-		}
-	}
+	//if(pline != 0) {
+	//	kMethod *mtdOLD = KonohaSpace_getMethodNULL(_ctx, ks, mtd->cid, mtd->mn);
+	//	if(mtdOLD != NULL) {
+	//		char mbuf[128];
+	//		kreportf(ERR_, pline, "method %s.%s is already defined", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	//		return 0;
+	//	}
+	//}
 	if(mtd->packid == 0) {
 		((struct _kMethod*)mtd)->packid = ks->packid;
 	}
@@ -563,7 +564,6 @@ static const char *T_tt(ktoken_t t)
 #define kToken_s(tk) kToken_s_(_ctx, tk)
 static const char *kToken_s_(CTX, kToken *tk)
 {
-	DBG_P("T_tt=%s", T_tt(tk->tt));
 	switch((int)tk->tt) {
 	case TK_INDENT: return "end of line";
 	case TK_CODE: ;

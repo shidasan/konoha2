@@ -107,8 +107,10 @@ set(PACKAGES
 	konoha.i
 ##	konoha.assert
 	posix.process
+##	posix.file
 ##	konoha.socket
 	konoha.rope
+##	konoha.subproc
 ##	konoha.mpi
 	konoha.bytes
 	ijit
@@ -125,6 +127,7 @@ check_type_size(float    SIZEOF_FLOAT)
 check_type_size(double   SIZEOF_DOUBLE)
 
 check_include_files(dlfcn.h HAVE_DLFCN_H)
+check_include_files(iconv.h HAVE_ICONV_H)
 
 FIND_FILE(HAS_DOTGIT .git PATHS "${CMAKE_CURRENT_SOURCE_DIR}")
 if("${HAS_DOTGIT}" MATCHES ".git")
