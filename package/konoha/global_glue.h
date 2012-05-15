@@ -65,7 +65,8 @@ static KMETHOD Fmethod_ProtoSetterN(CTX, ksfp_t *sfp _RIX)
 {
 	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
 	ksymbol_t key = (ksymbol_t)mtd->delta;
-	kObject_setUnboxedValue(sfp[0].o, key, mtd->pa->p[0].ty, sfp[1].ndata);
+	kParam *pa = kMethod_param(mtd);
+	kObject_setUnboxedValue(sfp[0].o, key, pa->p[0].ty, sfp[1].ndata);
 	RETURNd_(sfp[1].ndata);
 }
 
@@ -73,8 +74,8 @@ static kMethod *new_ProtoGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty)
 {
 	kmethodn_t mn = ty == TY_Boolean ? MN_toISBOOL(sym) : MN_toGETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_ProtoGetterN : Fmethod_ProtoGetter;
-	kParam *pa = new_kParam(ty, 0, NULL);
-	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, f);
+	kMethod_setParam(mtd, ty, 0, NULL);
 	((struct _kMethod*)mtd)->delta = sym;
 	return mtd;
 }
@@ -84,8 +85,8 @@ static kMethod *new_ProtoSetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty)
 	kmethodn_t mn = MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_ProtoSetterN : Fmethod_ProtoSetter;
 	kparam_t p = {ty, FN_("x")};
-	kParam *pa = new_kParam(ty, 1, &p);
-	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, f);
+	kMethod_setParam(mtd, ty, 1, &p);
 	((struct _kMethod*)mtd)->delta = sym;
 	return mtd;
 }
@@ -111,7 +112,7 @@ static kMethod *Object_newProtoSetterNULL(CTX, kObject *o, kKonohaSpace *ks, kty
 	if(mtd == NULL) {
 		mtd = kKonohaSpace_getMethodNULL(ks, cid, MN_toISBOOL(fn));
 	}
-	if(mtd != NULL && mtd->pa->rtype != ty) {
+	if(mtd != NULL && kMethod_rtype(mtd) != ty) {
 		SUGAR p(_ctx, ERR_, pline, -1, "differently defined getter: %s.%s", T_CT(O_ct(o)), T_fn(fn));
 		return NULL;
 	}

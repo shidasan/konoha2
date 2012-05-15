@@ -216,6 +216,7 @@ typedef struct kmape_t {
 	struct kmape_t *next;
 	union {
 		const struct _kString  *skey;
+		const struct _kParam   *paramkey;
 		uintptr_t        ukey;
 		void            *pkey;
 	};
@@ -243,6 +244,7 @@ typedef kushort_t       ktype_t;     /* extended ktype_t */
 typedef kushort_t       ksymbol_t;
 typedef kushort_t       kuname_t;
 typedef kushort_t       kmethodn_t;
+typedef kushort_t       kparamid_t;
 
 /* kcid_t */
 #define CLASS_newid        ((kcid_t)-1)
@@ -355,8 +357,8 @@ typedef struct kshare_t {
 	const struct _kBoolean      *constFalse;
 	const struct _kString       *emptyString;
 	const struct _kArray        *emptyArray;
-	const struct _kParam        *nullParam;
-	const struct _kParam        *defParam;
+//	const struct _kParam        *nullParam;
+//	const struct _kParam        *defParam;
 
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //
@@ -366,6 +368,10 @@ typedef struct kshare_t {
 	struct kmap_t         *unameMapNN;
 	const struct _kArray         *symbolList;   // name, f,
 	struct kmap_t         *symbolMapNN;
+	const struct _kArray         *paramList;
+	struct kmap_t         *paramMapNN;
+	const struct _kArray         *paramdomList;
+	struct kmap_t         *paramdomMapNN;
 } kshare_t ;
 
 #define K_FRAME_NCMEMBER \
@@ -813,6 +819,7 @@ struct _kArray {
 #endif
 		const struct _kObject        **list;
 		const struct _kString        **strings;
+		const struct _kParam         **params;
 		const struct _kMethod        **methods;
 		const struct _kToken         **toks;
 		struct _kToken        **Wtoks;
@@ -888,9 +895,11 @@ typedef const struct _kMethod kMethod;
 #define kMethod_isTransCast(mtd)    MN_isTOCID(mtd->mn)
 #define kMethod_isCast(mtd)         MN_isASCID(mtd->mn)
 #define kMethod_isCoercion(mtd)    (TFLAG_is(uintptr_t, (mtd)->flag,kMethod_Coercion))
-
 //#define kMethod_isOverload(o)  (TFLAG_is(uintptr_t,DP(o)->flag,kMethod_Overload))
 //#define kMethod_setOverload(o,b) TFLAG_set(uintptr_t,DP(o)->flag,kMethod_Overload,b)
+
+#define kMethod_param(mtd)        _ctx->share->paramList->params[mtd->paramid]
+#define kMethod_rtype(mtd)        (kMethod_param(mtd))->rtype
 
 /* method data */
 #define DEND     (-1)
@@ -934,8 +943,8 @@ struct _kMethod {
 	};
 	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
+	kparamid_t        paramid;  kparamid_t paramdom;
 	kshort_t delta;          kpack_t packid;
-	kParam            *pa;
 	const struct _kToken            *tcode;
 	union {
 		kObject              *objdata;
@@ -1082,8 +1091,9 @@ struct _klib2 {
 	void (*KArray_insert)(CTX, kArray *, size_t, kObject *);
 	void (*KArray_clear)(CTX, kArray *, size_t);
 
-	kParam *   (*Knew_Param)(CTX, ktype_t, int, kparam_t *);
-	kMethod *  (*Knew_Method)(CTX, uintptr_t, kcid_t, kmethodn_t, kParam*, knh_Fmethod);
+//	kParam *   (*Knew_Param)(CTX, ktype_t, int, kparam_t *);
+	kMethod *  (*Knew_Method)(CTX, uintptr_t, kcid_t, kmethodn_t, knh_Fmethod);
+	kParam*    (*KMethod_setParam)(CTX, kMethod *, ktype_t, int, kparam_t *);
 	void       (*KMethod_setFunc)(CTX, kMethod*, knh_Fmethod);
 	void       (*KMethod_genCode)(CTX, kMethod*, const struct _kBlock *bk);
 	intptr_t   (*KMethod_indexOfField)(kMethod *);
@@ -1110,8 +1120,7 @@ struct _klib2 {
 #define K_NULL            (_ctx->share->constNull)
 #define K_TRUE            (_ctx->share->constTrue)
 #define K_FALSE           (_ctx->share->constFalse)
-#define K_NULLPARAM       (_ctx->share->nullParam)
-#define K_DEFPARAM        (_ctx->share->defParam)
+#define K_NULLPARAM       (_ctx->share->paramList->params[0])
 #define K_EMPTYARRAY      (_ctx->share->emptyArray)
 #define TS_EMPTY          (_ctx->share->emptyString)
 
@@ -1193,8 +1202,10 @@ struct _klib2 {
 #define kArray_insert(A, N, V)    (KPI)->KArray_insert(_ctx, A, N, UPCAST(V))
 #define kArray_clear(A, S)        (KPI)->KArray_clear(_ctx, A, S)
 
-#define new_kParam(R,S,P)        (KPI)->Knew_Param(_ctx, R, S, P)
-#define new_kMethod(F,C,M,P,FF)  (KPI)->Knew_Method(_ctx, F, C, M, P, FF)
+#define new_kParam(R,S,P)        (KPI)->Knew_Method(_ctx, R, S, P)
+#define new_kMethod(F,C,M,FF)  (KPI)->Knew_Method(_ctx, F, C, M, FF)
+#define kMethod_setParam(M, R, PSIZE, P)      (KPI)->KMethod_setParam(_ctx, M, R, PSIZE, P)
+#define new_kParam2(R, PSIZE, P)  (KPI)->KMethod_setParam(_ctx, NULL, R, PSIZE, P)
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 #define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 

@@ -52,8 +52,8 @@ static kMethod *new_FieldGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty, int 
 {
 	kmethodn_t mn = ty == TY_Boolean ? MN_toISBOOL(sym) : MN_toGETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldGetterN : Fmethod_FieldGetter;
-	kParam *pa = new_kParam(ty, 0, NULL);
-	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, f);
+	kMethod_setParam(mtd, ty, 0, NULL);
 	((struct _kMethod*)mtd)->delta = idx;  // FIXME
 	return mtd;
 }
@@ -63,8 +63,8 @@ static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t sym, ktype_t ty, int
 	kmethodn_t mn = /*(ty == TY_Boolean) ? MN_toISBOOL(sym) :*/ MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldSetterN : Fmethod_FieldSetter;
 	kparam_t p = {ty, FN_("x")};
-	kParam *pa = new_kParam(ty, 1, &p);
-	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, f);
+	kMethod_setParam(mtd, ty, 1, &p);
 	((struct _kMethod*)mtd)->delta = idx;   // FIXME
 	return mtd;
 }
@@ -378,10 +378,9 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		{NULL},
 	};
 	kKonohaSpace_loadConstData(ks, ClassData, 0); // add class name to this namespace
-	kParam *pa = new_kParam(ct->cid, 0, NULL);
-	PUSH_GCSTACK(pa);
-	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, pa, NULL);
-	CT_addMethod(_ctx, ct, mtd);
+//	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, NULL);
+//	kMethod_setParam(mtd, ct->cid, 0, NULL);
+//	CT_addMethod(_ctx, ct, mtd);
 	return (struct _kclass*)ct;
 }
 

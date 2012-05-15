@@ -974,17 +974,17 @@ static void KonohaCode_free(CTX, kObject *o)
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
-	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
-	ktype_t rtype = mtd->pa->rtype;
-	if (rtype != TY_void) {
-		if (TY_isUnbox(rtype)) {
-			RETURNi_(0);
-		} else {
-			kclass_t *ct = CT_(rtype);
-			kObject *nulval = ct->nulvalNUL;
-			RETURN_(nulval);
-		}
-	}
+//	kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+//	ktype_t rtype = mtd->pa->rtype;
+//	if (rtype != TY_void) {
+//		if (TY_isUnbox(rtype)) {
+//			RETURNi_(0);
+//		} else {
+//			kclass_t *ct = CT_(rtype);
+//			kObject *nulval = ct->nulvalNUL;
+//			RETURN_(nulval);
+//		}
+//	}
 	RETURNi_(0);
 }
 
