@@ -347,6 +347,22 @@ static void ObjectField_init(CTX, const struct _kObject *o, void *conf)
 	memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
 }
 
+extern struct _kObject** KONOHA_reftail(CTX, size_t size);
+
+static void ObjectField_reftrace (CTX, kObject *o)
+{
+	kclass_t *ct =O_ct(o);
+	kfield_t *fields = ct->fields;
+	size_t i, fsize = ct->fsize;
+	BEGIN_REFTRACE(fsize);
+	for (i = 0; i < fsize; i++) {
+		if (fields[i].isobj) {
+			KREFTRACEn(o->fields[i]);
+		}
+	}
+	END_REFTRACE();
+}
+
 static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
 {
 	KDEFINE_CLASS defNewClass = {
@@ -397,6 +413,7 @@ static void CT_setField(CTX, struct _kclass *ct, kclass_t *supct, int fctsize)
 	if(fsize > 0) {
 		ct->fnull(_ctx, ct);  //
 		ct->init = ObjectField_init;
+		ct->reftrace = ObjectField_reftrace;
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;
 		ct->fallocsize = fsize;
