@@ -160,7 +160,7 @@ static KMETHOD Math_atanh(CTX, ksfp_t *sfp _RIX)
 
 static	kbool_t math_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	KLOAD_PACKAGE("konoha.float", pline);
+	KREQUIRE_PACKAGE("konoha.float", pline);
 	static KDEFINE_CLASS MathDef = {
 			.structname = "Math"/*structname*/,
 			.cid = CLASS_newid/*cid*/,
@@ -226,7 +226,7 @@ static kbool_t math_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static kbool_t math_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
-	kKonohaSpace_importPackage(ks, "konoha.float", pline);
+	KEXPORT_PACKAGE("konoha.float", ks, pline);
 	return true;
 }
 

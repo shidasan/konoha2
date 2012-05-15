@@ -1198,8 +1198,8 @@ struct _klib2 {
 #define kMethod_setFunc(M,F)     (KPI)->KMethod_setFunc(_ctx, M, F)
 #define kMethod_genCode(M, BLOCK) (KPI)->KMethod_genCode(_ctx, M, BLOCK)
 
-#define KLOAD_PACKAGE(NAME, UL)                   (KPI)->KimportPackage(_ctx, NULL, NAME, UL)
-#define kKonohaSpace_importPackage(KS, NAME, UL)  (KPI)->KimportPackage(_ctx, KS, NAME, UL)
+#define KREQUIRE_PACKAGE(NAME, UL)                   (KPI)->KimportPackage(_ctx, NULL, NAME, UL)
+#define KEXPORT_PACKAGE(NAME, KS, UL)                (KPI)->KimportPackage(_ctx, KS, NAME, UL)
 
 #define KCLASS(cid)                          S_text(CT(cid)->name)
 #define kClassTable_Generics(CT, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, PSIZE, P)

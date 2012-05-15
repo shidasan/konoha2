@@ -60,7 +60,7 @@ static kMethod *new_FieldGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty, int 
 
 static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t sym, ktype_t ty, int idx)
 {
-	kmethodn_t mn = (ty == TY_Boolean) ? MN_toISBOOL(sym) : MN_toSETTER(sym);
+	kmethodn_t mn = /*(ty == TY_Boolean) ? MN_toISBOOL(sym) :*/ MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldSetterN : Fmethod_FieldSetter;
 	kparam_t p = {ty, FN_("x")};
 	kParam *pa = new_kParam(ty, 1, &p);
@@ -292,7 +292,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 
 // ----------------------------------------------------------------------------
 
-static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname, struct _kclass *ct)
+static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkC)
 {
 	USING_SUGAR;
 	kToken *tkP = (kToken*)kObject_getObject(stmt, KW_Block, NULL);
@@ -301,6 +301,7 @@ static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname, struct _kc
 		size_t atop = kArray_size(a), s, i;
 		SUGAR KonohaSpace_tokenize(_ctx, kStmt_ks(stmt), S_text(tkP->text), tkP->uline, a);
 		s = kArray_size(a);
+		const char *cname = S_text(tkC->text);
 		for(i = atop; i < s; i++) {
 			kToken *tk = a->toks[i];
 			DBG_P("cname='%s'", cname);
@@ -315,11 +316,14 @@ static void Stmt_parseClassBlock(CTX, kStmt *stmt, const char *cname, struct _kc
 			tkP = tk;
 		}
 		kBlock *bk = SUGAR new_Block(_ctx, kStmt_ks(stmt), stmt, a, s, kArray_size(a), ';');
-		struct _kToken *tkTY = new_W(Token, 0);
-		tkTY->kw = KW_Type;
-		tkTY->ty = ct->cid;
+//		struct _kToken *tkTY = new_W(Token, 0);
+//		tkTY->kw = KW_Type;
+//		tkTY->ty = ct->cid;
 		for (i = 0; i < kArray_size(bk->blocks); i++) {
-			kObject_setObject((kStmt*)bk->blocks->list[i], KW_Usymbol, tkTY);
+			kStmt *methodDecl = bk->blocks->stmts[i];
+			if(methodDecl->syn->kw == KW_StmtMethodDecl) {
+				kObject_setObject(methodDecl, KW_Usymbol, tkC);
+			}
 		}
 		kObject_setObject(stmt, KW_Block, bk);
 		kArray_clear(a, atop);
@@ -337,11 +341,10 @@ typedef struct {
 
 static void ObjectField_init(CTX, const struct _kObject *o, void *conf)
 {
-	kclass_t *ct = o->h.ct;
-	if (ct->nulvalNUL != NULL) {
-		size_t fsize = ct->fsize;
-		memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
-	}
+	kclass_t *ct = O_ct(o);
+	DBG_ASSERT(ct->nulvalNUL != NULL);
+	size_t fsize = ct->fsize;
+	memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
 }
 
 static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
@@ -351,7 +354,7 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		.cid    = CLASS_newid,
 		.bcid   = CLASS_Object,
 		.supcid = CLASS_Object,
-		.init   = ObjectField_init,
+//		.init   = ObjectField_init,
 	};
 	kclass_t *ct = Konoha_addClassDef(ks->packid, ks->packdom, name, &defNewClass, pline);
 	KDEFINE_CLASS_CONST ClassData[] = {
@@ -392,7 +395,8 @@ static void CT_setField(CTX, struct _kclass *ct, kclass_t *supct, int fctsize)
 	ct->cstruct_size = size64(fctsize * sizeof(kObject*) + sizeof(kObjectHeader));
 	DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
 	if(fsize > 0) {
-		ct->fnull(_ctx, ct);
+		ct->fnull(_ctx, ct);  //
+		ct->init = ObjectField_init;
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;
 		ct->fallocsize = fsize;
@@ -504,14 +508,14 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 		}
 	}
 	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
-	Stmt_parseClassBlock(_ctx, stmt, S_text(tkC->text), ct);
+	((struct _kToken*)tkC)->kw = KW_Type;
+	((struct _kToken*)tkC)->ty = ct->cid;
+	Stmt_parseClassBlock(_ctx, stmt, tkC);
 	kBlock *bk = kStmt_block(stmt, KW_Block, K_NULLBLOCK);
 	CT_setField(_ctx, ct, supct, checkFieldSize(_ctx, bk));
 	if(!CT_addClassFields(_ctx, ct, gma, bk, stmt->uline)) {
 		RETURNb_(false);
 	}
-	((struct _kToken*)tkC)->kw = KW_Type;
-	((struct _kToken*)tkC)->ty = ct->cid;
 	kStmt_done(stmt);
 	CT_checkMethodDecl(_ctx, tkC, bk, &stmt);
 	RETURNb_(true);

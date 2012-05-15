@@ -657,9 +657,10 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
-	if (mtd->mn == MN_new && mtd->fcall_1 == Fmethod_abstract) {
-		/* do nothing */
-	} else if(kMethod_isVirtual(mtd)) {
+//	if (mtd->mn == MN_new && mtd->fcall_1 == Fmethod_abstract) {
+//		/* do nothing */
+//	} else
+	if(kMethod_isVirtual(mtd)) {
 		ASM(NSET, NC_(thisidx-1), (intptr_t)mtd, CT_Method);
 		ASM(CALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), knull(CT_(expr->ty)));
 	}
@@ -671,9 +672,9 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 			ASM(VCALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 		}
 	}
-	if (mtd->mn == MN_new) {
-		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
-	}
+//	if (mtd->mn == MN_new) {
+//		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
+//	}
 }
 
 static void OR_asm(CTX, int a, kExpr *expr, int espidx)
@@ -907,6 +908,9 @@ static void Method_genCode(CTX, kMethod *mtd, kBlock *bk)
 	ASM_LABEL(_ctx, lbBEGIN);
 	BLOCK_asm(_ctx, bk);
 	ASM_LABEL(_ctx, ctxcode->lbEND);
+	if (mtd->mn == MN_new) {
+		ASM(NMOV, OC_(K_RTNIDX), OC_(0), CT_(mtd->cid));   // FIXME: Type 'This' must be resolved
+	}
 	ASM(RET);
 //	BUILD_popLABEL(_ctx);
 	BUILD_compile(_ctx, mtd, lbINIT, ctxcode->lbEND);
