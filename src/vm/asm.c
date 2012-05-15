@@ -68,25 +68,31 @@ static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
 
 #define ASMLINE  0
 
-#define ASM(T, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__}; \
-		BUILD_asm(_ctx, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define OP_T(T) union { kopl_t op; T op_; }
 
-#define ASMop(T, OP, ...) { \
-		klr_##T##_t op_ = {TADDR, OP, ASMLINE, ## __VA_ARGS__}; \
-		BUILD_asm(_ctx, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define ASM(T, ...) do {\
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BUILD_asm(_ctx, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
-#define ASMbranch(T, lb, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, NULL, ## __VA_ARGS__}; \
-		ASM_BRANCH_(_ctx, lb, (kopl_t*)(&op_), sizeof(klr_##T##_t)); \
-	}\
+#define ASMop(T, OP, ...) do {\
+	klr_##T##_t op_ = {TADDR, OP, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BUILD_asm(_ctx, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
-#define kBasicBlock_add(bb, T, ...) { \
-		klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
-		BasicBlock_add(_ctx, bb, 0, (kopl_t*)(&op_), sizeof(klr_##T##_t));\
-	}\
+#define ASMbranch(T, lb, ...) do {\
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, NULL, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	ASM_BRANCH_(_ctx, lb, &tmp_.op, sizeof(klr_##T##_t)); \
+} while (0)
+
+#define kBasicBlock_add(bb, T, ...) do { \
+	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
+	union { kopl_t op; klr_##T##_t op_; } tmp_; tmp_.op_ = op_;\
+	BasicBlock_add(_ctx, bb, 0, &tmp_.op, sizeof(klr_##T##_t));\
+} while (0)
 
 #define NC_(sfpidx)    (((sfpidx) * 2) + 1)
 #define OC_(sfpidx)    ((sfpidx) * 2)
@@ -113,7 +119,7 @@ static void BasicBlock_add(CTX, struct _kBasicBlock *bb, kushort_t line, kopl_t 
 
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize)
 {
-	DBG_ASSERT(op->opcode != OPCODE_JMPF);
+	assert(op->opcode != OPCODE_JMPF);
 	BasicBlock_add(_ctx, ctxcode->WcurbbNC, ctxcode->uline, op, opsize);
 }
 
@@ -912,6 +918,7 @@ static void Method_genCode(CTX, kMethod *mtd, kBlock *bk)
 		ASM(NMOV, OC_(K_RTNIDX), OC_(0), CT_(mtd->cid));   // FIXME: Type 'This' must be resolved
 	}
 	ASM(RET);
+	assert(ctxcode->lbEND);/* scan-build: remove warning */
 //	BUILD_popLABEL(_ctx);
 	BUILD_compile(_ctx, mtd, lbINIT, ctxcode->lbEND);
 	ctxcode->lbEND = NULL;

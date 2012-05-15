@@ -91,6 +91,7 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 	kKonohaSpace *ks = ks0;
 	uintptr_t hcode = kw;
 	ksyntax_t *parent = NULL;
+	assert(ks0 != NULL);/* scan-build: remove warning */
 	while(ks != NULL) {
 		if(ks->syntaxMapNN != NULL) {
 			kmape_t *e = kmap_get(ks->syntaxMapNN, hcode);
