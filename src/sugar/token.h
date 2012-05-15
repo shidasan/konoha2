@@ -219,20 +219,49 @@ static int parseSLASH(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 
 static int parseDQUOTE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
+
+    karray_t a;
+    kwb_t wb;
+    /* if we use karray as kwb, struct_size should be sizeof(char) */
+	KARRAY_INIT(&a, 8);
+	kwb_init(&a, &wb);
+
 	int ch, prev = '"', pos = tok_start + 1;
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {
 			break;
 		}
-		if(ch == '"' && prev != '\\') {
-			if(IS_NOTNULL(tk)) {
-				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1)- (tok_start+1), 0));
+		if (prev == '\\') {
+			switch (ch) {
+			case 'n':
+				kwb_putc(&wb, '\n');
+				break;
+			case 't':
+				kwb_putc(&wb, '\t');
+				break;
+			case 'r':
+				kwb_putc(&wb, '\r');
+				break;
+			default:
+				kwb_putc(&wb, ch);
+				break;
+			}
+		} else if (ch == '"') {
+			if (IS_NOTNULL(tk)) {
+				size_t bytesize = kwb_bytesize(&wb);
+				KSETv(tk->text, new_kString(kwb_top(&wb, bytesize), bytesize, 0));
 				tk->tt = TK_TEXT;
 			}
+			kwb_free(&wb);
+			KARRAY_FREE(&a);
 			return pos;
+		} else if (ch != '\\') {
+			kwb_putc(&wb, ch);
 		}
 		prev = ch;
 	}
+	kwb_free(&wb);
+	KARRAY_FREE(&a);
 	if(IS_NOTNULL(tk)) {
 		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with \"");
 		Token_toERR(_ctx, tk, errref);
