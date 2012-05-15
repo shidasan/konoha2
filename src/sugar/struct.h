@@ -41,12 +41,13 @@ static void KonohaSpace_init(CTX, kObject *o, void *conf)
 static void syntax_reftrace(CTX, kmape_t *p)
 {
 	ksyntax_t *syn = (ksyntax_t*)p->uvalue;
-	BEGIN_REFTRACE(5);
+	BEGIN_REFTRACE(6);
 	KREFTRACEn(syn->syntaxRuleNULL);
 	KREFTRACEn(syn->ParseStmtNULL);
-	KREFTRACEn(syn->TopStmtTyCheck);
-	KREFTRACEn(syn->StmtTyCheck);
-	KREFTRACEn(syn->ExprTyCheck);
+	KREFTRACEv(syn->ParseExpr);
+	KREFTRACEv(syn->TopStmtTyCheck);
+	KREFTRACEv(syn->StmtTyCheck);
+	KREFTRACEv(syn->ExprTyCheck);
 	END_REFTRACE();
 }
 
