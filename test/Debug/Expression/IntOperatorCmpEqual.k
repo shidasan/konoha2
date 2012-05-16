@@ -10,3 +10,4 @@ void int_operator_cmpEqual_cmpEqual() {
 	System.p( i1  ==  i2 );
 }
 int_operator_cmpEqual_cmpEqual();
+
