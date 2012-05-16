@@ -402,6 +402,8 @@ static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kme
 	return CT_findMethodNULL(_ctx, CT_(cid), mn);
 }
 
+
+
 static kMethod* KonohaSpace_getStaticMethodNULL(CTX, kKonohaSpace *ks, kmethodn_t mn)
 {
 	while(ks != NULL) {
