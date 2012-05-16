@@ -169,13 +169,8 @@ static kExpr* ExprCall_toConstValue(CTX, kExpr *expr, kArray *cons, ktype_t rtyp
 static kbool_t CT_isa(CTX, ktype_t cid1, ktype_t cid2)
 {
 	DBG_ASSERT(cid1 != cid2); // should be checked
-	if(cid2 == CLASS_Object) return true;
-	kclass_t *ct = CT_(cid1);
-	while(ct->supcid != CLASS_Object) {
-		ct = CT_(ct->supcid);
-		if(ct->cid == cid2) return true;
-	}
-	return false;
+	kclass_t *ct = CT_(cid1), *t = CT_(cid2);
+	return ct->isSubType(_ctx, ct, t);
 }
 
 static kExpr *new_BoxingExpr(CTX, kExpr *expr, ktype_t reqty)
@@ -1324,10 +1319,10 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	kMethod *mtd = new_kMethod(kMethod_Static, 0, 0, NULL);
 	PUSH_GCSTACK(mtd);
 	kMethod_setParam(mtd, TY_Object, 0, NULL);
-	kstack_t *base = _ctx->stack;
-	kstatus_t result = K_CONTINUE;
-	kjmpbuf_t lbuf = {};
 	int i, jmpresult;
+	kstatus_t result = K_CONTINUE;
+	kstack_t *base = _ctx->stack;
+	kjmpbuf_t lbuf = {};
 	if(base->evaljmpbuf == NULL) {
 		base->evaljmpbuf = (kjmpbuf_t*)KCALLOC(sizeof(kjmpbuf_t), 1);
 	}
@@ -1335,7 +1330,8 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	if((jmpresult = ksetjmp(*base->evaljmpbuf)) == 0) {
 		for(i = 0; i < kArray_size(bk->blocks); i++) {
 			KSETv(bk1->blocks->list[0], bk->blocks->list[i]);
-			KSETv(((struct _kBlock*)bk1)->ks, bk->ks);  // FIXME
+			KSETv(((struct _kBlock*)bk1)->ks, bk->ks);
+			kArray_clear(bk1->blocks, 1);
 			result = SingleBlock_eval(_ctx, bk1, mtd, bk->ks);
 			if(result == K_FAILED) break;
 		}

@@ -313,10 +313,11 @@ static void Array_clear(CTX, kArray *o, size_t n)
 	DBG_ASSERT(IS_Array(o));
 	size_t asize = kArray_size(o);
 	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	DBG_ASSERT(asize >= n);
 	if(asize > n) {
 		bzero(a->a.objects + n, sizeof(void*) * (asize - n));  // RCGC
+		a->a.bytesize = (n) * sizeof(void*);
 	}
-	a->a.bytesize = (n) * sizeof(void*);
 }
 
 // ---------------
@@ -517,9 +518,14 @@ static uintptr_t DEFAULT_unbox(CTX, kObject *o)
 	return 0;
 }
 
-static kbool_t DEFAULT_issubtype(CTX, kclass_t* c, kclass_t *t)
+static kbool_t DEFAULT_isSubType(CTX, kclass_t* ct, kclass_t *t)
 {
-	return 0;
+	if(t->cid == CLASS_Object) return true;
+	while(ct->supcid != CLASS_Object) {
+		ct = CT_(ct->supcid);
+		if(ct->cid == t->cid) return true;
+	}
+	return false;
 }
 
 static kclass_t* DEFAULT_realtype(CTX, kclass_t* c, kclass_t *self)
@@ -588,7 +594,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
 		ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
 		ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
-		ct->issubtype = (s->issubtype != NULL) ? s->issubtype : DEFAULT_issubtype;
+		ct->isSubType = (s->isSubType != NULL) ? s->isSubType : DEFAULT_isSubType;
 		ct->initdef = s->initdef;
 	}
 	if(ct->initdef != NULL) {
@@ -815,7 +821,7 @@ static void loadInitStructData(CTX)
 		dd++;
 	}
 	struct _kclass *ct = (struct _kclass *)CT_Array;
-	ct->cparam = new_Param(_ctx, TY_void, 0, &ArrayCparam);
+	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
 }
 
 static void initStructData(CTX)
