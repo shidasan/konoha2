@@ -75,18 +75,14 @@ static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 
 static KMETHOD StmtTyCheck_AddAssignment(CTX, ksfp_t *sfp _RIX)
 {
-	DBG_P("hoge2");
 }
-
-
 
 static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
 {
-	fprintf(stderr, "hoge\n");
 	USING_SUGAR;
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);   // a += 1
-	struct _kToken *tk = tls->toks[s];      // first token
-	struct _kToken *tkOp = tls->toks[c];    // "+="
+	struct _kToken *tk = (struct _kToken*)tls->toks[s];      // first token
+	struct _kToken *tkOp = (struct _kToken*)tls->toks[c];    // "+="
 	// a = (a) + 1
 	size_t atop = kArray_size(tls);
 
@@ -100,19 +96,6 @@ static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
 	tkOp->topch ='=';
 	tkOp->kw = KW_LET;
 
-	/*struct _kToken *tkN = new_W(Token, 0);
-	tkN->tt = AST_PARENTHESIS;
-	tkN->uline = tk->uline;
-
-	KSETv(tkN->sub, new_(TokenArray, 0));
-
-	struct _kToken *tkA = new_W(Token, 0);
-	tkA->tt = tk->tt; tkA->kw = tk->tt; tkA->uline = tk->uline; tkA->topch = tk->topch; tkA->lpos = tk->closech;
-	KSETv(tkA->text, tk->text);
-
-	kArray_add(tkN->sub, tkA);
-	kArray_insert(tls, s+2, tkN);
-	*/
 	kArray_insert(tls, s+2, tk);
 
 	struct _kToken *tkNewOp = new_W(Token, 0);
@@ -122,13 +105,10 @@ static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
 	tkNewOp->topch = '+';
 
 	kArray_insert(tls, s+3, tkNewOp);
-	/*
-	int i = 0;
-	for (i = s; i < kArray_size(tls); i++ ) {
-		kToken *mytk = tls->toks[i];
-		DBG_P("i=%d, tk->text='%s'", i, S_text(mytk->text));
-	}
-	*/
+	//for (i = s; i < kArray_size(tls); i++ ) {
+	//	kToken *mytk = tls->toks[i];
+	//	DBG_P("i=%d, tk->text='%s'", i, S_text(mytk->text));
+	//}
 
 	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
 	kArray_clear(tls, atop);

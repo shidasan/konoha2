@@ -160,7 +160,9 @@ static int parseOP(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod
 	}
 	if(IS_NOTNULL(tk)) {
 		const char *s = tenv->source + tok_start;
+		DBG_P("s= '%s'", s);
 		KSETv(tk->text, new_kString(s, (pos-1)-tok_start, SPOL_ASCII|SPOL_POOL));
+		DBG_P("tk= '%s'", S_text(tk->text));
 		tk->tt = TK_OPERATOR;
 		if(S_size(tk->text) == 1) {
 			tk->topch = S_text(tk->text)[0];
