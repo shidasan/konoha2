@@ -185,7 +185,7 @@ typedef struct KDEFINE_SYNTAX {
 	knh_Fmethod ExprTyCheck;
 } KDEFINE_SYNTAX;
 
-#define new_SugarMethod(F)     new_kMethod(0, 0, 0, NULL, F)
+#define new_SugarMethod(F)     new_kMethod(0, 0, 0, F)
 
 #define SYN_setTopStmtTyCheck(KS, KW, F) do {\
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\

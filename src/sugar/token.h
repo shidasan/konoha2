@@ -219,24 +219,37 @@ static int parseSLASH(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 
 static int parseDQUOTE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
-	int ch, prev = '"', pos = tok_start + 1;
+	kwb_t wb;
+	kwb_init(&(_ctx->stack->cwb), &wb);
+	int ch, prev = '"', pos = tok_start + 1, next;
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {
 			break;
 		}
 		if(ch == '"' && prev != '\\') {
 			if(IS_NOTNULL(tk)) {
-				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1)- (tok_start+1), 0));
+				size_t length = kwb_bytesize(&wb);
+				KSETv(tk->text, new_kString(kwb_top(&wb, 1), length, 0));
 				tk->tt = TK_TEXT;
 			}
+			kwb_free(&wb);
 			return pos;
 		}
+		if(ch == '\\' && (next = tenv->source[pos]) != 0) {
+			switch (next) {
+			case 'n': ch = '\n'; pos++; break;
+			case 't': ch = '\t'; pos++; break;
+			case 'r': ch = '\r'; pos++; break;
+			}
+		}
 		prev = ch;
+		kwb_putc(&wb, ch);
 	}
 	if(IS_NOTNULL(tk)) {
 		size_t errref = SUGAR_P(ERR_, tk->uline, tk->lpos, "must close with \"");
 		Token_toERR(_ctx, tk, errref);
 	}
+	kwb_free(&wb);
 	return pos-1;
 }
 

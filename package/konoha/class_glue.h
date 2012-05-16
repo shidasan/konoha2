@@ -52,8 +52,8 @@ static kMethod *new_FieldGetter(CTX, kcid_t cid, ksymbol_t sym, ktype_t ty, int 
 {
 	kmethodn_t mn = ty == TY_Boolean ? MN_toISBOOL(sym) : MN_toGETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldGetterN : Fmethod_FieldGetter;
-	kParam *pa = new_kParam(ty, 0, NULL);
-	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public|kMethod_Immutable, cid, mn, f);
+	kMethod_setParam(mtd, ty, 0, NULL);
 	((struct _kMethod*)mtd)->delta = idx;  // FIXME
 	return mtd;
 }
@@ -63,8 +63,8 @@ static kMethod *new_FieldSetter(CTX, kcid_t cid, kmethodn_t sym, ktype_t ty, int
 	kmethodn_t mn = /*(ty == TY_Boolean) ? MN_toISBOOL(sym) :*/ MN_toSETTER(sym);
 	knh_Fmethod f = (TY_isUnbox(ty)) ? Fmethod_FieldSetterN : Fmethod_FieldSetter;
 	kparam_t p = {ty, FN_("x")};
-	kParam *pa = new_kParam(ty, 1, &p);
-	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, pa, f);
+	kMethod *mtd = new_kMethod(kMethod_Public, cid, mn, f);
+	kMethod_setParam(mtd, ty, 1, &p);
 	((struct _kMethod*)mtd)->delta = idx;   // FIXME
 	return mtd;
 }
@@ -347,6 +347,22 @@ static void ObjectField_init(CTX, const struct _kObject *o, void *conf)
 	memcpy(((struct _kObject *)o)->fields, ct->nulvalNUL->fields, fsize * sizeof(void*));
 }
 
+extern struct _kObject** KONOHA_reftail(CTX, size_t size);
+
+static void ObjectField_reftrace (CTX, kObject *o)
+{
+	kclass_t *ct =O_ct(o);
+	kfield_t *fields = ct->fields;
+	size_t i, fsize = ct->fsize;
+	BEGIN_REFTRACE(fsize);
+	for (i = 0; i < fsize; i++) {
+		if (fields[i].isobj) {
+			KREFTRACEn(o->fields[i]);
+		}
+	}
+	END_REFTRACE();
+}
+
 static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
 {
 	KDEFINE_CLASS defNewClass = {
@@ -362,10 +378,9 @@ static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kSt
 		{NULL},
 	};
 	kKonohaSpace_loadConstData(ks, ClassData, 0); // add class name to this namespace
-	kParam *pa = new_kParam(ct->cid, 0, NULL);
-	PUSH_GCSTACK(pa);
-	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, pa, NULL);
-	CT_addMethod(_ctx, ct, mtd);
+//	kMethod *mtd = new_kMethod(_Public/*flag*/, ct->cid, MN_new, NULL);
+//	kMethod_setParam(mtd, ct->cid, 0, NULL);
+//	CT_addMethod(_ctx, ct, mtd);
 	return (struct _kclass*)ct;
 }
 
@@ -397,6 +412,7 @@ static void CT_setField(CTX, struct _kclass *ct, kclass_t *supct, int fctsize)
 	if(fsize > 0) {
 		ct->fnull(_ctx, ct);  //
 		ct->init = ObjectField_init;
+		ct->reftrace = ObjectField_reftrace;
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;
 		ct->fallocsize = fsize;

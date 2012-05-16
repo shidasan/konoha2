@@ -77,7 +77,7 @@ static kbool_t checkMethod(CTX, kMethod *mtd, FcheckParam f, kclass_t *ct, kStri
 		kreportf(CRIT_, pline, "undefined method: %s.%s", T_CT(ct), S_text(name));
 		return false;
 	}
-	if(mtd->cid != ct->cid || !f(_ctx, mtd->pa)) {
+	if(mtd->cid != ct->cid || !f(_ctx, kMethod_param(mtd))) {
 		kreportf(CRIT_, pline, "mismatched method: %s.%s", T_CT(ct), S_text(name));
 		return false;
 	}

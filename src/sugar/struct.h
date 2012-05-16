@@ -41,12 +41,13 @@ static void KonohaSpace_init(CTX, kObject *o, void *conf)
 static void syntax_reftrace(CTX, kmape_t *p)
 {
 	ksyntax_t *syn = (ksyntax_t*)p->uvalue;
-	BEGIN_REFTRACE(5);
+	BEGIN_REFTRACE(6);
 	KREFTRACEn(syn->syntaxRuleNULL);
 	KREFTRACEn(syn->ParseStmtNULL);
-	KREFTRACEn(syn->TopStmtTyCheck);
-	KREFTRACEn(syn->StmtTyCheck);
-	KREFTRACEn(syn->ExprTyCheck);
+	KREFTRACEv(syn->ParseExpr);
+	KREFTRACEv(syn->TopStmtTyCheck);
+	KREFTRACEv(syn->StmtTyCheck);
+	KREFTRACEv(syn->ExprTyCheck);
 	END_REFTRACE();
 }
 
@@ -453,7 +454,6 @@ static kbool_t KonohaSpace_defineMethod(CTX, kKonohaSpace *ks, kMethod *mtd, kli
 static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 {
 	intptr_t *d = data;
-	kParam *prev = NULL;
 	while(d[0] != -1) {
 		uintptr_t flag = (uintptr_t)d[0];
 		knh_Fmethod f = (knh_Fmethod)d[1];
@@ -468,25 +468,13 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 			p[i].fn = (ksymbol_t)d[1];
 			d += 2;
 		}
-		if(prev != NULL) {
-			if (prev->rtype == rtype && prev->psize == psize) {
-				for(i = 0; i < psize; i++) {
-					if(p[i].ty != prev->p[i].ty || p[i].fn != prev->p[i].fn) {
-						prev = NULL;
-						break;
-					}
-				}
-			}
-			else prev = NULL;
-		}
-		kParam *pa = (prev == NULL) ? new_kParam(rtype, psize, p) : prev;
-		kMethod *mtd = new_kMethod(flag, cid, mn, pa, f);
+		kMethod *mtd = new_kMethod(flag, cid, mn, f);
+		kMethod_setParam(mtd, rtype, psize, p);
 		if(ks == NULL || kMethod_isPublic(mtd)) {
 			CT_addMethod(_ctx, CT_(cid), mtd);
 		} else {
 			KonohaSpace_addMethod(_ctx, ks, mtd);
 		}
-		prev = pa;
 	}
 }
 

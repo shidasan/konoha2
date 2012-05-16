@@ -555,14 +555,14 @@ static KMETHOD Array_erase(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Method_getParamSize(CTX, ksfp_t *sfp _RIX)
 {
 	kMethod *mtd = sfp[0].mtd;
-	RETURNi_(mtd->pa->psize);
+	RETURNi_(kMethod_param(mtd)->psize);
 }
 
 //## Param Method.getParam(int n);
 static KMETHOD Method_getParam(CTX, ksfp_t *sfp _RIX)
 {
 	kMethod *mtd = sfp[0].mtd;
-	kParam *pa = mtd->pa;
+	kParam *pa = kMethod_param(mtd);
 	RETURN_(pa);
 }
 
@@ -579,7 +579,7 @@ static KMETHOD Method_getReturnType(CTX, ksfp_t *sfp _RIX)
 {
 	kMethod *mtd = sfp[0].mtd;
 	assert(IS_Method(mtd));
-	RETURNi_(mtd->pa->rtype);
+	RETURNi_(kMethod_param(mtd)->rtype);
 }
 
 //## String mtd.getFname();

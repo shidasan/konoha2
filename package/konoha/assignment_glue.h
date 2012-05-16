@@ -73,27 +73,74 @@ static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-//static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
-//{
-//	VAR_ParseExpr(stmt, syn, tls, s, c, e);   // a += 1
-//	kToken *tk = tls->toks[s];      // first token
-//	kToken *tkOp = tls->toks[c];    // "+="
-//	// a = (a) + 1
-//	size_t atop = kArray_size(tls);
-//	tk->tt = AST_PARENSIS;
+static KMETHOD StmtTyCheck_AddAssignment(CTX, ksfp_t *sfp _RIX)
+{
+	DBG_P("hoge2");
+}
+
+
+
+static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
+{
+	fprintf(stderr, "hoge\n");
+	USING_SUGAR;
+	VAR_ParseExpr(stmt, syn, tls, s, c, e);   // a += 1
+	struct _kToken *tk = tls->toks[s];      // first token
+	struct _kToken *tkOp = tls->toks[c];    // "+="
+	// a = (a) + 1
+	size_t atop = kArray_size(tls);
+
+	//tk->tt = AST_PARENSIS;
 //	SETvtk->sub new_Array(TokenArray, 0);
-//	// @see makeTree AST_PARENTHESIS;
-//	expr = SUGAR Stmt_newExpr2(ctx, stmt, tls, atop, kArray_size(tls));
-//	kArray_clear(tls, atop);
-//	RETURN_(expr);
-//}
+	// @see makeTree AST_PARENTHESIS;
+
+	// += --> =
+	KSETv(tkOp->text, new_kString("=", 1, 0));
+	tkOp->tt = TK_OPERATOR;
+	tkOp->topch ='=';
+	tkOp->kw = KW_LET;
+
+	/*struct _kToken *tkN = new_W(Token, 0);
+	tkN->tt = AST_PARENTHESIS;
+	tkN->uline = tk->uline;
+
+	KSETv(tkN->sub, new_(TokenArray, 0));
+
+	struct _kToken *tkA = new_W(Token, 0);
+	tkA->tt = tk->tt; tkA->kw = tk->tt; tkA->uline = tk->uline; tkA->topch = tk->topch; tkA->lpos = tk->closech;
+	KSETv(tkA->text, tk->text);
+
+	kArray_add(tkN->sub, tkA);
+	kArray_insert(tls, s+2, tkN);
+	*/
+	kArray_insert(tls, s+2, tk);
+
+	struct _kToken *tkNewOp = new_W(Token, 0);
+	KSETv(tkNewOp->text, new_kString("+", 1, 0));
+	tkNewOp->tt = TK_OPERATOR;
+	tkNewOp->kw = KW_ADD;
+	tkNewOp->topch = '+';
+
+	kArray_insert(tls, s+3, tkNewOp);
+	/*
+	int i = 0;
+	for (i = s; i < kArray_size(tls); i++ ) {
+		kToken *mytk = tls->toks[i];
+		DBG_P("i=%d, tk->text='%s'", i, S_text(mytk->text));
+	}
+	*/
+
+	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
+	kArray_clear(tls, atop);
+	RETURN_(expr);
+}
 
 static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("="), /*.op2 = "*", .priority_op2 = 4096,*/ ExprTyCheck_(assignment)},
-//		{ TOKEN("+="), /*.priority_op2 =*/ StmtParse_(AddAssignment), },
+		{ TOKEN("+="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(AddAssignment), ParseExpr_(AddAssignment), .priority_op2 = 4096,},
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

@@ -267,11 +267,11 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	knull(base->cBlock);
 	kmodsugar_setup(_ctx, &base->h, 0);
 
-	KINITv(base->UndefinedParseExpr,   new_kMethod(0, 0, 0, NULL, UndefinedParseExpr));
-	KINITv(base->UndefinedStmtTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedStmtTyCheck));
-	KINITv(base->UndefinedExprTyCheck, new_kMethod(0, 0, 0, NULL, UndefinedExprTyCheck));
-	KINITv(base->ParseExpr_Op,   new_kMethod(0, 0, 0, NULL, ParseExpr_Op));
-	KINITv(base->ParseExpr_Term, new_kMethod(0, 0, 0, NULL, ParseExpr_Term));
+	KINITv(base->UndefinedParseExpr,   new_SugarMethod(UndefinedParseExpr));
+	KINITv(base->UndefinedStmtTyCheck, new_SugarMethod(UndefinedStmtTyCheck));
+	KINITv(base->UndefinedExprTyCheck, new_SugarMethod(UndefinedExprTyCheck));
+	KINITv(base->ParseExpr_Op,   new_SugarMethod(ParseExpr_Op));
+	KINITv(base->ParseExpr_Term, new_SugarMethod(ParseExpr_Term));
 
 	defineDefaultSyntax(_ctx, base->rootks);
 	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME

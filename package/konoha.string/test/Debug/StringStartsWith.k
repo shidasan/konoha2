@@ -10,7 +10,6 @@ void test() {
 	System.p("aあiいuう".startsWith("aあiいuう"));
 	System.p("aあiいuう".startsWith("aあiいuうe"));
 	System.p("".startsWith(""));
-	System.p("".startsWith(null));
 }
 
 test();

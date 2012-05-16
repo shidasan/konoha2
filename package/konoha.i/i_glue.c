@@ -63,7 +63,7 @@ static void MethodAttribute_p(CTX, kMethod *mtd, kwb_t *wb)
 static void Method_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 	kMethod *mtd = sfp[pos].mtd;
-	kParam *pa = mtd->pa;
+	kParam *pa = kMethod_param(mtd);
 	char mbuf[128];
 	DBG_ASSERT(IS_Method(mtd));
 	if(level != 0) {
