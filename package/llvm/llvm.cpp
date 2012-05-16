@@ -5040,7 +5040,7 @@ static kbool_t llvm_initPackage(CTX, kKonohaSpace *ks, int argc, const char **ar
 		_Public|_Static, _F(LLVM_createObjCARCOptPass),      TY_Pass, TY_LLVM, MN_("createObjCARCOptPass"), 0,
 		_Public|_Static, _F(LLVM_createLowerExpectIntrinsicPass), TY_Pass, TY_LLVM, MN_("createLowerExpectIntrinsicPass"), 0,
 #endif
-#if LLVM_VERSION >= 310
+#if LLVM_VERSION >= 301
 		_Public|_Static, _F(LLVM_createBBVectorizePass),     TY_Pass, TY_LLVM, MN_("createBBVectorizePass"), 0,
 #endif
 		_Public|_Static, _F(LLVM_createInstructionSimplifierPass),  TY_Pass, TY_LLVM, MN_("createInstructionSimplifierPass"), 0,
