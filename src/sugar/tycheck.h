@@ -588,7 +588,19 @@ static kExpr *Expr_lookupMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma, 
 		}
 	}
 	if(mtd != NULL) {
-		return Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
+		struct _kExpr *rexpr = (struct _kExpr *)Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
+		if (rexpr->ty == TY_T0) {
+			kclass_t *ct = CT_(this_cid);
+			if (ct->cparam != K_NULLPARAM && ct->cparam->psize == 1) {
+				//Array<T>
+				DBG_P("psize=%d, %s", ct->cparam->psize, T_ty(ct->cparam->p[0].ty));
+				rexpr->ty = ct->cparam->p[0].ty;
+			} else {
+				// TODO
+			}
+		}
+//		return Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
+		return (kExpr*)rexpr;
 	}
 	return K_NULLEXPR;
 }
