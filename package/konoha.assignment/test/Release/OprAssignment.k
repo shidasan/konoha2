@@ -12,7 +12,6 @@ void test_oprAssignment() {
 	p(i);
 	i %= 3;
 	p(i);
-	i += 1;
 }
 
 test_oprAssignment();
