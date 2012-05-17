@@ -96,7 +96,8 @@ static KMETHOD StmtTyCheck_ModAssignment(CTX, ksfp_t *sfp _RIX)
 static void transfrom_oprAssignment(CTX, kArray* tls, int s, int c, int e, int kw)
 {
 	// a += --> a = (a) + 1
-	struct _kToken *tk = (struct _kToken*)tls->toks[s];      // first token
+	// struct _kToken *tk = (struct _kToken*)tls->toks[s];      // first token
+	kToken *tk = tls->toks[s];      // first token
 	struct _kToken *tkOp = (struct _kToken*)tls->toks[c];    // "+="
 
 	//change operator, a += 1 --> a = 1

@@ -403,98 +403,97 @@ static int param_policy(ksymbol_t fn)
 	return pol;
 }
 
-/* @Overloading */
-
-static void KonohaSpace_lookupMethods(CTX, kKonohaSpace *ks, ktype_t cid, kmethodn_t mn, kArray *abuf)
-{
-	while(ks != NULL) {
-		size_t i;
-		kArray *a = ks->methods;
-		for(i = 0; i < kArray_size(a); i++) {
-			kMethod *mtd = a->methods[i];
-			if(mtd->cid == cid && mtd->mn == mn) {
-				kArray_add(abuf, mtd);
-			}
-		}
-		ks = ks->parentNULL;
-	}
-	kclass_t *ct = CT_(cid);
-	while(ct != NULL) {
-		size_t i;
-		kArray *a = ct->methods;
-		for(i = 0; i < kArray_size(a); i++) {
-			kMethod *mtd = a->methods[i];
-			if(mtd->mn == mn) {
-				kArray_add(abuf, mtd);
-			}
-		}
-		ct = ct->searchSuperMethodClassNULL;
-	}
-}
-
-static kbool_t kParam_equals(CTX, kParam *pa, kclass_t *thisct, int psize, kparam_t *p)
-{
-	int i;
-	for(i = 0; i < psize; i++) {
-		if(pa->p[i].ty == p[i].ty) continue;
-		if(ktype_var(_ctx, pa->p[i].ty, thisct) != p[i].ty) return false;
-	}
-	return true;
-}
-
-static kbool_t kParam_match(CTX, kParam *pa, kclass_t *thisct, int psize, kparam_t *p)
-{
+///* @Overloading */
+//static void KonohaSpace_lookupMethods(CTX, kKonohaSpace *ks, ktype_t cid, kmethodn_t mn, kArray *abuf)
+//{
+//	while(ks != NULL) {
+//		size_t i;
+//		kArray *a = ks->methods;
+//		for(i = 0; i < kArray_size(a); i++) {
+//			kMethod *mtd = a->methods[i];
+//			if(mtd->cid == cid && mtd->mn == mn) {
+//				kArray_add(abuf, mtd);
+//			}
+//		}
+//		ks = ks->parentNULL;
+//	}
+//	kclass_t *ct = CT_(cid);
+//	while(ct != NULL) {
+//		size_t i;
+//		kArray *a = ct->methods;
+//		for(i = 0; i < kArray_size(a); i++) {
+//			kMethod *mtd = a->methods[i];
+//			if(mtd->mn == mn) {
+//				kArray_add(abuf, mtd);
+//			}
+//		}
+//		ct = ct->searchSuperMethodClassNULL;
+//	}
+//}
+//
+//static kbool_t kParam_equals(CTX, kParam *pa, kclass_t *thisct, int psize, kparam_t *p)
+//{
 //	int i;
 //	for(i = 0; i < psize; i++) {
-//		if(pa->p[i].ty != p[i].ty) return false;
+//		if(pa->p[i].ty == p[i].ty) continue;
+//		if(ktype_var(_ctx, pa->p[i].ty, thisct) != p[i].ty) return false;
 //	}
 //	return true;
-	return false;
-}
-
-/* KonohaSpace/Class/Method */
-static kMethod* Array_lookupMethod(CTX, kArray *a, int s, int e, kclass_t *thisct, int psize, kparam_t *p)
-{
-	int i;
-	for(i = s; i < e; i++) {
-		kParam *pa = kMethod_param(a->methods[i]);
-		if(pa->psize == psize && kParam_equals(_ctx, pa, thisct, psize, p)) {
-			return a->methods[i];
-		}
-	}
-	for(i = s; i < e; i++) {
-		kParam *pa = kMethod_param(a->methods[i]);
-		if(kParam_match(_ctx, pa, thisct, psize, p)) {
-			return a->methods[i];
-		}
-	}
-	return NULL;
-}
-
-static kMethod *kExpr_lookUpOverloadMethod(CTX, kExpr *expr, kMethod *mtd, kGamma *gma, kclass_t *thisct)
-{
-	kArray *abuf = _ctx->stack->gcstack;
-	int i, psize = kArray_size(expr->cons) - 2, atop = kArray_size(abuf);
-	kparam_t p[psize];
-	for(i = 0; i < psize; i++) {
-		p[i].ty = expr->cons->exprs[i+2]->ty;
-	}
-	kclass_t *ct = thisct;
-	while(1) {
-		KonohaSpace_lookupMethods(_ctx, gma->genv->ks, ct->cid, mtd->mn, abuf);
-		kMethod *mtd2 = Array_lookupMethod(_ctx, abuf, atop, kArray_size(abuf), thisct, psize, p);
-		kArray_clear(abuf, atop);
-		if(mtd2 != NULL) return mtd2;
-		if(ct->cid == TY_Object) break;
-		ct = CT_(ct->supcid);
-	}
-	return mtd;
-}
+//}
+//
+//static kbool_t kParam_match(CTX, kParam *pa, kclass_t *thisct, int psize, kparam_t *p)
+//{
+////	int i;
+////	for(i = 0; i < psize; i++) {
+////		if(pa->p[i].ty != p[i].ty) return false;
+////	}
+////	return true;
+//	return false;
+//}
+//
+///* KonohaSpace/Class/Method */
+//static kMethod* Array_lookupMethod(CTX, kArray *a, int s, int e, kclass_t *thisct, int psize, kparam_t *p)
+//{
+//	int i;
+//	for(i = s; i < e; i++) {
+//		kParam *pa = kMethod_param(a->methods[i]);
+//		if(pa->psize == psize && kParam_equals(_ctx, pa, thisct, psize, p)) {
+//			return a->methods[i];
+//		}
+//	}
+//	for(i = s; i < e; i++) {
+//		kParam *pa = kMethod_param(a->methods[i]);
+//		if(kParam_match(_ctx, pa, thisct, psize, p)) {
+//			return a->methods[i];
+//		}
+//	}
+//	return NULL;
+//}
+//
+//static kMethod *kExpr_lookUpOverloadMethod(CTX, kExpr *expr, kMethod *mtd, kGamma *gma, kclass_t *thisct)
+//{
+//	kArray *abuf = _ctx->stack->gcstack;
+//	int i, psize = kArray_size(expr->cons) - 2, atop = kArray_size(abuf);
+//	kparam_t p[psize];
+//	for(i = 0; i < psize; i++) {
+//		p[i].ty = expr->cons->exprs[i+2]->ty;
+//	}
+//	kclass_t *ct = thisct;
+//	while(1) {
+//		KonohaSpace_lookupMethods(_ctx, gma->genv->ks, ct->cid, mtd->mn, abuf);
+//		kMethod *mtd2 = Array_lookupMethod(_ctx, abuf, atop, kArray_size(abuf), thisct, psize, p);
+//		kArray_clear(abuf, atop);
+//		if(mtd2 != NULL) return mtd2;
+//		if(ct->cid == TY_Object) break;
+//		ct = CT_(ct->supcid);
+//	}
+//	return mtd;
+//}
 
 static kExpr* Expr_typedWithMethod(CTX, kExpr *expr, kMethod *mtd, ktype_t reqty)
 {
 	KSETv(expr->cons->methods[0], mtd);
-	kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : kMethod_rtype(mtd));
+	kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : ktype_var(_ctx, kMethod_rtype(mtd), CT_(kExpr_at(expr, 1)->ty)));
 	return expr;
 }
 
@@ -588,19 +587,7 @@ static kExpr *Expr_lookupMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma, 
 		}
 	}
 	if(mtd != NULL) {
-		struct _kExpr *rexpr = (struct _kExpr *)Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
-		if (rexpr->ty == TY_T0) {
-			kclass_t *ct = CT_(this_cid);
-			if (ct->cparam != K_NULLPARAM && ct->cparam->psize == 1) {
-				//Array<T>
-				DBG_P("psize=%d, %s", ct->cparam->psize, T_ty(ct->cparam->p[0].ty));
-				rexpr->ty = ct->cparam->p[0].ty;
-			} else {
-				// TODO
-			}
-		}
-//		return Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
-		return (kExpr*)rexpr;
+		return Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty);
 	}
 	return K_NULLEXPR;
 }
