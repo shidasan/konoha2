@@ -8,21 +8,21 @@
 //	kushort_t opcode; \
 //	kushort_t line
 
-typedef int kreg_t;
-#define KCODE_HEAD \
-	void *codeaddr; \
-	int opcode:4; \
-
-typedef struct kopl_t {
-	KCODE_HEAD;
-	//union {
-	//	intptr_t data[5];
-	//	void *p[5];
-	//	kObject *o[5];
-	//	kclass_t *ct[5];
-	//	char *u[5];
-	//};
-} kopl_t;
+//typedef int kreg_t;
+//#define KCODE_HEAD \
+//	void *codeaddr; \
+//	int opcode:4; \
+//
+//typedef struct kopl_t {
+//	KCODE_HEAD;
+//	//union {
+//	//	intptr_t data[5];
+//	//	void *p[5];
+//	//	kObject *o[5];
+//	//	kclass_t *ct[5];
+//	//	char *u[5];
+//	//};
+//} kopl_t;
 
 #define OPCODE_NOP ((kopcode_t)0)
 typedef struct klr_NOP_t {
@@ -32,7 +32,7 @@ typedef struct klr_NOP_t {
 #define OPCODE_THCODE ((kopcode_t)1)
 typedef struct klr_THCODE_t {
 	KCODE_HEAD;
-	//klr_Fth th;
+	klr_Fth th;
 } klr_THCODE_t;
 
 #define OPCODE_ENTER ((kopcode_t)2)
@@ -183,7 +183,7 @@ typedef struct klr_JMPF_t {
 /* ------------------------------------------------------------------------ */
 /* [data] */
 
-#define _CONST 1
+//#define _CONST 1
 #define _JIT   (1<<1)
 #define _DEF   (1<<2)
 typedef struct {

@@ -31,6 +31,7 @@
 #include "ecrobot_interface.h"
 #include "balancer.h"
 
+#include "vm.h"
 #include "tinyvm.h"
 
 void cyc0(VP_INT exinf)
@@ -40,7 +41,7 @@ void cyc0(VP_INT exinf)
 
 void TaskMain(VP_INT exinf)
 {
-
+	VirtualMachine_run(NULL, NULL, NULL);
 }
 
 void TaskDisp(VP_INT exinf)
