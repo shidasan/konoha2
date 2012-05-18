@@ -22,11 +22,16 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#define K_USING_TINYVM 1
+#define K_USING_THCODE_ 1
+
 #include "tinykonoha.h"
 #include "kernel_id.h"
 #include "ecrobot_base.h"
 #include "ecrobot_interface.h"
 #include "balancer.h"
+
+#include "tinyvm.h"
 
 void cyc0(VP_INT exinf)
 {

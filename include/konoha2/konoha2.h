@@ -449,7 +449,9 @@ typedef struct kstack_t {
 	struct _kObject**            reftail;
 	ktype_t   evalty;
 	kushort_t evalidx;
+#ifndef K_USING_TINYVM
 	kjmpbuf_t* evaljmpbuf;
+#endif
 } kstack_t;
 
 typedef struct kfield_t {

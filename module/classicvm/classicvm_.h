@@ -11,7 +11,7 @@ typedef struct klr_NOP_t {
 #define OPCODE_THCODE ((kopcode_t)1)
 typedef struct klr_THCODE_t {
 	KCODE_HEAD;
-	klr_Fth th;
+	//klr_Fth th;
 } klr_THCODE_t;
 
 #define OPCODE_ENTER ((kopcode_t)2)

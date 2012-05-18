@@ -30,11 +30,11 @@ NCALL      0
 BNOT       0                  c:rn a:rn
 JMP        0                  addr:addr
 JMPF       0                  addr:addr a:rn
-SAFEPOINT  0                  espshift:ro
-
-ERROR      0                  start:ro msg:String
-
-VCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method  tyo:co
+#SAFEPOINT  0                  espshift:ro
+#
+#ERROR      0                  start:ro msg:String
+#
+#VCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method  tyo:co
 
 #P          _CONST            print:f flag:u  msg:String n:sfpidx2
 #PROBE      0                 sfpidx:sfpidx2 probe:f n:u n2:u
@@ -519,9 +519,9 @@ def gen_vm_c(bdir):
 #	f = open_c(fname, ['"vm.h"', '"minivm.h"'])
 #	close_c(f, fname)
 	
-	f = open('minivm.h', 'w')
-	f.write('#ifndef %s\n' % 'minivm_h'.upper());
-	f.write('#define %s\n' % 'minivm_h'.upper());
+	f = open('tinyvm.h', 'w')
+	f.write('#ifndef %s\n' % 'tinyvm_h'.upper());
+	f.write('#define %s\n' % 'tinyvm_h'.upper());
 	f.write('''// THIS FILE WAS AUTOMATICALLY GENERATED
 
 ''')
@@ -529,7 +529,7 @@ def gen_vm_c(bdir):
 	write_inst_c(f)
 	write_exec(f)
 
-	f.write('#endif /* %s */\n' % 'minivm_h'.upper());
+	f.write('#endif /* %s */\n' % 'tinyvm_h'.upper());
 	f.close()
 
 
