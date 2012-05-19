@@ -2,12 +2,15 @@
 #define SAMPLE_H
 
 #include <t_services.h>
+#define K_USING_TINYVM  1
+#define K_USING_THCODE_ 1
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifndef _MACRO_ONLY
+
 
 enum {
 	MINIT = 0,

@@ -360,6 +360,7 @@ typedef struct kshare_t {
 //	const struct _kParam        *nullParam;
 //	const struct _kParam        *defParam;
 
+#ifdef K_USING_TINYVM
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //
 	const struct _kArray         *packList;   // are you using this?
@@ -372,6 +373,7 @@ typedef struct kshare_t {
 	struct kmap_t         *paramMapNN;
 	const struct _kArray         *paramdomList;
 	struct kmap_t         *paramdomMapNN;
+#endif
 } kshare_t ;
 
 #define K_FRAME_NCMEMBER \

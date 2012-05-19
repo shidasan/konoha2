@@ -48,37 +48,37 @@ typedef struct klr_EXIT_t {
 #define OPCODE_NSET ((kopcode_t)4)
 typedef struct klr_NSET_t {
 	KCODE_HEAD;
-	kreg_t a:7;
+	kreg_t a;
 	kint_t n;
 } klr_NSET_t;
 
 #define OPCODE_NMOV ((kopcode_t)5)
 typedef struct klr_NMOV_t {
 	KCODE_HEAD;
-	kreg_t a:7;
-	kreg_t b:7;
+	kreg_t a;
+	kreg_t b;
 } klr_NMOV_t;
 
 #define OPCODE_NMOVx ((kopcode_t)6)
 typedef struct klr_NMOVx_t {
 	KCODE_HEAD;
-	kreg_t a:7;
-	kreg_t b:7;
+	kreg_t a;
+	kreg_t b;
 	int bx;
 } klr_NMOVx_t;
 
 #define OPCODE_XNMOV ((kopcode_t)7)
 typedef struct klr_XNMOV_t {
 	KCODE_HEAD;
-	kreg_t a:7;
+	kreg_t a;
 	int ax;
-	kreg_t b:7;
+	kreg_t b;
 } klr_XNMOV_t;
 
 #define OPCODE_NEW ((kopcode_t)8)
 typedef struct klr_NEW_t {
 	KCODE_HEAD;
-	kreg_t a:7;
+	kreg_t a;
 	int p;
 	kclass_t* ty;
 } klr_NEW_t;
@@ -86,23 +86,23 @@ typedef struct klr_NEW_t {
 #define OPCODE_NULL ((kopcode_t)9)
 typedef struct klr_NULL_t {
 	KCODE_HEAD;
-	kreg_t a:7;
+	kreg_t a;
 	kclass_t* ty;
 } klr_NULL_t;
 
 #define OPCODE_BOX ((kopcode_t)10)
 typedef struct klr_BOX_t {
 	KCODE_HEAD;
-	kreg_t a:7;
-	kreg_t b:7;
+	kreg_t a;
+	kreg_t b;
 	kclass_t* ty;
 } klr_BOX_t;
 
 #define OPCODE_UNBOX ((kopcode_t)11)
 typedef struct klr_UNBOX_t {
 	KCODE_HEAD;
-	kreg_t a:7;
-	kreg_t b:7;
+	kreg_t a;
+	kreg_t b;
 	kclass_t* ty;
 } klr_UNBOX_t;
 
@@ -110,8 +110,8 @@ typedef struct klr_UNBOX_t {
 typedef struct klr_CALL_t {
 	KCODE_HEAD;
 	int uline;
-	kreg_t thisidx:7;
-	kreg_t espshift:7;
+	kreg_t thisidx;
+	kreg_t espshift;
 	kObject* tyo;
 } klr_CALL_t;
 
@@ -119,8 +119,8 @@ typedef struct klr_CALL_t {
 typedef struct klr_SCALL_t {
 	KCODE_HEAD;
 	int uline;
-	kreg_t thisidx:7;
-	kreg_t espshift:7;
+	kreg_t thisidx;
+	kreg_t espshift;
 	kMethod* mtd;
 	kObject* tyo;
 } klr_SCALL_t;
@@ -138,8 +138,8 @@ typedef struct klr_NCALL_t {
 #define OPCODE_BNOT ((kopcode_t)16)
 typedef struct klr_BNOT_t {
 	KCODE_HEAD;
-	kreg_t c:7;
-	kreg_t a:7;
+	kreg_t c;
+	kreg_t a;
 } klr_BNOT_t;
 
 #define OPCODE_JMP ((kopcode_t)17)
@@ -154,7 +154,7 @@ typedef struct klr_JMPF_t {
 	KCODE_HEAD;
 	int offset;
 	kopl_t  *jumppc;
-	kreg_t a:7;
+	kreg_t a;
 } klr_JMPF_t;
 
 	
@@ -388,14 +388,14 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 		GOTO_NEXT();
 	} 
 	CASE(JMP) {
-	//	klr_JMP_t *op = (klr_JMP_t*)pc; (void)op;
-	//	OPEXEC_JMP(pc = op->jumppc, JUMP); pc++;
-	//	GOTO_NEXT();
+		klr_JMP_t *op = (klr_JMP_t*)pc; (void)op;
+		OPEXEC_JMP(pc = op->jumppc, JUMP); pc++;
+		GOTO_NEXT();
 	} 
 	CASE(JMPF) {
-	//	klr_JMPF_t *op = (klr_JMPF_t*)pc; (void)op;
-	//	OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a); pc++;
-	//	GOTO_NEXT();
+		klr_JMPF_t *op = (klr_JMPF_t*)pc; (void)op;
+		OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a); pc++;
+		GOTO_NEXT();
 	} 
 	DISPATCH_END(pc);
 	L_RETURN:;
