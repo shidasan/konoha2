@@ -4,6 +4,7 @@
 #include <t_services.h>
 #define K_USING_TINYVM  1
 #define K_USING_THCODE_ 1
+#define STACK_SIZE 128
 
 #ifdef __cplusplus
 extern "C" {

@@ -31,6 +31,8 @@
 #include "vm.h"
 #include "tinyvm.h"
 
+ksfp_t sfp[STACK_SIZE];
+
 void cyc0(VP_INT exinf)
 {
 
@@ -38,7 +40,7 @@ void cyc0(VP_INT exinf)
 
 void TaskMain(VP_INT exinf)
 {
-	VirtualMachine_run(NULL, NULL, NULL);
+	VirtualMachine_run(NULL, sfp, NULL);
 }
 
 void TaskDisp(VP_INT exinf)

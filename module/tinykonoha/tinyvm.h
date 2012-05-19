@@ -304,97 +304,116 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 
 	CASE(NOP) {
 		klr_NOP_t *op = (klr_NOP_t*)pc; (void)op;
-		OPEXEC_NOP(); pc++;
+		OPEXEC_NOP();
+		pc = ((klr_NOP_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(THCODE) {
 		klr_THCODE_t *op = (klr_THCODE_t*)pc; (void)op;
-		OPEXEC_THCODE(); pc++;
+		OPEXEC_THCODE();
+		pc = ((klr_THCODE_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(ENTER) {
 		klr_ENTER_t *op = (klr_ENTER_t*)pc; (void)op;
-		OPEXEC_ENTER(); pc++;
+		OPEXEC_ENTER();
+		pc = ((klr_ENTER_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(EXIT) {
 		klr_EXIT_t *op = (klr_EXIT_t*)pc; (void)op;
-		OPEXEC_EXIT(); pc++;
+		OPEXEC_EXIT();
+		pc = ((klr_EXIT_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NSET) {
 		klr_NSET_t *op = (klr_NSET_t*)pc; (void)op;
-		OPEXEC_NSET(op->a, op->n); pc++;
+		OPEXEC_NSET(op->a, op->n);
+		pc = ((klr_NSET_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NMOV) {
 		klr_NMOV_t *op = (klr_NMOV_t*)pc; (void)op;
-		OPEXEC_NMOV(op->a, op->b); pc++;
+		OPEXEC_NMOV(op->a, op->b);
+		pc = ((klr_NMOV_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NMOVx) {
 		klr_NMOVx_t *op = (klr_NMOVx_t*)pc; (void)op;
-		OPEXEC_NMOVx(op->a, op->b, op->bx); pc++;
+		OPEXEC_NMOVx(op->a, op->b, op->bx);
+		pc = ((klr_NMOVx_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(XNMOV) {
 		klr_XNMOV_t *op = (klr_XNMOV_t*)pc; (void)op;
-		OPEXEC_XNMOV(op->a, op->ax, op->b); pc++;
+		OPEXEC_XNMOV(op->a, op->ax, op->b);
+		pc = ((klr_XNMOV_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NEW) {
 		klr_NEW_t *op = (klr_NEW_t*)pc; (void)op;
-		OPEXEC_NEW(op->a, op->p, op->ty); pc++;
+		OPEXEC_NEW(op->a, op->p, op->ty);
+		pc = ((klr_NEW_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NULL) {
 		klr_NULL_t *op = (klr_NULL_t*)pc; (void)op;
-		OPEXEC_NULL(op->a, op->ty); pc++;
+		OPEXEC_NULL(op->a, op->ty);
+		pc = ((klr_NULL_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(BOX) {
 		klr_BOX_t *op = (klr_BOX_t*)pc; (void)op;
-		OPEXEC_BOX(op->a, op->b, op->ty); pc++;
+		OPEXEC_BOX(op->a, op->b, op->ty);
+		pc = ((klr_BOX_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(UNBOX) {
 		klr_UNBOX_t *op = (klr_UNBOX_t*)pc; (void)op;
-		OPEXEC_UNBOX(op->a, op->b, op->ty); pc++;
+		OPEXEC_UNBOX(op->a, op->b, op->ty);
+		pc = ((klr_UNBOX_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(CALL) {
 		klr_CALL_t *op = (klr_CALL_t*)pc; (void)op;
-		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, op->tyo); pc++;
+		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, op->tyo);
+		pc = ((klr_CALL_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(SCALL) {
 		klr_SCALL_t *op = (klr_SCALL_t*)pc; (void)op;
-		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo); pc++;
+		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo);
+		pc = ((klr_SCALL_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(RET) {
 		klr_RET_t *op = (klr_RET_t*)pc; (void)op;
-		OPEXEC_RET(); pc++;
+		OPEXEC_RET();
+		pc = ((klr_RET_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(NCALL) {
 		klr_NCALL_t *op = (klr_NCALL_t*)pc; (void)op;
-		OPEXEC_NCALL(); pc++;
+		OPEXEC_NCALL();
+		pc = ((klr_NCALL_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(BNOT) {
 		klr_BNOT_t *op = (klr_BNOT_t*)pc; (void)op;
-		OPEXEC_BNOT(op->c, op->a); pc++;
+		OPEXEC_BNOT(op->c, op->a);
+		pc = ((klr_BNOT_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(JMP) {
 		klr_JMP_t *op = (klr_JMP_t*)pc; (void)op;
-		OPEXEC_JMP(pc = op->jumppc, JUMP); pc++;
+		OPEXEC_JMP(pc = op->jumppc, JUMP);
+		pc = ((klr_JMP_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	CASE(JMPF) {
 		klr_JMPF_t *op = (klr_JMPF_t*)pc; (void)op;
-		OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a); pc++;
+		OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a);
+		pc = ((klr_JMPF_t*)pc)+1;
 		GOTO_NEXT();
 	} 
 	DISPATCH_END(pc);
