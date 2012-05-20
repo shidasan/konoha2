@@ -473,7 +473,7 @@ struct _kclass;
 		uintptr_t (*unbox)(CTX, const struct _kObject*);\
 		int  (*compareTo)(const struct _kObject*, const struct _kObject*);\
 		void (*initdef)(CTX, struct _kclass*, kline_t);\
-		kbool_t (*issubtype)(CTX, const struct _kclass*, const struct _kclass*);\
+		kbool_t (*isSubType)(CTX, const struct _kclass*, const struct _kclass*);\
 		const struct _kclass* (*realtype)(CTX, const struct _kclass*, const struct _kclass*)
 
 typedef struct KDEFINE_CLASS {

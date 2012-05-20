@@ -48,7 +48,7 @@ int verbose_code = 0;  // global variable
 #define BBOP(BB)     (BB)->op.opl
 #define BBOPn(BB,N)  (BB)->op.opl[N]
 
-static void EXPR_asm(CTX, int a, kExpr *expr, int espidx);
+static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
 
 #define GammaBuilderLabel(n)   (kBasicBlock*)(ctxcode->lstacks->list[n])
 
@@ -521,9 +521,9 @@ static kBasicBlock* ASM_JMPF(CTX, int flocal, kBasicBlock *lbJUMP)
 	return lbJUMP;
 }
 
-static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlock* label, int espidx)
+static kBasicBlock* EXPR_asmJMPIF(CTX, int a, kExpr *expr, int isTRUE, kBasicBlock* label, int shift, int espidx)
 {
-	EXPR_asm(_ctx, a, expr, espidx);
+	EXPR_asm(_ctx, a, expr, shift, espidx);
 	if(isTRUE) {
 		ASM(BNOT, NC_(a), NC_(a));
 	}
@@ -541,11 +541,11 @@ static kObject* BUILD_addConstPool(CTX, kObject *o)
 	return o;
 }
 
-static void BLOCK_asm(CTX, kBlock *bk);
-static void CALL_asm(CTX, int a, kExpr *expr, int espidx);
-static void AND_asm(CTX, int a, kExpr *expr, int espidx);
-static void OR_asm(CTX, int a, kExpr *expr, int espidx);
-static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx);
+static void BLOCK_asm(CTX, kBlock *bk, int shift);
+static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx);
+static void AND_asm(CTX, int a, kExpr *expr, int shift, int espidx);
+static void OR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
+static void LETEXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
 
 static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 {
@@ -557,8 +557,9 @@ static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 	}
 }
 
-static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
+static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
+	DBG_P("a=%d, shift=%d, espidx=%d", a, shift, espidx);
 	switch(expr->build) {
 	case TEXPR_CONST : {
 		kObject *v = expr->data;
@@ -594,9 +595,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	}
 	case TEXPR_BLOCK : {
 		DBG_ASSERT(IS_Block(expr->block));
-		BLOCK_asm(_ctx, expr->block);
-		//DBG_ASSERT(expr->index == espidx);
-		DBG_P("TEXPR_BLOCK mov=%d,%d", a, espidx);
+		BLOCK_asm(_ctx, expr->block, espidx);
 		NMOV_asm(_ctx, a, expr->ty, /*expr->index*/ espidx);
 		break;
 	}
@@ -613,7 +612,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 	}
 	case TEXPR_BOX   : {
 		DBG_ASSERT(IS_Expr(expr->single));
-		EXPR_asm(_ctx, a, expr->single, espidx);
+		EXPR_asm(_ctx, a, expr->single, shift, espidx);
 		ASM(BOX, OC_(a), NC_(a), CT_(expr->single->ty));
 		break;
 	}
@@ -622,23 +621,24 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 		break;
 	}
 	case TEXPR_CALL  :
-		CALL_asm(_ctx, a, expr, espidx);
+		CALL_asm(_ctx, a, expr, shift, espidx);
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, expr->ty, espidx);
 		}
 		break;
 	case TEXPR_AND  :
-		AND_asm(_ctx, a, expr, espidx);
+		AND_asm(_ctx, a, expr, shift, espidx);
 		break;
 	case TEXPR_OR  :
-		OR_asm(_ctx, a, expr, espidx);
+		OR_asm(_ctx, a, expr, shift, espidx);
 		break;
 	case TEXPR_LET  :
-		LETEXPR_asm(_ctx, a, expr, espidx);
+		LETEXPR_asm(_ctx, a, expr, shift, espidx);
 		break;
 	case TEXPR_STACKTOP  :
-		DBG_P("TEXPR_STACKTOP mov %d,%d expr->index=%d, espidx=%d, ", a, expr->index + espidx, expr->index, espidx);
-		NMOV_asm(_ctx, a, expr->ty, expr->index + espidx);
+		DBG_P("STACKTOP mov %d, %d, < %d", a, expr->index + shift, espidx);
+		DBG_ASSERT(expr->index + shift < espidx);
+		NMOV_asm(_ctx, a, expr->ty, expr->index + shift);
 		break;
 	default:
 		DBG_ABORT("unknown expr=%d", expr->build);
@@ -647,7 +647,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int espidx)
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX);
 
-static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
+static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
 	kMethod *mtd = expr->cons->methods[0];
 	DBG_ASSERT(IS_Method(mtd));
@@ -660,7 +660,8 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 	for(i = s; i < kArray_size(expr->cons); i++) {
 		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
-		EXPR_asm(_ctx, thisidx + i - 1, exprN, thisidx + i - 1);
+		DBG_P("param: i=%d shift=%d,espidx=%d", i, shift, thisidx + i - 1);
+		EXPR_asm(_ctx, thisidx + i - 1, exprN, shift, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
 //	if (mtd->mn == MN_new && mtd->fcall_1 == Fmethod_abstract) {
@@ -683,13 +684,13 @@ static void CALL_asm(CTX, int a, kExpr *expr, int espidx)
 //	}
 }
 
-static void OR_asm(CTX, int a, kExpr *expr, int espidx)
+static void OR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
 	int i, size = kArray_size(expr->cons);
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 1; i < size; i++) {
-		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 1/*TRUE*/, lbTRUE, espidx);
+		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 1/*TRUE*/, lbTRUE, shift, espidx);
 	}
 	ASM(NSET, NC_(a), 0/*O_data(K_FALSE)*/, CT_Boolean);
 	ASM_JMP(_ctx, lbFALSE);
@@ -698,13 +699,13 @@ static void OR_asm(CTX, int a, kExpr *expr, int espidx)
 	ASM_LABEL(_ctx, lbFALSE); // false
 }
 
-static void AND_asm(CTX, int a, kExpr *expr, int espidx)
+static void AND_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
 	int i, size = kArray_size(expr->cons);
 	kBasicBlock*  lbTRUE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbFALSE = new_BasicBlockLABEL(_ctx);
 	for(i = 1; i < size; i++) {
-		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 0/*FALSE*/, lbFALSE, espidx);
+		EXPR_asmJMPIF(_ctx, a, kExpr_at(expr, i), 0/*FALSE*/, lbFALSE, shift, espidx);
 	}
 	ASM(NSET, NC_(a), 1/*O_data(K_TRUE)*/, CT_Boolean);
 	ASM_JMP(_ctx, lbTRUE);
@@ -713,26 +714,26 @@ static void AND_asm(CTX, int a, kExpr *expr, int espidx)
 	ASM_LABEL(_ctx, lbTRUE);   // TRUE
 }
 
-static void LETEXPR_asm(CTX, int a, kExpr *expr, int espidx)
+static void LETEXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
 	kExpr *exprL = kExpr_at(expr, 1);
 	kExpr *exprR = kExpr_at(expr, 2);
 	if(exprL->build == TEXPR_LOCAL) {
-		EXPR_asm(_ctx, exprL->index, exprR, espidx);
+		EXPR_asm(_ctx, exprL->index, exprR, shift, espidx);
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);
 		}
 	}
 	else if(exprL->build == TEXPR_STACKTOP) {
-		DBG_P("LET TEXPR_STACKTOP a=%d, espidx=%d", exprL->index + espidx, espidx);
-		EXPR_asm(_ctx, exprL->index + espidx, exprR, espidx);
-		if(a != exprL->index + espidx) {
+		DBG_P("LET TEXPR_STACKTOP a=%d, exprL->index=%d, espidx=%d", a, exprL->index, espidx);
+		EXPR_asm(_ctx, exprL->index + shift, exprR, shift, espidx);
+		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, exprL->index + espidx);
 		}
 	}
 	else{
 		assert(exprL->build == TEXPR_FIELD);
-		EXPR_asm(_ctx, espidx, exprR, espidx);
+		EXPR_asm(_ctx, espidx, exprR, shift, espidx);
 		kshort_t index = (kshort_t)exprL->index;
 		kshort_t xindex = (kshort_t)(exprL->index >> (sizeof(kshort_t)*8));
 		if(TY_isUnbox(exprR->ty)) {
@@ -777,54 +778,54 @@ static void ASM_SAFEPOINT(CTX, int espidx)
 	ASM(SAFEPOINT, SFP_(espidx));
 }
 
-static void ErrStmt_asm(CTX, kStmt *stmt, int espidx)
+static void ErrStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	kString *msg = (kString*)kObject_getObjectNULL(stmt, 0);
 	DBG_ASSERT(IS_String(msg));
 	ASM(ERROR, SFP_(espidx), msg);
 }
 
-static void ExprStmt_asm(CTX, kStmt *stmt, int espidx)
+static void ExprStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
 	if(IS_Expr(expr)) {
-		EXPR_asm(_ctx, espidx, expr, espidx);
+		EXPR_asm(_ctx, espidx, expr, shift, espidx);
 	}
 }
 
-static void BlockStmt_asm(CTX, kStmt *stmt, int espidx)
+static void BlockStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	USING_SUGAR;
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK), shift);
 }
 
-static void IfStmt_asm(CTX, kStmt *stmt, int espidx)
+static void IfStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	USING_SUGAR;
 	kBasicBlock*  lbELSE = new_BasicBlockLABEL(_ctx);
 	kBasicBlock*  lbEND  = new_BasicBlockLABEL(_ctx);
 	/* if */
-	lbELSE = EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbELSE, espidx);
+	lbELSE = EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbELSE, shift, espidx);
 	/* then */
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK), shift);
 	ASM_JMP(_ctx, lbEND);
 	/* else */
 	ASM_LABEL(_ctx, lbELSE);
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_else, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_else, K_NULLBLOCK), shift);
 	/* endif */
 	ASM_LABEL(_ctx, lbEND);
 }
 
-static void ReturnStmt_asm(CTX, kStmt *stmt, int espidx)
+static void ReturnStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	kExpr *expr = (kExpr*)kObject_getObjectNULL(stmt, 1);
 	if(expr != NULL && IS_Expr(expr) && expr->ty != TY_void) {
-		EXPR_asm(_ctx, K_RTNIDX, expr, espidx);
+		EXPR_asm(_ctx, K_RTNIDX, expr, shift, espidx);
 	}
 	ASM_JMP(_ctx, ctxcode->lbEND);  // RET
 }
 
-static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
+static void LoopStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	USING_SUGAR;
 	kBasicBlock* lbCONTINUE = new_BasicBlockLABEL(_ctx);
@@ -834,15 +835,15 @@ static void LoopStmt_asm(CTX, kStmt *stmt, int espidx)
 	kObject_setObject(stmt, KW_("break"), lbBREAK);
 	ASM_LABEL(_ctx, lbCONTINUE);
 	ASM_SAFEPOINT(_ctx, espidx);
-	EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbBREAK, espidx);
+	EXPR_asmJMPIF(_ctx, espidx, kStmt_expr(stmt, 1, NULL), 0/*FALSE*/, lbBREAK, shift, espidx);
 	//BLOCK_asm(_ctx, kStmt_block(stmt, KW_("iteration"), K_NULLBLOCK));
-	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK));
+	BLOCK_asm(_ctx, kStmt_block(stmt, KW_Block, K_NULLBLOCK), shift);
 	ASM_JMP(_ctx, lbCONTINUE);
 	ASM_LABEL(_ctx, lbBREAK);
 //	BUILD_popLABEL(_ctx);
 }
 
-static void JumpStmt_asm(CTX, kStmt *stmt, int espidx)
+static void JumpStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	ksyntax_t *syn = stmt->syn;
 	kStmt *jump = (kStmt*)kObject_getObject(stmt, syn->kw, NULL);
@@ -854,28 +855,28 @@ static void JumpStmt_asm(CTX, kStmt *stmt, int espidx)
 	ASM_JMP(_ctx, lbJUMP);
 }
 
-static void UndefinedStmt_asm(CTX, kStmt *stmt, int espidx)
+static void UndefinedStmt_asm(CTX, kStmt *stmt, int shift, int espidx)
 {
 	DBG_ABORT("undefined asm syntax kw='%s'", T_kw(stmt->syn->kw));
 }
 
-static void BLOCK_asm(CTX, kBlock *bk)
+static void BLOCK_asm(CTX, kBlock *bk, int shift)
 {
-	int i, espidx = bk->esp->index;
-	//DBG_ASSERT(bk->esp->build == TEXPR_LOCAL);
+	int i, espidx = (bk->esp->build == TEXPR_STACKTOP) ? shift + bk->esp->index : bk->esp->index;
+	DBG_P("shift=%d, espidx=%d build=%d", shift, espidx, bk->esp->build);
 	for(i = 0; i < kArray_size(bk->blocks); i++) {
 		kStmt *stmt = bk->blocks->stmts[i];
 		if(stmt->syn == NULL) continue;
 		ctxcode->uline = stmt->uline;
 		switch(stmt->build) {
-		case TSTMT_ERR:    ErrStmt_asm(_ctx, stmt, espidx);   return;
-		case TSTMT_EXPR:   ExprStmt_asm(_ctx, stmt, espidx);  break;
-		case TSTMT_BLOCK:  BlockStmt_asm(_ctx, stmt, espidx); break;
-		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, espidx); return;
-		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, espidx);     break;
-		case TSTMT_LOOP:   LoopStmt_asm(_ctx, stmt, espidx);     break;
-		case TSTMT_JUMP:   JumpStmt_asm(_ctx, stmt, espidx);     break;
-		default: UndefinedStmt_asm(_ctx, stmt, espidx); break;
+		case TSTMT_ERR:    ErrStmt_asm(_ctx, stmt, shift, espidx);   return;
+		case TSTMT_EXPR:   ExprStmt_asm(_ctx, stmt, shift, espidx);  break;
+		case TSTMT_BLOCK:  BlockStmt_asm(_ctx, stmt, shift, espidx); break;
+		case TSTMT_RETURN: ReturnStmt_asm(_ctx, stmt, shift, espidx); return;
+		case TSTMT_IF:     IfStmt_asm(_ctx, stmt, shift, espidx);     break;
+		case TSTMT_LOOP:   LoopStmt_asm(_ctx, stmt, shift, espidx);     break;
+		case TSTMT_JUMP:   JumpStmt_asm(_ctx, stmt, shift, espidx);     break;
+		default: UndefinedStmt_asm(_ctx, stmt, shift, espidx); break;
 		}
 	}
 }
@@ -912,7 +913,7 @@ static void Method_genCode(CTX, kMethod *mtd, kBlock *bk)
 //	BUILD_pushLABEL(_ctx, NULL, lbBEGIN, lbEND);
 	ASM(THCODE, _THCODE);
 	ASM_LABEL(_ctx, lbBEGIN);
-	BLOCK_asm(_ctx, bk);
+	BLOCK_asm(_ctx, bk, 0);
 	ASM_LABEL(_ctx, ctxcode->lbEND);
 	if (mtd->mn == MN_new) {
 		ASM(NMOV, OC_(K_RTNIDX), OC_(0), CT_(mtd->cid));   // FIXME: Type 'This' must be resolved

@@ -178,9 +178,7 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 	kPyObject *po = (kPyObject*)sfp[0].o;
 	kwb_t wb;
 	// assert
-	if(po->self == NULL) {
-		// [TODO] throw Exception
-	}
+	DBG_ASSERT(po->self != NULL);
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	O_ct(sfp[0].o)->p(_ctx, sfp, 0, &wb, 0);
 	kString* s = new_kString(kwb_top(&wb, 1), kwb_bytesize(&wb), 0);
@@ -508,7 +506,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_("toString"),  0,
 		// [TODO] add following konoha class.
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toList), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
-		//_Public|_Const|_Im|_Coercion, _F(List_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,
+		//_Public|_Const|_Im|_Coercion, _F(Array_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toComplex), TY_Complex, TY_PyObject, MN_to(TY_Complex), 0,
 		//_Public|_Const|_Im|_Coercion, _F(Complex_toPyObject), TY_PyObject, TY_Complex, MN_to(TY_PyObject), 0,
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toBuffer), TY_Buffer, TY_PyObject, MN_to(TY_Buffer), 0,

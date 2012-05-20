@@ -99,7 +99,7 @@ set(PACKAGES
 	konoha.float
 ##	konoha.int
 	llvm
-##	konoha.pcre
+	konoha.pcre
 ##	konoha.io
 	konoha.while
 	konoha.class
