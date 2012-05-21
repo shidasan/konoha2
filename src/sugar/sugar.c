@@ -485,7 +485,7 @@ static KDEFINE_PACKAGE *KonohaSpace_openGlueHandler(CTX, kKonohaSpace *ks, char 
 }
 
 #ifndef K_PREFIX
-#define K_PREFIX  "/usr/local/konoha2"
+#define K_PREFIX  "/usr/local"
 #endif
 
 static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
@@ -507,7 +507,7 @@ static const char* packagepath(CTX, char *buf, size_t bufsiz, kString *pkgname)
 		fclose(fp);
 	}
 	else {
-		snprintf(buf, bufsiz, K_PREFIX "/package" "/%s/%s_glue.k", fname, packname(fname));
+		snprintf(buf, bufsiz, K_PREFIX "/konoha2/package" "/%s/%s_glue.k", fname, packname(fname));
 	}
 #endif
 	return (const char*)buf;
