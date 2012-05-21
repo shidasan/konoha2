@@ -433,7 +433,7 @@ static void Method_init(CTX, kObject *o, void *conf)
 
 static void Method_reftrace(CTX, kObject *o)
 {
-	BEGIN_REFTRACE(4);
+	BEGIN_REFTRACE(3);
 	kMethod *mtd = (kMethod*)o;
 	KREFTRACEv(mtd->tcode);
 	KREFTRACEv(mtd->kcode);

@@ -72,9 +72,12 @@ set(RUNTIME
 	src/konoha/konoha2.c
 )
 
-set(GC
-	src/gc/gc.c
-)
+set(KONOHA_GC_MODULE "" CACHE STRING "konoha gc module")
+if(KONOHA_GC_MODULE)
+	set(GC module/${KONOHA_GC_MODULE}gc/${KONOHA_GC_MODULE}gc.c)
+else(KONOHA_GC_MODULE)
+	set(GC src/gc/gc.c)
+endif(KONOHA_GC_MODULE)
 
 set(LOGGER
 	src/logger/logger.c
@@ -115,6 +118,7 @@ set(PACKAGES
 	konoha.bytes
 	ijit
 	python
+	random
 )
 
 find_library(HAVE_LIBDL NAMES dl)
