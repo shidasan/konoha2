@@ -66,26 +66,26 @@ static size_t knh_bytes_mlen(kbytes_t v)
 #endif
 }
 
-//static kbytes_t knh_bytes_mofflen(kbytes_t v, size_t moff, size_t mlen)
-//{
-//#ifdef K_USING_UTF8
-//	size_t i;
-//	const unsigned char *s = v.utext;
-//	const unsigned char *e = s + v.len;
-//	for(i = 0; i < moff; i++) {
-//		s += utf8len(s[0]);
-//	}
-//	v.buf = (char*)s;
-//	for(i = 0; i < mlen; i++) {
-//		s += utf8len(s[0]);
-//	}
-//	KNH_ASSERT(s <= e);
-//	v.len = (const char*)s - v.text;
-//	return v;
-//#else
-//	return knh_bytes_subbytes(m, moff, mlen); /* if K_ENCODING is not set */
-//#endif
-//}
+static kbytes_t knh_bytes_mofflen(kbytes_t v, size_t moff, size_t mlen)
+{
+#ifdef K_USING_UTF8
+	size_t i;
+	const unsigned char *s = v.utext;
+	const unsigned char *e = s + v.len;
+	for(i = 0; i < moff; i++) {
+		s += utf8len(s[0]);
+	}
+	v.buf = (char*)s;
+	for(i = 0; i < mlen; i++) {
+		s += utf8len(s[0]);
+	}
+	KNH_ASSERT(s <= e);
+	v.len = (const char*)s - v.text;
+	return v;
+#else
+	return knh_bytes_subbytes(m, moff, mlen); /* if K_ENCODING is not set */
+#endif
+}
 
 static const char* (*_pcre_version)(void);
 static void  (*_pcre_free)(void *);
@@ -307,36 +307,35 @@ static kString *kwb_newString(CTX, kwb_t *wb, int flg)
 	return new_kString(kwb_top(wb, flg), kwb_bytesize(wb), SPOL_POOL);
 }
 
-//#define _ALWAYS SPOL_POOL
-//#define _NEVER  SPOL_POOL
-//#define _ASCII  SPOL_ASCII
-//#define _UTF8   SPOL_UTF8
-//#define _SUB(s0) (S_isASCII(s0) ? _ASCII|_ALWAYS : _ALWAYS)
-//#define _SUBCHAR(s0) (S_isASCII(s0) ? _ASCII : 0)
-//#define _CHARSIZE(len) (len==1 ? _ASCII : _UTF8)
-//
-//static kArray *kStringToCharArray(CTX, kString *bs, int istrim)
-//{
-//	kbytes_t base = {S_size(bs), {S_text(bs)}};
-//	size_t i, n = base.len;
-//	kArray *a = new_(Array, n); //TODO new_Array(_ctx, CLASS_String, n);
-//	if(S_isASCII(bs)) {
-//		for(i = 0; i < n; i++) {
-//			if(istrim && isspace(base.utext[i])) continue;
-//			kArray_add(a, new_kString(base.text+i, 1, _ALWAYS|_ASCII));
-//		}
-//	}
-//	else {
-//		n = knh_bytes_mlen(base);
-//		for(i = 0; i < n; i++) {
-//			if(istrim && isspace(base.utext[i])) continue;
-//			kbytes_t sub = knh_bytes_mofflen(base, i, 1);
-//			kArray_add(a, new_kString(sub.text, sub.len, _ALWAYS|((sub.len == 1) ? _ASCII:_UTF8)));
-//		}
-//	}
-//	return a;
-//}
-//
+#define _ALWAYS SPOL_POOL
+#define _NEVER  SPOL_POOL
+#define _ASCII  SPOL_ASCII
+#define _UTF8   SPOL_UTF8
+#define _SUB(s0) (S_isASCII(s0) ? _ASCII|_ALWAYS : _ALWAYS)
+#define _SUBCHAR(s0) (S_isASCII(s0) ? _ASCII : 0)
+#define _CHARSIZE(len) (len==1 ? _ASCII : _UTF8)
+
+static kArray *kStringToCharArray(CTX, kString *bs, int istrim)
+{
+	kbytes_t base = {S_size(bs), {S_text(bs)}};
+	size_t i, n = base.len;
+	kArray *a = new_(Array, n); //TODO new_Array(_ctx, CLASS_String, n);
+	if(S_isASCII(bs)) {
+		for(i = 0; i < n; i++) {
+			if(istrim && isspace(base.utext[i])) continue;
+			kArray_add(a, new_kString(base.text+i, 1, _ALWAYS|_ASCII));
+		}
+	}
+	else {
+		n = knh_bytes_mlen(base);
+		for(i = 0; i < n; i++) {
+			if(istrim && isspace(base.utext[i])) continue;
+			kbytes_t sub = knh_bytes_mofflen(base, i, 1);
+			kArray_add(a, new_kString(sub.text, sub.len, _ALWAYS|((sub.len == 1) ? _ASCII:_UTF8)));
+		}
+	}
+	return a;
+}
 
 static void Regex_init(CTX, kObject *o, void *conf)
 {
@@ -409,48 +408,48 @@ static KMETHOD String_search(CTX, ksfp_t *sfp _RIX)
 /* ------------------------------------------------------------------------ */
 //## @Const method String[] String.match(Regex re);
 
-//static KMETHOD String_match(CTX, ksfp_t *sfp _RIX)
-//{
-//	kString *s0 = sfp[0].s;
-//	kRegex *re = sfp[1].re;
-//	kArray *a = NULL;
-//	if(IS_NOTNULL(re) && S_size(re->pattern) > 0) {
-//		const char *str = S_text(s0);  // necessary
-//		const char *base = str;
-//		const char *eos = base + S_size(s0);
-//		size_t nmatch = re->spi->regnmatchsize(_ctx, re->reg);
-//		kregmatch_t *p, pmatch[nmatch+1];
-//		int i, isGlobalOption = Regex_isGlobalOption(re);
-//		a = new_(Array, nmatch);/*TODO new_Array(CLASS_String)*/
-//		BEGIN_LOCAL(lsfp, 1);
-//		KSETv(lsfp[0].o, a);
-//		do {
-//			int res = re->spi->regexec(_ctx, re->reg, str, nmatch, pmatch, re->eflags);
-//			if(res != 0) {
-//				// FIXME
-//				//LOG_regex(_ctx, sfp, res, re, str);
-//				break;
-//			}
-//			for(p = pmatch, i = 0; i < nmatch; p++, i++) {
-//				if (p->rm_so == -1) break;
-//				//DBG_P("[%d], rm_so=%d, rm_eo=%d", i, p->rm_so, p->rm_eo);
-//				kbytes_t sub = {((p->rm_eo) - (p->rm_so)), {str + (p->rm_so)}};
-//				kArray_add(a, new_kString(sub.text, sub.len, _SUB(s0)));
-//			}
-//			if(isGlobalOption) {
-//				size_t eo = pmatch[0].rm_eo; // shift matched pattern
-//				str += (eo > 0) ? eo : 1;
-//				if(!(str < eos)) isGlobalOption = 0; // stop iteration
-//			}
-//		} while(isGlobalOption);
-//		END_LOCAL();
-//	}
-//	else {
-//		a = new_(Array, 0);/*TODO new_Array(CLASS_String)*/
-//	}
-//	RETURN_(a);
-	/*new_(O_ct(sfp[K_RTNIDX].o), 0);  // USE THIS; */
-//}
+static KMETHOD String_match(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s0 = sfp[0].s;
+	kRegex *re = sfp[1].re;
+	kArray *a = NULL;
+	if(IS_NOTNULL(re) && S_size(re->pattern) > 0) {
+		const char *str = S_text(s0);  // necessary
+		const char *base = str;
+		const char *eos = base + S_size(s0);
+		size_t nmatch = re->spi->regnmatchsize(_ctx, re->reg);
+		kregmatch_t *p, pmatch[nmatch+1];
+		int i, isGlobalOption = Regex_isGlobalOption(re);
+		a = new_(Array, nmatch);/*TODO new_Array(CLASS_String)*/
+		BEGIN_LOCAL(lsfp, 1);
+		KSETv(lsfp[0].o, a);
+		do {
+			int res = re->spi->regexec(_ctx, re->reg, str, nmatch, pmatch, re->eflags);
+			if(res != 0) {
+				// FIXME
+				//LOG_regex(_ctx, sfp, res, re, str);
+				break;
+			}
+			for(p = pmatch, i = 0; i < nmatch; p++, i++) {
+				if (p->rm_so == -1) break;
+				//DBG_P("[%d], rm_so=%d, rm_eo=%d", i, p->rm_so, p->rm_eo);
+				kbytes_t sub = {((p->rm_eo) - (p->rm_so)), {str + (p->rm_so)}};
+				kArray_add(a, new_kString(sub.text, sub.len, _SUB(s0)));
+			}
+			if(isGlobalOption) {
+				size_t eo = pmatch[0].rm_eo; // shift matched pattern
+				str += (eo > 0) ? eo : 1;
+				if(!(str < eos)) isGlobalOption = 0; // stop iteration
+			}
+		} while(isGlobalOption);
+		END_LOCAL();
+	}
+	else {
+		a = new_(Array, 0);/*TODO new_Array(CLASS_String)*/
+	}
+	RETURN_(a);
+/*new_(O_ct(sfp[K_RTNIDX].o), 0);  // USE THIS; */
+}
 
 /* ------------------------------------------------------------------------ */
 //## @Const method String String.replace(Regex re, String s);
@@ -499,43 +498,43 @@ static KMETHOD String_replace(CTX, ksfp_t *sfp _RIX)
 /* ------------------------------------------------------------------------ */
 //## @Const method String[] String.split(Regex re);
 
-//static KMETHOD String_split(CTX, ksfp_t *sfp _RIX)
-//{
-//	kString *s0 = sfp[0].s;
-//	kRegex *re = sfp[1].re;
-//	kArray *a = NULL;
-//	if (IS_NOTNULL(re) && S_size(re->pattern) > 0) {
-//		const char *str = S_text(s0);  // necessary
-//		const char *eos = str + S_size(s0);
-//		kregmatch_t pmatch[KREGEX_MATCHSIZE+1];
-//		if (str < eos) {
-//			a = new_(Array, 0); // TODO new_Array(_ctx, CLASS_String, 0);
-//			BEGIN_LOCAL(lsfp, 1);
-//			KSETv(lsfp[0].o, a);
-//			while (str <= eos) {
-//				int res = re->spi->regexec(_ctx, re->reg, str, KREGEX_MATCHSIZE, pmatch, re->eflags);
-//				if (res == 0) {
-//					size_t len = pmatch[0].rm_eo;
-//					if (len > 0) {
-//						kbytes_t sub = {pmatch[0].rm_so, {str}};
-//						kArray_add(a, new_kString(sub.text, sub.len, _SUB(s0)));
-//						str += len;
-//						continue;
-//					}
-//				}
-//				kArray_add(a, new_kString(str, strlen(str), SPOL_POOL)); // append remaining string to array
-//				break;
-//			}
-//			END_LOCAL();
-//		} else { // for 0-length patterh
-//			a = kStringToCharArray(_ctx, new_kString(str, S_size(s0), SPOL_POOL), 0);
-//		}
-//	}
-//	else {
-//		a = kStringToCharArray(_ctx, s0, 0);
-//	}
-//	RETURN_(a);
-//}
+static KMETHOD String_split(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s0 = sfp[0].s;
+	kRegex *re = sfp[1].re;
+	kArray *a = NULL;
+	if (IS_NOTNULL(re) && S_size(re->pattern) > 0) {
+		const char *str = S_text(s0);  // necessary
+		const char *eos = str + S_size(s0);
+		kregmatch_t pmatch[KREGEX_MATCHSIZE+1];
+		if (str < eos) {
+			a = new_(Array, 0); // TODO new_Array(_ctx, CLASS_String, 0);
+			BEGIN_LOCAL(lsfp, 1);
+			KSETv(lsfp[0].o, a);
+			while (str <= eos) {
+				int res = re->spi->regexec(_ctx, re->reg, str, KREGEX_MATCHSIZE, pmatch, re->eflags);
+				if (res == 0) {
+					size_t len = pmatch[0].rm_eo;
+					if (len > 0) {
+						kbytes_t sub = {pmatch[0].rm_so, {str}};
+						kArray_add(a, new_kString(sub.text, sub.len, _SUB(s0)));
+						str += len;
+						continue;
+					}
+				}
+				kArray_add(a, new_kString(str, strlen(str), SPOL_POOL)); // append remaining string to array
+				break;
+			}
+			END_LOCAL();
+		} else { // for 0-length patterh
+			a = kStringToCharArray(_ctx, new_kString(str, S_size(s0), SPOL_POOL), 0);
+		}
+	}
+	else {
+		a = kStringToCharArray(_ctx, s0, 0);
+	}
+	RETURN_(a);
+}
 
 // --------------------------------------------------------------------------
 
@@ -563,12 +562,18 @@ static kbool_t pcre_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 	};
 	base->cRegex = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &RegexDef, pline);
 
+	kparam_t p = { .ty = TY_String, .fn = FN_("i"), };
+	kclass_t *cStrArray = kClassTable_Generics(CT_(TY_Array), 1, &p);
+#define TY_StrArray (cStrArray->cid)
+
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
 	intptr_t MethodData[] = {
 		_Public|_Const, _F(Regex_new),     TY_Regex,  TY_Regex,  MN_("new"), 2, TY_String, FN_x, TY_String, FN_y,
 		_Public|_Const, _F(String_search), TY_Int,    TY_String, MN_("search"),  1, TY_Regex, FN_x,
 		_Public|_Const, _F(String_replace),TY_String, TY_String, MN_("replace"), 2, TY_Regex, FN_x, TY_String, FN_y,
+		_Public|_Const, _F(String_match),  TY_StrArray, TY_String, MN_("match"), 1, TY_Regex, FN_x,
+		_Public|_Const, _F(String_split),  TY_StrArray, TY_String, MN_("split"), 1, TY_Regex, FN_x,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
@@ -580,17 +585,22 @@ static kbool_t pcre_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+static Ftokenizer parseSLASH;
+
 static int parseREGEX(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod *thunk)
 {
 	USING_SUGAR;
 	int ch, prev = '/', pos = tok_start + 1;
+	if(tenv->source[pos] == '*' || tenv->source[pos] == '/') {
+		return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
+	}
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {
 			break;
 		}
 		if(ch == '/' && prev != '\\') {
 			if(IS_NOTNULL(tk)) {
-				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1)- (tok_start+1), 0));
+				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1) - (tok_start+1), 0));
 				tk->tt = TK_CODE;
 				tk->kw = KW_("$REGEX");
 			}
@@ -599,7 +609,8 @@ static int parseREGEX(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 		prev = ch;
 	}
 	if(IS_NOTNULL(tk)) {
-		kreportf(ERR_, tk->uline, "must close with /");
+		return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
+		//kreportf(ERR_, tk->uline, "must close with /");
 	}
 	return pos-1;
 }
@@ -628,9 +639,11 @@ static KMETHOD ExprTyCheck_Regex(CTX, ksfp_t *sfp _RIX)
 	RETURN_(kExpr_setConstValue(expr, TY_Regex, r));
 }
 
+#define _SLASH     30//FIXME (from src/sugar/token.h)
 static kbool_t pcre_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
+	parseSLASH = ks->fmat[_SLASH];
 	SUGAR KonohaSpace_setTokenizer(_ctx, ks, '/', parseREGEX, NULL);
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("$REGEX"), _TERM, ExprTyCheck_(Regex), },
