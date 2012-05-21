@@ -26,8 +26,6 @@
 
 #include "commons.h"
 
-int verbose_gc = 0;
-
 #ifdef K_USING_RCGC
 #include "rcgc.h"
 #elif defined(K_USING_GENGC)
@@ -35,54 +33,3 @@ int verbose_gc = 0;
 #else
 #include "bmgc.h"
 #endif
-
-/* ------------------------------------------------------------------------ */
-/* [klocalgc] */
-
-//static void klocalgc_reftrace(CTX, struct kmodlocal_t *baseh)
-//{
-////	klocalgc_t *base = (klocalgc_t*)baseh;
-//}
-//static void klocalgc_free(CTX, struct kmodlocal_t *baseh)
-//{
-////	klocalgc_t *base = (klocalgc_t*)baseh;
-////	KFREE(base, sizeof(klocalgc_t));
-//}
-//
-//static void kmodgc_setup(CTX, struct kmodshare_t *def, int newctx)
-//{
-////	if(_ctx->mod[MOD_gc] == NULL) {
-////		klocalgc_t *base = (klocalgc_t*)KCALLOC(sizeof(klocalgc_t));
-////		base->h.reftrace = klocalgc_reftrace;
-////		base->h.free     = klocalgc_free;
-////		_ctx->mod[MOD_gc] = (kmodlocal_t*)base;
-////	}
-//}
-//
-//static void kmodgc_reftrace(CTX, struct kmodshare_t *baseh)
-//{
-//}
-//
-//static void kmodgc_free(CTX, struct kmodshare_t *baseh)
-//{
-//	KFREE(baseh, sizeof(kmodshare_t));
-//}
-//
-//typedef struct kmodgc_t {
-//	kmodshare_t h;
-//} kmodgc_t;
-//
-//void MODGC_init2(CTX, kcontext_t *ctx)
-//{
-//	kmodgc_t *base = (kmodgc_t*)KCALLOC(sizeof(kmodgc_t), 1);
-//	base->h.name     = "bmgc";
-//	base->h.setup    = kmodgc_setup;
-//	base->h.reftrace = kmodgc_reftrace;
-//	base->h.free     = kmodgc_free;
-////
-////	klib2_t *l = ctx->lib2;
-////	l->KKonohaSpace_getCT   = KonohaSpace_getCT;
-////	l->KloadMethodData = KonohaSpace_loadMethodData;
-////	l->KloadConstData  = KonohaSpace_loadConstData;
-////	l->Kraise = Kraise;
-//}
