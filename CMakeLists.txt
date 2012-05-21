@@ -19,7 +19,7 @@ set(PACKAGE_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set(K_CONFIG_ARCH ${CMAKE_SYSTEM})
 set(K_CONFIG_OS   ${CMAKE_SYSTEM_NAME})
 set(K_CONFIG_CPU  ${CMAKE_SYSTEM_PROCESSOR})
-
+set(K_PREFIX ${CMAKE_INSTALL_PREFIX})
 if(UNIX)
 	set(K_OSDLLEXT ".so")
 endif(UNIX)
@@ -72,9 +72,12 @@ set(RUNTIME
 	src/konoha/konoha2.c
 )
 
-set(GC
-	src/gc/gc.c
-)
+set(KONOHA_GC_MODULE "" CACHE STRING "konoha gc module")
+if(KONOHA_GC_MODULE)
+	set(GC module/${KONOHA_GC_MODULE}gc/${KONOHA_GC_MODULE}gc.c)
+else(KONOHA_GC_MODULE)
+	set(GC src/gc/gc.c)
+endif(KONOHA_GC_MODULE)
 
 set(LOGGER
 	src/logger/logger.c

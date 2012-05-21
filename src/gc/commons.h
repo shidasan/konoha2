@@ -86,4 +86,6 @@
 
 #endif
 
+int verbose_gc = 0;
+
 #endif /* GC_COMMONS_H_ */
