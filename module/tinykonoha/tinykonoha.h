@@ -5,6 +5,7 @@
 #define K_USING_TINYVM  1
 #define K_USING_THCODE_ 1
 #define STACK_SIZE 128
+#define MAX_CT     10
 
 #ifdef __cplusplus
 extern "C" {

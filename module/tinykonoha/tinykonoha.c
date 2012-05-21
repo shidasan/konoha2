@@ -33,6 +33,129 @@
 
 ksfp_t sfp[STACK_SIZE];
 
+static kObject *DEFAULT_fnull(CTX, kclass_t *ct)
+{
+	DBG_ASSERT(ct->nulvalNUL != NULL);
+	return ct->nulvalNUL;
+}
+
+static void DEFAULT_init(CTX, kObject *o, void *conf)
+{
+	(void)_ctx;(void)o;(void)conf;
+}
+
+static void DEFAULT_reftrace(CTX, kObject *o)
+{
+	(void)_ctx;(void)o;
+}
+
+static void DEFAULT_free(CTX, kObject *o)
+{
+	(void)_ctx;(void)o;
+}
+
+static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
+{
+	(void)_ctx;(void)sfp;(void)pos;(void)wb;(void)level;
+}
+
+static uintptr_t DEFAULT_unbox(CTX, kObject *o)
+{
+	return 0;
+}
+
+static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
+{
+	static struct _kclass cts[MAX_CT];
+	kshare_t *share = _ctx->share;
+	kcid_t newcid = share->casize;
+	assert(newcid < MAX_CT);
+	share->casize++;
+	struct _kclass *ct = share->ca[newcid];
+	if (bct != NULL) {
+		DBG_ASSERT(s == NULL);
+		memcpy(ct, bct, offsetof(kclass_t, cparam));
+		ct->cid = newcid;
+		//if (ct->fnull == DEFAULT_fnull) ct->fnull = DEFAULT_fnullinit;
+	} else {
+		DBG_ASSERT(s != NULL);
+		ct->cflag = s->cflag;
+		ct->cid = newcid;
+		ct->bcid = newcid;
+		ct->supcid = (s->supcid == 0) ? CLASS_Object : s->supcid;
+		ct->fields = s->fields;
+		ct->fsize = s->fsize;
+		ct->fallocsize = s->fallocsize;
+		//ct->cstruct_size = size64(s->cstruct_size);
+		if (s->cparams != NULL) {
+			DBG_P("params");
+			//KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
+		}
+		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
+		ct->reftrace = (s->reftrace != NULL) ? s->reftrace : DEFAULT_reftrace;
+		ct->p = (s->p != NULL) ? s->p : DEFAULT_p;
+		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
+		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
+		//ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
+		//ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
+		//ct->isSubType = (s->isSubType != NULL) ? s->isSubType : DEFAULT_isSubType;
+		ct->initdef = s->initdef;
+	}
+	if (ct->initdef != NULL) {
+		ct->initdef(_ctx, ct, pline);
+	}
+	return ct;
+}
+
+static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
+{
+	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
+	ct->packid = packid;
+	ct->packdom = packdom;
+	if (name == NULL) {
+		const char *n = cdef->structname;
+		//ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
+	} else {
+		//ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
+	}
+	//CT_setName(_ctx, ct, pline);
+	return (kclass_t*)ct;
+}
+
+static void KCLASSTABLE_initklib2(struct _klib2 *l)
+{
+	l->KaddClassDef = addClassDef;
+}
+
+static void loadInitStructData(CTX)
+{
+
+}
+
+static void KCLASSTABLE_init(kcontext_t *ctx)
+{
+	static kshare_t share;
+	ctx->share = &share;
+	static struct _kclass *ca[MAX_CT];
+	ctx->share->ca = &ca;
+	ctx->share->casize = 0;
+	KCLASSTABLE_initklib2((struct _klib2*)ctx->lib2);
+	loadInitStructData(ctx);
+}
+
+static kcontext_t *new_context()
+{
+	static kcontext_t _ctx;
+	static kmodshare_t *modshare[MOD_MAX] = {0};
+	static kmodlocal_t *modlocal[MOD_MAX] = {0};
+	static struct _klib2 klib2 = {0};
+	_ctx.modshare = modshare;
+	_ctx.modlocal = modlocal;
+	_ctx.lib2 = &klib2;
+	KCLASSTABLE_init(&_ctx);
+	return &_ctx;
+}
+
 void cyc0(VP_INT exinf)
 {
 
@@ -40,7 +163,10 @@ void cyc0(VP_INT exinf)
 
 void TaskMain(VP_INT exinf)
 {
-	VirtualMachine_run(NULL, sfp, NULL);
+	struct kcontext_t *_ctx = NULL;
+	//_ctx = new_context();
+	new_CT(_ctx, NULL, NULL, 0);
+	VirtualMachine_run(_ctx, sfp, NULL);
 }
 
 void TaskDisp(VP_INT exinf)

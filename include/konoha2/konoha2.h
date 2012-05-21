@@ -296,7 +296,11 @@ struct  kcontext_t;
 typedef const struct kcontext_t *const CTX_t;
 #define CTX      CTX_t _ctx
 
+#ifdef K_USING_TINYVM
+#define MOD_MAX    2
+#else
 #define MOD_MAX    128
+#endif
 struct _kObject;
 
 #define MOD_logger   0
@@ -349,7 +353,12 @@ typedef struct kcontext_t {
 } kcontext_t ;
 
 typedef struct kshare_t {
+#ifdef K_USING_TINYVM
+	struct _kclass **ca;
+	size_t casize;
+#else
 	karray_t ca;
+#endif
 	struct kmap_t         *lcnameMapNN;
 	/* system shared const */
 	const struct _kObject       *constNull;
