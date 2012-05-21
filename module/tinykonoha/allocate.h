@@ -29,73 +29,93 @@ typedef struct heap_free_area
 {
 	size_t size;
 	struct heap_free_area *next;
-}header;
+}heap_header;
 
 static char space[HEAP_SIZE];
-static header *header = NULL;
+static heap_header *header_global = NULL;
 
-static void *heap_alloc(header *header, size_t size)
+static void *heap_alloc(size_t size, heap_header **header)
 {
+	heap_header *_header = *header;
+	heap_header *prev = NULL;
 	void *mem = NULL;
+	char *ptr;
 	while (mem == NULL) {
-		if (header->size > size + sizeof(header)) {
-			header *_header = header;
-			size_t size = _header->size - (sizeof(header) + size);
-			mem = (void*)(((char*)header) + sizeof(header));
-			if (size < MINIMUM_ALLOCATE_SIZE) {
-				header = header->next;
+		if (_header->size > size + sizeof(heap_header)) {
+			int newsize = _header->size - (sizeof(heap_header) + size);
+			ptr = (char*)_header;
+			mem = (void*)(ptr + sizeof(heap_header));
+			if (newsize < MINIMUM_ALLOCATE_SIZE) {
+				if (prev != NULL) prev->next = _header->next;
+				else *header = _header->next;
 			} else {
-				header = (header*)(((char*)header) + (sizeof(header) + size));
-				header->size = _header->size - (sizeof(header) + size);
-				header->next = _header->next;
+				heap_header *newheader = (heap_header*)(ptr + sizeof(heap_header) + size);
+				newheader->size = newsize;
+				newheader->next = _header->next;
+				if (prev != NULL) prev->next = newheader;
+				else {
+					*header = newheader;
+				}
 			}
-		} else if (header->next == NULL) {
+		} else if (_header->next == NULL) {
 			return NULL;
 		} else {
-			header = header->next;
+			prev = _header;
+			_header = _header->next;
 		}
 	}
 	return mem;
 }
 
-static header *ptr_to_header(void *ptr)
+static heap_header *ptr_to_header(void *ptr)
 {
-	char *_ptr = (char*)_ptr;
-	return _ptr - sizeof(header);
+	char *_ptr = (char*)ptr;
+	return (heap_header*)(_ptr - sizeof(heap_header));
 }
 
 static void heap_init()
 {
-	header = (header*)space;
-	header->size = HEAP_SIZE;
-	header->next = NULL;
+	header_global = (heap_header*)space;
+	header_global->size = HEAP_SIZE;
+	header_global->next = NULL;
 }
 
 static void *malloc(size_t size)
 {
 	void *mem;
-	mem = heap_alloc(header, size);
+	mem = heap_alloc(size, &header_global);
 	return mem;
 }
 
-static void heap_free(header *free_header, header *header)
+static void heap_free(heap_header *free_header, heap_header **header)
 {
-	header *prev = header;
-	while (header < free_header) {
-		prev = header;
-		header = header->next;
+	heap_header *prev = NULL;
+	heap_header *_header = *header;
+	while (_header != NULL && _header < free_header) {
+		prev = _header;
+		_header = _header->next;
 	}
-	char *ptr0 = (char*)prev, ptr1 = (char*)free_header;
-	if (ptr0 + sizeof(header) + prev->size == ptr1) {
-		prev->size += (sizeof(header) + free_header->size);
+
+	char *ptr0 = (char*)prev, *ptr1 = (char*)free_header;
+	if (prev == NULL) {
+		free_header->next = *header;
+		*header = free_header;
+	} else if (ptr0 + sizeof(heap_header) + prev->size == ptr1) {
+		prev->size += (sizeof(heap_header) + free_header->size);
 	} else {
-		header *tmp = prev->next;
+		heap_header *tmp = prev->next;
 		prev->next = free_header;
 		free_header->next = tmp;
+	}
+
+	ptr0 = (char*)free_header; ptr1 = (char*)free_header->next;
+	if (ptr0 + sizeof(heap_header) + free_header->size == ptr1) {
+		free_header->next = free_header->next->next;
+		free_header->size += sizeof(heap_header) + free_header->next->size;
 	}
 }
 
 static void free(void* ptr)
 {
-	heap_free(ptr_to_header(ptr), header);
+	heap_free(ptr_to_header(ptr), &header_global);
 }
