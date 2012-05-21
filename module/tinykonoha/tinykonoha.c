@@ -66,6 +66,37 @@ void KONOHA_freeObjectField(CTX, struct _kObject *o)
 	ct->free(_ctx, o);
 }
 
+void KONOHA_reftraceObject(CTX, kObject *o)
+{
+	kclass_t *ct = O_ct(o);
+	if(o->h.kvproto->bytemax > 0) {
+		size_t i, pmax = o->h.kvproto->bytemax / sizeof(kvs_t);
+		kvs_t *d = o->h.kvproto->kvs;
+		BEGIN_REFTRACE(pmax);
+		for(i = 0; i < pmax; i++) {
+			if(FN_isBOXED(d->key)) {
+				KREFTRACEv(d->oval);
+			}
+			d++;
+		}
+		END_REFTRACE();
+	}
+	ct->reftrace(_ctx, o);
+}
+
+struct _kObject** KONOHA_reftail(CTX, size_t size)
+{
+	kstack_t *stack = _ctx->stack;
+	size_t ref_size = stack->reftail - stack->ref.refhead;
+	if(stack->ref.bytemax/sizeof(void*) < size + ref_size) {
+		KARRAY_EXPAND(&stack->ref, (size + ref_size) * sizeof(kObject*));
+		stack->reftail = stack->ref.refhead + ref_size;
+	}
+	struct _kObject **reftail = stack->reftail;
+	stack->reftail = NULL;
+	return reftail;
+}
+
 static kObject *DEFAULT_fnull(CTX, kclass_t *ct)
 {
 	DBG_ASSERT(ct->nulvalNUL != NULL);
