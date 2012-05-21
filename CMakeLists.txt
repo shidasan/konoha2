@@ -118,7 +118,6 @@ set(PACKAGES
 	konoha.bytes
 	ijit
 	python
-	random
 )
 
 find_library(HAVE_LIBDL NAMES dl)
