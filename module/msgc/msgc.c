@@ -43,7 +43,11 @@ static void knh_vfree(CTX, void *block, size_t size);
 
 #define K_PAGEOBJECTSIZE(i) (K_PAGESIZE / sizeof(kGCObject##i))
 
+#ifdef K_USING_TINYVM
+#define K_ARENATBL_INITSIZE     1
+#else
 #define K_ARENATBL_INITSIZE     32
+#endif
 
 typedef struct kGCObject0 {
 	kObjectHeader h;
@@ -172,7 +176,7 @@ static inline void do_bzero(void *ptr, size_t size)
 
 static inline void *do_malloc(size_t size)
 {
-	void *ptr = malloc(size);
+	void *ptr = tiny_malloc(size);
 	do_bzero(ptr, size);
 	return ptr;
 }
@@ -186,7 +190,7 @@ static inline void *do_realloc(void *ptr, size_t oldSize, size_t newSize)
 
 static inline void do_free(void *ptr, size_t size)
 {
-	free(ptr);
+	tiny_free(ptr);
 }
 
 static ssize_t klib2_malloced = 0;
@@ -564,7 +568,12 @@ void kmemlocal_free(CTX)
 	}
 }
 
+#ifdef K_USING_TINYVM
+#define K_ARENASIZE             ((K_PAGESIZE)) /*4KB*/
+#else
+#error
 #define K_ARENASIZE             ((sizeof(kGCObject0) * K_PAGESIZE) * 16) /*4MB*/
+#endif
 
 #define gc_extendObjectArena(N) do {\
 	size_t i = 0;\

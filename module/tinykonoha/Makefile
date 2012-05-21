@@ -103,7 +103,7 @@ endif
 #
 COPTS := $(COPTS)
 CDEFS := $(CDEFS)
-INCLUDES := -I. -I$(SRCDIR)/include -I$(SRCDIR)/nxt/device -I$(SRCDIR)/nxt/ecrobot -I$(SRCDIR)/nxt/balancer $(INCLUDES)
+INCLUDES := -I. -I$(SRCDIR)/include -I$(SRCDIR)/nxt/device -I$(SRCDIR)/nxt/ecrobot -I$(SRCDIR)/nxt/balancer $(INCLUDES) -I../../include
 LDFLAGS := -nostdlib $(LDFLAGS)
 LIBS := $(LIBS) $(CXXLIBS) -lc -lgcc
 CFLAGS = $(COPTS) $(CDEFS) $(INCLUDES)

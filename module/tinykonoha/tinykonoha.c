@@ -28,10 +28,43 @@
 #include "ecrobot_interface.h"
 #include "balancer.h"
 
+#include "allocate.h"
 #include "vm.h"
 #include "tinyvm.h"
+#include "../../include/konoha2/gc.h"
+#include "../msgc/msgc.c"
 
 ksfp_t sfp[STACK_SIZE];
+
+void KRUNTIME_reftraceAll(CTX)
+{
+	//kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
+}
+
+#define KVPROTO_INIT  8
+#define KVPROTO_DELTA 7
+
+static inline karray_t* kvproto_null(void)  // for proto_get safe null
+{
+	static kvs_t dnull[KVPROTO_DELTA] = {};
+	static karray_t pnull = {
+		.bytesize = sizeof(kvs_t), .bytemax = 0,
+	};
+	pnull.kvs = dnull;
+	return &pnull;
+}
+
+void KONOHA_freeObjectField(CTX, struct _kObject *o)
+{
+	kclass_t *ct = O_ct(o);
+	if(o->h.kvproto->bytemax > 0) {
+		karray_t *p = o->h.kvproto;
+		KFREE(p->bytebuf, p->bytemax);
+		KFREE(p, sizeof(karray_t));
+		o->h.kvproto = kvproto_null();
+	}
+	ct->free(_ctx, o);
+}
 
 static kObject *DEFAULT_fnull(CTX, kclass_t *ct)
 {
@@ -132,15 +165,15 @@ static void loadInitStructData(CTX)
 
 }
 
-static void KCLASSTABLE_init(kcontext_t *ctx)
+static void KCLASSTABLE_init(kcontext_t *_ctx)
 {
 	static kshare_t share;
-	ctx->share = &share;
+	_ctx->share = &share;
 	static struct _kclass *ca[MAX_CT];
-	ctx->share->ca = &ca;
-	ctx->share->casize = 0;
-	KCLASSTABLE_initklib2((struct _klib2*)ctx->lib2);
-	loadInitStructData(ctx);
+	_ctx->share->ca = ca;
+	_ctx->share->casize = 0;
+	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
+	loadInitStructData(_ctx);
 }
 
 static kcontext_t *new_context()
@@ -152,6 +185,7 @@ static kcontext_t *new_context()
 	_ctx.modshare = modshare;
 	_ctx.modlocal = modlocal;
 	_ctx.lib2 = &klib2;
+	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
 	return &_ctx;
 }
