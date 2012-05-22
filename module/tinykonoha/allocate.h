@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#define HEAP_SIZE (4096 * 4)
+#define HEAP_SIZE (4096 * 3)
 #define MINIMUM_ALLOCATE_SIZE 4
 
 typedef struct heap_free_area
@@ -75,7 +75,6 @@ static heap_header *ptr_to_header(void *ptr)
 
 static void heap_init()
 {
-	(void)space[HEAP_SIZE-1];
 	header_global = (heap_header*)space;
 	header_global->size = HEAP_SIZE;
 	header_global->next = NULL;

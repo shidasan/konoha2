@@ -30,7 +30,11 @@
 #endif
 
 #define K_CLASSTABLE_INIT 64
+#ifdef K_USING_TINYVM
+#define K_PAGESIZE        2048
+#else
 #define K_PAGESIZE        4096
+#endif
 
 #ifndef K_OSDLLEXT
 #if defined(__APPLE__)
@@ -50,13 +54,15 @@
 
 //#include"konoha2/konoha_config.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#ifndef K_USING_TINYVM
+#include <stdio.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <assert.h>
-#include <string.h>
 #include <setjmp.h>
+#endif
 #include <stdarg.h>
 
 #if defined(K_USING_SIGNAL)

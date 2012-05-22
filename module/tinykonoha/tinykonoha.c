@@ -34,7 +34,7 @@
 #include "../../include/konoha2/gc.h"
 #include "../msgc/msgc.c"
 
-ksfp_t sfp[STACK_SIZE];
+ksfp_t sfp[SFP_SIZE];
 
 void KRUNTIME_reftraceAll(CTX)
 {
@@ -217,9 +217,20 @@ static kbool_t KRUNTIME_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
 	}
 }
 
+static void Kreport(CTX, int level, const char *msg)
+{
+	/* TODO */
+}
+
+static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
+{
+	/* TODO */
+}
 static void klib2_init(struct _klib2 *l)
 {
 	l->KsetModule = KRUNTIME_setModule;
+	l->Kreport = Kreport;
+	l->Kreportf = Kreportf;
 }
 
 static kcontext_t *new_context()
@@ -249,7 +260,7 @@ void TaskMain(VP_INT exinf)
 void TaskDisp(VP_INT exinf)
 {
 	struct kcontext_t *_ctx = NULL;
-	//_ctx = new_context();
-	new_CT(_ctx, NULL, NULL, 0);
-	VirtualMachine_run(_ctx, sfp, NULL);
+	_ctx = new_context();
+	//new_CT(_ctx, NULL, NULL, 0);
+	//VirtualMachine_run(_ctx, sfp, NULL);
 }

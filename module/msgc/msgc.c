@@ -108,7 +108,11 @@ typedef struct objpageTBL_t {
 } objpageTBL_t;
 
 #define ARENA_COUNT_SIZE(size,c) (size) >> (c)
+#ifdef K_USING_TINYVM
+#define K_ARENA_COUNT 2
+#else
 #define K_ARENA_COUNT 3
+#endif
 
 typedef struct kmemlocal_t {
 	kmodlocal_t     h;
@@ -164,7 +168,9 @@ static void Arena_free(CTX, kmemshare_t *memshare)
 {
 	ARENA_FREE(0);
 	ARENA_FREE(1);
+#ifndef K_USING_TINYVM
 	ARENA_FREE(2);
+#endif
 }
 
 /* ------------------------------------------------------------------------ */
@@ -193,7 +199,11 @@ static inline void do_free(void *ptr, size_t size)
 	tiny_free(ptr);
 }
 
-static ssize_t klib2_malloced = 0;
+#ifdef K_USING_TINYVM
+static size_t klib2_malloced = 0;
+#else
+static size_t klib2_malloced = 0;
+#endif
 
 static void* Kmalloc(CTX, size_t s)
 {
@@ -819,7 +829,9 @@ static void MSGC_setup(CTX, struct kmodshare_t *def, int newctx)
 		_ctx->modlocal[MOD_gc] = (kmodlocal_t*)base;
 		MSGC_SETUP(0);
 		MSGC_SETUP(1);
+#ifndef K_USING_TINYVM
 		MSGC_SETUP(2);
+#endif
 	}
 }
 
@@ -834,6 +846,9 @@ static void MSGC_free(CTX, struct kmodshare_t *baseh)
 void MODGC_init(CTX, kcontext_t *ctx)
 {
 	if(IS_ROOTCTX(ctx)) {
+#ifdef K_USING_TINYVM
+		heap_init();
+#endif
 		kmemshare_t *base = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
 		base->h.name     = "msgc";
 		base->h.setup    = MSGC_setup;
@@ -844,7 +859,7 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		KSET_KLIB(free, 0);
 		Konoha_setModule(MOD_gc, &base->h, 0);
 	}
-	MSGC_setup(ctx, (kmodshare_t*) memshare(_ctx), 1);
+	//MSGC_setup(ctx, (kmodshare_t*) memshare(_ctx), 1);
 }
 
 void MODGC_free(CTX, kcontext_t *ctx)
