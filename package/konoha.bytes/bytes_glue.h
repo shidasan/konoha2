@@ -167,7 +167,6 @@ static void kmodiconv_free(CTX, struct kmodshare_t *baseh)
 //
 //}
 
-extern int verbose_debug;
 static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const char *toCoding)
 {
 	kiconv_t conv;
