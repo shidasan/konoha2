@@ -198,7 +198,10 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 	KSETv(tkP->sub, new_(TokenArray, 0));
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
-		DBG_ASSERT(tk->kw == 0);
+		if(tk->kw != 0) {
+			kArray_add(tkP->sub, tk);
+			continue;
+		}
 		if(tk->tt == TK_ERR) break;  // ERR
 		DBG_ASSERT(tk->topch != '{');
 		if(tk->topch == '(') {
