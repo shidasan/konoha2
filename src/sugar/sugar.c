@@ -367,12 +367,24 @@ static kstatus_t KonohaSpace_loadstream(CTX, kKonohaSpace *ns, FILE *fp, kline_t
 {
 	kstatus_t status = K_CONTINUE;
 	kwb_t wb;
+	char *p;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while(!feof(fp)) {
 		kline_t chunkheadline = uline;
 		uline = readchunk(_ctx, fp, uline, &wb);
 		const char *script = kwb_top(&wb, 1);
 		size_t len = kwb_bytesize(&wb);
+		if (len > 2 && script[0] == '#' && script[1] == '!') {
+			if ((p = strstr(script, "konoha")) != 0) {
+				p += 6;
+				script = p;
+			} else {
+				//FIXME: its not konoha shell, need to exec??
+				kreportf(ERR_, pline, "it may not konoha script: %s", T_file(uline));
+				status = K_FAILED;
+				break;
+			}
+		}
 		if(isemptychunk(script, len)) {
 			status = MODSUGAR_eval(_ctx, script, /*len, */chunkheadline);
 		}
@@ -640,6 +652,7 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t pline = sfp[K_RTNIDX].uline;
 	FILE *fp = fopen(S_text(sfp[1].s), "r");
+	fprintf(stderr, "hoge\n");
 	if(fp != NULL) {
 		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
 		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].ks, fp, uline, 0);
