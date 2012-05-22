@@ -207,12 +207,28 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	loadInitStructData(_ctx);
 }
 
+static kbool_t KRUNTIME_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
+{
+	if (_ctx->modshare[x] == NULL) {
+		_ctx->modshare[x] = d;
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+static void klib2_init(struct _klib2 *l)
+{
+	l->KsetModule = KRUNTIME_setModule;
+}
+
 static kcontext_t *new_context()
 {
 	static kcontext_t _ctx;
 	static kmodshare_t *modshare[MOD_MAX] = {0};
 	static kmodlocal_t *modlocal[MOD_MAX] = {0};
 	static struct _klib2 klib2 = {0};
+	klib2_init(&klib2);
 	_ctx.modshare = modshare;
 	_ctx.modlocal = modlocal;
 	_ctx.lib2 = &klib2;
@@ -228,13 +244,12 @@ void cyc0(VP_INT exinf)
 
 void TaskMain(VP_INT exinf)
 {
-	struct kcontext_t *_ctx = NULL;
-	//_ctx = new_context();
-	new_CT(_ctx, NULL, NULL, 0);
-	VirtualMachine_run(_ctx, sfp, NULL);
 }
 
 void TaskDisp(VP_INT exinf)
 {
-
+	struct kcontext_t *_ctx = NULL;
+	//_ctx = new_context();
+	new_CT(_ctx, NULL, NULL, 0);
+	VirtualMachine_run(_ctx, sfp, NULL);
 }

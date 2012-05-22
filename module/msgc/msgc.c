@@ -571,7 +571,6 @@ void kmemlocal_free(CTX)
 #ifdef K_USING_TINYVM
 #define K_ARENASIZE             ((K_PAGESIZE)) /*4KB*/
 #else
-#error
 #define K_ARENASIZE             ((sizeof(kGCObject0) * K_PAGESIZE) * 16) /*4MB*/
 #endif
 
