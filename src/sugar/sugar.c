@@ -652,7 +652,6 @@ static KMETHOD KonohaSpace_loadScript_(CTX, ksfp_t *sfp _RIX)
 {
 	kline_t pline = sfp[K_RTNIDX].uline;
 	FILE *fp = fopen(S_text(sfp[1].s), "r");
-	fprintf(stderr, "hoge\n");
 	if(fp != NULL) {
 		kline_t uline = uline_init(_ctx, S_text(sfp[1].s), S_size(sfp[1].s), 1, 1);
 		kstatus_t status = KonohaSpace_loadstream(_ctx, sfp[0].ks, fp, uline, 0);
