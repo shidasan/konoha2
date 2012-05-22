@@ -31,7 +31,7 @@
 
 #define K_CLASSTABLE_INIT 64
 #ifdef K_USING_TINYVM
-#define K_PAGESIZE        2048
+#define K_PAGESIZE        4096
 #else
 #define K_PAGESIZE        4096
 #endif

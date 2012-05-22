@@ -158,7 +158,7 @@ static void Arena_init(CTX, kmemshare_t *memshare)
 	for(i = 0; i < memshare->sizeObjectArenaTBL[j]; i++) {\
 		objpageTBL_t *oat = memshare->ObjectArenaTBL[j] + i;\
 		DBG_ASSERT(K_MEMSIZE(oat->bottom##j, oat->head##j) == oat->arenasize);\
-		knh_vfree(_ctx, oat->head##j, oat->arenasize);\
+		do_free(oat->head##j, oat->arenasize);\
 	}\
 	do_free(memshare->ObjectArenaTBL[j], memshare->capacityObjectArenaTBL[j] * sizeof(objpageTBL_t));\
 	memshare->ObjectArenaTBL[j] = NULL;\
@@ -369,7 +369,7 @@ static void ObjectPage_init2(objpage2_t *opage)
 
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage0_t *opage = (objpage0_t *)knh_valloc(_ctx, arenasize);
+	objpage0_t *opage = (objpage0_t *)do_malloc(arenasize);
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
 	oat->head0 =   opage;
 	oat->bottom0 = (objpage0_t *)K_SHIFTPTR(opage, arenasize);
@@ -383,7 +383,7 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage1_t *opage = (objpage1_t *)knh_valloc(_ctx, arenasize);
+	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
 	oat->head1 =   opage;
 	oat->bottom1 = (objpage1_t *)K_SHIFTPTR(opage, arenasize);
@@ -397,7 +397,7 @@ static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 
 static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage2_t *opage = (objpage2_t *)knh_valloc(_ctx, arenasize);
+	objpage2_t *opage = (objpage2_t *)do_malloc(arenasize);
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
 	oat->head2 =   opage;
 	oat->bottom2 = (objpage2_t *)K_SHIFTPTR(opage, arenasize);
@@ -859,7 +859,7 @@ void MODGC_init(CTX, kcontext_t *ctx)
 		KSET_KLIB(free, 0);
 		Konoha_setModule(MOD_gc, &base->h, 0);
 	}
-	//MSGC_setup(ctx, (kmodshare_t*) memshare(_ctx), 1);
+	MSGC_setup(ctx, (kmodshare_t*) memshare(_ctx), 1);
 }
 
 void MODGC_free(CTX, kcontext_t *ctx)
