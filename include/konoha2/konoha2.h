@@ -31,9 +31,28 @@
 
 #define K_CLASSTABLE_INIT 64
 #ifdef K_USING_TINYVM
+
 #define K_PAGESIZE        2048
+#define TDBG_i(KEY, VALUE) \
+	display_clear(0);\
+	display_goto_xy(0, 0);\
+	display_string(KEY);\
+	display_goto_xy(0, 1);\
+	display_int(VALUE, 0);\
+	display_update();\
+
+#define TDBG_s(KEY, VALUE) \
+	display_clear(0);\
+	display_goto_xy(0, 0);\
+	display_string(KEY);\
+	display_goto_xy(0, 1);\
+	display_string(VALUE);\
+	display_update();\
+
 #else
 #define K_PAGESIZE        4096
+#define TDBG_i(KEY, VALUE) 
+#define TDBG_s(KEY, VALUE) 
 #endif
 
 #ifndef K_OSDLLEXT
