@@ -359,12 +359,7 @@ typedef struct kcontext_t {
 } kcontext_t ;
 
 typedef struct kshare_t {
-#ifdef K_USING_TINYVM
-	struct _kclass **ca;
-	size_t casize;
-#else
 	karray_t ca;
-#endif
 	struct kmap_t         *lcnameMapNN;
 	/* system shared const */
 	const struct _kObject       *constNull;

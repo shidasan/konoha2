@@ -23,16 +23,17 @@
  ***************************************************************************/
 
 #include "tinykonoha.h"
+#include <../../include/konoha2/konoha2.h>
+#include "vm.h"
+#include "tinyvm.h"
+#include "allocate.h"
+#include "../msgc/msgc.c"
+#include "../../include/konoha2/sugar.h"
+
 #include "kernel_id.h"
 #include "ecrobot_base.h"
 #include "ecrobot_interface.h"
 #include "balancer.h"
-
-#include "allocate.h"
-#include "vm.h"
-#include "tinyvm.h"
-#include "../../include/konoha2/gc.h"
-#include "../msgc/msgc.c"
 
 ksfp_t sfp[SFP_SIZE];
 
@@ -130,22 +131,27 @@ static uintptr_t DEFAULT_unbox(CTX, kObject *o)
 
 static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
 {
-	static struct _kclass cts[MAX_CT];
 	kshare_t *share = _ctx->share;
-	kcid_t newcid = share->casize;
-	assert(newcid < MAX_CT);
-	share->casize++;
-	struct _kclass *ct = share->ca[newcid];
+	kcid_t newid = share->ca.bytesize / sizeof(struct _kclass*);
+	if (share->ca.bytesize == share->ca.bytemax) {
+		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
+	}
+	share->ca.bytesize += sizeof(struct _kclass*);
+	struct _kclass *ct = (struct _kclass*)KCALLOC(sizeof(kclass_t), 1);
+	share->ca.cts[newid] = (kclass_t*)ct;
+	//kcid_t newcid = share->casize;
+	//share->casize++;
+	//struct _kclass *ct = share->ca[newcid];
 	if (bct != NULL) {
 		DBG_ASSERT(s == NULL);
 		memcpy(ct, bct, offsetof(kclass_t, cparam));
-		ct->cid = newcid;
+		ct->cid = newid;
 		//if (ct->fnull == DEFAULT_fnull) ct->fnull = DEFAULT_fnullinit;
 	} else {
 		DBG_ASSERT(s != NULL);
 		ct->cflag = s->cflag;
-		ct->cid = newcid;
-		ct->bcid = newcid;
+		ct->cid = newid;
+		ct->bcid = newid;
 		ct->supcid = (s->supcid == 0) ? CLASS_Object : s->supcid;
 		ct->fields = s->fields;
 		ct->fsize = s->fsize;
@@ -200,9 +206,10 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 {
 	static kshare_t share;
 	_ctx->share = &share;
-	static struct _kclass *ca[MAX_CT];
-	_ctx->share->ca = ca;
-	_ctx->share->casize = 0;
+	KARRAY_INIT(&(share.ca), MAX_CT * sizeof(kclass_t));
+	//static struct _kclass *ca[MAX_CT];
+	//_ctx->share->ca = ca;
+	//_ctx->share->casize = 0;
 	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
 	loadInitStructData(_ctx);
 }
@@ -226,11 +233,56 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 {
 	/* TODO */
 }
+
+static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
+{
+	if(unlikely(ct->methods == K_EMPTYARRAY)) {
+		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
+	}
+	kArray_add(ct->methods, mtd);
+}
+
+static void KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd)
+{
+	if(ks->methods == K_EMPTYARRAY) {
+		KINITv(((struct _kKonohaSpace*)ks)->methods, new_(MethodArray, 8));
+	}
+	kArray_add(ks->methods, mtd);
+}
+
+static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
+{
+	intptr_t *d = data;
+	while(d[0] != -1) {
+		uintptr_t flag = (uintptr_t)d[0];
+		knh_Fmethod f = (knh_Fmethod)d[1];
+		ktype_t rtype = (ktype_t)d[2];
+		kcid_t cid  = (kcid_t)d[3];
+		kmethodn_t mn = (kmethodn_t)d[4];
+		size_t i, psize = (size_t)d[5];
+		kparam_t p[psize+1];
+		d = d + 6;
+		for(i = 0; i < psize; i++) {
+			p[i].ty = (ktype_t)d[0];
+			p[i].fn = (ksymbol_t)d[1];
+			d += 2;
+		}
+		kMethod *mtd = new_kMethod(flag, cid, mn, f);
+		kMethod_setParam(mtd, rtype, psize, p);
+		if(ks == NULL || kMethod_isPublic(mtd)) {
+			CT_addMethod(_ctx, CT_(cid), mtd);
+		} else {
+			KonohaSpace_addMethod(_ctx, ks, mtd);
+		}
+	}
+}
+
 static void klib2_init(struct _klib2 *l)
 {
 	l->KsetModule = KRUNTIME_setModule;
 	l->Kreport = Kreport;
 	l->Kreportf = Kreportf;
+	l->KS_loadMethodData = KonohaSpace_loadMethodData;
 }
 
 static kcontext_t *new_context()

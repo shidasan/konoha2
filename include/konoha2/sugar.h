@@ -28,9 +28,9 @@
 /* ------------------------------------------------------------------------ */
 /* sugar.h */
 
-#include <dlfcn.h>
-#include "konoha2.h"
-#include "klib.h"
+//#include <dlfcn.h>
+//#include "konoha2.h"
+//#include "klib.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,6 +1,5 @@
 #ifndef TINYVM_H
 #define TINYVM_H
-#include <../../include/konoha2/konoha2.h>
 
 //#define KCODE_HEAD \
 //	void *codeaddr; \

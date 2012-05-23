@@ -223,11 +223,17 @@ static void* Kmalloc(CTX, size_t s)
 
 static void* Kzmalloc(CTX, size_t s)
 {
+#ifdef K_USING_TINYVM
+	void *p = Kmalloc(_ctx, s);
+	do_bzero(p, s);
+	return p;
+#else
 	klib2_malloced += s;
 	size_t *p = (size_t*)do_malloc(s + sizeof(size_t));
 	p[0] = s;
 	do_bzero(p+1, s);
 	return (void*)(p+1);
+#endif
 }
 
 static void Kfree(CTX, void *p, size_t s)
