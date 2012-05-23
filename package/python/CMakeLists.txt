@@ -2,19 +2,21 @@ cmake_minimum_required(VERSION 2.6)
 set(PACKAGE_SOURCE_CODE python_glue.c)
 set(PACKAGE_SCRIPT_CODE python_glue.k)
 
-find_library(PACKAGE_EXTRA_LIBRARY python)
-foreach(ver 2.7 2.6 2.5 2.4 2.3 2.2 2.1 2.0)
-	check_include_files(python${ver}/Python.h HAVE_PYTHON_H)
-	if(${HAVE_PYTHON_H})
-		find_path(_PY_INCLUDE_DIRS python${ver}/Python.h)
-		set(PY_INCLUDE_DIRS ${_PY_INCLUDE_DIRS}/python${ver})
-		message("find python path: " ${PY_INCLUDE_DIRS})
-		include_directories(${PY_INCLUDE_DIRS})
-		break()
-	endif(${HAVE_PYTHON_H})
-endforeach(ver 2.7 2.6 2.5 2.4 2.3 2.2 2.1 2.0)
+find_program(PYTHON_CONFIG NAMES python-config)
+execute_process(
+		COMMAND ${PYTHON_CONFIG} --include
+		OUTPUT_VARIABLE PYCNF_INCLUDE_RESULT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
 
+string(REGEX MATCH "/[^ ]+/python[2-3].[0-9]" PYTHON_INCLUDE_PATH ${PYCNF_INCLUDE_RESULT})
+string(REGEX REPLACE "/[^ ]+/(python[2-3].[0-9])" "\\1" python_ver "${PYTHON_INCLUDE_PATH}")
+message("replaced PYTHON_INCLUDE_PATH = '" ${PYTHON_INCLUDE_PATH} "'")
+MESSAGE("test= ${python_ver}")
+
+find_library(PACKAGE_EXTRA_LIBRARY NAMES ${python_ver})
 if(PACKAGE_EXTRA_LIBRARY)
-set(PACKAGE_ENV "PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_SOURCE_DIR}/test/")
-add_konoha_package(python)
+	include_directories(${PYTHON_INCLUDE_PATH})
+	set(PACKAGE_ENV "PYTHONPATH=$ENV{PYTHONPATH}:${CMAKE_CURRENT_SOURCE_DIR}/test/")
+	add_konoha_package(python)
 endif(PACKAGE_EXTRA_LIBRARY)
