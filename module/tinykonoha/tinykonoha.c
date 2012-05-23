@@ -29,6 +29,7 @@
 #include "allocate.h"
 #include "../msgc/msgc.c"
 #include "../../include/konoha2/sugar.h"
+#include "datatype.h"
 
 #include "kernel_id.h"
 #include "ecrobot_base.h"
@@ -40,19 +41,6 @@ ksfp_t sfp[SFP_SIZE];
 void KRUNTIME_reftraceAll(CTX)
 {
 	//kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
-}
-
-#define KVPROTO_INIT  8
-#define KVPROTO_DELTA 7
-
-static inline karray_t* kvproto_null(void)  // for proto_get safe null
-{
-	static kvs_t dnull[KVPROTO_DELTA] = {};
-	static karray_t pnull = {
-		.bytesize = sizeof(kvs_t), .bytemax = 0,
-	};
-	pnull.kvs = dnull;
-	return &pnull;
 }
 
 void KONOHA_freeObjectField(CTX, struct _kObject *o)
@@ -96,122 +84,6 @@ struct _kObject** KONOHA_reftail(CTX, size_t size)
 	struct _kObject **reftail = stack->reftail;
 	stack->reftail = NULL;
 	return reftail;
-}
-
-static kObject *DEFAULT_fnull(CTX, kclass_t *ct)
-{
-	DBG_ASSERT(ct->nulvalNUL != NULL);
-	return ct->nulvalNUL;
-}
-
-static void DEFAULT_init(CTX, kObject *o, void *conf)
-{
-	(void)_ctx;(void)o;(void)conf;
-}
-
-static void DEFAULT_reftrace(CTX, kObject *o)
-{
-	(void)_ctx;(void)o;
-}
-
-static void DEFAULT_free(CTX, kObject *o)
-{
-	(void)_ctx;(void)o;
-}
-
-static void DEFAULT_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
-{
-	(void)_ctx;(void)sfp;(void)pos;(void)wb;(void)level;
-}
-
-static uintptr_t DEFAULT_unbox(CTX, kObject *o)
-{
-	return 0;
-}
-
-static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
-{
-	kshare_t *share = _ctx->share;
-	kcid_t newid = share->ca.bytesize / sizeof(struct _kclass*);
-	if (share->ca.bytesize == share->ca.bytemax) {
-		KARRAY_EXPAND(&share->ca, share->ca.bytemax * 2);
-	}
-	share->ca.bytesize += sizeof(struct _kclass*);
-	struct _kclass *ct = (struct _kclass*)KCALLOC(sizeof(kclass_t), 1);
-	share->ca.cts[newid] = (kclass_t*)ct;
-	//kcid_t newcid = share->casize;
-	//share->casize++;
-	//struct _kclass *ct = share->ca[newcid];
-	if (bct != NULL) {
-		DBG_ASSERT(s == NULL);
-		memcpy(ct, bct, offsetof(kclass_t, cparam));
-		ct->cid = newid;
-		//if (ct->fnull == DEFAULT_fnull) ct->fnull = DEFAULT_fnullinit;
-	} else {
-		DBG_ASSERT(s != NULL);
-		ct->cflag = s->cflag;
-		ct->cid = newid;
-		ct->bcid = newid;
-		ct->supcid = (s->supcid == 0) ? CLASS_Object : s->supcid;
-		ct->fields = s->fields;
-		ct->fsize = s->fsize;
-		ct->fallocsize = s->fallocsize;
-		//ct->cstruct_size = size64(s->cstruct_size);
-		if (s->cparams != NULL) {
-			DBG_P("params");
-			//KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
-		}
-		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
-		ct->reftrace = (s->reftrace != NULL) ? s->reftrace : DEFAULT_reftrace;
-		ct->p = (s->p != NULL) ? s->p : DEFAULT_p;
-		ct->unbox = (s->unbox != NULL) ? s->unbox : DEFAULT_unbox;
-		ct->free = (s->free != NULL) ? s->free : DEFAULT_free;
-		//ct->fnull = (s->fnull != NULL) ? s->fnull : DEFAULT_fnullinit;
-		//ct->realtype = (s->realtype != NULL) ? s->realtype : DEFAULT_realtype;
-		//ct->isSubType = (s->isSubType != NULL) ? s->isSubType : DEFAULT_isSubType;
-		ct->initdef = s->initdef;
-	}
-	if (ct->initdef != NULL) {
-		ct->initdef(_ctx, ct, pline);
-	}
-	return ct;
-}
-
-static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
-{
-	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
-	ct->packid = packid;
-	ct->packdom = packdom;
-	if (name == NULL) {
-		const char *n = cdef->structname;
-		//ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
-	} else {
-		//ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
-	}
-	//CT_setName(_ctx, ct, pline);
-	return (kclass_t*)ct;
-}
-
-static void KCLASSTABLE_initklib2(struct _klib2 *l)
-{
-	l->KaddClassDef = addClassDef;
-}
-
-static void loadInitStructData(CTX)
-{
-
-}
-
-static void KCLASSTABLE_init(kcontext_t *_ctx)
-{
-	static kshare_t share;
-	_ctx->share = &share;
-	KARRAY_INIT(&(share.ca), MAX_CT * sizeof(kclass_t));
-	//static struct _kclass *ca[MAX_CT];
-	//_ctx->share->ca = ca;
-	//_ctx->share->casize = 0;
-	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
-	loadInitStructData(_ctx);
 }
 
 static kbool_t KRUNTIME_setModule(CTX, int x, kmodshare_t *d, kline_t pline)
