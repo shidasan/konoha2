@@ -4,8 +4,7 @@
 #include <t_services.h>
 #define K_USING_TINYVM  1
 #define K_USING_THCODE_ 1
-#define SFP_SIZE   64
-#define MAX_CT     5
+#define MAX_CT     16
 
 #ifdef __cplusplus
 extern "C" {

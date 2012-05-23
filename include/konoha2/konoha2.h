@@ -37,7 +37,7 @@
 	display_goto_xy(0, 0);\
 	display_string(KEY);\
 	display_goto_xy(0, 1);\
-	display_int(VALUE, 0);\
+	display_int(VALUE, 1);\
 	display_update();\
 	dly_tsk(1000U);\
 
@@ -51,6 +51,8 @@
 #define TDBG_abort(MSG) \
 	display_clear(0);\
 	display_goto_xy(0, 0);\
+	display_string("abort");\
+	display_goto_xy(0, 1);\
 	display_string(MSG);\
 	display_update();\
 	while (1) {\
@@ -383,7 +385,9 @@ typedef struct kcontext_t {
 	struct kshare_t                   *share;
 	struct klocal_t                   *local;
 	struct kstack_t                   *stack;
+#ifndef K_USING_TINYVM
 	struct klogger_t                  *logger;
+#endif
 	struct kmodshare_t               **modshare;
 	struct kmodlocal_t               **modlocal;
 } kcontext_t ;
@@ -400,7 +404,6 @@ typedef struct kshare_t {
 //	const struct _kParam        *nullParam;
 //	const struct _kParam        *defParam;
 
-#ifdef K_USING_TINYVM
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //
 	const struct _kArray         *packList;   // are you using this?
@@ -413,7 +416,6 @@ typedef struct kshare_t {
 	struct kmap_t         *paramMapNN;
 	const struct _kArray         *paramdomList;
 	struct kmap_t         *paramdomMapNN;
-#endif
 } kshare_t ;
 
 #define K_FRAME_NCMEMBER \
@@ -1089,6 +1091,7 @@ struct _klib2 {
 	void  (*Karray_expand)(CTX, karray_t *, size_t);
 	void  (*Karray_free)(CTX, karray_t *);
 
+#ifndef K_USING_TINYVM
 	void (*Kwb_init)(karray_t *, kwb_t *);
 	void (*Kwb_write)(CTX, kwb_t *, const char *, size_t);
 	void (*Kwb_putc)(CTX, kwb_t *, ...);
@@ -1096,6 +1099,7 @@ struct _klib2 {
 	void (*Kwb_printf)(CTX, kwb_t *, const char *fmt, ...);
 	const char* (*Kwb_top)(CTX, kwb_t *, int);
 	void (*Kwb_free)(kwb_t *);
+#endif
 
 	kmap_t*  (*Kmap_init)(CTX, size_t);
 	kmape_t* (*Kmap_newentry)(CTX, kmap_t *, uintptr_t);

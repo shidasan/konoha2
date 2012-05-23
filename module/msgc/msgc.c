@@ -603,7 +603,7 @@ void kmemlocal_free(CTX)
 }
 
 #ifdef K_USING_TINYVM
-#define K_ARENASIZE             ((K_PAGESIZE)) /*4KB*/
+#define K_ARENASIZE             ((K_PAGESIZE)) /*2KB*/
 #else
 #define K_ARENASIZE             ((sizeof(kGCObject0) * K_PAGESIZE) * 16) /*4MB*/
 #endif
@@ -650,9 +650,14 @@ static knh_ostack_t *ostack_init(CTX, knh_ostack_t *ostack)
 	ostack->stack = memlocal(_ctx)->queue;
 	ostack->capacity_log2  = memlocal(_ctx)->queue_log2;
 	if(ostack->capacity == 0) {
+#ifndef K_USING_TINYVM
 		ostack->capacity_log2 = 12;
 		ostack->capacity = (1 << ostack->capacity_log2) - 1;
-		DBG_ASSERT(K_PAGESIZE == 1 << 12);
+		DBG_ASSERT(K_PAGESIZE == 1 << 12); //4096
+#else
+		ostack->capacity_log2 = 32;
+		ostack->capacity = ostack->capacity_log2;
+#endif
 		ostack->stack = (kObject**)do_malloc(sizeof(kObject*) * (ostack->capacity + 1));
 	}
 	ostack->cur  = 0;
@@ -664,6 +669,7 @@ static void ostack_push(CTX, knh_ostack_t *ostack, kObject *ref)
 {
 	size_t ntail = (ostack->tail + 1 ) & ostack->capacity;
 	if(unlikely(ntail == ostack->cur)) {
+		TDBG_abort("ostack_push");
 		size_t capacity = 1 << ostack->capacity_log2;
 		ostack->stack = (kObject**)do_realloc(ostack->stack, capacity * sizeof(kObject*), capacity * 2 * sizeof(kObject*));
 		ostack->capacity_log2 += 1;
@@ -736,6 +742,7 @@ static void gc_mark(CTX)
 
 #define CHECK_EXPAND(listSize,n) do {\
 	if(memlocal(_ctx)->freeObjectListSize[n] < listSize / 10) {/* 90% */\
+		TDBG_abort("cannot expand!!");\
 		gc_extendObjectArena##n(_ctx);\
 	}\
 }while(0)
@@ -743,16 +750,18 @@ static void gc_mark(CTX)
 static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 {
 	unsigned i;
+	uintptr_t j = 100;
 	size_t collected = 0;
 	size_t pageSize = K_PAGESIZE/sizeOfObject;
 	for(i = 0; i < pageSize; ++i) {
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
 		if(o->h.refc != 1) {
 			if( O_ct(o)) {
+				//TDBG_s("dead");
 				//DBG_ASSERT(!IS_Method(o));
-				DBG_P("~Object%d %s", n, O_ct(o)->DBG_NAME);
+				//DBG_P("~Object%d %s", n, O_ct(o)->DBG_NAME);
 				KONOHA_freeObjectField(_ctx, (struct _kObject*)o);
-				assert(O_ct(o)->cstruct_size == sizeOfObject);
+				//assert(O_ct(o)->cstruct_size == sizeOfObject);
 				++collected;
 				OBJECT_REUSE(o, n);
 				memlocal(_ctx)->freeObjectListSize[n] += 1;
@@ -765,6 +774,7 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 
 static size_t gc_sweep0(CTX)
 {
+	TDBG_s("gc_sweep0");
 	size_t collected = 0;
 	objpageTBL_t *oat = memshare(_ctx)->ObjectArenaTBL[0];
 	size_t atindex, size = memshare(_ctx)->sizeObjectArenaTBL[0];
@@ -816,9 +826,12 @@ static size_t gc_sweep2(CTX)
 
 static void gc_sweep(CTX)
 {
-	gc_sweep0(_ctx);
-	gc_sweep1(_ctx);
-	gc_sweep2(_ctx);
+	int collected = 0;
+	collected += gc_sweep0(_ctx);
+	collected += gc_sweep1(_ctx);
+#ifndef K_USING_TINYVM
+	collected += gc_sweep2(_ctx);
+#endif
 }
 
 /* --------------------------------------------------------------- */
@@ -899,14 +912,12 @@ void MODGC_free(CTX, kcontext_t *ctx)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
-	TDBG_s("omalloc");
 	int page_size = (size / sizeof(kGCObject0)) >> 1;
 	DBG_ASSERT(page_size <= 4);
 	kGCObject *o = NULL;
 	FREELIST_POP(o,page_size);
 	memlocal(_ctx)->freeObjectListSize[page_size] -= 1;
 	do_bzero((void*)o, size);
-	TDBG_s("omalloc end");
 	if (o == NULL) {
 		TDBG_s("omalloc NULL");
 	}
@@ -915,7 +926,7 @@ kObject *MODGC_omalloc(CTX, size_t size)
 
 void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
-	TDBG_abort("msgc");
+	TDBG_s("msgc");
 	//TODO : stop the world
 	gc_init(_ctx);
 	gc_mark(_ctx);

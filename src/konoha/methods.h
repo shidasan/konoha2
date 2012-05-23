@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 /* String */
+#ifndef K_USING_TINYVM
 static KMETHOD Object_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kwb_t wb;
@@ -36,6 +37,7 @@ static KMETHOD Object_toString(CTX, ksfp_t *sfp _RIX)
 	kwb_free(&wb);
 	RETURN_(s);
 }
+#endif
 
 //## @Const method Boolean Boolean.opNOT();
 static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)

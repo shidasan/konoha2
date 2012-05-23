@@ -114,7 +114,7 @@ static void Number_init(CTX, kObject *o, void *conf)
 
 static void Boolean_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
+	//kwb_printf(wb, sfp[pos].bvalue ? "true" : "false");
 }
 
 static kObject* Boolean_fnull(CTX, kclass_t *ct)
@@ -124,7 +124,7 @@ static kObject* Boolean_fnull(CTX, kclass_t *ct)
 
 static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	kwb_printf(wb, KINT_FMT, sfp[pos].ivalue);
+	//kwb_printf(wb, KINT_FMT, sfp[pos].ivalue);
 }
 
 // String
@@ -146,12 +146,12 @@ static void String_free(CTX, kObject *o)
 
 static void String_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	if(level == 0) {
-		kwb_printf(wb, "%s", S_text(sfp[pos].o));
-	}
-	else {
-		kwb_printf(wb, "\"%s\"", S_text(sfp[pos].o));
-	}
+	//if(level == 0) {
+	//	kwb_printf(wb, "%s", S_text(sfp[pos].o));
+	//}
+	//else {
+	//	kwb_printf(wb, "\"%s\"", S_text(sfp[pos].o));
+	//}
 }
 
 static uintptr_t String_unbox(CTX, kObject *o)
@@ -233,6 +233,15 @@ static void Param_init(CTX, kObject *o, void *conf)
 	pa->rtype = TY_void;
 }
 
+static inline size_t size64(size_t s)
+{
+	size_t base = sizeof(struct _kObject);
+	while(base < s) {
+		base *= 2;
+	}
+	return base;
+}
+
 static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t pline)
 {
 	kshare_t *share = _ctx->share;
@@ -260,7 +269,7 @@ static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->fields = s->fields;
 		ct->fsize = s->fsize;
 		ct->fallocsize = s->fallocsize;
-		//ct->cstruct_size = size64(s->cstruct_size);
+		ct->cstruct_size = size64(s->cstruct_size);
 		if (s->cparams != NULL) {
 			DBG_P("params");
 			//KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
@@ -468,17 +477,17 @@ static void loadInitStructData(CTX)
 		.realtype = T_realtype,
 	};
 	KDEFINE_CLASS *DATATYPES[] = {
-		//&defTvoid,
-		//&defTvar,
-		//&defObject,
-		//&defBoolean,
-		//&defInt,
-		//&defString,
-		//&defParam,
-		//&defMethod,
-		//&defArray,
-		//&defSystem,
-		//&defT0,
+		&defTvoid,
+		&defTvar,
+		&defObject,
+		&defBoolean,
+		&defInt,
+		&defString,
+		&defParam,
+		&defMethod,
+		&defArray,
+		&defSystem,
+		&defT0,
 		NULL,
 	};
 	KDEFINE_CLASS **dd = DATATYPES;
@@ -487,7 +496,7 @@ static void loadInitStructData(CTX)
 		dd++;
 	}
 	struct _kclass *ct = (struct _kclass *)CT_Array;
-	//ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
+	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
 }
 
 static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
@@ -518,9 +527,8 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	KCLASSTABLE_initklib2((struct _klib2*)_ctx->lib2);
 	KARRAY_INIT(&(share.ca), MAX_CT * sizeof(kclass_t));
 	loadInitStructData(_ctx);
-	//static struct _kclass *ca[MAX_CT];
-	//_ctx->share->ca = ca;
-	//_ctx->share->casize = 0;
+	KINITv(share.constNull, new_(Object, NULL));
+	kObject_setNullObject(share.constNull, 1);
 }
 
 static void KCLASSTABLE_loadMethod(CTX)

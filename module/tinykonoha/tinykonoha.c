@@ -37,8 +37,7 @@
 #include "../../src/konoha/methods.h"
 #include "datatype.h"
 
-ksfp_t sfp[SFP_SIZE];
-
+#define K_STACK_SIZE 128
 void KRUNTIME_reftraceAll(CTX)
 {
 	//kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
@@ -202,12 +201,52 @@ static void klib2_init(struct _klib2 *l)
 	l->Karray_expand     = karray_expand;
 	l->Karray_free       = karray_free;
 	l->KsetModule        = KRUNTIME_setModule;
-	l->Kreport           = Kreport;
-	l->Kreportf          = Kreportf;
-	l->KS_loadMethodData = KonohaSpace_loadMethodData;
+	//l->Kreport           = Kreport;
+	//l->Kreportf          = Kreportf;
+	//l->KS_loadMethodData = KonohaSpace_loadMethodData;
 }
 
-static kcontext_t *new_context()
+static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
+{
+	size_t i;
+	kstack_t *base = (kstack_t*)KCALLOC(sizeof(kstack_t), 1);
+	base->stacksize = stacksize;
+	base->stack = (ksfp_t*)KCALLOC(sizeof(ksfp_t), stacksize);
+	assert(stacksize>64);
+	base->stack_uplimit = base->stack + (stacksize - 64);
+	for(i = 0; i < stacksize; i++) {
+		KINITv(base->stack[i].o, K_NULL);
+	}
+	//KINITv(base->gcstack, new_(Array, K_PAGESIZE/sizeof(void*)));
+	KINITv(base->gcstack, new_(Array, 5));
+	//KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
+	KARRAY_INIT(&base->ref, 32);
+	base->reftail = base->ref.refhead;
+	ctx->esp = base->stack;
+	ctx->stack = base;
+}
+
+static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
+{
+	ksfp_t *sp = ctx->stack->stack;
+	BEGIN_REFTRACE((_ctx->esp - sp)+1);
+	while(sp < ctx->esp) {
+		KREFTRACEv(sp[0].o);
+		sp++;
+	}
+	KREFTRACEv(ctx->stack->gcstack);
+	END_REFTRACE();
+}
+
+static void KRUNTIME_free(CTX, kcontext_t *ctx)
+{
+	KARRAY_FREE(&_ctx->stack->cwb);
+	KARRAY_FREE(&_ctx->stack->ref);
+	KFREE(_ctx->stack->stack, sizeof(ksfp_t) * ctx->stack->stacksize);
+	KFREE(_ctx->stack, sizeof(kstack_t));
+}
+
+static kcontext_t *new_context(size_t stacksize)
 {
 	static kcontext_t _ctx;
 	static kmodshare_t *modshare[MOD_MAX] = {0};
@@ -219,6 +258,7 @@ static kcontext_t *new_context()
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
+	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	return &_ctx;
 }
 
@@ -233,10 +273,12 @@ void TaskMain(VP_INT exinf)
 void TaskDisp(VP_INT exinf)
 {
 	struct kcontext_t *_ctx = NULL;
-	_ctx = new_context();
+	_ctx = new_context(K_STACK_SIZE);
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
+	kclass_t *ct = CT_(CLASS_String);
+	TDBG_s("loop start");
 	while (1) {
-		dly_tsk(1000);
+		new_kObject(ct, NULL);
 	}
 }

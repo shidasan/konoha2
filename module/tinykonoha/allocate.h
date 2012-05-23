@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#define HEAP_SIZE (4096 * 2)
+#define HEAP_SIZE (4096 * 3)
 #define MINIMUM_ALLOCATE_SIZE 4
 
 typedef struct heap_free_area
@@ -84,7 +84,9 @@ static int total_malloced = 0;
 static void *tiny_malloc(size_t size)
 {
 	total_malloced+=size;
-	TDBG_i("total mallocked", total_malloced);
+	if (total_malloced > HEAP_SIZE / 10 * 9) {
+		TDBG_i("total mallocked", total_malloced);
+	}
 	void *mem;
 	mem = heap_alloc(size, &header_global);
 	//TDBG_s("malloc end");
