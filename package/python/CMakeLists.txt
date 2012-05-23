@@ -12,7 +12,6 @@ execute_process(
 string(REGEX MATCH "/[^ ]+/python[2-3].[0-9]" PYTHON_INCLUDE_PATH ${PYCNF_INCLUDE_RESULT})
 string(REGEX REPLACE "/[^ ]+/(python[2-3].[0-9])" "\\1" python_ver "${PYTHON_INCLUDE_PATH}")
 message("replaced PYTHON_INCLUDE_PATH = '" ${PYTHON_INCLUDE_PATH} "'")
-MESSAGE("test= ${python_ver}")
 
 find_library(PACKAGE_EXTRA_LIBRARY NAMES ${python_ver})
 if(PACKAGE_EXTRA_LIBRARY)
