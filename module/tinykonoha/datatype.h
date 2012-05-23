@@ -487,7 +487,7 @@ static void loadInitStructData(CTX)
 		dd++;
 	}
 	struct _kclass *ct = (struct _kclass *)CT_Array;
-	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
+	//ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
 }
 
 static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
@@ -521,6 +521,4 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	//static struct _kclass *ca[MAX_CT];
 	//_ctx->share->ca = ca;
 	//_ctx->share->casize = 0;
-	//loadInitStructData(_ctx);
 }
-

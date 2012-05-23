@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#define HEAP_SIZE (4096 * 3)
+#define HEAP_SIZE (4096 * 2)
 #define MINIMUM_ALLOCATE_SIZE 4
 
 typedef struct heap_free_area

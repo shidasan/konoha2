@@ -31,7 +31,7 @@
 
 #define K_CLASSTABLE_INIT 64
 #ifdef K_USING_TINYVM
-#define K_PAGESIZE        4096
+#define K_PAGESIZE        2048
 #else
 #define K_PAGESIZE        4096
 #endif
@@ -56,14 +56,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+
 #ifndef K_USING_TINYVM
 #include <stdio.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <assert.h>
 #include <setjmp.h>
-#endif
-#include <stdarg.h>
 
 #if defined(K_USING_SIGNAL)
 #include <signal.h>
@@ -72,6 +72,8 @@
 #if defined(K_USING_PTHREAD)
 #include <pthread.h>
 #endif
+
+#endif /* K_USING_TINYVM */
 
 /* ------------------------------------------------------------------------ */
 /* type */
