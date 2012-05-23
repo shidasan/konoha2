@@ -51,8 +51,6 @@ typedef struct {
 	};
 } kbytes_t;
 
-#define utf8len(c)    _utf8len[(int)c]
-
 static size_t knh_bytes_mlen(kbytes_t v)
 {
 #ifdef K_USING_UTF8
@@ -383,19 +381,18 @@ static void kregexshare_free(CTX, struct kmodshare_t *baseh)
 	KFREE(baseh, sizeof(kregexshare_t));
 }
 
-///* ------------------------------------------------------------------------ */
-//static void knh_Regex_setGlobalOption(kRegex *re, const char *opt)
-//{
-//	const char *p = opt;
-//	while(*p != 0) {
-//		if(*p == 'g') {
-//			Regex_setGlobalOption(re, 1);
-//			break;
-//		}
-//		p++;
-//	}
-//}
-//
+/* ------------------------------------------------------------------------ */
+static void knh_Regex_setGlobalOption(kRegex *re, const char *opt)
+{
+	const char *p = opt;
+	while(*p != 0) {
+		if(*p == 'g') {
+			Regex_setGlobalOption(re, 1);
+			break;
+		}
+		p++;
+	}
+}
 
 static size_t knh_regex_matched(kregmatch_t* r, size_t maxmatch)
 {
@@ -460,7 +457,7 @@ static void Regex_set(CTX, kRegex *re, kString *ptns, kString *opts)
 {
 	const char *ptn = S_text(ptns);
 	const char *opt = S_text(opts);
-	//knh_Regex_setGlobalOption(re, opt);
+	knh_Regex_setGlobalOption(re, opt);
 	KSETv(re->pattern, ptns);
 	re->reg = pcre_regmalloc(_ctx, ptns);
 	pcre_regcomp(_ctx, re->reg, ptn, pcre_parsecflags(_ctx, opt));
@@ -693,17 +690,25 @@ static int parseREGEX(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 	if(tenv->source[pos] == '*' || tenv->source[pos] == '/') {
 		return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
 	}
-	kToken *tkPrev = tenv->list->toks[kArray_size(tenv->list) - 1];
-	if(tkPrev->tt == TK_INT || tkPrev->tt == TK_SYMBOL) {
-		return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
+	int tlsize = kArray_size(tenv->list);
+	if(tlsize > 0) {
+		kToken *tkPrev = tenv->list->toks[tlsize - 1];
+		if(tkPrev->tt == TK_INT || tkPrev->tt == TK_SYMBOL) {
+			return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
+		}
 	}
 	while((ch = tenv->source[pos++]) != 0) {
 		if(ch == '\n') {
 			break;
 		}
 		if(ch == '/' && prev != '\\') {
+			int pos0 = pos;
+			while(isalpha(tenv->source[pos])) pos++;
 			if(IS_NOTNULL(tk)) {
-				KSETv(tk->text, new_kString(tenv->source + tok_start + 1, (pos-1) - (tok_start+1), 0));
+				kArray *a = new_(Array, 2);
+				kArray_add(a, new_kString(tenv->source + tok_start + 1, (pos0-1) - (tok_start+1), 0));
+				kArray_add(a, new_kString(tenv->source + pos0, pos-pos0, 0));
+				tk->sub = a;
 				tk->tt = TK_CODE;
 				tk->kw = KW_("$REGEX");
 			}
@@ -712,8 +717,7 @@ static int parseREGEX(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 		prev = ch;
 	}
 	if(IS_NOTNULL(tk)) {
-		return parseSLASH(_ctx, tk, tenv, tok_start, thunk);
-		//kreportf(ERR_, tk->uline, "must close with /");
+		kreportf(ERR_, tk->uline, "must close with /");
 	}
 	return pos-1;
 }
@@ -724,7 +728,8 @@ static KMETHOD ExprTyCheck_Regex(CTX, ksfp_t *sfp _RIX)
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
 	kToken *tk = expr->tk;
 	kRegex *r = new_(Regex, NULL);
-	Regex_set(_ctx, r, tk->text, KNULL(String));
+	DBG_ASSERT(kArray_size(tk->sub) == 2);
+	Regex_set(_ctx, r, tk->sub->strings[0], tk->sub->strings[1]);
 	RETURN_(kExpr_setConstValue(expr, TY_Regex, r));
 }
 
@@ -733,6 +738,7 @@ static kbool_t pcre_initKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	parseSLASH = ks->fmat[_SLASH];
+	DBG_ASSERT(parseSLASH != NULL);
 	SUGAR KonohaSpace_setTokenizer(_ctx, ks, '/', parseREGEX, NULL);
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("$REGEX"), _TERM, ExprTyCheck_(Regex), },
