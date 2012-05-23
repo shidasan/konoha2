@@ -22,6 +22,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#include "kernel_id.h"
+#include "ecrobot_base.h"
+#include "ecrobot_interface.h"
+#include "balancer.h"
+
 #include "tinykonoha.h"
 #include <../../include/konoha2/konoha2.h>
 #include "vm.h"
@@ -29,12 +34,8 @@
 #include "allocate.h"
 #include "../msgc/msgc.c"
 #include "../../include/konoha2/sugar.h"
+#include "../../src/konoha/methods.h"
 #include "datatype.h"
-
-#include "kernel_id.h"
-#include "ecrobot_base.h"
-#include "ecrobot_interface.h"
-#include "balancer.h"
 
 ksfp_t sfp[SFP_SIZE];
 
@@ -149,11 +150,60 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 	}
 }
 
+static void karray_init(CTX, karray_t *m, size_t bytemax)
+{
+	m->bytesize = 0;
+	m->bytemax  = bytemax;
+	m->bytebuf = (char*)KCALLOC(bytemax, 1);
+}
+
+static void karray_resize(CTX, karray_t *m, size_t newsize)
+{
+	size_t oldsize = m->bytemax;
+	char *newbody = (char*)KMALLOC(newsize);
+	if(oldsize < newsize) {
+		memcpy(newbody, m->bytebuf, oldsize);
+		bzero(newbody + oldsize, newsize - oldsize);
+	}
+	else {
+		memcpy(newbody, m->bytebuf, newsize);
+	}
+	KFREE(m->bytebuf, oldsize);
+	m->bytebuf = newbody;
+	m->bytemax = newsize;
+}
+
+static void karray_expand(CTX, karray_t *m, size_t minsize)
+{
+	if(m->bytemax == 0) {
+		if(minsize > 0) karray_init(_ctx, m, minsize);
+	}
+	else {
+		size_t oldsize = m->bytemax, newsize = oldsize * 2;
+		if(minsize > newsize) newsize = minsize;
+		karray_resize(_ctx, m, newsize);
+	}
+}
+
+static void karray_free(CTX, karray_t *m)
+{
+	if(m->bytemax > 0) {
+		KFREE(m->bytebuf, m->bytemax);
+		m->bytebuf = NULL;
+		m->bytesize = 0;
+		m->bytemax  = 0;
+	}
+}
+
 static void klib2_init(struct _klib2 *l)
 {
-	l->KsetModule = KRUNTIME_setModule;
-	l->Kreport = Kreport;
-	l->Kreportf = Kreportf;
+	l->Karray_init       = karray_init;
+	l->Karray_resize     = karray_resize;
+	l->Karray_expand     = karray_expand;
+	l->Karray_free       = karray_free;
+	l->KsetModule        = KRUNTIME_setModule;
+	l->Kreport           = Kreport;
+	l->Kreportf          = Kreportf;
 	l->KS_loadMethodData = KonohaSpace_loadMethodData;
 }
 
@@ -174,7 +224,6 @@ static kcontext_t *new_context()
 
 void cyc0(VP_INT exinf)
 {
-
 }
 
 void TaskMain(VP_INT exinf)
@@ -187,4 +236,7 @@ void TaskDisp(VP_INT exinf)
 	_ctx = new_context();
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
+	while (1) {
+		dly_tsk(1000);
+	}
 }

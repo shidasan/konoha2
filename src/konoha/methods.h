@@ -123,6 +123,7 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(sfp[0].ivalue >= sfp[1].ivalue);
 }
 
+#ifndef K_USING_TINYVM
 //## @Const method String Int.toString();
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
@@ -130,6 +131,7 @@ static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 	snprintf(buf, sizeof(buf), "%ld", (intptr_t)sfp[0].ivalue);
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
 }
+#endif
 
 //## @Const method String String.toInt();
 static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)

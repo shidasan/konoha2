@@ -80,10 +80,17 @@ static void heap_init()
 	header_global->next = NULL;
 }
 
+static int total_malloced = 0;
 static void *tiny_malloc(size_t size)
 {
+	total_malloced+=size;
+	TDBG_i("total mallocked", total_malloced);
 	void *mem;
 	mem = heap_alloc(size, &header_global);
+	//TDBG_s("malloc end");
+	if (mem == NULL) {
+		TDBG_s("NULL");
+	}
 	return mem;
 }
 

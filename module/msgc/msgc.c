@@ -202,7 +202,7 @@ static inline void do_free(void *ptr, size_t size)
 #ifdef K_USING_TINYVM
 static size_t klib2_malloced = 0;
 #else
-static size_t klib2_malloced = 0;
+static ssize_t klib2_malloced = 0;
 #endif
 
 static void* Kmalloc(CTX, size_t s)
@@ -337,7 +337,9 @@ static void ObjectPage_init0(objpage0_t *opage)
 	kGCObject0 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(0) - 1;
 	for(i = 0; i < t; ++i) {
+#ifndef K_USING_TINYVM
 		DBG_ASSERT(K_OPAGE((opage->slots + i),0) == opage);
+#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -351,7 +353,9 @@ static void ObjectPage_init1(objpage1_t *opage)
 	kGCObject1 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(1) - 1;
 	for(i = 0; i < t; ++i) {
+#ifndef K_USING_TINYVM
 		DBG_ASSERT(K_OPAGE(opage->slots + i,1) == opage);
+#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -365,7 +369,9 @@ static void ObjectPage_init2(objpage2_t *opage)
 	kGCObject2 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(2) - 1;
 	for(i = 0; i < t; ++i) {
+#ifndef K_USING_TINYVM
 		DBG_ASSERT(K_OPAGE(opage->slots + i,2) == opage);
+#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -376,7 +382,9 @@ static void ObjectPage_init2(objpage2_t *opage)
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage0_t *opage = (objpage0_t *)do_malloc(arenasize);
+#ifndef K_USING_TINYVM
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+#endif
 	oat->head0 =   opage;
 	oat->bottom0 = (objpage0_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -390,7 +398,9 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
+#ifndef K_USING_TINYVM
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+#endif
 	oat->head1 =   opage;
 	oat->bottom1 = (objpage1_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -404,7 +414,9 @@ static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage2_t *opage = (objpage2_t *)do_malloc(arenasize);
+#ifndef K_USING_TINYVM
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+#endif
 	oat->head2 =   opage;
 	oat->bottom2 = (objpage2_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -432,6 +444,7 @@ static kGCObject0 *new_ObjectArena0(CTX, size_t arenasize)
 	ObjectArenaTBL_init0(_ctx, oat, arenasize);
 	kGCObject0 *p = oat->head0->slots;
 	p->ref4_tail = (kGCObject0 *)&(oat->bottom0[-1]);
+#ifndef K_USING_TINYVM
 	int i = 0;
 	kGCObject0 *tmp = p;
 	while (tmp != &oat->head0->slots[K_PAGEOBJECTSIZE(0)]) {
@@ -439,6 +452,7 @@ static kGCObject0 *new_ObjectArena0(CTX, size_t arenasize)
 		i++;
 	}
 	assert(i == K_PAGEOBJECTSIZE(0));
+#endif
 	return p;
 }
 
@@ -460,6 +474,7 @@ static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 	kGCObject1 *p = oat->head1->slots;
 	p->ref4_tail = (kGCObject1 *)&(oat->bottom1[-1]);
 
+#ifndef K_USING_TINYVM
 	int i = 0;
 	kGCObject1 *tmp = p;
 	while (tmp != &oat->head1->slots[K_PAGEOBJECTSIZE(1)]) {
@@ -467,6 +482,7 @@ static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 		i++;
 	}
 	assert(i == K_PAGEOBJECTSIZE(1));
+#endif
 	return p;
 }
 
@@ -488,6 +504,7 @@ static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 	kGCObject2 *p = oat->head2->slots;
 	p->ref4_tail = (kGCObject2 *) &(oat->bottom2[-1]);
 
+#ifndef K_USING_TINYVM
 	int i = 0;
 	kGCObject2 *tmp = p;
 	while (tmp != &oat->head2->slots[K_PAGEOBJECTSIZE(2)]) {
@@ -495,6 +512,7 @@ static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 		i++;
 	}
 	assert(i == K_PAGEOBJECTSIZE(2));
+#endif
 	return p;
 }
 
@@ -881,17 +899,23 @@ void MODGC_free(CTX, kcontext_t *ctx)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
+	TDBG_s("omalloc");
 	int page_size = (size / sizeof(kGCObject0)) >> 1;
 	DBG_ASSERT(page_size <= 4);
 	kGCObject *o = NULL;
 	FREELIST_POP(o,page_size);
 	memlocal(_ctx)->freeObjectListSize[page_size] -= 1;
 	do_bzero((void*)o, size);
+	TDBG_s("omalloc end");
+	if (o == NULL) {
+		TDBG_s("omalloc NULL");
+	}
 	return (kObject *)o;
 }
 
 void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
+	TDBG_abort("msgc");
 	//TODO : stop the world
 	gc_init(_ctx);
 	gc_mark(_ctx);
