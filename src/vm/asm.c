@@ -737,10 +737,10 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 		kshort_t index = (kshort_t)exprL->index;
 		kshort_t xindex = (kshort_t)(exprL->index >> (sizeof(kshort_t)*8));
 		if(TY_isUnbox(exprR->ty)) {
-			ASM(XNMOV, OC_(index), xindex, NC_(espidx));
+			ASM(XNMOV, OC_(index), xindex, NC_(espidx), CT_(exprL->ty));
 		}
 		else {
-			ASM(XNMOV, OC_(index), xindex, OC_(espidx));
+			ASM(XNMOV, OC_(index), xindex, OC_(espidx), CT_(exprL->ty));
 		}
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);
