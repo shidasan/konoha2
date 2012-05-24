@@ -491,13 +491,13 @@ static int param_policy(ksymbol_t fn)
 
 static kExpr* Expr_typedWithMethod(CTX, kExpr *expr, kMethod *mtd, ktype_t reqty)
 {
+	kExpr *expr1 = kExpr_at(expr, 1);
 	KSETv(expr->cons->methods[0], mtd);
-	ktype_t thisty = kExpr_at(expr, 1)->ty;
-	if(mtd->mn == MN_new) {
-		kExpr_typed(expr, CALL, thisty);
+	if(expr1->build == TEXPR_NEW) {
+		kExpr_typed(expr, CALL, expr1->ty);
 	}
 	else {
-		kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : ktype_var(_ctx, kMethod_rtype(mtd), CT_(thisty)));
+		kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : ktype_var(_ctx, kMethod_rtype(mtd), CT_(expr1->ty)));
 	}
 	return expr;
 }
