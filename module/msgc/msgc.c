@@ -667,9 +667,21 @@ static knh_ostack_t *ostack_init(CTX, knh_ostack_t *ostack)
 
 static void ostack_push(CTX, knh_ostack_t *ostack, kObject *ref)
 {
+#ifdef K_USING_TINYVM
+	if (ostack->tail ==ostack->capacity) {
+		TDBG_abort("ostack_push");
+		size_t newcapacity = ostack->capacity * 2;
+		kObject **newstack = (kObject**)do_malloc(newcapacity * sizeof(kObject*));
+		memcpy(newstack, ostack->stack, ostack->capacity * sizeof(kObject*));
+		do_free(ostack->stack, ostack->capacity * sizeof(kObject*));
+		ostack->stack = newstack;
+		ostack->capacity = newcapacity;
+	}
+	ostack->stack[ostack->tail] = ref;
+	ostack->tail++;
+#else
 	size_t ntail = (ostack->tail + 1 ) & ostack->capacity;
 	if(unlikely(ntail == ostack->cur)) {
-		TDBG_abort("ostack_push");
 		size_t capacity = 1 << ostack->capacity_log2;
 		ostack->stack = (kObject**)do_realloc(ostack->stack, capacity * sizeof(kObject*), capacity * 2 * sizeof(kObject*));
 		ostack->capacity_log2 += 1;
@@ -678,6 +690,7 @@ static void ostack_push(CTX, knh_ostack_t *ostack, kObject *ref)
 	}
 	ostack->stack[ostack->tail] = ref;
 	ostack->tail = ntail;
+#endif
 }
 
 static kObject *ostack_next(knh_ostack_t *ostack)
