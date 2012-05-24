@@ -27,18 +27,6 @@
 #ifndef FILE_GLUE_H_
 #define FILE_GLUE_H_
 
-#define MOD_file 22
-
-typedef struct {
-    kmodshare_t h;
-    kclass_t     *cFile;
-} kmodfile_t;
-
-typedef struct {
-    kmodlocal_t h;
-} ctxfile_t;
-
-
 typedef const struct _kFile kFile;
 struct _kFile {
 	kObjectHeader h;
@@ -57,7 +45,13 @@ static void File_free(CTX, kObject *o)
 {
 	struct _kFile *file = (struct _kFile*)o;
 	if (file->fp != NULL) {
-		fclose(file->fp);
+		int ret = fclose(file->fp);
+		if (ret != 0) {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "fclose"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
 		file->fp = NULL;
 	}
 }
@@ -75,7 +69,14 @@ static KMETHOD System_fopen(CTX, ksfp_t *sfp _RIX)
 	kString *s = sfp[1].s;
 	const char *mode = IS_NULL(sfp[2].s) ? "r" : S_text(sfp[2].s);
 	FILE *fp = fopen(S_text(s), mode);
-	DBG_P("fopen=%p", fp);
+	if (fp == NULL) {
+		ktrace(_SystemFault|_ScriptFault,
+				KEYVALUE_s("@", "fopen"),
+				KEYVALUE_s("path", S_text(s)),
+				KEYVALUE_u("mode", mode),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
 	RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), fp));
 }
 //## @Native int File.read(Bytes buf, int offset, int len);
@@ -95,7 +96,13 @@ static KMETHOD File_read(CTX, ksfp_t *sfp _RIX)
 		}
 		if(len == 0) len = size - offset;
 		size = fread(ba->buf + offset, 1, len, fp);
-		DBG_P("FileRead size=%d", size);
+		if (size == 0 && ferror(fp) != 0){
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "fread"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+			clearerr(fp);
+		}
 	}
 	RETURNi_(size);
 }
@@ -113,6 +120,13 @@ static KMETHOD File_write(CTX , ksfp_t *sfp _RIX)
 		size = ba->bytesize;
 		if(len == 0) len = size - offset;
 		size = fwrite(ba->buf + offset, 1, len, fp);
+		if (size < len) {
+			// error
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "fwrite"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
 	}
 	RETURNi_(size);
 }
@@ -120,11 +134,17 @@ static KMETHOD File_write(CTX , ksfp_t *sfp _RIX)
 //## @Native void File.close();
 static KMETHOD File_close(CTX, ksfp_t *sfp _RIX)
 {
-	kFile *file = (kFile*)sfp[0].o;
+	struct _kFile *file = (struct _kFile*)sfp[0].o;
 	FILE *fp = file->fp;
 	if(fp != NULL) {
-		fclose(fp);
-//		file->fp = NULL;
+		int ret = fclose(fp);
+		if (ret != 0) {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "fclose"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
+		file->fp = NULL;
 	}
 	RETURNvoid_();
 }
@@ -136,6 +156,12 @@ static KMETHOD File_getC(CTX, ksfp_t *sfp _RIX)
 	int ch = EOF;
 	if (fp != NULL) {
 		ch = fgetc(fp);
+		if (ch == EOF && ferror(fp) != 0) {
+			ktrace(LOGPOL_DEBUG | _DataFault,
+					KEYVALUE_s("@", "fgetc"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
 	}
 	RETURNi_(ch);
 }
@@ -146,6 +172,12 @@ static KMETHOD File_putC(CTX, ksfp_t *sfp _RIX)
 	FILE *fp = ((kFile*)sfp[0].o)->fp;
 	if (fp != NULL) {
 		int ch = fputc(sfp[1].ivalue, fp);
+		if (ch == EOF) {
+			ktrace(LOGPOL_DEBUG | _DataFault,
+					KEYVALUE_s("@", "fputc"),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
 		RETURNb_(ch != EOF);
 	}
 	RETURNb_(0);
@@ -161,12 +193,18 @@ KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 		int fd = fileno(fp);
 		if (fd == -1) {
 			ktrace(LOGPOL_DEBUG | _DataFault,
-					KEYVALUE_s("@", "fileno")
-//					KEYVALUE_p("fp", fp)
-					);
+					KEYVALUE_s("@", "fileno"),
+					KEYVALUE_p("fp", fp)
+			);
 			RETURNb_(0);
 		}
 		ret =  fsync(fd);
+		if (ret == -1) {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "fsync"),
+					KEYVALUE_p("errstr", strerror(errno))
+			);
+		}
 	}
 	RETURNb_(ret == 0);
 }
