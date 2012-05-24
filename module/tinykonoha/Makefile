@@ -300,7 +300,7 @@ clean:
 	rm -f \#* *~ *.o tmpfile?
 	rm -f $(MAKE_KERNEL) $(OBJNAME)
 	rm -f $(OBJNAME).syms $(OBJNAME).srec $(OBJNAME).chk
-	rm -f $(OBJNAME).exe $(OBJNAME).bin $(OBJNAME).rxe $(OBJNAME).out
+	rm -f $(OBJNAME).exe $(OBJNAME).bin $(OBJNAME).out
 	rm -f kernel_cfg.c kernel_chk.c kernel_chk.s kernel_id.h kernel_obj.dat
 	rm -f makeoffset.s offset.h
 
