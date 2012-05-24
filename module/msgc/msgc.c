@@ -363,21 +363,21 @@ static void ObjectPage_init1(objpage1_t *opage)
 	opage->slots[t].ref = opage[1].slots;
 }
 
+#ifndef K_USING_TINYVM
 static void ObjectPage_init2(objpage2_t *opage)
 {
 	size_t i = 0;
 	kGCObject2 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(2) - 1;
 	for(i = 0; i < t; ++i) {
-#ifndef K_USING_TINYVM
 		DBG_ASSERT(K_OPAGE(opage->slots + i,2) == opage);
-#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
 	opage->slots[t].h.ct = NULL;
 	opage->slots[t].ref = opage[1].slots;
 }
+#endif
 
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
@@ -411,12 +411,11 @@ static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 	(opage-1)->slots[K_PAGEOBJECTSIZE(1) - 1].ref = NULL;
 }
 
+#ifndef K_USING_TINYVM
 static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage2_t *opage = (objpage2_t *)do_malloc(arenasize);
-#ifndef K_USING_TINYVM
 	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
-#endif
 	oat->head2 =   opage;
 	oat->bottom2 = (objpage2_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -426,6 +425,7 @@ static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 	}
 	(opage-1)->slots[K_PAGEOBJECTSIZE(2) - 1].ref = NULL;
 }
+#endif
 
 static kGCObject0 *new_ObjectArena0(CTX, size_t arenasize)
 {
@@ -486,6 +486,7 @@ static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 	return p;
 }
 
+#ifndef K_USING_TINYVM
 static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 {
 	objpageTBL_t *oat;
@@ -504,7 +505,6 @@ static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 	kGCObject2 *p = oat->head2->slots;
 	p->ref4_tail = (kGCObject2 *) &(oat->bottom2[-1]);
 
-#ifndef K_USING_TINYVM
 	int i = 0;
 	kGCObject2 *tmp = p;
 	while (tmp != &oat->head2->slots[K_PAGEOBJECTSIZE(2)]) {
@@ -512,9 +512,9 @@ static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 		i++;
 	}
 	assert(i == K_PAGEOBJECTSIZE(2));
-#endif
 	return p;
 }
+#endif
 
 static void knh_ObjectObjectArenaTBL_free0(CTX, const objpageTBL_t *oat)
 {
@@ -544,6 +544,7 @@ static void knh_ObjectObjectArenaTBL_free1(CTX, const objpageTBL_t *oat)
 	}
 }
 
+#ifndef K_USING_TINYVM
 static void knh_ObjectObjectArenaTBL_free2(CTX, const objpageTBL_t *oat)
 {
 	objpage2_t *opage = oat->head2;
@@ -557,6 +558,7 @@ static void knh_ObjectObjectArenaTBL_free2(CTX, const objpageTBL_t *oat)
 		opage++;
 	}
 }
+#endif
 
 #define KNH_OBJECTARENA_FINALFREE(j) do {\
 	size_t i;\
@@ -575,17 +577,22 @@ static void knh_ObjectArena_finalfree1(CTX, objpageTBL_t *oat, size_t oatSize)
 {
 	KNH_OBJECTARENA_FINALFREE(1);
 }
+
+#ifndef K_USING_TINYVM
 static void knh_ObjectArena_finalfree2(CTX, objpageTBL_t *oat, size_t oatSize)
 {
 	KNH_OBJECTARENA_FINALFREE(2);
 }
+#endif
 
 void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 {
 	if(IS_ROOTCTX(ctx)) {
 		knh_ObjectArena_finalfree0(ctx, memshare(_ctx)->ObjectArenaTBL[0], memshare(_ctx)->sizeObjectArenaTBL[0]);
 		knh_ObjectArena_finalfree1(ctx, memshare(_ctx)->ObjectArenaTBL[1], memshare(_ctx)->sizeObjectArenaTBL[1]);
+#ifndef K_USING_TINYVM
 		knh_ObjectArena_finalfree2(ctx, memshare(_ctx)->ObjectArenaTBL[2], memshare(_ctx)->sizeObjectArenaTBL[2]);
+#endif
 		Arena_free(_ctx, memshare(_ctx));
 	}
 }
@@ -629,10 +636,12 @@ static void gc_extendObjectArena1(CTX)
 	gc_extendObjectArena(1);
 }
 
+#ifndef K_USING_TINYVM
 static void gc_extendObjectArena2(CTX)
 {
 	gc_extendObjectArena(2);
 }
+#endif
 
 /* ------------------------------------------------------- */
 
@@ -820,6 +829,7 @@ static size_t gc_sweep1(CTX)
 	return collected;
 }
 
+#ifndef K_USING_TINYVM
 static size_t gc_sweep2(CTX)
 {
 	size_t collected = 0;
@@ -836,6 +846,7 @@ static size_t gc_sweep2(CTX)
 	CHECK_EXPAND(listSize,2);
 	return collected;
 }
+#endif
 
 static void gc_sweep(CTX)
 {
@@ -896,9 +907,6 @@ static void MSGC_free(CTX, struct kmodshare_t *baseh)
 void MODGC_init(CTX, kcontext_t *ctx)
 {
 	if(IS_ROOTCTX(ctx)) {
-#ifdef K_USING_TINYVM
-		heap_init();
-#endif
 		kmemshare_t *base = (kmemshare_t*) do_malloc(sizeof(kmemshare_t));
 		base->h.name     = "msgc";
 		base->h.setup    = MSGC_setup;

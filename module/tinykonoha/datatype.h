@@ -531,32 +531,60 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	kObject_setNullObject(share.constNull, 1);
 }
 
+#define _Public    kMethod_Public
+#define _Const     kMethod_Const
+#define _Immutable kMethod_Immutable
+#define _F(F)      (intptr_t)(F)
+
 static void KCLASSTABLE_loadMethod(CTX)
 {
 	//int FN_x = FN_("x");
-	//intptr_t MethodData[] = {
-	//	_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
-	//	_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
-	//	_Public|_Immutable|_Const, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
-	//	_Public|_Immutable|_Const, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
-	//	/* opDIV and opMOD raise zero divided exception. Don't set _Const */
-	//	_Public|_Immutable, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
-	//	_Public|_Immutable|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
-	//	_Public|_Immutable|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
-	//	_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
-	//	_Public|_Immutable, _F(System_assert), TY_void, TY_System, MN_("assert"), 1, TY_Boolean, FN_x,
-	//	_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
-	//	_Public|_Immutable, _F(System_gc), TY_void, TY_System, MN_("gc"), 0,
-	//	DEND,
-	//};
-	//kKonohaSpace_loadMethodData(NULL, MethodData);
+	int FN_x = 0;
+	intptr_t MethodData[] = {
+		_F(Object_toString), TY_Object, MN_to(TY_String),
+		_F(Boolean_opNOT), TY_Boolean, MN_("opNOT"),
+		_F(Int_opMINUS), TY_Int, MN_("opMINUS"),
+		_F(Int_opADD), TY_Int, MN_("opADD"),
+		_F(Int_opSUB), TY_Int, MN_("opSUB"),
+		_F(Int_opMUL), TY_Int, MN_("opMUL"),
+		/* opDIV and opMOD raise zero divided exception. Don't set _Const */
+		_F(Int_opDIV), TY_Int, MN_("opDIV"),
+		_F(Int_opMOD), TY_Int, MN_("opMOD"),
+		_F(Int_opEQ),  TY_Int, MN_("opEQ"),
+		_F(Int_opNEQ), TY_Int, MN_("opNEQ"),
+		_F(Int_opLT),  TY_Int, MN_("opLT"),
+		_F(Int_opLTE), TY_Int, MN_("opLTE"),
+		_F(Int_opGT),  TY_Int, MN_("opGT"),
+		_F(Int_opGTE), TY_Int, MN_("opGTE"),
+		///_F(Int_toString), TY_Int, MN_to(TY_String),
+		///_F(String_toInt), TY_String, MN_to(TY_Int),
+		///_F(String_opADD), TY_String, MN_("opADD"),
+		//_F(System_assert), TY_System, MN_("assert"),
+		//_F(System_p), TY_System, MN_("p"),
+		//_F(System_gc), TY_System, MN_("gc"),
+		DEND,
+		//_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
+		//_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
+		//_Public|_Immutable|_Const, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
+		//_Public|_Immutable|_Const, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
+		///* opDIV and opMOD raise zero divided exception. Don't set _Const */
+		//_Public|_Immutable, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
+		//_Public|_Immutable, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
+		//_Public|_Immutable|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
+		//_Public|_Immutable|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
+		//_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
+		//_Public|_Immutable, _F(System_assert), TY_void, TY_System, MN_("assert"), 1, TY_Boolean, FN_x,
+		//_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
+		//_Public|_Immutable, _F(System_gc), TY_void, TY_System, MN_("gc"), 0,
+		//DEND,
+	};
+	kKonohaSpace_loadMethodData(NULL, MethodData);
 }

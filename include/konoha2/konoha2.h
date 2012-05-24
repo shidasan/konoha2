@@ -321,10 +321,17 @@ typedef kushort_t       kparamid_t;
 #define MN_isSETTER(mn)   ((mn & MN_SETTER) == MN_SETTER)
 #define MN_toSETTER(mn)   ((MN_UNMASK(mn)) | MN_SETTER)
 
+#ifdef K_USING_TINYVM
+#define MN_to(cid)        0
+#define MN_isTOCID(mn)    0
+#define MN_as(cid)        0
+#define MN_isASCID(mn)    0
+#else
 #define MN_to(cid)        (cid | MN_TOCID)
 #define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
 #define MN_as(cid)        (cid | MN_ASCID)
 #define MN_isASCID(mn)    ((mn & MN_ASCID) == MN_ASCID)
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -1124,12 +1131,14 @@ struct _klib2 {
 
 	kObject*    (*Knew_Object)(CTX, kclass_t *, void *);
 	kObject*    (*Knull)(CTX, kclass_t *);
+#ifndef K_USING_TINYVM
 	kObject*    (*KObject_getObject)(CTX, kObject *, ksymbol_t, kObject *);
 	void        (*KObject_setObject)(CTX, kObject *, ksymbol_t, ktype_t, kObject *);
 	uintptr_t   (*KObject_getUnboxedValue)(CTX, kObject *, ksymbol_t, uintptr_t);
 	void        (*KObject_setUnboxedValue)(CTX, kObject *, ksymbol_t, ktype_t, uintptr_t);
 	void        (*KObject_protoEach)(CTX, kObject *, void *thunk, void (*f)(CTX, void *, kvs_t *d));
 	void        (*KObject_removeKey)(CTX, kObject *, ksymbol_t);
+#endif
 
 	kString*    (*Knew_String)(CTX, const char *, size_t, int);
 	kString*    (*Knew_Stringf)(CTX, int, const char *, ...);

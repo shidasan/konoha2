@@ -27,17 +27,17 @@ extern "C" {
 #endif
 
 /* String */
-#ifndef K_USING_TINYVM
 static KMETHOD Object_toString(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	kwb_t wb;
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	O_ct(sfp[0].o)->p(_ctx, sfp, 0, &wb, 0);
 	kString* s = new_kString(kwb_top(&wb, 1), kwb_bytesize(&wb), 0);
 	kwb_free(&wb);
 	RETURN_(s);
-}
 #endif
+}
 
 //## @Const method Boolean Boolean.opNOT();
 static KMETHOD Boolean_opNOT(CTX, ksfp_t *sfp _RIX)
@@ -73,9 +73,11 @@ static KMETHOD Int_opMUL(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Int_opDIV(CTX, ksfp_t *sfp _RIX)
 {
 	kint_t n = sfp[1].ivalue;
+#ifndef K_USING_TINYVM
 	if(unlikely(n == 0)) {
 		kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: zero divided");
 	}
+#endif
 	RETURNi_(sfp[0].ivalue / n);
 }
 
@@ -83,9 +85,11 @@ static KMETHOD Int_opDIV(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Int_opMOD(CTX, ksfp_t *sfp _RIX)
 {
 	kint_t n = sfp[1].ivalue;
+#ifndef K_USING_TINYVM
 	if(unlikely(n == 0)) {
 		kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: zero divided");
 	}
+#endif
 	RETURNi_(sfp[0].ivalue % n);
 }
 
@@ -125,31 +129,35 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(sfp[0].ivalue >= sfp[1].ivalue);
 }
 
-#ifndef K_USING_TINYVM
 //## @Const method String Int.toString();
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	char buf[40];
 	snprintf(buf, sizeof(buf), "%ld", (intptr_t)sfp[0].ivalue);
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
-}
 #endif
+}
 
 //## @Const method String String.toInt();
 static KMETHOD String_toInt(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	RETURNi_((kint_t)strtoll(S_text(sfp[0].s), NULL, 10));
+#endif
 }
 
 //## @Const @Immutable method String String.opAdd(@Coercion String x);
 static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	kString *lhs = sfp[0].s, *rhs = sfp[1].s;
 	int spol = (S_isASCII(lhs) && S_isASCII(rhs)) ? SPOL_ASCII : SPOL_UTF8;
 	kString *s = new_kString(NULL, S_size(lhs)+S_size(rhs), spol|SPOL_NOCOPY);
 	memcpy(s->buf, S_text(lhs), S_size(lhs));
 	memcpy(s->buf+S_size(lhs), S_text(rhs), S_size(rhs));
 	RETURN_(s);
+#endif
 }
 
 int konoha_AssertResult = 0;
@@ -157,12 +165,14 @@ int konoha_AssertResult = 0;
 //## @Const @Static void System.assert(boolean x)
 static KMETHOD System_assert(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	kbool_t cond = sfp[1].bvalue;
 	if (cond == false) {
 		kline_t pline  = sfp[K_RTNIDX].uline;
 		konoha_AssertResult = 1;
 		kreportf(CRIT_, pline, "Assert!!");
 	}
+#endif
 }
 
 //## method void System.p(@Coercion String msg);

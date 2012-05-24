@@ -124,21 +124,30 @@ static void KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd)
 
 static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 {
+	static int mn_count = 0;
 	intptr_t *d = data;
 	while(d[0] != -1) {
-		uintptr_t flag = (uintptr_t)d[0];
-		knh_Fmethod f = (knh_Fmethod)d[1];
-		ktype_t rtype = (ktype_t)d[2];
-		kcid_t cid  = (kcid_t)d[3];
-		kmethodn_t mn = (kmethodn_t)d[4];
-		size_t i, psize = (size_t)d[5];
-		kparam_t p[psize+1];
-		d = d + 6;
-		for(i = 0; i < psize; i++) {
-			p[i].ty = (ktype_t)d[0];
-			p[i].fn = (ksymbol_t)d[1];
-			d += 2;
-		}
+		uintptr_t flag = 0;
+		knh_Fmethod f = (knh_Fmethod)d[0];
+		ktype_t rtype = 0;
+		kcid_t cid = (kcid_t)d[1];
+		mn_count++;
+		kmethodn_t mn = mn_count;
+		size_t psize = 0;
+		kparam_t p[1];
+		//uintptr_t flag = (uintptr_t)d[0];
+		//knh_Fmethod f = (knh_Fmethod)d[1];
+		//ktype_t rtype = (ktype_t)d[2];
+		//kcid_t cid  = (kcid_t)d[3];
+		//kmethodn_t mn = (kmethodn_t)d[4];
+		//size_t i, psize = (size_t)d[5];
+		//kparam_t p[psize+1];
+		//d = d + 6;
+		//for(i = 0; i < psize; i++) {
+		//	p[i].ty = (ktype_t)d[0];
+		//	p[i].fn = (ksymbol_t)d[1];
+		//	d += 2;
+		//}
 		kMethod *mtd = new_kMethod(flag, cid, mn, f);
 		kMethod_setParam(mtd, rtype, psize, p);
 		if(ks == NULL || kMethod_isPublic(mtd)) {
@@ -203,7 +212,7 @@ static void klib2_init(struct _klib2 *l)
 	l->KsetModule        = KRUNTIME_setModule;
 	//l->Kreport           = Kreport;
 	//l->Kreportf          = Kreportf;
-	//l->KS_loadMethodData = KonohaSpace_loadMethodData;
+	l->KS_loadMethodData = KonohaSpace_loadMethodData;
 }
 
 static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
@@ -218,7 +227,7 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 		KINITv(base->stack[i].o, K_NULL);
 	}
 	//KINITv(base->gcstack, new_(Array, K_PAGESIZE/sizeof(void*)));
-	KINITv(base->gcstack, new_(Array, 5));
+	//KINITv(base->gcstack, new_(Array, 5));
 	//KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
 	KARRAY_INIT(&base->ref, 32);
 	base->reftail = base->ref.refhead;
@@ -248,6 +257,7 @@ static void KRUNTIME_free(CTX, kcontext_t *ctx)
 
 static kcontext_t *new_context(size_t stacksize)
 {
+	heap_init();
 	static kcontext_t _ctx;
 	static kmodshare_t *modshare[MOD_MAX] = {0};
 	static kmodlocal_t *modlocal[MOD_MAX] = {0};
@@ -259,6 +269,7 @@ static kcontext_t *new_context(size_t stacksize)
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
+	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
 }
 
