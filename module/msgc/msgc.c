@@ -749,8 +749,11 @@ static void gc_mark(CTX)
 	size_t ref_size = stack->reftail - stack->ref.refhead;
 	goto L_INLOOP;
 	while((ref = ostack_next(ostack)) != NULL) {
+		TDBG_s("reset");
 		context_reset_refs(_ctx);
+		TDBG_s("reset refs");
 		KONOHA_reftraceObject(_ctx, ref);
+		TDBG_s("reset end");
 		ref_size = stack->reftail - stack->ref.refhead;
 		if(ref_size > 0) {
 			L_INLOOP:;
