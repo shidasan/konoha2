@@ -1219,12 +1219,21 @@ struct _klib2 {
 #define SYMPOL_RAW                0
 #define SYMPOL_NAME               1
 #define SYMPOL_METHOD             2
+#ifdef K_USING_TINYVM
+#define ksymbol(T,L,D,P)          0
+#define KSYMBOL(T)                0
+#define FN_(T)                    0
+#define MN_(T)                    0
+#define MN_new                    0
+#define T_mn(B, X)                0
+#else
 #define ksymbol(T,L,D,P)          (KPI)->Ksymbol(_ctx, T, L, D, P)
 #define KSYMBOL(T)                (KPI)->Ksymbol(_ctx, T, sizeof(T)-1, FN_NEWID, SYMPOL_RAW)
 #define FN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_NAME)
 #define MN_(T)                    ksymbol(T, (sizeof(T)-1), FN_NEWID, SYMPOL_METHOD)
 #define MN_new                    1  /* @see */
 #define T_mn(B, X)                (KPI)->KTsymbol(_ctx, B, sizeof(B), X)
+#endif
 
 #define FILEID_NATIVE             0
 #define FILEID_(T)                (KPI)->Kfileid(_ctx, T, sizeof(T)-1, SPOL_TEXT|SPOL_ASCII, _NEWID)

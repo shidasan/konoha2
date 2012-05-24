@@ -539,7 +539,6 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 static void KCLASSTABLE_loadMethod(CTX)
 {
 	//int FN_x = FN_("x");
-	int FN_x = 0;
 	intptr_t MethodData[] = {
 		_F(Object_toString), TY_Object, MN_to(TY_String),
 		_F(Boolean_opNOT), TY_Boolean, MN_("opNOT"),
@@ -556,12 +555,12 @@ static void KCLASSTABLE_loadMethod(CTX)
 		_F(Int_opLTE), TY_Int, MN_("opLTE"),
 		_F(Int_opGT),  TY_Int, MN_("opGT"),
 		_F(Int_opGTE), TY_Int, MN_("opGTE"),
-		///_F(Int_toString), TY_Int, MN_to(TY_String),
-		///_F(String_toInt), TY_String, MN_to(TY_Int),
-		///_F(String_opADD), TY_String, MN_("opADD"),
-		//_F(System_assert), TY_System, MN_("assert"),
-		//_F(System_p), TY_System, MN_("p"),
-		//_F(System_gc), TY_System, MN_("gc"),
+		_F(Int_toString), TY_Int, MN_to(TY_String),
+		_F(String_toInt), TY_String, MN_to(TY_Int),
+		_F(String_opADD), TY_String, MN_("opADD"),
+		_F(System_assert), TY_System, MN_("assert"),
+		_F(System_p), TY_System, MN_("p"),
+		_F(System_gc), TY_System, MN_("gc"),
 		DEND,
 		//_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
 		//_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,

@@ -135,26 +135,14 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 		kmethodn_t mn = mn_count;
 		size_t psize = 0;
 		kparam_t p[1];
-		//uintptr_t flag = (uintptr_t)d[0];
-		//knh_Fmethod f = (knh_Fmethod)d[1];
-		//ktype_t rtype = (ktype_t)d[2];
-		//kcid_t cid  = (kcid_t)d[3];
-		//kmethodn_t mn = (kmethodn_t)d[4];
-		//size_t i, psize = (size_t)d[5];
-		//kparam_t p[psize+1];
-		//d = d + 6;
-		//for(i = 0; i < psize; i++) {
-		//	p[i].ty = (ktype_t)d[0];
-		//	p[i].fn = (ksymbol_t)d[1];
-		//	d += 2;
+		d += 3;
+		//kMethod *mtd = new_kMethod(flag, cid, mn, f);
+		//kMethod_setParam(mtd, rtype, psize, p);
+		//if(ks == NULL || kMethod_isPublic(mtd)) {
+		//	CT_addMethod(_ctx, CT_(cid), mtd);
+		//} else {
+		//	KonohaSpace_addMethod(_ctx, ks, mtd);
 		//}
-		kMethod *mtd = new_kMethod(flag, cid, mn, f);
-		kMethod_setParam(mtd, rtype, psize, p);
-		if(ks == NULL || kMethod_isPublic(mtd)) {
-			CT_addMethod(_ctx, CT_(cid), mtd);
-		} else {
-			KonohaSpace_addMethod(_ctx, ks, mtd);
-		}
 	}
 }
 

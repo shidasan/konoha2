@@ -436,9 +436,12 @@ $(STASK_ASMOBJS): %.o: %.S
 
 $(UTASK_COBJS): %.o: %.c
 	$(CC) -c $(CFLAGS) $(UTASK_CFLAGS) $<
+	@echo "hi"
+	@echo $(CFLAGS)
 
 $(UTASK_COBJS:.o=.s): %.s: %.c
 	$(CC) -S $(CFLAGS) $(UTASK_CFLAGS) $<
+	@echo $(CFLAGS)
 
 $(UTASK_CXXOBJS): %.o: %.cpp
 	$(CXX) -c $(CFLAGS) $(UTASK_CFLAGS) $<
