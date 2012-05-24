@@ -257,7 +257,7 @@ static kcontext_t *new_context(size_t stacksize)
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
-	KCLASSTABLE_loadMethod(&_ctx);
+	//KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
 }
 
