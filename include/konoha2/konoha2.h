@@ -348,11 +348,19 @@ typedef const struct kcontext_t *const CTX_t;
 #endif
 struct _kObject;
 
+#ifdef K_USING_TINYVM
+#define MOD_gc       0
+#define MOD_code     1
+#define MOD_logger   2
+#define MOD_sugar    3
+#define MOD_float   11
+#else
 #define MOD_logger   0
 #define MOD_gc       1
 #define MOD_code     2
 #define MOD_sugar    3
 #define MOD_float   11
+#endif
 //#define MOD_jit     12
 #define MOD_iconv   13
 //#define MOD_IO      14

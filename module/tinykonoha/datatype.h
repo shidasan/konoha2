@@ -333,8 +333,8 @@ static void Method_reftrace(CTX, kObject *o)
 {
 	BEGIN_REFTRACE(3);
 	kMethod *mtd = (kMethod*)o;
-	KREFTRACEv(mtd->tcode);
-	KREFTRACEv(mtd->kcode);
+	KREFTRACEn(mtd->tcode);
+	KREFTRACEn(mtd->kcode);
 	KREFTRACEn(mtd->proceedNUL);
 	END_REFTRACE();
 }
@@ -347,17 +347,6 @@ static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, knh_F
 	mtd->mn      = mn;
 	kMethod_setFunc(mtd, func);
 	return mtd;
-}
-
-static kParam* KMethod_setParam(CTX, kMethod *mtd_, ktype_t rtype, int psize, kparam_t *p)
-{
-	kparamid_t paramid = Kparam(_ctx, rtype, psize, p);
-	if(mtd_ != NULL) {
-		struct _kMethod* mtd = (struct _kMethod*)mtd_;
-		mtd->paramdom = Kparamdom(_ctx, rtype, psize, p);
-		mtd->paramid = paramid;
-	}
-	return _ctx->share->paramList->params[paramid];
 }
 
 struct _kAbstractArray {
@@ -385,6 +374,7 @@ static void Array_reftrace(CTX, kObject *o)
 	if(!kArray_isUnboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(kArray_size(a));
+		TDBG_i("array", kArray_size(a));
 		for(i = 0; i < kArray_size(a); i++) {
 			KREFTRACEv(a->list[i]);
 		}
@@ -514,10 +504,78 @@ static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name
 	return (kclass_t*)ct;
 }
 
+static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
+{
+	//kMethod *mtd = sfp[K_MTDIDX].mtdNC;
+	//char mbuf[128];
+	//kreportf(WARN_, sfp[K_RTNIDX].uline, "calling abstract method: %s.%s", T_cid(mtd->cid), T_mn(mbuf, mtd->mn));
+	RETURNi_(0); //necessary
+}
+
+static void Method_setFunc(CTX, kMethod *mtd, knh_Fmethod func)
+{
+	func = (func == NULL) ? Fmethod_abstract : func;
+	((struct _kMethod*)mtd)->fcall_1 = func;
+	//((struct _kMethod*)mtd)->pc_start = CODE_NCALL;
+
+}
+
+static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
+{
+	if(!((min * sizeof(void*)) < a->a.bytemax)) {
+		if(min < sizeof(kObject)) min = sizeof(kObject);
+		KARRAY_EXPAND(&a->a, min);
+	}
+}
+
+static void Array_add(CTX, kArray *o, kObject *value)
+{
+	size_t asize = kArray_size(o);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	Array_ensureMinimumSize(_ctx, a, asize+1);
+	DBG_ASSERT(a->a.objects[asize] == NULL);
+	KINITv(a->a.objects[asize], value);
+	a->a.bytesize = (asize+1) * sizeof(void*);
+}
+
 static void KCLASSTABLE_initklib2(struct _klib2 *l)
 {
 	l->Knew_Object = new_Object;
+	l->Knew_Method   = new_Method;
 	l->KaddClassDef = addClassDef;
+	l->KMethod_setFunc = Method_setFunc;
+	l->KArray_add = Array_add;
+}
+
+static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
+{
+	//uintptr_t lname = longid(ct->packdom, ct->nameid);
+	//kreportf(DEBUG_, pline, "new class domain=%s, name='%s.%s'", T_PN(ct->packdom), T_PN(ct->packid), T_UN(ct->nameid));
+	//kclass_t *ct2 = (kclass_t*)map_getu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)NULL);
+	//if(ct2 == NULL) {
+	//	map_addu(_ctx, _ctx->share->lcnameMapNN, lname, (uintptr_t)ct);
+	//}
+	if(ct->methods == NULL) {
+		KINITv(ct->methods, K_EMPTYARRAY);
+		if(ct->cid > CLASS_Object) {
+			ct->searchSuperMethodClassNULL = CT_(ct->supcid);
+		}
+	}
+	//if(ct->cparam == NULL) {
+	//	KINITv(ct->cparam, K_NULLPARAM);
+	//}
+}
+
+static void initStructData(CTX)
+{
+	kclass_t **ctt = (kclass_t**)_ctx->share->ca.cts;
+	size_t i;
+	for (i = 0; i <= CLASS_T0; i++) {
+		struct _kclass *ct = (struct _kclass *)ctt[i];
+		//const char *name = ct->DBG_NAME;
+		//ct->nameid = kuname(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
+		CT_setName(_ctx, ct, 0);
+	}
 }
 
 static void KCLASSTABLE_init(kcontext_t *_ctx)
@@ -529,6 +587,9 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	loadInitStructData(_ctx);
 	KINITv(share.constNull, new_(Object, NULL));
 	kObject_setNullObject(share.constNull, 1);
+	//
+	KINITv(share.emptyArray, new_(Array, 0));
+	initStructData(_ctx);
 }
 
 #define _Public    kMethod_Public

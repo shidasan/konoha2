@@ -38,19 +38,95 @@
 #include "datatype.h"
 
 #define K_STACK_SIZE 128
+
+static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
+{
+	//TDBG_abort("runtime trace");
+	//ksfp_t *sp = ctx->stack->stack;
+	//BEGIN_REFTRACE((_ctx->esp - sp)+1);
+	//while(sp < ctx->esp) {
+	//	KREFTRACEv(sp[0].o);
+	//	sp++;
+	//}
+	//KREFTRACEv(ctx->stack->gcstack);
+	//END_REFTRACE();
+}
+
+static void kshare_reftrace(CTX, kcontext_t *ctx)
+{
+	TDBG_s("share reftrace");
+	kshare_t *share = ctx->share;
+	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
+	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
+	for(i = 0; i < size; i++) {
+		kclass_t *ct = cts[i];
+		{
+			BEGIN_REFTRACE(1);
+			//KREFTRACEv(ct->cparam);
+			KREFTRACEn(ct->methods);
+			//KREFTRACEn(ct->shortNameNULL);
+			//KREFTRACEn(ct->nulvalNUL);
+			END_REFTRACE();
+		}
+//		if (ct->constNameMapSO) kmap_reftrace(ct->constNameMapSO, keyval_reftrace);
+		//if (ct->constPoolMapNO) kmap_reftrace(ct->constPoolMapNO, val_reftrace);
+	}
+
+	BEGIN_REFTRACE(2);
+	KREFTRACEn(share->constNull);
+	//KREFTRACEv(share->constTrue);
+	//KREFTRACEv(share->constFalse);
+	//KREFTRACEv(share->emptyString);
+	KREFTRACEn(share->emptyArray);
+
+	//KREFTRACEv(share->fileidList);
+	//KREFTRACEv(share->packList);
+	//KREFTRACEv(share->symbolList);
+	//KREFTRACEv(share->unameList);
+	//KREFTRACEv(share->paramList);
+	//KREFTRACEv(share->paramdomList);
+	END_REFTRACE();
+	TDBG_s("share end");
+}
+
+static void kcontext_reftrace(CTX, kcontext_t *ctx)
+{
+	TDBG_s("context start");
+	size_t i;
+	if(IS_ROOTCTX(_ctx)) {
+		kshare_reftrace(_ctx, ctx);
+		for(i = 0; i < MOD_MAX; i++) {
+			kmodshare_t *p = ctx->modshare[i];
+			if(p != NULL && p->reftrace != NULL) {
+				p->reftrace(_ctx, p);
+			}
+		}
+	}
+	KRUNTIME_reftrace(_ctx, ctx);
+	for(i = 0; i < MOD_MAX; i++) {
+		kmodlocal_t *p = ctx->modlocal[i];
+		if(p != NULL && p->reftrace != NULL) {
+			p->reftrace(_ctx, p);
+		}
+	}
+	TDBG_s("context end");
+}
+
 void KRUNTIME_reftraceAll(CTX)
 {
-	//kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
+	kcontext_reftrace(_ctx, (kcontext_t*)_ctx);
 }
 
 void KONOHA_freeObjectField(CTX, struct _kObject *o)
 {
 	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
+		TDBG_s("kfree");
 		karray_t *p = o->h.kvproto;
 		KFREE(p->bytebuf, p->bytemax);
 		KFREE(p, sizeof(karray_t));
 		o->h.kvproto = kvproto_null();
+		TDBG_s("kfree end");
 	}
 	ct->free(_ctx, o);
 }
@@ -58,18 +134,18 @@ void KONOHA_freeObjectField(CTX, struct _kObject *o)
 void KONOHA_reftraceObject(CTX, kObject *o)
 {
 	kclass_t *ct = O_ct(o);
-	if(o->h.kvproto->bytemax > 0) {
-		size_t i, pmax = o->h.kvproto->bytemax / sizeof(kvs_t);
-		kvs_t *d = o->h.kvproto->kvs;
-		BEGIN_REFTRACE(pmax);
-		for(i = 0; i < pmax; i++) {
-			if(FN_isBOXED(d->key)) {
-				KREFTRACEv(d->oval);
-			}
-			d++;
-		}
-		END_REFTRACE();
-	}
+	//if(o->h.kvproto->bytemax > 0) {
+	//	size_t i, pmax = o->h.kvproto->bytemax / sizeof(kvs_t);
+	//	kvs_t *d = o->h.kvproto->kvs;
+	//	BEGIN_REFTRACE(pmax);
+	//	for(i = 0; i < pmax; i++) {
+	//		if(FN_isBOXED(d->key)) {
+	//			KREFTRACEv(d->oval);
+	//		}
+	//		d++;
+	//	}
+	//	END_REFTRACE();
+	//}
 	ct->reftrace(_ctx, o);
 }
 
@@ -108,7 +184,7 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 
 static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
 {
-	if(unlikely(ct->methods == K_EMPTYARRAY)) {
+	if(ct->methods == K_EMPTYARRAY) {
 		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
 	}
 	kArray_add(ct->methods, mtd);
@@ -134,15 +210,15 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 		mn_count++;
 		kmethodn_t mn = mn_count;
 		size_t psize = 0;
-		kparam_t p[1];
+		//kparam_t p[1];
 		d += 3;
-		//kMethod *mtd = new_kMethod(flag, cid, mn, f);
+		kMethod *mtd = new_kMethod(flag, cid, mn, f);
 		//kMethod_setParam(mtd, rtype, psize, p);
-		//if(ks == NULL || kMethod_isPublic(mtd)) {
-		//	CT_addMethod(_ctx, CT_(cid), mtd);
-		//} else {
-		//	KonohaSpace_addMethod(_ctx, ks, mtd);
-		//}
+		if(ks == NULL || kMethod_isPublic(mtd)) {
+			CT_addMethod(_ctx, CT_(cid), mtd);
+		} else {
+			KonohaSpace_addMethod(_ctx, ks, mtd);
+		}
 	}
 }
 
@@ -223,18 +299,6 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 	ctx->stack = base;
 }
 
-static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
-{
-	ksfp_t *sp = ctx->stack->stack;
-	BEGIN_REFTRACE((_ctx->esp - sp)+1);
-	while(sp < ctx->esp) {
-		KREFTRACEv(sp[0].o);
-		sp++;
-	}
-	KREFTRACEv(ctx->stack->gcstack);
-	END_REFTRACE();
-}
-
 static void KRUNTIME_free(CTX, kcontext_t *ctx)
 {
 	KARRAY_FREE(&_ctx->stack->cwb);
@@ -257,16 +321,18 @@ static kcontext_t *new_context(size_t stacksize)
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
-	//KCLASSTABLE_loadMethod(&_ctx);
+	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
 }
 
 void cyc0(VP_INT exinf)
 {
+
 }
 
 void TaskMain(VP_INT exinf)
 {
+
 }
 
 void TaskDisp(VP_INT exinf)
