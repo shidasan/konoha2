@@ -559,7 +559,7 @@ static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 
 static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
-	DBG_P("a=%d, shift=%d, espidx=%d", a, shift, espidx);
+	//DBG_P("a=%d, shift=%d, espidx=%d", a, shift, espidx);
 	switch(expr->build) {
 	case TEXPR_CONST : {
 		kObject *v = expr->data;
@@ -636,7 +636,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 		LETEXPR_asm(_ctx, a, expr, shift, espidx);
 		break;
 	case TEXPR_STACKTOP  :
-		DBG_P("STACKTOP mov %d, %d, < %d", a, expr->index + shift, espidx);
+		//DBG_P("STACKTOP mov %d, %d, < %d", a, expr->index + shift, espidx);
 		DBG_ASSERT(expr->index + shift < espidx);
 		NMOV_asm(_ctx, a, expr->ty, expr->index + shift);
 		break;
@@ -660,7 +660,6 @@ static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 	for(i = s; i < kArray_size(expr->cons); i++) {
 		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
-		DBG_P("param: i=%d shift=%d,espidx=%d", i, shift, thisidx + i - 1);
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, shift, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
@@ -679,9 +678,6 @@ static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 			ASM(VCALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 		}
 	}
-//	if (mtd->mn == MN_new) {
-//		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
-//	}
 }
 
 static void OR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
