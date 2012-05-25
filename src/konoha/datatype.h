@@ -263,9 +263,10 @@ static void Array_free(CTX, kObject *o)
 
 static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
 {
-	if(!((min * sizeof(void*)) < a->a.bytemax)) {
-		if(min < sizeof(kObject)) min = sizeof(kObject);
-		KARRAY_EXPAND(&a->a, min);
+	size_t minbyte = min * sizeof(void*);
+	if(!(minbyte < a->a.bytemax)) {
+		if(minbyte < sizeof(kObject)) minbyte = sizeof(kObject);
+		KARRAY_EXPAND(&a->a, minbyte);
 	}
 }
 
