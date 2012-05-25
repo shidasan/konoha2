@@ -325,7 +325,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				close(cfd);
 			} while ( ++cfd < maxFd );
 		}
-//      setsid(); // separation from tty
+		setsid(); // separation from tty
 		if (!IS_NULL(spd->cwd)) { // TODO!!
 			if ( chdir(S_text((spd->cwd))) != 0 ) {
 				ktrace(_ScriptFault,
@@ -709,8 +709,8 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
 	if ( ONEXEC(p) ) {
-		if ( (p->w.mode == M_PIPE) && (sfp[1].ba->bytesize > 0) ) {
-			kBytes *ba = sfp[1].ba;
+		if ( (p->w.mode == M_PIPE) && (S_size(sfp[1].s)> 0) ) {
+			kString *s = sfp[1].s;
 			// The measure against panic,
 			// if "Broken Pipe" is detected at the time of writing.
 #ifndef __APPLE__
@@ -718,12 +718,21 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 #else
 			sig_t oldset = signal(SIGPIPE, SIG_IGN);
 #endif
-			if ( fwrite(ba->buf, sizeof(char), ba->bytesize, p->w.fp) > 0 ) {
+			fprintf(stderr, "s:%s, len:%d\n", S_text(s), S_size(s));
+			// WARN??
+			kBytes* ba = (kBytes*)new_kObject(CT_Bytes, S_size(s));
+			memcpy(ba->buf, s->utext, S_size(s));
+			if (fwrite(ba->buf, sizeof(char), ba->bytesize, p->w.fp) > 0) {
 				fputc('\n', p->w.fp);
 				fflush(p->w.fp);
 				fsync(fileno(p->w.fp));
 			} else {
-//                KNH_NTRACE2(ctx, "package.subproc.communicate ", K_PERROR, KNH_LDATA0);
+				ktrace(_SystemFault,
+						KEYVALUE_s("@", "fwrite"),
+						KEYVALUE_u("errno", errno),
+						KEYVALUE_s("errstr", strerror(errno))
+				);
+//				KNH_NTRACE2(ctx, "package.subproc.communicate ", K_PERROR, KNH_LDATA0);
 			}
 			if ( oldset != SIG_ERR ) {
 				signal(SIGPIPE, oldset);
@@ -732,18 +741,27 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 		if ( knh_wait(_ctx, p->cpid, p->bg, p->timeout, &p->status ) == S_TIMEOUT ) {
 			p->timeoutKill = 1;
 			killWait(p->cpid);
-//            KNH_NTHROW2(ctx, sfp, "Script!!", "subproc.communicate :: timeout", K_FAILED, KNH_LDATA0);
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "knh_wait"),
+					KEYVALUE_u("errno", errno),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
 		} else {
-//            ret_a = new_kArray(ctx, CLASS_String, 0);
+			ret_a = (kArray*)new_kObject(CT_Array, NULL);
 			if ( p->r.mode == M_PIPE ) {
 				char buf[BUFSIZE];
 				memset(buf, 0x00, sizeof(buf));
 				// what if there's more than bufsize output?!
-				if( fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0 ) {
+				if(fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0) {
 					kArray_add(ret_a, new_kString(buf, BUFSIZE, 0));//TODO!
 				} else {
 					kArray_add(ret_a, KNULL(String));
-//                    KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
+					ktrace(_SystemFault,
+							KEYVALUE_s("@", "fread"),
+							KEYVALUE_u("errno", errno),
+							KEYVALUE_s("errstr", strerror(errno))
+					);
+//					KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
 				}
 			} else {
 				kArray_add( ret_a, KNULL(String));
@@ -755,7 +773,7 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 					kArray_add(ret_a, new_kString(buf, BUFSIZE, 0)); // TODO!
 				} else {
 					kArray_add(ret_a, KNULL(String));
-//                    KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
+//					KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
 				}
 			} else {
 				kArray_add(ret_a, KNULL(Object));
@@ -860,66 +878,66 @@ KMETHOD Subproc_setBufsize(CTX, ksfp_t *sfp _RIX)
 //## boolean Subproc.setFileERR(File err);
 //KMETHOD Subproc_setFileERR(CTX, ksfp_t *sfp _RIX)
 //{
-//    subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
-//    int ret = PREEXEC(p);
-//    if ( ret ) {
-//        ret = (sfp[1].p->rawptr != NULL);
-//        if ( ret ) {
-//            setFd(ctx, &p->e, M_FILE, (FILE*)sfp[1].p->rawptr);
-//        }
-//    }
-//    RETURNb_( ret );
+//	subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
+//	int ret = PREEXEC(p);
+//	if ( ret ) {
+//		ret = (sfp[1].p->rawptr != NULL);
+//		if ( ret ) {
+//			setFd(ctx, &p->e, M_FILE, (FILE*)sfp[1].p->rawptr);
+//		}
+//	}
+//	RETURNb_( ret );
 //}
 
 //## boolean Subproc.setTimeout(int milisec);
 //KMETHOD Subproc_setTimeout(CTX, ksfp_t *sfp _RIX)
 //{
-//    subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
-//    int ret = PREEXEC(p);
-//    if ( ret ) {
-//        int time = WORD2INT(sfp[1].ivalue);
-//        p->timeout = ( time > 0 ) ? time : 0;
-//    }
-//    RETURNb_( ret );
+//	subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
+//	int ret = PREEXEC(p);
+//	if ( ret ) {
+//		int time = WORD2INT(sfp[1].ivalue);
+//		p->timeout = ( time > 0 ) ? time : 0;
+//	}
+//	RETURNb_( ret );
 //}
 
 ////## File Subproc.getIN();
 //KMETHOD Subproc_getIn(CTX, ksfp_t *sfp _RIX)
 //{
-//    subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
-//    kRawPtr *po = (kRawPtr*)KNH_NULVAL(CLASS_Tvoid);
-//    if ( ONEXEC(p) ) {
-//        if( p->w.mode == M_PIPE ) {
-//            po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->w.fp);
-//        }
-//    }
-//    RETURN_( po );
+//	subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
+//	kRawPtr *po = (kRawPtr*)KNH_NULVAL(CLASS_Tvoid);
+//	if ( ONEXEC(p) ) {
+//		if( p->w.mode == M_PIPE ) {
+//			po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->w.fp);
+//		}
+//	}
+//	RETURN_( po );
 //}
 
 //## File Subproc.getOUT();
 //KMETHOD Subproc_getOut(CTX, ksfp_t *sfp _RIX)
 //{
-//    subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
-//    kRawPtr *po = (kRawPtr*)KNH_NULVAL(CLASS_Tvoid);
-//    if ( ONEXEC(p) ) {
-//        if( p->r.mode == M_PIPE ) {
-//            po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->r.fp);
-//        }
-//    }
-//    RETURN_( po );
+//	subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
+//	kRawPtr *po = (kRawPtr*)KNH_NULVAL(CLASS_Tvoid);
+//	if ( ONEXEC(p) ) {
+//		if( p->r.mode == M_PIPE ) {
+//			po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->r.fp);
+//		}
+//	}
+//	RETURN_( po );
 //}
 
 //## File Subproc.getERR();
 //KMETHOD Subproc_getErr(CTX, ksfp_t *sfp _RIX)
 //{
-//    subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
-//    kRawPtr *po = (kRawPtr*)KNH_NULVAL(CLASS_Tvoid);
-//    if ( ONEXEC(p) ) {
-//        if( p->e.mode == M_PIPE ) {
-//            po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->e.fp);
-//        }
-//    }
-//    RETURN_( po );
+//	subprocData_t *p = (subprocData_t*)sfp[0].p->rawptr;
+//	kRawPtr *po = KNULL(CLASS_Tvoid);
+//	if ( ONEXEC(p) ) {
+//		if( p->e.mode == M_PIPE ) {
+//			po = new_RawPtr(ctx, ClassTBL(khn_getFileClass(ctx)), p->e.fp);
+//		}
+//	}
+//	RETURN_( po );
 //}
 
 //## int Subproc.getPid();
@@ -943,7 +961,7 @@ KMETHOD Subproc_getReturncode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-    RETURNi_( (p!=NULL) ? p->status : -1 );
+	RETURNi_( (p!=NULL) ? p->status : -1 );
 }
 
 //## boolean Subproc.enablePipemodeIN(Boolean isPipemode);
@@ -1180,10 +1198,7 @@ static void Subproc_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 
 }
-
 /* ------------------------------------------------------------------------ */
-
-// --------------------------------------------------------------------------
 
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
@@ -1210,12 +1225,16 @@ static kbool_t subproc_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 
 	base->cSubproc= Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defSubproc, pline);
 
+	kparam_t ps = {TY_String, FN_("str")};
+	kclass_t *CT_StringArray2 = kClassTable_Generics(CT_Array, 1, &ps);
+	kcid_t TY_StringArray = CT_StringArray2->cid;
+
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im, _F(Subproc_new), TY_Subproc, TY_Subproc,MN_("new"), 2, TY_String, FN_("path"), TY_Boolean, FN_("mode"),
 		_Public|_Const|_Im, _F(Subproc_fg), TY_Int, TY_Subproc, MN_("fg"), 0,
 		_Public|_Const|_Im, _F(Subproc_bg), TY_Boolean, TY_Subproc, MN_("bg"), 0,
 		_Public|_Const|_Im, _F(Subproc_exec), TY_String, TY_Subproc, MN_("exec"), 1, TY_String, FN_("data"),
-		_Public|_Const|_Im, _F(Subproc_communicate), TY_Array, TY_Subproc, MN_("communicate"), 1, TY_String, FN_("input"),
+		_Public|_Const|_Im, _F(Subproc_communicate), TY_StringArray, TY_Subproc, MN_("communicate"), 1, TY_String, FN_("input"),
 //		_Public|_Const|_Im, _F(Subproc_poll), TY_Int, TY_Subproc, MN_("poll"), 0,
 //		_Public|_Const|_Im, _F(Subproc_wait), TY_Int, TY_Subproc, MN_("wait"), 0,
 //		_Public|_Const|_Im, _F(Subproc_sendSignal), TY_Boolean, TY_Subproc, MN_("sendSignal"), 1 TY_Int, FN_("signal"),

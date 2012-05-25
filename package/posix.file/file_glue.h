@@ -182,9 +182,172 @@ static KMETHOD File_putC(CTX, ksfp_t *sfp _RIX)
 	}
 	RETURNb_(0);
 }
+/* ======================================================================== */
+/* FILE low-level*/
+
+// TODO: functions below will return integer which indecates file descriptor
+
+//## @Native int File.lseek(int offset, int whence)
+static KMETHOD File_lseek(CTX, ksfp_t *sfp _RIX)
+{
+	kFile *file = (kFile*)sfp[0].o;
+	FILE *fp = file->fp;
+	// fileno only returns EBADF
+	if (fp == NULL) RETURNi_(-1);
+	int fd = fileno(fp);
+	if (fd == -1) {
+		ktrace(_DataFault,
+				KEYVALUE_s("@", "fileno"),
+				KEYVALUE_p("fp", fp)
+		);
+		RETURNi_(-1);
+	}
+	int offset = sfp[1].ivalue;
+	int whence = sfp[2].ivalue;
+	off_t ret_offset = lseek(fd, offset, whence);
+	if (ret_offset == -1) {
+		ktrace(_DataFault,
+				KEYVALUE_s("@", "lseek"),
+				KEYVALUE_u("offset", offset),
+				KEYVALUE_u("whence", whence),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
+	RETURNi_((int)ret_offset);
+}
+
+//## boolean File.truncate(int length)
+static KMETHOD File_truncate(CTX, ksfp_t *sfp _RIX)
+{
+	kFile *file = (kFile*)sfp[0].o;
+	FILE *fp = file->fp;
+	int length = sfp[1].ivalue;
+	if (fp == NULL) RETURNb_(0);
+	int fd = fileno(fp);
+	if (fd == -1) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "fileno"),
+				KEYVALUE_p("fp", fp)
+		);
+		RETURNb_(0);
+	}
+	int ret = ftruncate(fd, length);
+	if (ret != 0) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "ftruncate"),
+				KEYVALUE_u("length", length),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
+	RETURNb_(ret == 0);
+}
+
+//## boolean DFile.chmod(int length)
+static KMETHOD File_chmod(CTX, ksfp_t *sfp _RIX)
+{
+	kFile *file = (kFile*)sfp[0].o;
+	FILE *fp = file->fp;
+	mode_t mode = (mode_t)sfp[1].ivalue;
+	if (fp == NULL) RETURNb_(0);
+	int fd = fileno(fp);
+	if (fd == -1) {
+		ktrace(_DataFault,
+				KEYVALUE_s("@", "fileno"),
+				KEYVALUE_p("fp", fp)
+		);
+		RETURNb_(0);
+	}
+
+	int ret = fchmod(fd, mode);
+	if (ret != -1) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "fchmod"),
+				KEYVALUE_u("mode", mode),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
+	RETURNb_(ret == 0);
+}
+
+//## boolean File.chown(int owner, int group)
+static KMETHOD File_chown(CTX, ksfp_t *sfp _RIX)
+{
+	kFile *file = (kFile*)sfp[0].o;
+	FILE *fp = file->fp;
+	uid_t owner = (uid_t)sfp[1].ivalue;
+	gid_t group = (gid_t)sfp[2].ivalue;
+	if (fp == NULL) RETURNb_(0);
+	int fd = fileno(fp);
+	if (fd == -1) {
+		ktrace(_DataFault,
+				KEYVALUE_s("@", "fileno"),
+				KEYVALUE_p("fp", fp)
+		);
+		RETURNb_(0);
+	}
+	int ret = fchown(fd, owner, group);
+	if (ret != -1) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "fchown"),
+				KEYVALUE_u("owner", owner),
+				KEYVALUE_u("group", group),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
+	RETURNb_(ret == 0);
+}
+
+// TODO: isn't ioctl difficult for script users? should we support this?
+//## @Native int File.ioctl(int request, String[] args)
+//staic KMETHOD File_ioctl(CTX, ksfp_t *sfp _RIX)
+//{
+//	kFile *file = (kFile*)sfp[0].o;
+//	FILE *fp = file->fp;
+//	int request  = Int_to(int, sfp[1]);
+//	char *argp = String_to(char*, sfp[2]);
+//	if (fp == NULL) RETURNb_(0);
+//	int fd = fileno(fp);
+//	if (fd == -1) {
+//		KNH_NTRACE2(ctx, "fileno", K_PERROR, KNH_LDATA(LOG_p("fp", fp)));
+//		RETURNb_(0);
+//	}
+//	int ret = ioctl(fd, request, argp);
+//	KNH_NTRACE2(ctx, "ioctl", ret != -1 ? K_OK : K_PERROR, KNH_LDATA(
+//				LOG_p("fp", fp), LOG_i("request", request), LOG_s("arg", argp)
+//				));
+//	RETURNb_(ret != -1);
+//}
+
+// NOTE: sys_flock can use for a file, only for
+//## @Native boolean File.flock(int opretaion);
+static KMETHOD File_flock(CTX, ksfp_t *sfp _RIX)
+{
+	kFile *file = (kFile*)sfp[0].o;
+	FILE *fp = file->fp;
+	int operation  = sfp[1].ivalue;
+	if (fp == NULL) RETURNb_(0);
+	int fd = fileno(fp);
+	if (fd == -1) {
+		ktrace(_DataFault,
+				KEYVALUE_s("@", "fileno"),
+				KEYVALUE_p("fp", fp)
+		);
+		RETURNb_(0);
+	}
+	int ret = flock(fd, operation);
+	if (ret == -1) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "flock"),
+				KEYVALUE_u("operation", operation),
+				KEYVALUE_p("fp", fp),
+				KEYVALUE_s("errstr", strerror(errno))
+		);
+	}
+	RETURNb_(ret == 0);
+}
 
 //## @Native boolean File.sync();
-KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
+static KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 {
 	kFile *file = (kFile*)sfp[0].o;
 	FILE *fp = file->fp;
@@ -192,7 +355,7 @@ KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 	if(fp != NULL) {
 		int fd = fileno(fp);
 		if (fd == -1) {
-			ktrace(LOGPOL_DEBUG | _DataFault,
+			ktrace(_DataFault,
 					KEYVALUE_s("@", "fileno"),
 					KEYVALUE_p("fp", fp)
 			);
@@ -237,6 +400,11 @@ static kbool_t file_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 		_Public|_Const|_Im, _F(File_sync), TY_Boolean, TY_File, MN_("sync"), 0,
 		_Public|_Const|_Im, _F(File_getC), TY_Int, TY_File, MN_("getC"), 0,
 		_Public|_Const|_Im, _F(File_putC), TY_Boolean, TY_File, MN_("putC"), 1, TY_Int, FN_("ch"),
+		_Public|_Const|_Im, _F(File_lseek), TY_Int, TY_File, MN_("lseek"), 2, TY_Int, FN_("offset"), TY_Int, FN_("whence"),
+		_Public|_Const|_Im, _F(File_chmod), TY_Boolean, TY_File, MN_("chmod"), 1, TY_Int, FN_("length"),
+		_Public|_Const|_Im, _F(File_chown), TY_Boolean, TY_File, MN_("chown"), 2, TY_Int, FN_("owner"), TY_Int, FN_("group"),
+		_Public|_Const|_Im, _F(File_truncate), TY_Boolean, TY_File, MN_("truncate"), 1, TY_Int, FN_("length"),
+		_Public|_Const|_Im, _F(File_flock), TY_Boolean, TY_File, MN_("flock"), 1, TY_Int, FN_("operation"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
