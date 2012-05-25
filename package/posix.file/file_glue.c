@@ -27,6 +27,7 @@
 
 #include <unistd.h>
 #include <konoha2/bytes.h>
+#include <errno.h>
 
 #include"file_glue.h"
 

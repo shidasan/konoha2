@@ -974,6 +974,7 @@ struct _kSystem {
 #define CFLAG_T0                    kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final
 #define TY_T0                       CLASS_T0
 #define TY_0                        CLASS_T0
+
 //
 //#define CFLAG_Tdynamic              kClass_Final
 //#define OFLAG_Tdynamic              MAGICFLAG(0)
@@ -1198,6 +1199,7 @@ struct _klib2 {
 #define new_kStringf(P, FMT, ...) (KPI)->Knew_Stringf(_ctx, P, FMT, ## __VA_ARGS__)
 
 #define kArray_size(A)            (((A)->bytesize)/sizeof(void*))
+#define kArray_setsize(A, N)  ((struct _kArray*)A)->bytesize = N * sizeof(void*)
 #define kArray_add(A, V)          (KPI)->KArray_add(_ctx, A, UPCAST(V))
 #define kArray_insert(A, N, V)    (KPI)->KArray_insert(_ctx, A, N, UPCAST(V))
 #define kArray_clear(A, S)        (KPI)->KArray_clear(_ctx, A, S)

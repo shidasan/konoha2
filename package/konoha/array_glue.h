@@ -54,18 +54,42 @@ static KMETHOD Array_set(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
+struct _kAbstractArray {
+	kObjectHeader h;
+	karray_t a;
+} ;
 
-static KMETHOD IntArray_newArray(CTX, ksfp_t *sfp _RIX)
+static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 {
-	struct _kArray *a = (struct _kArray*)sfp[0].o;
-	int asize = sfp[1].ivalue;
-//	DBG_P("bytesize=%lu, class=%s", a->bytesize, T_CT(O_ct(a)));
+	struct _kArray *a = (struct _kArray *)sfp[0].o;
+	size_t asize = (size_t)sfp[1].ivalue;
+	kArray_setsize((kArray*)a, asize * sizeof(void*));
 	a->bytemax = asize * sizeof(void*);
-	a->bytesize = asize * sizeof(void*);
-	a->ndata = (uintptr_t *)KCALLOC(a->bytemax, 1);
+	a->list = (kObject**)KCALLOC(a->bytemax, 1);
 	RETURN_(a);
 }
 
+
+//static KMETHOD IntArray_newArray(CTX, ksfp_t *sfp _RIX)
+//{
+//	struct _kArray *a = (struct _kArray*)sfp[0].o;
+//	int asize = sfp[1].ivalue;
+////	DBG_P("bytesize=%lu, class=%s", a->bytesize, T_CT(O_ct(a)));
+//	a->bytemax = asize * sizeof(void*);
+//	a->bytesize = asize * sizeof(void*);
+//	a->ndata = (uintptr_t *)KCALLOC(a->bytemax, 1);
+//	RETURN_(a);
+//}
+//
+//static KMETHOD StringArray_newArray(CTX, ksfp_t *sfp _RIX)
+//{
+//	struct _kArray *a = (struct _kArray*)sfp[0].o;
+//	int asize = sfp[1].ivalue;
+//	a->bytemax = asize * sizeof(void*);
+//	a->bytesize = asize * sizeof(void*);
+//	a->strings = (struct _kString **)KCALLOC(a->bytemax, 1);
+//	RETURN_(a);
+//}
 
 // --------------------------------------------------------------------------
 
@@ -75,15 +99,28 @@ static KMETHOD IntArray_newArray(CTX, ksfp_t *sfp _RIX)
 #define _Im       kMethod_Immutable
 #define _F(F)     (intptr_t)(F)
 
+static kclass_t *T_thistype(CTX, kclass_t *ct, kclass_t *self)
+{
+	return self;
+}
+
+#define CT_Tthis         cThis
+#define TY_Tthis         cThis->cid
+
 static	kbool_t array_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	kparam_t p = {TY_Int, FN_("x")};
-	kclass_t *CT_IntArray = kClassTable_Generics(CT_Array, 1, &p);
-	kcid_t TY_IntArray = CT_IntArray->cid;
+//	KDEFINE_CLASS defTthis = {
+//		.structname = "Tthis",
+//		.cid = CLASS_newid,
+//		.cflag = kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final,
+//		.realtype = T_thistype,
+//	};
+//	kclass_t *cThis = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defTthis, pline);
+
 	intptr_t MethodData[] = {
-		_Public, _F(Array_get), TY_T0,   TY_Array, MN_("get"), 1, TY_Int, FN_("idx"),
-		_Public|_Im|_Const, _F(Array_set), TY_void, TY_Array, MN_("set"), 2, TY_Int, FN_("idx"),  TY_T0, FN_("value"),
-		_Public|_Im|_Const, _F(IntArray_newArray), TY_IntArray, TY_IntArray, MN_("newArray"), 1, TY_Int, FN_("size"),
+		_Public, _F(Array_get), TY_T0,   TY_Array, MN_("get"), 1, TY_Int, FN_("index"),
+		_Public|_Im|_Const, _F(Array_set), TY_void, TY_Array, MN_("set"), 2, TY_Int, FN_("index"),  TY_T0, FN_("value"),
+		_Public|_Im|_Const, _F(Array_newArray), TY_Array, TY_Array, MN_("newArray"), 1, TY_Int, FN_("size"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
@@ -95,14 +132,13 @@ static kbool_t array_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-
 static KMETHOD ParseExpr_BRACKET(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	DBG_P("parse bracket!!");
 	kToken *tk = tls->toks[c];
-	if(s == c) {  // TODO
+	if(s == c) { // TODO
 		kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tk->sub, 0, kArray_size(tk->sub));
 		RETURN_(SUGAR Expr_rightJoin(_ctx, expr, stmt, tls, s+1, c+1, e));
 	}

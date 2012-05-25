@@ -93,6 +93,7 @@ static void StringBase_unsetFlag(StringBase *s, uint32_t mask)
 static StringBase *new_StringBase(CTX, uint32_t mask)
 {
 	StringBase *s = (StringBase *) new_(String, 0);
+	StringBase_unsetFlag(s, MASK_INLINE);
 	StringBase_setFlag(s, mask);
 	return s;
 }
@@ -103,6 +104,7 @@ static StringBase *InlineString_new(CTX, StringBase *base, const char *text, siz
 	InlineString *s = (InlineString *) base;
 	StringBase_setFlag(base, MASK_INLINE);
 	s->base.length = len;
+	assert(len < SIZEOF_INLINETEXT);
 	for (i = 0; i < len; ++i) {
 		s->inline_text[i] = text[i];
 	}
@@ -178,15 +180,20 @@ static void write_text(StringBase *base, char *dest, int size)
 		switch (S_flag(base)) {
 			case S_FLAG_LINER:
 			case S_FLAG_EXTERNAL:
+				memcpy(dest, ((LinerString *) base)->text, size);
+				return;
 			case S_FLAG_INLINE:
-				memcpy(dest, ((InlineString *) base)->text, size);
+				assert(base->length < SIZEOF_INLINETEXT);
+				memcpy(dest, ((InlineString *) base)->inline_text, size);
 				return;
 			case S_FLAG_ROPE:
 				str = (RopeString *) base;
+				assert(str->left->length + str->right->length == size);
 				len = S_len(str->left);
 				write_text(str->left, dest, len);
 				base = str->right;
 				dest += len;
+				size -= len;
 				break;
 		}
 	}
@@ -196,9 +203,9 @@ static LinerString *RopeString_flatten(CTX, RopeString *rope)
 {
 	size_t length = S_len((StringBase *) rope);
 	char *dest = (char *) KMALLOC(length+1);
-	size_t len = S_len(rope->left);
-	write_text(rope->left,  dest, len);
-	write_text(rope->right, dest+len, length - len);
+	size_t llen = S_len(rope->left);
+	write_text(rope->left,  dest,llen);
+	write_text(rope->right, dest+llen, length - llen);
 	return RopeString_toLinerString(rope, dest, length);
 }
 
@@ -226,12 +233,14 @@ static void StringBase_reftrace(CTX, StringBase *s)
 	while (1) {
 		if (unlikely(!StringBase_isRope(s)))
 			break;
-		BEGIN_REFTRACE(1);
 		RopeString *rope = (RopeString *) s;
 		StringBase_reftrace(_ctx, rope->left);
+		BEGIN_REFTRACE(3);
+		KREFTRACEv(rope);//FIXME reftracing rope is needed?
+		KREFTRACEv(rope->left);
 		KREFTRACEv(rope->right);
-		s = rope->right;
 		END_REFTRACE();
+		s = rope->right;
 	}
 }
 
@@ -264,6 +273,7 @@ static StringBase *StringBase_concat(CTX, kString *s0, kString *s1)
 		InlineString *ret = (InlineString *) new_StringBase(_ctx, MASK_INLINE);
 		char *s0 = String_getReference(_ctx, left);
 		char *s1 = String_getReference(_ctx, right);
+		assert(length < SIZEOF_INLINETEXT);
 		ret->base.length = length;
 		memcpy(ret->inline_text, s0, llen);
 		memcpy(ret->inline_text + llen, s1, rlen);
@@ -293,12 +303,17 @@ static KMETHOD Rope_opADD(CTX, ksfp_t *sfp _RIX)
 
 static kbool_t rope_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-	int FN_x = FN_("x");
-	intptr_t MethodData[] = {
-		_Public|_Const, _F(Rope_opADD),       TY_String,  TY_String, MN_("opADD"), 1, TY_String, FN_x,
-		DEND,
-	};
-	kKonohaSpace_loadMethodData(ks, MethodData);
+	kMethod *mtd = kKonohaSpace_getMethodNULL(ks, TY_String, MN_("opADD"));
+	if (mtd) {
+		kMethod_setFunc(mtd, Rope_opADD);
+	} else {
+		int FN_x = FN_("x");
+		intptr_t MethodData[] = {
+			_Public|_Const, _F(Rope_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x,
+			DEND
+		};
+		kKonohaSpace_loadMethodData(ks, MethodData);
+	}
 	KSET_CLASSFUNC(CT_String, unbox, String2, pline);
 	KSET_CLASSFUNC(CT_String, free, String2, pline);
 	KSET_CLASSFUNC(CT_String, reftrace, String2, pline);

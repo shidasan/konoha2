@@ -117,7 +117,7 @@ static void setfield(CTX, KDEFINE_CLASS *ct, int fctsize, kclass_t *supct)
 {
 	size_t fsize = supct->fsize + fctsize;
 	ct->cstruct_size = fctsize * sizeof(kObject*); //size64((fsize * sizeof(void*)) + sizeof(kObjectHeader));
-	DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
+	//DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
 	if(fsize > 0) {
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;

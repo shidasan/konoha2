@@ -574,7 +574,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		DBG_ASSERT(s != NULL);
 		ct->cflag   = s->cflag;
 		ct->cid     = newid;
-		ct->bcid    = newid;
+		ct->bcid    = (s->bcid == 0) ? newid : s->bcid;
 		ct->supcid  = (s->supcid == 0) ? CLASS_Object : s->supcid;
 		ct->fields = s->fields;
 		ct->fsize  = s->fsize;
