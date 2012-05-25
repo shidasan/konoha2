@@ -1306,8 +1306,16 @@ typedef enum {
 
 #define KINITv(VAR, VAL)   OBJECT_SET(VAR, VAL)
 #define KSETv(VAR, VAL)    OBJECT_SET(VAR, VAL)
-#define KINITp(parent, v, o) KINITv(v, o)
-#define KSETp(parent,  v, o) KSETv(v, o)
+
+#define KINITp(parent, v, o) KINITv(v, o) {\
+		KWRITE_BARRIER(parent, o);\
+		OBJECT_SET(v, o);\
+	}
+#define KSETp(parent,  v, o) KSETv(v, o) {\
+		KWRITE_BARRIER(parent, o);\
+		OBJECT_SET(v, o);\
+	}
+
 #define KUNUSEv(V)  (V)->h.ct->free(_ctx, (V))
 
 #define BEGIN_REFTRACE(SIZE)  int _ref_ = (SIZE); struct _kObject** _tail = KONOHA_reftail(_ctx, (SIZE));
@@ -1402,6 +1410,16 @@ typedef struct DEFINE_TESTFUNC {
 	Ftest f;
 } DEFINE_TESTFUNC ;
 #endif
+
+void kwrite_barrier(CTX, kObject* pa, kObject* chi);
+
+#define KWRITE_BARRIER(parent, child) {\
+	kwrite_barrier(_ctx, (kObject*)parent, (kObject*)child);\
+}
+
+#define knh_isYoung(o)     (o->h.refc == 0)//(knh_testFlag(o->h.refc, KNH_TENURE_FLAG) == 0)
+#define knh_isTenure(o)    (o != NULL && o->h.refc == 1)//(knh_testFlag(o->h.refc, KNH_TENURE_FLAG) == 1)
+#define knh_invoke_gc(ctx) knh_invoke_gc_(ctx)
 
 #include "logger.h"
 

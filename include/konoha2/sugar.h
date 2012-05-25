@@ -191,18 +191,21 @@ typedef struct KDEFINE_SYNTAX {
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->TopStmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
+		KWRITE_BARRIER(syn_, syn_->TopStmtTyCheck);\
 	}while(0)\
 
 #define SYN_setStmtTyCheck(KS, KW, F) do {\
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->StmtTyCheck, new_SugarMethod(StmtTyCheck_##F));\
+		KWRITE_BARRIER(syn_, syn_->StmtTyCheck);\
 	}while(0)\
 
 #define SYN_setExprTyCheck(KS, KW, F) do {\
 		struct _ksyntax *syn_ = NEWSYN_(KS, KW);\
 		DBG_ASSERT(syn_ != NULL);\
 		KSETv(syn_->ExprTyCheck, new_SugarMethod(ExprTyCheck_##F));\
+		KWRITE_BARRIER(syn_, syn_->ExprTyCheck);\
 	}while(0)\
 
 

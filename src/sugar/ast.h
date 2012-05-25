@@ -42,6 +42,7 @@ static kBlock *new_Block(CTX, kKonohaSpace *ks, kStmt *parent, kArray *tls, int 
 	struct _kBlock *bk = new_W(Block, ks);
 	PUSH_GCSTACK(bk);
 	if(parent != NULL) {
+		KWRITE_BARRIER(bk, parent);
 		KINITv(bk->parentNULL, parent);
 	}
 	int i = s, indent = 0, atop = kArray_size(tls);
@@ -176,6 +177,7 @@ static kbool_t Token_toBRACE(CTX, struct _kToken *tk, kKonohaSpace *ks)
 		PUSH_GCSTACK(a);
 		KonohaSpace_tokenize(_ctx, ks, S_text(tk->text), tk->uline, a);
 		tk->tt = AST_BRACE; tk->topch = '{'; tk->closech = '}';
+		KWRITE_BARRIER(tk, a);
 		KSETv(tk->sub, a);
 		RESET_GCSTACK();
 		return 1;
@@ -196,6 +198,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 	kArray_add(tlsdst, tkP);
 	tkP->tt = tt; tkP->kw = tt; tkP->uline = tk->uline; tkP->topch = tk->topch; tkP->lpos = closech;
 	KSETv(tkP->sub, new_(TokenArray, 0));
+	KWRITE_BARRIER(tkP, tkP->sub);
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
 		if(tk->kw != 0) {
@@ -492,6 +495,7 @@ static void Block_addStmtLine(CTX, kBlock *bk, kArray *tls, int s, int e, kToken
 {
 	struct _kStmt *stmt = new_W(Stmt, tls->toks[s]->uline);
 	kArray_add(bk->blocks, stmt);
+	KWRITE_BARRIER(stmt, bk);
 	KINITv(stmt->parentNULL, bk);
 	if(tkERR != NULL) {
 		((struct _kStmt*)stmt)->syn = SYN_(kStmt_ks(stmt), KW_Err);
@@ -638,6 +642,7 @@ static KMETHOD ParseExpr_Term(CTX, ksfp_t *sfp _RIX)
 	struct _kExpr *expr = new_W(Expr, SYN_(kStmt_ks(stmt), tk->kw));
 	PUSH_GCSTACK(expr);
 	Expr_setTerm(expr, 1);
+	KWRITE_BARRIER(expr, tk);
 	KSETv(expr->tk, tk);
 	RETURN_(kExpr_rightJoin(expr, stmt, tls, s+1, c+1, e));
 }

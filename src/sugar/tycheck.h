@@ -233,6 +233,7 @@ static kExpr* Expr_tyCheckAt(CTX, kExpr *exprP, size_t pos, kGamma *gma, ktype_t
 	if(!Expr_isTerm(exprP) && pos < kArray_size(exprP->cons)) {
 		kExpr *expr = exprP->cons->exprs[pos];
 		expr = Expr_tyCheck(_ctx, expr, gma, reqty, pol);
+		KWRITE_BARRIER(exprP->cons, expr);
 		KSETv(exprP->cons->exprs[pos], expr);
 		return expr;
 	}
@@ -303,6 +304,7 @@ static kMethod* KS_getGetterMethodNULL(CTX, kKonohaSpace *ks, ktype_t cid, ksymb
 static kExpr* new_GetterExpr(CTX, kToken *tkU, kMethod *mtd, kExpr *expr)
 {
 	struct _kExpr *expr1 = (struct _kExpr *)new_TypedConsExpr(_ctx, TEXPR_CALL, kMethod_rtype(mtd), 2, mtd, expr);
+	KWRITE_BARRIER(expr1, tkU);
 	KSETv(expr1->tk, tkU); // for uline
 	return (kExpr*)expr1;
 }
@@ -512,6 +514,7 @@ static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma
 	DBG_ASSERT(this_ct->cid != TY_var);
 	if(!TY_isUnbox(mtd->cid) && CT_isUnbox(this_ct)) {
 		expr1 = new_BoxingExpr(_ctx, cons->exprs[1], this_ct->cid);
+		KWRITE_BARRIER(cons, expr1);
 		KSETv(cons->exprs[1], expr1);
 	}
 	int isConst = (Expr_isCONST(expr1)) ? 1 : 0;
@@ -642,6 +645,7 @@ static KMETHOD ExprTyCheck_FuncStyleCall(CTX, ksfp_t *sfp _RIX)
 				if(mtd != NULL) {
 					if(!kMethod_isStatic(mtd)) {
 						KSETv(cons->exprs[1], new_Variable(LOCAL, gma->genv->this_cid, 0, gma));
+						KWRITE_BARRIER(cons,cons->exprs[1]);
 						this_cid = gma->genv->this_cid;
 					}
 				}
@@ -657,6 +661,7 @@ static KMETHOD ExprTyCheck_FuncStyleCall(CTX, ksfp_t *sfp _RIX)
 	if(mtd != NULL) {
 		if(this_cid == TY_unknown) {
 			KSETv(cons->exprs[1], new_Variable(NULL, mtd->cid, 0, gma));
+			KWRITE_BARRIER(cons,cons->exprs[1]);
 		}
 		RETURN_(Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty));
 	}
@@ -1089,7 +1094,9 @@ static void Stmt_setMethodFunc(CTX, kStmt *stmt, kKonohaSpace *ks, kMethod *mtd)
 {
 	kToken *tcode = kStmt_token(stmt, KW_Block, NULL);
 	if(tcode != NULL && tcode->tt == TK_CODE) {
+		KWRITE_BARRIER((struct _kMethod*)mtd, tcode);
 		KSETv(((struct _kMethod*)mtd)->tcode, tcode);  //FIXME
+		KWRITE_BARRIER((struct _kMethod*)mtd, ks);
 		KSETv(((struct _kMethod*)mtd)->lazyns, ks);
 		kMethod_setFunc(mtd, Fmethod_lazyCompilation);
 		kArray_add(ctxsugar->definedMethods, mtd);
@@ -1338,7 +1345,9 @@ static kstatus_t Block_eval(CTX, kBlock *bk)
 	memcpy(&lbuf, base->evaljmpbuf, sizeof(kjmpbuf_t));
 	if((jmpresult = ksetjmp(*base->evaljmpbuf)) == 0) {
 		for(i = 0; i < kArray_size(bk->blocks); i++) {
+			KWRITE_BARRIER(bk1->blocks, bk->blocks->list[i]);
 			KSETv(bk1->blocks->list[0], bk->blocks->list[i]);
+			KWRITE_BARRIER((struct _kBlock*)bk1, bk->ks);
 			KSETv(((struct _kBlock*)bk1)->ks, bk->ks);
 			kArray_clear(bk1->blocks, 1);
 			result = SingleBlock_eval(_ctx, bk1, mtd, bk->ks);

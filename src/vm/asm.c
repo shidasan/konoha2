@@ -445,6 +445,7 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 {
 	W(kMethod, mtd);
 	kMethod_setFunc(mtd, Fmethod_runVM);
+	KWRITE_BARRIER(Wmtd, kcode);
 	KSETv(Wmtd->kcode, kcode);
 	Wmtd->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
 	if(verbose_code) {
@@ -1023,7 +1024,9 @@ static void kmodcode_setup(CTX, struct kmodshare_t *def, int newctx)
 		base->h.reftrace = ctxcode_reftrace;
 		base->h.free     = ctxcode_free;
 		KINITv(base->insts, new_(Array, K_PAGESIZE/sizeof(void*)));
+		KWRITE_BARRIER(base, base->insts);
 		KINITv(base->constPools, new_(Array, 64));
+		KWRITE_BARRIER(base, base->constPools);
 		_ctx->modlocal[MOD_code] = (kmodlocal_t*)base;
 	}
 }
@@ -1081,6 +1084,7 @@ void MODCODE_init(CTX, kcontext_t *ctx)
 		kBasicBlock_add(ib, RET);   // NEED TERMINATION
 		ia->WnextNC = ib;
 		kKonohaCode *kcode = new_KonohaCode(_ctx, ia, ib);
+		KWRITE_BARRIER(kmodcode, kcode);
 		KINITv(kmodcode->codeNull, kcode);
 		kopl_t *pc = VirtualMachine_run(_ctx, _ctx->esp, kcode->code);
 		CODE_ENTER = pc;

@@ -126,9 +126,13 @@ static ksyntax_t* KonohaSpace_syntax(CTX, kKonohaSpace *ks0, keyword_t kw, int i
 			syn->ty  = TY_unknown;
 			syn->op1 = MN_NONAME;
 			syn->op2 = MN_NONAME;
+			KWRITE_BARRIER(syn, kmodsugar->UndefinedParseExpr);
 			KINITv(syn->ParseExpr, kmodsugar->UndefinedParseExpr);
+			KWRITE_BARRIER(syn, kmodsugar->UndefinedStmtTyCheck);
 			KINITv(syn->TopStmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+			KWRITE_BARRIER(syn, kmodsugar->UndefinedStmtTyCheck);
 			KINITv(syn->StmtTyCheck, kmodsugar->UndefinedStmtTyCheck);
+			KWRITE_BARRIER(syn, kmodsugar->UndefinedExprTyCheck);
 			KINITv(syn->ExprTyCheck, kmodsugar->UndefinedExprTyCheck);
 		}
 		//syn->parent = parent;
@@ -174,6 +178,7 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		}
 		if(syndef->rule != NULL) {
 			KINITv(syn->syntaxRuleNULL, new_(TokenArray, 0));
+			KWRITE_BARRIER(syn, syn->syntaxRuleNULL);
 			parseSyntaxRule(_ctx, syndef->rule, 0, syn->syntaxRuleNULL);
 		}
 		setSyntaxMethod(_ctx, syndef->ParseStmt, &(syn->ParseStmtNULL), &pParseStmt, &mParseStmt);
@@ -183,9 +188,11 @@ static void KonohaSpace_defineSyntax(CTX, kKonohaSpace *ks, KDEFINE_SYNTAX *synd
 		setSyntaxMethod(_ctx, syndef->ExprTyCheck, &(syn->ExprTyCheck), &pExprTyCheck, &mExprTyCheck);
 		if(syn->ParseExpr == kmodsugar->UndefinedParseExpr) {
 			if(FLAG_is(syn->flag, SYNFLAG_ExprOp)) {
+				KWRITE_BARRIER(syn, kmodsugar->ParseExpr_Op);
 				KSETv(syn->ParseExpr, kmodsugar->ParseExpr_Op);
 			}
 			else if(FLAG_is(syn->flag, SYNFLAG_ExprTerm)) {
+				KWRITE_BARRIER(syn, kmodsugar->ParseExpr_Term);
 				KSETv(syn->ParseExpr, kmodsugar->ParseExpr_Term);
 			}
 		}
@@ -355,6 +362,7 @@ static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
 {
 	if(unlikely(ct->methods == K_EMPTYARRAY)) {
 		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
+		KWRITE_BARRIER((struct _kclass*)ct, ct->methods);
 	}
 	kArray_add(ct->methods, mtd);
 }
@@ -363,6 +371,7 @@ static void KonohaSpace_addMethod(CTX, kKonohaSpace *ks, kMethod *mtd)
 {
 	if(ks->methods == K_EMPTYARRAY) {
 		KINITv(((struct _kKonohaSpace*)ks)->methods, new_(MethodArray, 8));
+		KWRITE_BARRIER((struct _kKonohaSpace*)ks, ks->methods);
 	}
 	kArray_add(ks->methods, mtd);
 }
@@ -637,6 +646,7 @@ static struct _kExpr* Expr_vadd(CTX, struct _kExpr *expr, int n, va_list ap)
 	int i;
 	if(!IS_Array(expr->cons)) {
 		KSETv(expr->cons, new_(Array, 8));
+		KWRITE_BARRIER(expr, expr->cons);
 	}
 	for(i = 0; i < n; i++) {
 		kObject *v =  (kObject*)va_arg(ap, kObject*);
@@ -767,6 +777,7 @@ static kExpr* Expr_setConstValue(CTX, kExpr *expr, ktype_t ty, kObject *o)
 	}
 	else {
 		Wexpr->build = TEXPR_CONST;
+		KWRITE_BARRIER(Wexpr, o);
 		KINITv(Wexpr->data, o);
 	}
 	WASSERT(expr);
@@ -955,8 +966,11 @@ static void Block_init(CTX, kObject *o, void *conf)
 	kKonohaSpace *ks = (conf != NULL) ? (kKonohaSpace*)conf : kmodsugar->rootks;
 	bk->parentNULL = NULL;
 	KINITv(bk->ks, ks);
+	KWRITE_BARRIER(bk, ks);
 	KINITv(bk->blocks, new_(StmtArray, 0));
+	KWRITE_BARRIER(bk, bk->blocks);
 	KINITv(bk->esp, new_(Expr, 0));
+	KWRITE_BARRIER(bk, bk->esp);
 }
 
 static void Block_reftrace(CTX, kObject *o)
@@ -973,6 +987,7 @@ static void Block_reftrace(CTX, kObject *o)
 static void Block_insertAfter(CTX, kBlock *bk, kStmt *target, kStmt *stmt)
 {
 	//DBG_ASSERT(stmt->parentNULL == NULL);
+	KWRITE_BARRIER((struct _kStmt*)stmt, bk);
 	KSETv(((struct _kStmt*)stmt)->parentNULL, bk);
 	size_t i;
 	for(i = 0; i < kArray_size(bk->blocks); i++) {

@@ -126,8 +126,11 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 //## @Const method String Int.toString();
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
-	char buf[40];
+	char buf[40] = {0};
 	snprintf(buf, sizeof(buf), "%ld", (intptr_t)sfp[0].ivalue);
+	if (sfp[0].ivalue == -17445) {
+		asm("int3");
+	}
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
 }
 

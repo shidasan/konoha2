@@ -278,6 +278,7 @@ static void Array_add(CTX, kArray *o, kObject *value)
 	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
 	Array_ensureMinimumSize(_ctx, a, asize+1);
 	DBG_ASSERT(a->a.objects[asize] == NULL);
+	KWRITE_BARRIER(a, value);
 	KINITv(a->a.objects[asize], value);
 	a->a.bytesize = (asize+1) * sizeof(void*);
 }
@@ -292,6 +293,7 @@ static void Array_insert(CTX, kArray *o, size_t n, kObject *v)
 	else {
 		Array_ensureMinimumSize(_ctx, a, asize+1);
 		memmove(a->a.objects+(n+1), a->a.objects+n, sizeof(kObject*) * (asize - n));
+		KWRITE_BARRIER(a, v);
 		KINITv(a->a.objects[n], v);
 		a->a.bytesize = (asize+1) * sizeof(void*);
 	}
@@ -403,6 +405,7 @@ static kparamid_t Kmap_getparamid(CTX, kmap_t *kmp, kArray *list, uintptr_t hcod
 	uintptr_t paramid = kArray_size(list);
 	kArray_add(list, pa);
 	e = kmap_newentry(kmp, hcode);
+	KWRITE_BARRIER(e, pa);
 	KINITv(e->paramkey, pa);
 	e->uvalue = paramid;
 	kmap_add(kmp, e);
@@ -545,6 +548,7 @@ static kObject* DEFAULT_fnullinit(CTX, kclass_t *ct)
 	assert(ct->nulvalNUL == NULL);
 	DBG_P("creating new nulval for %s", T_CT(ct));
 	KINITv(((struct _kclass*)ct)->nulvalNUL, new_kObject(ct, 0));
+	KWRITE_BARRIER((struct _kclass*)ct, ct->nulvalNUL);
 	kObject_setNullObject(ct->nulvalNUL, 1);
 	((struct _kclass*)ct)->fnull = DEFAULT_fnull;
 	return ct->nulvalNUL;
@@ -577,6 +581,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->cid     = newid;
 		ct->bcid    = (s->bcid == 0) ? newid : s->bcid;
 		ct->supcid  = (s->supcid == 0) ? CLASS_Object : s->supcid;
+		KWRITE_BARRIER(ct, s->fields);
 		ct->fields = s->fields;
 		ct->fsize  = s->fsize;
 		ct->fallocsize = s->fallocsize;
@@ -586,6 +591,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		if(s->cparams != NULL) {
 			DBG_P("params");
 			KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
+			KWRITE_BARRIER(ct, ct->cparam);
 		}
 		// function
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
@@ -613,7 +619,9 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 			newct->cflag |= kClass_Private;
 			newct->cstruct_size = ct->cstruct_size * 2;
+			KWRITE_BARRIER(newct, ct->cparam);
 			KINITv(newct->cparam, ct->cparam);
+			KWRITE_BARRIER(newct, ct->methods);
 			KINITv(newct->methods, ct->methods);
 			((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 		}
@@ -653,6 +661,7 @@ static kclass_t *CT_Generics(CTX, kclass_t *ct, int psize, kparam_t *p)
 	}
 	struct _kclass *newct = new_CT(_ctx, ct, NULL, NOPLINE);
 	KINITv(newct->cparam, new_CParam(_ctx, ct, psize, p));
+	KWRITE_BARRIER(newct, ct->cparam);
 	KINITv(newct->methods, K_EMPTYARRAY);
 	if(newct->searchSuperMethodClassNULL == NULL) {
 		newct->searchSuperMethodClassNULL = ct0;
@@ -665,6 +674,7 @@ static kString* CT_shortName(CTX, kclass_t *ct)
 	if(ct->shortNameNULL == NULL) {
 		if(ct->cparam == K_NULLPARAM) {
 			KINITv(((struct _kclass*)ct)->shortNameNULL, S_UN(ct->nameid));
+			KWRITE_BARRIER((struct _kclass*)ct, ct->shortNameNULL);
 		}
 		else {
 			size_t i;
@@ -690,6 +700,7 @@ static kString* CT_shortName(CTX, kclass_t *ct)
 			kwb_putc(&wb, ']');
 			const char *text = Kwb_top(_ctx, &wb, 1);
 			KINITv(((struct _kclass*)ct)->shortNameNULL, new_String(_ctx, text, kwb_bytesize(&wb), SPOL_ASCII));
+			KWRITE_BARRIER((struct _kclass*)ct, ct->shortNameNULL);
 			kwb_free(&wb);
 		}
 	}
@@ -866,25 +877,36 @@ static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 //	share->cStringArray = CT_p0(_ctx, CT_Array, TY_String);
 	share->lcnameMapNN = kmap_init(0);
 	KINITv(share->fileidList, new_(StringArray, 8));
+	KWRITE_BARRIER(share, share->fileidList);
 	share->fileidMapNN = kmap_init(0);
 	KINITv(share->packList, new_(StringArray, 8));
+	KWRITE_BARRIER(share, share->packList);
 	share->packMapNN = kmap_init(0);
 	KINITv(share->symbolList, new_(StringArray, 32));
+	KWRITE_BARRIER(share, share->symbolList);
 	share->symbolMapNN = kmap_init(0);
 	KINITv(share->unameList, new_(StringArray, 32));
+	KWRITE_BARRIER(share, share->unameList);
 	share->unameMapNN = kmap_init(0);
 
 	share->paramMapNN = kmap_init(0);
 	KINITv(share->paramList, new_(Array, 32));
+	KWRITE_BARRIER(share, share->paramList);
 	share->paramdomMapNN = kmap_init(0);
 	KINITv(share->paramdomList, new_(Array, 32));
+	KWRITE_BARRIER(share, share->paramdomList);
 	//
 	KINITv(share->constNull, new_(Object, NULL));
+	KWRITE_BARRIER(share, share->constNull);
 	kObject_setNullObject(share->constNull, 1);
 	KINITv(share->constTrue,   new_(Boolean, 1));
+	KWRITE_BARRIER(share, share->constTrue);
 	KINITv(share->constFalse,  new_(Boolean, 0));
+	KWRITE_BARRIER(share, share->constFalse);
 	KINITv(share->emptyString, new_(String, NULL));
+	KWRITE_BARRIER(share, share->emptyString);
 	KINITv(share->emptyArray,  new_(Array, 0));
+	KWRITE_BARRIER(share, share->emptyArray);
 
 	Kparam(_ctx, TY_void, 0, NULL);  // PARAM_void
 	FILEID_("(konoha.c)");

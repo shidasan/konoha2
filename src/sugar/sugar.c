@@ -152,13 +152,19 @@ static void kmodsugar_setup(CTX, struct kmodshare_t *def, int newctx)
 		base->h.reftrace = ctxsugar_reftrace;
 		base->h.free     = ctxsugar_free;
 		KINITv(base->tokens, new_(TokenArray, K_PAGESIZE/sizeof(void*)));
+		KWRITE_BARRIER(base, base->tokens);
 		base->err_count = 0;
 		KINITv(base->errors, new_(StringArray, 8));
+		KWRITE_BARRIER(base, base->errors);
 		KINITv(base->lvarlst, new_(ExprArray, K_PAGESIZE/sizeof(void*)));
+		KWRITE_BARRIER(base, base->lvarlst);
 		KINITv(base->definedMethods, new_(MethodArray, 8));
+		KWRITE_BARRIER(base, base->definedMethods);
 
 		KINITv(base->gma, new_(Gamma, NULL));
+		KWRITE_BARRIER(base, base->gma);
 		KINITv(base->singleBlock, new_(Block, NULL));
+		KWRITE_BARRIER(base, base->singleBlock);
 		kArray_add(base->singleBlock->blocks, K_NULL);
 		KARRAY_INIT(&base->cwb, K_PAGESIZE);
 		_ctx->modlocal[MOD_sugar] = (kmodlocal_t*)base;
@@ -219,8 +225,10 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	l->KS_syncMethods    = KonohaSpace_syncMethods;
 
 	KINITv(base->keywordList, new_(Array, 32));
+	KWRITE_BARRIER(base, base->keywordList);
 	base->keywordMapNN = kmap_init(0);
 	KINITv(base->packageList, new_(Array, 8));
+	KWRITE_BARRIER(base, base->keywordMapNN);
 	base->packageMapNO = kmap_init(0);
 
 	KDEFINE_CLASS defKonohaSpace = {
@@ -262,16 +270,22 @@ void MODSUGAR_init(CTX, kcontext_t *ctx)
 	base->cTokenArray = CT_p0(_ctx, CT_Array, base->cToken->cid);
 
 	KINITv(base->rootks, new_(KonohaSpace, NULL));
+	KWRITE_BARRIER(base, base->rootks);
 	knull(base->cToken);
 	knull(base->cExpr);
 	knull(base->cBlock);
 	kmodsugar_setup(_ctx, &base->h, 0);
 
 	KINITv(base->UndefinedParseExpr,   new_SugarMethod(UndefinedParseExpr));
+	KWRITE_BARRIER(base, base->UndefinedParseExpr);
 	KINITv(base->UndefinedStmtTyCheck, new_SugarMethod(UndefinedStmtTyCheck));
+	KWRITE_BARRIER(base, base->UndefinedStmtTyCheck);
 	KINITv(base->UndefinedExprTyCheck, new_SugarMethod(UndefinedExprTyCheck));
+	KWRITE_BARRIER(base, base->UndefinedExprTyCheck);
 	KINITv(base->ParseExpr_Op,   new_SugarMethod(ParseExpr_Op));
+	KWRITE_BARRIER(base, base->ParseExpr_Op);
 	KINITv(base->ParseExpr_Term, new_SugarMethod(ParseExpr_Term));
+	KWRITE_BARRIER(base, base->ParseExpr_Term);
 
 	defineDefaultSyntax(_ctx, base->rootks);
 	struct _ksyntax *syn = (struct _ksyntax*)SYN_(base->rootks, KW_void); //FIXME
@@ -566,6 +580,7 @@ static kpackage_t *loadPackageNULL(CTX, kpack_t packid, kline_t pline)
 			}
 			pack = (kpackage_t*)KCALLOC(sizeof(kpackage_t), 1);
 			pack->packid = packid;
+			KWRITE_BARRIER(pack, ks);
 			KINITv(pack->ks, ks);
 			pack->packdef = packdef;
 			pack->export_script = scriptfileid(_ctx, fbuf, sizeof(fbuf), T_PN(packid));

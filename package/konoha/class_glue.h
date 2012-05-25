@@ -38,12 +38,15 @@ static KMETHOD Fmethod_FieldGetterN(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Fmethod_FieldSetter(CTX, ksfp_t *sfp _RIX)
 {
 	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	KWRITE_BARRIER(sfp[0].Wo, sfp[1].o);
 	KSETv((sfp[0].Wo)->fields[delta], sfp[1].o);
 	RETURN_(sfp[1].o);
 }
 static KMETHOD Fmethod_FieldSetterN(CTX, ksfp_t *sfp _RIX)
 {
 	size_t delta = sfp[K_MTDIDX].mtdNC->delta;
+	// [TODO] ndata is kObject?
+	//KWRITE_BARRIER(sfp[0].Wo, sfp[1]);
 	(sfp[0].Wo)->ndata[delta] = sfp[1].ndata;
 	RETURNd_(sfp[1].ndata);
 }
@@ -82,6 +85,7 @@ static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
 {
 	if(unlikely(ct->methods == K_EMPTYARRAY)) {
 		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
+		KWRITE_BARRIER((struct _kclass*)ct, ct->methods);
 	}
 	kArray_add(ct->methods, mtd);
 }
@@ -174,6 +178,7 @@ static void defineField(CTX, struct _kclass *ct, int flag, ktype_t ty, kString *
 	}
 	else {
 		kObject *v = (IS_NULL(value)) ? knull(O_ct(value)) : value;
+		KWRITE_BARRIER(ct->WnulvalNUL, v);
 		KSETv(ct->WnulvalNUL->fields[pos], v);
 		ct->fields[pos].isobj = 1;
 	}
@@ -230,6 +235,7 @@ static kbool_t class_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 static kExpr* NewExpr(CTX, ksyntax_t *syn, kToken *tk, ktype_t ty, uintptr_t val)
 {
 	struct _kExpr *expr = new_W(Expr, syn);
+	KWRITE_BARRIER(expr, tk);
 	KSETv(expr->tk, tk);
 	Expr_setTerm(expr, 1);
 	expr->build = TEXPR_NEW;
@@ -282,6 +288,7 @@ static KMETHOD ExprTyCheck_Getter(CTX, ksfp_t *sfp _RIX)
 			mtd = kKonohaSpace_getMethodNULL(gma->genv->ks, self->ty, MN_toISBOOL(fn));
 		}
 		if(mtd != NULL) {
+			KWRITE_BARRIER(expr->cons, mtd);
 			KSETv(expr->cons->methods[0], mtd);
 			RETURN_(SUGAR Expr_tyCheckCallParams(_ctx, expr, mtd, gma, reqty));
 		}
@@ -309,6 +316,7 @@ static void Stmt_parseClassBlock(CTX, kStmt *stmt, kToken *tkC)
 				struct _kToken *tkNEW = new_W(Token, 0);
 				tkNEW->tt = TK_SYMBOL;
 				KSETv(tkNEW->text, S_fn(MN_new));
+				KWRITE_BARRIER(tkNEW, tkNEW->text);
 				tkNEW->uline = tkP->uline;
 				kArray_add(a, tkNEW);
 			}
