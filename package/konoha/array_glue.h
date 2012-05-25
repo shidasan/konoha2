@@ -67,8 +67,8 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 
 static KMETHOD Array_add1(CTX, ksfp_t *sfp _RIX)
 {
-	struct _kArray *a = (struct _kArray *)sfp[0].o;
-	kArray_add(	a, sfp[1].o);
+	kArray *a = (kArray *)sfp[0].o;
+	kArray_add(a, sfp[1].o);
 	RETURN_(a);
 }
 
