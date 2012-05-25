@@ -268,8 +268,8 @@ foreach(dir ${PACKAGES})
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/package/${dir})
 endforeach()
 
-add_executable(test_konoha src/tool/test_konoha.c)
-target_link_libraries(test_konoha ${ExtraLibs})
+#add_executable(test_konoha src/tool/test_konoha.c)
+#target_link_libraries(test_konoha ${ExtraLibs})
 
 #macro(add_konoha_test scr)
 #set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)

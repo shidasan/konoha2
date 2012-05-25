@@ -44,7 +44,6 @@ static KMETHOD Array_get(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Array_set(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = sfp[0].a;
-//	fprintf(stderr, "ivalue=%d, size=%d\n", sfp[1].ivalue, kArray_size(a));
 	size_t n = check_index(_ctx, sfp[1].ivalue, kArray_size(a), sfp[K_RTNIDX].uline);
 	if(kArray_isUnboxData(a)) {
 		a->ndata[n] = sfp[2].ndata;
@@ -53,7 +52,6 @@ static KMETHOD Array_set(CTX, ksfp_t *sfp _RIX)
 		KSETv(a->list[n], sfp[2].o);
 	}
 }
-
 
 static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 {
@@ -68,6 +66,7 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Array_add1(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = (kArray *)sfp[0].o;
+
 	kArray_add(a, sfp[1].o);
 	RETURN_(a);
 }
@@ -128,8 +127,6 @@ static KMETHOD ParseExpr_BRACKET(CTX, ksfp_t *sfp _RIX)
 		RETURN_(SUGAR Expr_rightJoin(_ctx, lexpr, stmt, tls, s+1, c+1, e));
 	}
 }
-
-// TODO: spell miss BRACKET --> BRACKET
 
 static kbool_t array_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
