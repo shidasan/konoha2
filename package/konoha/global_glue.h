@@ -95,7 +95,6 @@ static void CT_addMethod2(CTX, kclass_t *ct, kMethod *mtd)
 {
 	if(unlikely(ct->methods == K_EMPTYARRAY)) {
 		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
-		KWRITE_BARRIER((struct _kclass*)ct, ct->methods);
 	}
 	kArray_add(ct->methods, mtd);
 }
@@ -282,7 +281,6 @@ static kbool_t global_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 		};
 		kclass_t *cScript = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defScript, pline);
 		KINITv(((struct _kKonohaSpace*)ks)->scrNUL, knull(cScript));
-		KWRITE_BARRIER((struct _kKonohaSpace*)ks, ks->scrNUL);
 	}
 	return true;
 }

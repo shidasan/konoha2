@@ -202,12 +202,7 @@ struct _kKonohaCode {
 #define OPEXEC_NSET(A, N, CT) rbp[(A)].ndata = N
 #define OPEXEC_NMOV(A, B, CT) rbp[(A)].ndata = rbp[(B)].ndata
 #define OPEXEC_NMOVx(A, B, BX, CT) rbp[(A)].o = (rbp[(B)].Wo)->fields[(BX)]
-
-#define OPEXEC_XNMOV(A, AX, B, CT) {\
-		KWRITE_BARRIER(rbp[(A)].Wo, rbp[(B)].o);\
-		(rbp[(A)].Wo)->fields[AX] = rbp[(B)].o;\
-	}
-//#define OPEXEC_XNMOV(A, AX, B, CT) (rbp[(A)].Wo)->fields[AX] = rbp[(B)].o
+#define OPEXEC_XNMOV(A, AX, B, CT) (rbp[(A)].Wo)->fields[AX] = rbp[(B)].o
 
 #define OPEXEC_NEW(A, P, CT)   KSETv(rbp[(A)].o, new_kObject(CT, P))
 #define OPEXEC_NULL(A, CT)     KSETv(rbp[(A)].o, knull(CT))
@@ -430,7 +425,7 @@ struct _kKonohaCode {
 	if(Object_isRC0(v1_)) {\
 		knh_Object_RCfree(ctx, v1_);\
 	}\
-	KWRITE_BARRIER(parent, v2_);\
+	knh_writeBarrier(parent, v2_);\
 	v1 = v2_;\
 }\
 

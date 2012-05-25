@@ -303,7 +303,6 @@ static void Kmap_remove(kmap_t* kmap, kmape_t *oe)
 static void map_addStringUnboxValue(CTX, kmap_t *kmp, uintptr_t hcode, kString *skey, uintptr_t uvalue)
 {
 	kmape_t *e = kmap_newentry(kmp, hcode);
-	KWRITE_BARRIER(e, skey);
 	KINITv(e->skey, skey);
 	e->uvalue = uvalue;
 	kmap_add(kmp, e);

@@ -424,7 +424,6 @@ void knh_setClassDef(CTX, kclass_t *ct, kclass_t *cdef)
 	ct->cdef = cdef;
 	if(cdef->fields != NULL) {
 		KNH_ASSERT(ct->fields == NULL);
-		KWRITE_BARRIER(ct, cdef->fields);
 		ct->fields = cdef->fields;
 		ct->fsize = cdef->struct_size / sizeof(void*);
 		ct->fcapacity = 0;
@@ -632,7 +631,6 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, kclass_t *bct, kParam *pa)
 	ct->fsize = ct->fcapacity;
 	ct->fields = (kfieldinfo_t*)KCALLOC(sizeof(kfieldinfo_t) * ct->fcapacity);
 	if(ct->fcapacity <= K_SMALLOBJECT_FIELDSIZE) {
-		KWRITE_BARRIER(tpl, &(tpl->smallobject));
 		tpl->fields = &(tpl->smallobject);
 	}
 	else {
@@ -654,12 +652,10 @@ static void ClassTBL_addTuple(CTX, kclass_t *ct, kclass_t *bct, kParam *pa)
 				ct->fields[fi].israw = 1;)
 		}
 		else {
-			KWRITE_BARRIER(tpl, KNH_NULVAL(CLASS_t(p->type)));
 			KINITv(tpl->fields[fi], KNH_NULVAL(CLASS_t(p->type)));
 		}
 		fi++;
 	}
-	KWRITE_BARRIER(ct, bct->methods);
 	KINITv(ct->methods, bct->methods);
 	KINITv(ct->typemaps, K_EMPTYARRAY);
 }
@@ -1060,7 +1056,6 @@ static KMETHOD Fmethod_ngetter(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Fmethod_setter(CTX, ksfp_t *sfp _RIX)
 {
 	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-	KWRITE_BARRIER((sfp[0].ox), sfp[1].o);
 	KSETv((sfp[0].ox)->fields[delta], sfp[1].o);
 	RETURN_(sfp[1].o);
 }
@@ -1085,7 +1080,6 @@ static KMETHOD Fmethod_kngetter(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Fmethod_ksetter(CTX, ksfp_t *sfp _RIX)
 {
 	int delta = DP(sfp[K_MTDIDX].mtdNC)->delta;
-	KWRITE_BARRIER((sfp[0].p), sfp[1].o);
 	KSETv((sfp[0].p)->kfields[delta], sfp[1].o);
 	RETURN_(sfp[1].o);
 }
@@ -1113,7 +1107,6 @@ static kMethod *new_GetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
 	DP(mtd)->delta = idx;
 	KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
-	KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 	return mtd;
 }
 
@@ -1124,7 +1117,6 @@ static kMethod *new_SetterMethod(CTX, kcid_t cid, kmethodn_t mn, ktype_t type, i
 	kMethod *mtd = new_Method(_ctx, 0, cid, mn, f);
 	DP(mtd)->delta = idx;
 	KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, FN_UNMASK(mn)));
-	KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 	return mtd;
 }
 
@@ -1157,7 +1149,6 @@ kDictMap* knh_Object_getXData(CTX, kObject *o)
 		m = (kDictMap*)v[ct->xdataidx];
 		if(IS_NULL(m)) {
 			m = new_DictMap0(_ctx, 0, 1/*isCaseMap*/, "xdata");
-			KWRITE_BARRIER(o, m);
 			KSETv(v[ct->xdataidx], m);
 		}
 	}
@@ -1233,14 +1224,12 @@ void knh_ClassTBL_addXField(CTX, kclass_t *ct, ktype_t type, ksymbol_t fn)
 	kMethod *mtd = new_Method(_ctx, 0, ct->cid, (type == CLASS_Boolean) ? MN_toISBOOL(fn) : MN_toGETTER(fn), f);
 	DP(mtd)->delta = fn;
 	KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
-	KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 	knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 
 	f = (TY_isUnbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
 	mtd = new_Method(_ctx, 0, ct->cid, MN_toSETTER(fn), f);
 	DP(mtd)->delta = fn;
 	KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, fn));
-	KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 	knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 }
 
@@ -1255,14 +1244,12 @@ kMethod *knh_KonohaSpace_addXSetter(CTX, kKonohaSpace *ns, kclass_t *ct, ktype_t
 			mtd = new_Method(_ctx, 0, ct->cid, mn, f);
 			DP(mtd)->delta = fn;
 			KSETv(DP(mtd)->mp, new_ParamR0(_ctx, type));
-			KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 			knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 
 			f = (TY_isUnbox(type)) ? Fmethod_xnsetter : Fmethod_xsetter;
 			mtd = new_Method(_ctx, 0, ct->cid, mn_setter, f);
 			DP(mtd)->delta = fn;
 			KSETv(DP(mtd)->mp, new_ParamP1(_ctx, RT_set(type), type, fn));
-			KWRITE_BARRIER(DP(mtd), DP(mtd)->mp);
 			knh_ClassTBL_addMethod(_ctx, ct, mtd, 0/*isCheck*/);
 			return mtd;
 		}
@@ -1314,7 +1301,6 @@ void knh_ClassTBL_addMethod(CTX, kclass_t *t, kMethod *mtd, int isCHECK)
 		KNH_ASSERT(kArray_size(a) == 0);
 		a = new_Array0(_ctx, K_FASTMALLOC_SIZE/sizeof(kMethod*));
 		KSETv(((struct _kclass*)t)->methods, a);
-		KWRITE_BARRIER((struct _kclass*)t, a);
 	}
 //	if(isCHECK) {
 //		size_t i;
@@ -1535,7 +1521,6 @@ static void knh_readyTransMapList(CTX, kcid_t cid)
 	if(t->typemaps == K_EMPTYARRAY) {
 		KNH_ASSERT(kArray_size(t->typemaps) == 0);
 		KSETv(t->typemaps, new_Array0(_ctx, 0));
-		KWRITE_BARRIER(t, t->typemaps);
 	}
 }
 
@@ -1608,7 +1593,6 @@ KNHAPI2(kTypeMap*) new_TypeMapData(CTX, kflag_t flag, kcid_t scid, kcid_t tcid, 
 	tmr->tcid = tcid;
 	tmr->ftypemap_1 = (func == NULL) ? Ftypemap_null : func;
 	KSETv(tmr->mapdata, mapdata);
-	KWRITE_BARRIER(tmr, mapdata);
 	if(TY_isUnbox(scid)) {
 		TypeMap_setNDATA(tmr, 1);
 	}
@@ -1649,7 +1633,6 @@ kTypeMap *new_TypeMapMethod(CTX, kflag_t flag, kMethod *mtd)
 	knh_Ftypemap f = TY_isUnbox(scid) ? Ftypemap_methodN : Ftypemap_method;
 	kTypeMap *tmr = new_TypeMap(_ctx, flag, scid, tcid, f);
 	KSETv(tmr->mtd, mtd);
-	KWRITE_BARRIER(tmr, mtd);
 	return tmr;
 }
 
@@ -1914,7 +1897,6 @@ static kIterator* new_IteratorIterator(CTX, kcid_t cid, kIterator *s)
 {
 	kIterator *it = new_O(Iterator, cid);
 	KSETv(DP(it)->source, s);
-	KWRITE_BARRIER(DP(it), s);
 	it->fnext_1 = Iterator_isNDATA(s) ? Iterator_Nnext : Iterator_Onext;
 	kcid_t sp1 = O_p0(s), tp1 = O_p0(it);
 	kTypeMap *tmr = knh_findTypeMapNULL(_ctx, sp1, tp1);
@@ -2202,7 +2184,6 @@ void knh_Object_fastset(CTX, kObject *o, kMethod *mtd, kObject *v)
 		}
 		else {
 			KSETv(of->fields[idx], v);
-			KWRITE_BARRIER(of, v);
 		}
 		return;
 	}

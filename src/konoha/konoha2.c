@@ -74,7 +74,6 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 		KINITv(base->stack[i].o, K_NULL);
 	}
 	KINITv(base->gcstack, new_(Array, K_PAGESIZE/sizeof(void*)));
-	KWRITE_BARRIER(base, base->gcstack);
 	KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
 	KARRAY_INIT(&base->ref, K_PAGESIZE);
 	base->reftail = base->ref.refhead;

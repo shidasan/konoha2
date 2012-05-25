@@ -84,7 +84,6 @@ static int parseNUM(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMetho
 	}
 	if(IS_NOTNULL(tk)) {
 		KSETv(tk->text, new_kString(ts + tok_start, (pos-1)-tok_start, SPOL_ASCII));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = (dot == 0) ? TK_INT : TK_FLOAT;
 	}
 	return pos - 1;  // next
@@ -100,7 +99,6 @@ static int parseSYMBOL(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMe
 	}
 	if(IS_NOTNULL(tk)) {
 		KSETv(tk->text, new_kString(ts + tok_start, (pos-1)-tok_start, SPOL_ASCII));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = TK_SYMBOL;
 	}
 	return pos - 1;  // next
@@ -116,7 +114,6 @@ static int parseUSYMBOL(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kM
 	}
 	if(IS_NOTNULL(tk)) {
 		KSETv(tk->text, new_kString(ts + tok_start, (pos-1)-tok_start, SPOL_ASCII));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = TK_USYMBOL;
 	}
 	return pos - 1;  // next
@@ -131,7 +128,6 @@ static int parseMSYMBOL(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kM
 	}
 	if(IS_NOTNULL(tk)) {
 		KSETv(tk->text, new_kString(ts + tok_start, (pos-1)-tok_start, SPOL_UTF8));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = TK_MSYMBOL;
 	}
 	return pos - 1;  // next
@@ -142,7 +138,6 @@ static int parseOP1(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMetho
 	if(IS_NOTNULL(tk)) {
 		const char *s = tenv->source + tok_start;
 		KSETv(tk->text, new_kString(s, 1, SPOL_ASCII|SPOL_POOL));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = TK_OPERATOR;
 		tk->topch = s[0];
 	}
@@ -166,7 +161,6 @@ static int parseOP(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMethod
 	if(IS_NOTNULL(tk)) {
 		const char *s = tenv->source + tok_start;
 		KSETv(tk->text, new_kString(s, (pos-1)-tok_start, SPOL_ASCII|SPOL_POOL));
-		KWRITE_BARRIER(tk, tk->text);
 		tk->tt = TK_OPERATOR;
 		if(S_size(tk->text) == 1) {
 			tk->topch = S_text(tk->text)[0];
@@ -236,7 +230,6 @@ static int parseDQUOTE(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMe
 			if(IS_NOTNULL(tk)) {
 				size_t length = kwb_bytesize(&wb);
 				KSETv(tk->text, new_kString(kwb_top(&wb, 1), length, 0));
-				KWRITE_BARRIER(tk, tk->text);
 				tk->tt = TK_TEXT;
 			}
 			kwb_free(&wb);
@@ -413,7 +406,6 @@ static int parseBLOCK(CTX, struct _kToken *tk, tenv_t *tenv, int tok_start, kMet
 			if(level == 0) {
 				if(IS_NOTNULL(tk)) {
 					KSETv(tk->text, new_kString(tenv->source + tok_start + 1, ((pos-2)-(tok_start)+1), 0));
-					KWRITE_BARRIER(tk, tk->text);
 					tk->tt = TK_CODE;
 				}
 				return pos + 1;
@@ -525,7 +517,6 @@ static kbool_t checkNestedSyntax(CTX, kArray *tls, int *s, int e, ktoken_t tt, i
 		int ne = findTopCh(_ctx, tls, i+1, e, tk->tt, closech);
 		tk->tt = tt; tk->kw = tt;
 		KSETv(tk->sub, new_(TokenArray, 0));
-		KWRITE_BARRIER(tk, tk->sub);
 		tk->topch = opench; tk->closech = closech;
 		makeSyntaxRule(_ctx, tls, i+1, ne, tk->sub);
 		*s = ne;

@@ -230,28 +230,28 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 #define _BITS 8
 #define PY_SSIZE_MAX (size_t)(1 << 31)
 
-//static KMETHOD Array_toPyObject(CTX, ksfp_t *sfp _RIX)
-//{
-//	kArray *a = sfp[0].a;
-//	size_t i, n = kArray_size(a);
-//	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
-//	PyObject* pa = PyList_New((Py_ssize_t)n);
-//	if (kArray_isUnboxData(a)) {
-//		for (i = 0; i < pa_size; i++) {
-//			// [TODO] transfer array element to PyObject
-//			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
-//		}
-//	}
-//	else {
-//		for (i = 0; i < pa_size; i++) {
-//			// [TODO] transfer array element to PyObject
-//			//PyList_Append(pa, i, a->list[n]);
-//		}
-//	}
-//	RETURN_PyObject(pa);
-//}
+static KMETHOD Array_toPyObject(CTX, ksfp_t *sfp _RIX)
+{
+	kArray *a = sfp[0].a;
+	size_t i, n = kArray_size(a);
+	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
+	PyObject* pa = PyList_New((Py_ssize_t)n);
+	if (kArray_isUnboxData(a)) {
+		for (i = 0; i < pa_size; i++) {
+			// [TODO] transfer array element to PyObject
+			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
+		}
+	}
+	else {
+		for (i = 0; i < pa_size; i++) {
+			// [TODO] transfer array element to PyObject
+			//PyList_Append(pa, i, a->list[n]);
+		}
+	}
+	RETURN_PyObject(pa);
+}
 
-//static KMETHOD PyObject_toArray(CTX, ksfp_t *sfp _RIX)
+//static KMETHOD PyObject_toList(CTX, ksfp_t *sfp _RIX)
 //{
 //	//kPyObject *po = (kPyObject*)sfp[0].o;
 //	//RETURNb_(po->self == Py_True ? 1 : 0);
@@ -505,7 +505,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im|_Coercion, _F(String_toPyObject), TY_PyObject, TY_String, MN_to(TY_PyObject), 0,
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_("toString"),  0,
 		// [TODO] add following konoha class.
-		//_Public|_Const|_Im|_Coercion, _F(PyObject_toArray), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
+		//_Public|_Const|_Im|_Coercion, _F(PyObject_toList), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
 		//_Public|_Const|_Im|_Coercion, _F(Array_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toComplex), TY_Complex, TY_PyObject, MN_to(TY_Complex), 0,
 		//_Public|_Const|_Im|_Coercion, _F(Complex_toPyObject), TY_PyObject, TY_Complex, MN_to(TY_PyObject), 0,

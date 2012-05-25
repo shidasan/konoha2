@@ -1741,9 +1741,6 @@ static bool rearrangeSegList(CTX, SubHeap *h, size_t klass)
 	return h->isFull;
 }
 
-void kwrite_barrier(CTX, kObject* pa, kObject* chi) {
-}
-
 static void bmgc_gc_sweep(CTX, HeapManager *mng)
 {
 	bool isFull = false;

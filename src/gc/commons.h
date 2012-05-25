@@ -40,8 +40,6 @@
 #define knh_unmlock(p)
 #endif
 
-#define K_USING_GENGC 1
-
 #define KB_   (1024)
 #define MB_   (KB_*1024)
 #define GB_   (MB_*1024)
