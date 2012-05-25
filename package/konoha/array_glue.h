@@ -60,10 +60,12 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 	a->bytemax = asize * sizeof(void*);
 	kArray_setsize((kArray*)a, asize);
 	a->list = (kObject**)KCALLOC(a->bytemax, 1);
-	if (kArray_isUnboxData(a)) {
-//		KINIT(a->list, knull(O_p0(a)), a->bytemax);
-	} else {
-//		KINIT(a->list, knull(O_p0(a)), a->bytemax);
+	if(!kArray_isUnboxData(a)) {
+		size_t i;
+		kObject *null = knull(CT_(O_p0(a)));
+		for(i = 0; i < asize; i++) {
+			KSETv(a->list[i], null);
+		}
 	}
 	RETURN_(a);
 }
@@ -74,19 +76,20 @@ struct _kAbstractArray {
 	karray_t a;
 };
 
-static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
+static void NArray_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
 {
-	if(!((min * sizeof(void*)) < a->a.bytemax)) {
-		if(min < sizeof(kObject)) min = sizeof(kObject);
-		KARRAY_EXPAND(&a->a, min);
+	size_t minbyte = min * sizeof(void*);
+	if(!(minbyte < a->a.bytemax)) {
+		if(minbyte < sizeof(kObject)) minbyte = sizeof(kObject);
+		KARRAY_EXPAND(&a->a, minbyte);
 	}
 }
 
-static void kArray_unboxAdd(CTX, kArray *o, uintptr_t value)
+static void NArray_add(CTX, kArray *o, uintptr_t value)
 {
 	size_t asize = kArray_size(o);
 	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
-	Array_ensureMinimumSize(_ctx, a, asize+1);
+	NArray_ensureMinimumSize(_ctx, a, asize+1);
 	DBG_ASSERT(a->a.objects[asize] == NULL);
 	struct _kArray *a2 = (struct _kArray *)a;
 	a2->ndata[asize] = value;
@@ -97,11 +100,10 @@ static KMETHOD Array_add1(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = (kArray *)sfp[0].o;
 	if (kArray_isUnboxData(a)) {
-		kArray_unboxAdd(_ctx, a, sfp[1].ndata);
+		NArray_add(_ctx, a, sfp[1].ndata);
 	} else {
 		kArray_add(a, sfp[1].o);
 	}
-	RETURN_(a);
 }
 
 // --------------------------------------------------------------------------
