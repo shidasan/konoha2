@@ -54,10 +54,6 @@ static KMETHOD Array_set(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
-struct _kAbstractArray {
-	kObjectHeader h;
-	karray_t a;
-} ;
 
 static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 {
@@ -69,27 +65,12 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 	RETURN_(a);
 }
 
-
-//static KMETHOD IntArray_newArray(CTX, ksfp_t *sfp _RIX)
-//{
-//	struct _kArray *a = (struct _kArray*)sfp[0].o;
-//	int asize = sfp[1].ivalue;
-////	DBG_P("bytesize=%lu, class=%s", a->bytesize, T_CT(O_ct(a)));
-//	a->bytemax = asize * sizeof(void*);
-//	a->bytesize = asize * sizeof(void*);
-//	a->ndata = (uintptr_t *)KCALLOC(a->bytemax, 1);
-//	RETURN_(a);
-//}
-//
-//static KMETHOD StringArray_newArray(CTX, ksfp_t *sfp _RIX)
-//{
-//	struct _kArray *a = (struct _kArray*)sfp[0].o;
-//	int asize = sfp[1].ivalue;
-//	a->bytemax = asize * sizeof(void*);
-//	a->bytesize = asize * sizeof(void*);
-//	a->strings = (struct _kString **)KCALLOC(a->bytemax, 1);
-//	RETURN_(a);
-//}
+static KMETHOD Array_add1(CTX, ksfp_t *sfp _RIX)
+{
+	struct _kArray *a = (struct _kArray *)sfp[0].o;
+	kArray_add(	a, sfp[1].o);
+	RETURN_(a);
+}
 
 // --------------------------------------------------------------------------
 
@@ -105,6 +86,7 @@ static	kbool_t array_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		_Public|_Im, _F(Array_get), TY_T0,   TY_Array, MN_("get"), 1, TY_Int, FN_("index"),
 		_Public,     _F(Array_set), TY_void, TY_Array, MN_("set"), 2, TY_Int, FN_("index"),  TY_T0, FN_("value"),
 		_Public,     _F(Array_newArray), TY_Array, TY_Array, MN_("newArray"), 1, TY_Int, FN_("size"),
+		_Public,     _F(Array_add1), TY_void, TY_Array, MN_("add"), 1, TY_T0, FN_("value"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
