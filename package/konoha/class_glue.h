@@ -252,7 +252,7 @@ static KMETHOD ParseExpr_new(CTX, ksfp_t *sfp _RIX)
 			kExpr *expr = SUGAR new_ConsExpr(_ctx, syn, 2, tkNEW, NewExpr(_ctx, syn, tk1, TK_type(tk1), 0));
 			RETURN_(expr);
 		}
-		if(TK_isType(tk1) && tk2->tt == AST_BRANCET) {     // new C [...]
+		if(TK_isType(tk1) && tk2->tt == AST_BRACKET) {     // new C [...]
 			ksyntax_t *syn = SYN_(kStmt_ks(stmt), KW_new);
 			kclass_t *ct = CT_p0(_ctx, CT_Array, TK_type(tk1));
 			kToken_setmn(tkNEW, MN_("newArray"), MNTYPE_method);

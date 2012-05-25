@@ -78,7 +78,7 @@ static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 
 static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
 {
-	if(tkP->tt == AST_BRANCET) {
+	if(tkP->tt == AST_BRACKET) {
 		size_t i, psize= 0, size = kArray_size(tkP->sub);
 		kparam_t p[size];
 		for(i = 0; i < size; i++) {
@@ -146,7 +146,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 			if(tkB->topch != '[') break;
 			kArray *abuf = ctxsugar->tokens;
 			size_t atop = kArray_size(abuf);
-			next = makeTree(_ctx, ks, AST_BRANCET, tls,  next+1, e, ']', abuf, tkERR);
+			next = makeTree(_ctx, ks, AST_BRACKET, tls,  next+1, e, ']', abuf, tkERR);
 			if(!(kArray_size(abuf) > atop)) return next;
 			tkB = abuf->toks[atop];
 			tk = TokenType_resolveGenerics(_ctx, ks, tk, tkB);
@@ -209,7 +209,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 			continue;
 		}
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tkP->sub, tkERRRef);
+			i = makeTree(_ctx, ks, AST_BRACKET, tls, i, e, ']', tkP->sub, tkERRRef);
 			continue;
 		}
 		if(tk->topch == closech) {
@@ -272,7 +272,7 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 			continue;
 		}
 		else if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tlsdst, tkERRRef);
+			i = makeTree(_ctx, ks, AST_BRACKET, tls, i, e, ']', tlsdst, tkERRRef);
 			continue;
 		}
 		else if(tk->tt == TK_ERR) {
@@ -411,7 +411,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			ti = next;
 			continue;
 		}
-		else if(rule->tt == AST_PARENTHESIS || rule->tt == AST_BRACE || rule->tt == AST_BRANCET) {
+		else if(rule->tt == AST_PARENTHESIS || rule->tt == AST_BRACE || rule->tt == AST_BRACKET) {
 			if(tk->tt == rule->tt && rule->topch == tk->topch) {
 				int next = matchSyntaxRule(_ctx, stmt, rule->sub, uline, tk->sub, 0, kArray_size(tk->sub), 0);
 				if(next == -1) return -1;

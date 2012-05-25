@@ -99,28 +99,12 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 #define _Im       kMethod_Immutable
 #define _F(F)     (intptr_t)(F)
 
-static kclass_t *T_thistype(CTX, kclass_t *ct, kclass_t *self)
-{
-	return self;
-}
-
-#define CT_Tthis         cThis
-#define TY_Tthis         cThis->cid
-
 static	kbool_t array_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
-//	KDEFINE_CLASS defTthis = {
-//		.structname = "Tthis",
-//		.cid = CLASS_newid,
-//		.cflag = kClass_TypeVar|kClass_UnboxType|kClass_Singleton|kClass_Final,
-//		.realtype = T_thistype,
-//	};
-//	kclass_t *cThis = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defTthis, pline);
-
 	intptr_t MethodData[] = {
-		_Public, _F(Array_get), TY_T0,   TY_Array, MN_("get"), 1, TY_Int, FN_("index"),
-		_Public|_Im|_Const, _F(Array_set), TY_void, TY_Array, MN_("set"), 2, TY_Int, FN_("index"),  TY_T0, FN_("value"),
-		_Public|_Im|_Const, _F(Array_newArray), TY_Array, TY_Array, MN_("newArray"), 1, TY_Int, FN_("size"),
+		_Public|_Im, _F(Array_get), TY_T0,   TY_Array, MN_("get"), 1, TY_Int, FN_("index"),
+		_Public,     _F(Array_set), TY_void, TY_Array, MN_("set"), 2, TY_Int, FN_("index"),  TY_T0, FN_("value"),
+		_Public,     _F(Array_newArray), TY_Array, TY_Array, MN_("newArray"), 1, TY_Int, FN_("size"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
@@ -163,13 +147,13 @@ static KMETHOD ParseExpr_BRACKET(CTX, ksfp_t *sfp _RIX)
 	}
 }
 
-// TODO: spell miss BRANCET --> BRACKET
+// TODO: spell miss BRACKET --> BRACKET
 
 static kbool_t array_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 {
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
-		{ TOKEN("[]"), .flag = SYNFLAG_ExprPostfixOp2, ParseExpr_(BRACKET), .priority_op2 = 16, },  //AST_BRANCET
+		{ TOKEN("[]"), .flag = SYNFLAG_ExprPostfixOp2, ParseExpr_(BRACKET), .priority_op2 = 16, },  //AST_BRACKET
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

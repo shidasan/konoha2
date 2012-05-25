@@ -264,7 +264,7 @@ static KMETHOD Stmt_newExpr(CTX, ksfp_t *sfp _RIX)
 //	kStmt *stmt  = sfp[0].stmt;
 //	kExpr *expr  = sfp[1].expr;
 //	kToken *tk     = sfp[2].tk;
-//	if(tk->tt != AST_PARENTHESIS || tk->tt != AST_BRANCET) {
+//	if(tk->tt != AST_PARENTHESIS || tk->tt != AST_BRACKET) {
 //		SUGAR p(_ctx, WARN_, tk->uline, tk->lpos, "not parameter token");
 //		kObject_setNullObject(expr, 1);
 //	}
