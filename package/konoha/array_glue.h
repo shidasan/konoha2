@@ -57,17 +57,50 @@ static KMETHOD Array_newArray(CTX, ksfp_t *sfp _RIX)
 {
 	struct _kArray *a = (struct _kArray *)sfp[0].o;
 	size_t asize = (size_t)sfp[1].ivalue;
-	kArray_setsize((kArray*)a, asize * sizeof(void*));
 	a->bytemax = asize * sizeof(void*);
+	kArray_setsize((kArray*)a, asize);
 	a->list = (kObject**)KCALLOC(a->bytemax, 1);
+	if (kArray_isUnboxData(a)) {
+//		KINIT(a->list, knull(O_p0(a)), a->bytemax);
+	} else {
+//		KINIT(a->list, knull(O_p0(a)), a->bytemax);
+	}
 	RETURN_(a);
+}
+
+// Array
+struct _kAbstractArray {
+	kObjectHeader h;
+	karray_t a;
+};
+
+static void Array_ensureMinimumSize(CTX, struct _kAbstractArray *a, size_t min)
+{
+	if(!((min * sizeof(void*)) < a->a.bytemax)) {
+		if(min < sizeof(kObject)) min = sizeof(kObject);
+		KARRAY_EXPAND(&a->a, min);
+	}
+}
+
+static void kArray_unboxAdd(CTX, kArray *o, uintptr_t value)
+{
+	size_t asize = kArray_size(o);
+	struct _kAbstractArray *a = (struct _kAbstractArray*)o;
+	Array_ensureMinimumSize(_ctx, a, asize+1);
+	DBG_ASSERT(a->a.objects[asize] == NULL);
+	struct _kArray *a2 = (struct _kArray *)a;
+	a2->ndata[asize] = value;
+	kArray_setsize(a2, (asize+1));
 }
 
 static KMETHOD Array_add1(CTX, ksfp_t *sfp _RIX)
 {
 	kArray *a = (kArray *)sfp[0].o;
-
-	kArray_add(a, sfp[1].o);
+	if (kArray_isUnboxData(a)) {
+		kArray_unboxAdd(_ctx, a, sfp[1].ndata);
+	} else {
+		kArray_add(a, sfp[1].o);
+	}
 	RETURN_(a);
 }
 
