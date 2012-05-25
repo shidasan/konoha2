@@ -110,7 +110,7 @@ set(PACKAGES
 	konoha.i
 ##	konoha.assert
 	posix.process
-##	posix.file
+	posix.file
 ##	konoha.socket
 	konoha.rope
 ##	konoha.subproc
