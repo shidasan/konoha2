@@ -28,9 +28,21 @@
 #include <signal.h>
 
 //## @Static @Public Int System.getpid();
+
 static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getpid());
+}
+
+static KMETHOD System_getPpid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(getppid());
+}
+static KMETHOD System_getPgid(CTX, ksfp_t *sfp _RIX)
+{
+	int pid = sfp[1].ivalue;
+	int gid = getpgid(pid);
+	RETURNi_(gid);
 }
 
 
@@ -48,6 +60,8 @@ static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 {
 	intptr_t MethodData[] = {
 		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
+		_Public|_Static, _F(System_getPpid), TY_Int, TY_System, MN_("getPpid"), 0,
+		_Public|_Static, _F(System_getPgid), TY_Int, TY_System, MN_("getPgid"), 1, TY_Int, FN_("pid"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
