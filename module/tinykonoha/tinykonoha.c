@@ -187,7 +187,9 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
 {
 	if(ct->methods == K_EMPTYARRAY) {
-		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
+		kObject *o = new_(MethodArray, 8);
+		//KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
+		KINITv(((struct _kclass*)ct)->methods, o);
 	}
 	kArray_add(ct->methods, mtd);
 }
@@ -295,7 +297,7 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 	//KINITv(base->gcstack, new_(Array, K_PAGESIZE/sizeof(void*)));
 	//KINITv(base->gcstack, new_(Array, 5));
 	//KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
-	KARRAY_INIT(&base->ref, 32);
+	KARRAY_INIT(&base->ref, 128);
 	base->reftail = base->ref.refhead;
 	ctx->esp = base->stack;
 	ctx->stack = base;
@@ -353,6 +355,14 @@ void TaskDisp(VP_INT exinf)
 #else
 int main(int argc, char **args)
 {
-	fprintf(stderr, "hi\n");
+	struct kcontext_t *_ctx = NULL;
+	_ctx = new_context(K_STACK_SIZE);
+	//new_CT(_ctx, NULL, NULL, 0);
+	//VirtualMachine_run(_ctx, sfp, NULL);
+	kclass_t *ct = CT_(CLASS_String);
+	TDBG_s("loop start");
+	while (1) {
+		new_kObject(ct, NULL);
+	}
 }
 #endif

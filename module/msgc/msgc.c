@@ -110,6 +110,8 @@ typedef struct objpageTBL_t {
 #define ARENA_COUNT_SIZE(size,c) (size) >> (c)
 #ifdef K_USING_TINYVM
 #define K_ARENA_COUNT 2
+#elif defined TINYKONOHA_DEBUG
+#define K_ARENA_COUNT 2
 #else
 #define K_ARENA_COUNT 3
 #endif
@@ -337,9 +339,6 @@ static void ObjectPage_init0(objpage0_t *opage)
 	kGCObject0 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(0) - 1;
 	for(i = 0; i < t; ++i) {
-#ifndef K_USING_TINYVM
-		DBG_ASSERT(K_OPAGE((opage->slots + i),0) == opage);
-#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -353,9 +352,6 @@ static void ObjectPage_init1(objpage1_t *opage)
 	kGCObject1 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(1) - 1;
 	for(i = 0; i < t; ++i) {
-#ifndef K_USING_TINYVM
-		DBG_ASSERT(K_OPAGE(opage->slots + i,1) == opage);
-#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -382,9 +378,6 @@ static void ObjectPage_init2(objpage2_t *opage)
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage0_t *opage = (objpage0_t *)do_malloc(arenasize);
-#ifndef K_USING_TINYVM
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
-#endif
 	oat->head0 =   opage;
 	oat->bottom0 = (objpage0_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -398,9 +391,6 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
-#ifndef K_USING_TINYVM
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
-#endif
 	oat->head1 =   opage;
 	oat->bottom1 = (objpage1_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -894,7 +884,9 @@ static void MSGC_setup(CTX, struct kmodshare_t *def, int newctx)
 		MSGC_SETUP(0);
 		MSGC_SETUP(1);
 #ifndef K_USING_TINYVM
+#ifndef TINYKONOHA_DEBUG
 		MSGC_SETUP(2);
+#endif
 #endif
 	}
 }

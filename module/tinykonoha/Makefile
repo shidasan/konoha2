@@ -303,6 +303,7 @@ clean:
 	rm -f $(OBJNAME).exe $(OBJNAME).bin $(OBJNAME).out
 	rm -f kernel_cfg.c kernel_chk.c kernel_chk.s kernel_id.h kernel_obj.dat
 	rm -f makeoffset.s offset.h
+	rm -f tinykonoha
 
 cleankernel:
 	rm -rf $(KERNEL_LIB_OBJS)
@@ -517,5 +518,5 @@ $(UTASK_ASMOBJS:.o=.d): %.d: %.S
 
 DEBUG_CC = gcc
 DEBUG_CFLAGS = -g -O0 -I../../include -I.
-debug : $(UNAME).o
-	$(DEBUG_CC) $(UNAME).c -o $(UNAME) $(DEBUG_CFLAGS)
+debug :
+	$(DEBUG_CC) $(UNAME).c -o $(UNAME) $(DEBUG_CFLAGS) -DTINYKONOHA_DEBUG=1

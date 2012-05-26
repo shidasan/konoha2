@@ -61,9 +61,9 @@
 
 #else
 #define K_PAGESIZE        4096
-#define TDBG_i(KEY, VALUE) 
-#define TDBG_s(KEY) 
-#define TDBG_abort(MSG)
+#define TDBG_i(KEY, VALUE) fprintf(stderr, "%s: %d\n", KEY, VALUE)
+#define TDBG_s(KEY) fprintf(stderr, "%s\n", KEY)
+#define TDBG_abort(MSG) fprintf(stderr, "%s\n", MSG); abort()
 #endif
 
 #ifndef K_OSDLLEXT
@@ -322,6 +322,11 @@ typedef kushort_t       kparamid_t;
 #define MN_toSETTER(mn)   ((MN_UNMASK(mn)) | MN_SETTER)
 
 #ifdef K_USING_TINYVM
+#define MN_to(cid)        0
+#define MN_isTOCID(mn)    0
+#define MN_as(cid)        0
+#define MN_isASCID(mn)    0
+#elif defined TINYKONOHA_DEBUG
 #define MN_to(cid)        0
 #define MN_isTOCID(mn)    0
 #define MN_as(cid)        0
@@ -1228,6 +1233,13 @@ struct _klib2 {
 #define SYMPOL_NAME               1
 #define SYMPOL_METHOD             2
 #ifdef K_USING_TINYVM
+#define ksymbol(T,L,D,P)          0
+#define KSYMBOL(T)                0
+#define FN_(T)                    0
+#define MN_(T)                    0
+#define MN_new                    0
+#define T_mn(B, X)                0
+#elif defined TINYKONOHA_DEBUG
 #define ksymbol(T,L,D,P)          0
 #define KSYMBOL(T)                0
 #define FN_(T)                    0

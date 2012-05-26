@@ -374,7 +374,7 @@ static void Array_reftrace(CTX, kObject *o)
 	if(!kArray_isUnboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(kArray_size(a));
-		TDBG_i("array", kArray_size(a));
+		TDBG_i("array", (int)kArray_size(a));
 		for(i = 0; i < kArray_size(a); i++) {
 			KREFTRACEv(a->list[i]);
 		}
