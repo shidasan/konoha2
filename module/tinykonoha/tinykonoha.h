@@ -2,7 +2,6 @@
 #define SAMPLE_H
 
 #include <t_services.h>
-#define K_USING_TINYVM  1
 #define K_USING_THCODE_ 1
 #define MAX_CT     16
 
