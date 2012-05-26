@@ -56,7 +56,6 @@ static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
 
 static void kshare_reftrace(CTX, kcontext_t *ctx)
 {
-	TDBG_s("share reftrace");
 	kshare_t *share = ctx->share;
 	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
 	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
@@ -88,12 +87,10 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	//KREFTRACEv(share->paramList);
 	//KREFTRACEv(share->paramdomList);
 	END_REFTRACE();
-	TDBG_s("share end");
 }
 
 static void kcontext_reftrace(CTX, kcontext_t *ctx)
 {
-	TDBG_s("context start");
 	size_t i;
 	if(IS_ROOTCTX(_ctx)) {
 		kshare_reftrace(_ctx, ctx);
@@ -111,7 +108,6 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 			p->reftrace(_ctx, p);
 		}
 	}
-	TDBG_s("context end");
 }
 
 void KRUNTIME_reftraceAll(CTX)
@@ -123,12 +119,10 @@ void KONOHA_freeObjectField(CTX, struct _kObject *o)
 {
 	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
-		TDBG_s("kfree");
 		karray_t *p = o->h.kvproto;
 		KFREE(p->bytebuf, p->bytemax);
 		KFREE(p, sizeof(karray_t));
 		o->h.kvproto = kvproto_null();
-		TDBG_s("kfree end");
 	}
 	ct->free(_ctx, o);
 }
@@ -187,9 +181,7 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 static void CT_addMethod(CTX, kclass_t *ct, kMethod *mtd)
 {
 	if(ct->methods == K_EMPTYARRAY) {
-		kObject *o = new_(MethodArray, 8);
-		//KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
-		KINITv(((struct _kclass*)ct)->methods, o);
+		KINITv(((struct _kclass*)ct)->methods, new_(MethodArray, 8));
 	}
 	kArray_add(ct->methods, mtd);
 }
@@ -324,6 +316,7 @@ static kcontext_t *new_context(size_t stacksize)
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
+	//FLOAT_init(&_ctx, NULL);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;

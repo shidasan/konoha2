@@ -348,6 +348,8 @@ typedef const struct kcontext_t *const CTX_t;
 
 #ifdef K_USING_TINYVM
 #define MOD_MAX    2
+#elif defined TINYKONOHA_DEBUG
+#define MOD_MAX    2
 #else
 #define MOD_MAX    128
 #endif
@@ -355,10 +357,12 @@ struct _kObject;
 
 #ifdef K_USING_TINYVM
 #define MOD_gc       0
-#define MOD_code     1
-#define MOD_logger   2
-#define MOD_sugar    3
-#define MOD_float   11
+#define MOD_float    1
+#define MOD_sugar    11
+#elif defined TINYKONOHA_DEBUG
+#define MOD_gc       0
+#define MOD_float    1
+#define MOD_sugar    11
 #else
 #define MOD_logger   0
 #define MOD_gc       1
@@ -1232,6 +1236,7 @@ struct _klib2 {
 #define SYMPOL_RAW                0
 #define SYMPOL_NAME               1
 #define SYMPOL_METHOD             2
+
 #ifdef K_USING_TINYVM
 #define ksymbol(T,L,D,P)          0
 #define KSYMBOL(T)                0

@@ -791,7 +791,6 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 
 static size_t gc_sweep0(CTX)
 {
-	TDBG_s("gc_sweep0");
 	size_t collected = 0;
 	objpageTBL_t *oat = memshare(_ctx)->ObjectArenaTBL[0];
 	size_t atindex, size = memshare(_ctx)->sizeObjectArenaTBL[0];
