@@ -93,7 +93,7 @@ static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _
 		}
 		kclass_t *ct = NULL;
 		if(psize > 0) {
-			kclass_t *ct = CT_(TK_type(tk));
+			ct = CT_(TK_type(tk));
 			if(ct->bcid == CLASS_Func) {
 				ct = kClassTable_Generics(ct, p[0].ty, psize-1, p+1);
 			}
