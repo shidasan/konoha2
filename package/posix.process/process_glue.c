@@ -101,7 +101,7 @@ static KMETHOD System_setPriority(CTX, ksfp_t *sfp _RIX)
 	int arg1 = sfp[1].ivalue;
 	int arg2 = sfp[2].ivalue;
 	int arg3 = sfp[3].ivalue;
-	int ret = getpriority(arg1, arg2, arg3);
+	int ret = setpriority(arg1, arg2, arg3);
 	RETURNi_(ret);
 }
 
@@ -289,7 +289,7 @@ static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**
 		_Public|_Static, _F(System_Rename), TY_Int, TY_System, MN_("Rename"), 2, TY_String, FN_("renamearg1"), TY_String, FN_("renamearg2"),
 		_Public|_Static, _F(System_Rmdir), TY_Int, TY_System, MN_("Rmdir"), 1, TY_String, FN_("rmdirarg"),
 		_Public|_Static, _F(System_symLink), TY_Int, TY_System, MN_("symLink"), 2, TY_String, FN_("symlinkarg1"), TY_String, FN_("symlikarg2"),
-		_Public|_Static, _Fp(System_readLink), TY_Int, TY_System, MN_("readLink"), 3, TY_String, FN_("readlinkarg1"), TY_String, FN_("readlikarg2"), TY_Int, FN_("readlinkarg3"),
+		_Public|_Static, _F(System_readLink), TY_Int, TY_System, MN_("readLink"), 3, TY_String, FN_("readlinkarg1"), TY_String, FN_("readlikarg2"), TY_Int, FN_("readlinkarg3"),
 		_Public|_Static, _F(System_Chown), TY_Int, TY_System, MN_("Chown"), 3, TY_String, FN_("chownarg1"), TY_Int, FN_("chownarg2"), TY_Int, FN_("chownarg3"),
 		_Public|_Static, _F(System_lChown), TY_Int, TY_System, MN_("lChown"), 3, TY_String, FN_("lchownarg1"), TY_Int, FN_("lchownarg2"), TY_Int, FN_("lchownarg3"),
 		_Public|_Static, _F(System_fChown), TY_Int, TY_System, MN_("fChown"), 3, TY_Int, FN_("fchownarg1"), TY_Int, FN_("fchownarg2"), TY_Int, FN_("fchownarg3"),
