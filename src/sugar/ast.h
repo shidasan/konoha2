@@ -91,7 +91,7 @@ static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _
 			if(tkT->topch == ',') continue;
 			return NULL; // new int[10];  // not generics
 		}
-		kclass_t *ct;
+		kclass_t *ct = NULL;
 		if(psize > 0) {
 			kclass_t *ct = CT_(TK_type(tk));
 			if(ct->bcid == CLASS_Func) {
