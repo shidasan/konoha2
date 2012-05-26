@@ -1,4 +1,4 @@
- - (FileRead.k:18) 1 hello world
+ - (FileRead.k:24) 1 hello world
 2 hello world
 3 hello world
 4 hello world
@@ -58,5 +58,4 @@
 8 hello world
 9 hello world
 
-
 Q.E.D.
