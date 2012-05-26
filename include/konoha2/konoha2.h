@@ -62,8 +62,8 @@
 #else
 #define K_PAGESIZE        4096
 #define TDBG_i(KEY, VALUE) 
-#define TDBG_s(KEY, VALUE) 
-#define TDBG_abort(KEY, VALUE) 
+#define TDBG_s(KEY) 
+#define TDBG_abort(MSG)
 #endif
 
 #ifndef K_OSDLLEXT

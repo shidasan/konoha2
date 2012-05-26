@@ -22,10 +22,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifdef K_USING_TINYVM
 #include "kernel_id.h"
 #include "ecrobot_base.h"
 #include "ecrobot_interface.h"
 #include "balancer.h"
+#endif
 
 #include "tinykonoha.h"
 #include <../../include/konoha2/konoha2.h>
@@ -325,6 +327,7 @@ static kcontext_t *new_context(size_t stacksize)
 	return &_ctx;
 }
 
+#ifdef K_USING_TINYVM
 void cyc0(VP_INT exinf)
 {
 
@@ -347,3 +350,9 @@ void TaskDisp(VP_INT exinf)
 		new_kObject(ct, NULL);
 	}
 }
+#else
+int main(int argc, char **args)
+{
+	fprintf(stderr, "hi\n");
+}
+#endif
