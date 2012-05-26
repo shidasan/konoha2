@@ -242,7 +242,13 @@ static void Kfree(CTX, void *p, size_t s)
 {
 	size_t *pp = (size_t*)p;
 	DBG_ASSERT(pp[-1] == s);
+#ifdef K_USING_TINYVM
+	do_free(pp, s);
+#elif defined TINYKONOHA_DEBUG
+	do_free(pp, s);
+#else
 	do_free(pp - 1, s + sizeof(size_t));
+#endif
 	klib2_malloced -= s;
 }
 
@@ -668,7 +674,6 @@ static void ostack_push(CTX, knh_ostack_t *ostack, kObject *ref)
 {
 #ifdef K_USING_TINYVM
 	if (ostack->tail ==ostack->capacity) {
-		TDBG_abort("ostack_push");
 		size_t newcapacity = ostack->capacity * 2;
 		kObject **newstack = (kObject**)do_malloc(newcapacity * sizeof(kObject*));
 		memcpy(newstack, ostack->stack, ostack->capacity * sizeof(kObject*));
@@ -739,11 +744,8 @@ static void gc_mark(CTX)
 	size_t ref_size = stack->reftail - stack->ref.refhead;
 	goto L_INLOOP;
 	while((ref = ostack_next(ostack)) != NULL) {
-		TDBG_s("reset");
 		context_reset_refs(_ctx);
-		TDBG_s("reset refs");
 		KONOHA_reftraceObject(_ctx, ref);
-		TDBG_s("reset end");
 		ref_size = stack->reftail - stack->ref.refhead;
 		if(ref_size > 0) {
 			L_INLOOP:;
@@ -766,7 +768,7 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 {
 	unsigned i;
 	uintptr_t j = 100;
-	size_t collected = 0;
+	size_t collected = 0, survived;
 	size_t pageSize = K_PAGESIZE/sizeOfObject;
 	for(i = 0; i < pageSize; ++i) {
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
@@ -847,7 +849,9 @@ static void gc_sweep(CTX)
 	collected += gc_sweep0(_ctx);
 	collected += gc_sweep1(_ctx);
 #ifndef K_USING_TINYVM
+#ifndef TINYKONOHA_DEBUG
 	collected += gc_sweep2(_ctx);
+#endif
 #endif
 }
 
@@ -942,7 +946,6 @@ kObject *MODGC_omalloc(CTX, size_t size)
 
 void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
-	TDBG_s("msgc");
 	//TODO : stop the world
 	gc_init(_ctx);
 	gc_mark(_ctx);
