@@ -93,12 +93,17 @@ static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _
 		}
 		kclass_t *ct;
 		if(psize > 0) {
-			ct = CT_(TK_type(tk));
-			if(ct->cparam == K_NULLPARAM) {
+			kclass_t *ct = CT_(TK_type(tk));
+			if(ct->bcid == CLASS_Func) {
+				ct = kClassTable_Generics(ct, p[0].ty, psize-1, p+1);
+			}
+			else if(ct->p0 == TY_void) {
 				SUGAR_P(ERR_, tk->uline, tk->lpos, "not generic type: %s", T_ty(TK_type(tk)));
 				return tk;
 			}
-			ct = kClassTable_Generics(ct, psize, p);
+			else {
+				ct = kClassTable_Generics(ct, TY_void, psize, p);
+			}
 		}
 		else {
 			ct = CT_p0(_ctx, CT_Array, TK_type(tk));
@@ -701,7 +706,6 @@ static KMETHOD ParseExpr_Parenthesis(CTX, ksfp_t *sfp _RIX)
 			((struct _kExpr*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall); // CALL
 		}
 		else if(lexpr->syn->kw != KW_ExprMethodCall) {
-			DBG_P("function calls  .. ");
 			syn = SYN_(kStmt_ks(stmt), KW_Parenthesis);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}

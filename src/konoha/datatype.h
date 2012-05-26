@@ -346,9 +346,9 @@ static kParam *new_Param(CTX, ktype_t rtype, int psize, kparam_t *p)
 	return pa;
 }
 
-static uintptr_t hashparamdom(ktype_t rtype, int psize, kparam_t *p)
+static uintptr_t hashparamdom(int psize, kparam_t *p)
 {
-	uintptr_t i, hcode = rtype;
+	uintptr_t i, hcode = 0;
 	for(i = 0; i < psize; i++) {
 		hcode = p[i].ty + (31 * hcode);
 	}
@@ -366,7 +366,7 @@ static uintptr_t hashparam(ktype_t rtype, int psize, kparam_t *p)
 
 static kbool_t equalsParamDom(ktype_t rtype, int psize, kparam_t *p, kParam *pa)
 {
-	if(rtype == pa->rtype && psize == pa->psize) {
+	if(psize == pa->psize) {
 		int i;
 		for(i = 0; i < psize; i++) {
 			if(p[i].ty != pa->p[i].ty) return false;
@@ -415,10 +415,10 @@ static kparamid_t Kparam(CTX, ktype_t rtype, int psize, kparam_t *p)
 	return Kmap_getparamid(_ctx, _ctx->share->paramMapNN, _ctx->share->paramList, hcode, equalsParam, rtype, psize, p);
 }
 
-static kparamid_t Kparamdom(CTX, ktype_t rtype, int psize, kparam_t *p)
+static kparamid_t Kparamdom(CTX, int psize, kparam_t *p)
 {
-	uintptr_t hcode = hashparamdom(rtype, psize, p);
-	return Kmap_getparamid(_ctx, _ctx->share->paramdomMapNN, _ctx->share->paramdomList, hcode, equalsParamDom, rtype, psize, p);
+	uintptr_t hcode = hashparamdom(psize, p);
+	return Kmap_getparamid(_ctx, _ctx->share->paramdomMapNN, _ctx->share->paramdomList, hcode, equalsParamDom, TY_void, psize, p);
 }
 
 /* --------------- */
@@ -445,7 +445,7 @@ static void Method_reftrace(CTX, kObject *o)
 static kMethod* new_Method(CTX, uintptr_t flag, kcid_t cid, kmethodn_t mn, knh_Fmethod func)
 {
 	struct _kMethod* mtd = new_W(Method, NULL);
-	mtd->flag  = flag;
+	mtd->flag    = flag;
 	mtd->cid     = cid;
 	mtd->mn      = mn;
 	kMethod_setFunc(mtd, func);
@@ -457,8 +457,8 @@ static kParam* KMethod_setParam(CTX, kMethod *mtd_, ktype_t rtype, int psize, kp
 	kparamid_t paramid = Kparam(_ctx, rtype, psize, p);
 	if(mtd_ != NULL) {
 		struct _kMethod* mtd = (struct _kMethod*)mtd_;
-		mtd->paramdom = Kparamdom(_ctx, rtype, psize, p);
-		mtd->paramid = paramid;
+		mtd->paramdom = Kparamdom(_ctx, psize, p);
+		mtd->paramid  = paramid;
 	}
 	return _ctx->share->paramList->params[paramid];
 }
@@ -471,14 +471,34 @@ static intptr_t STUB_Method_indexOfField(kMethod *mtd)
 // ---------------
 // System
 
-#define CT_System               CT_(CLASS_System)
+static void Func_init(CTX, kObject *o, void *conf)
+{
+	struct _kFunc *fo = (struct _kFunc*)o;
+	KINITv(fo->self, K_NULL);
+	KINITv(fo->mtd,  KNULL(Method));
+}
+
+static void Func_reftrace(CTX, kObject *o)
+{
+	BEGIN_REFTRACE(4);
+	kFunc *fo = (kFunc*)o;
+	KREFTRACEv(fo->self);
+	KREFTRACEv(fo->mtd);
+	END_REFTRACE();
+}
+
+// ---------------
+// System
+
+//#define CT_System               CT_(CLASS_System)
 
 // ---------------
 
 static kclass_t *T_realtype(CTX, kclass_t *ct, kclass_t *self)
 {
-	DBG_ASSERT(ct->optvalue < self->cparam->psize);
-	kclass_t *pct = CT_(self->cparam->p[ct->optvalue].ty);
+	kParam *cparam = CT_cparam(self);
+	DBG_ASSERT(ct->optvalue < cparam->psize);
+	kclass_t *pct = CT_(cparam->p[ct->optvalue].ty);
 	return pct->realtype(_ctx, pct, self);
 }
 
@@ -567,7 +587,7 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 	share->ca.cts[newid] = (kclass_t*)ct;
 	if(bct != NULL) {
 		DBG_ASSERT(s == NULL);
-		memcpy(ct, bct, offsetof(kclass_t, cparam));
+		memcpy(ct, bct, offsetof(kclass_t, methods));
 		ct->cid = newid;
 		if(ct->fnull == DEFAULT_fnull) ct->fnull =  DEFAULT_fnullinit;
 	}
@@ -583,9 +603,9 @@ static struct _kclass* new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->cstruct_size = size64(s->cstruct_size);
 		DBG_ASSERT(ct->cstruct_size <= 128);
 		ct->DBG_NAME = (s->structname != NULL) ? s->structname : "N/A";
-		if(s->cparams != NULL) {
-			DBG_P("params");
-			KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
+		if(s->psize > 0 && s->cparams != NULL) {
+			ct->p0 = s->cparams[0].ty;
+			ct->paramdom = Kparamdom(_ctx, /*s->rtype,*/ s->psize, s->cparams);
 		}
 		// function
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
@@ -608,12 +628,10 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 {
 	kclass_t *bct = ct;
 	while(ct->cstruct_size < sizeof(kObjectHeader) + head + body) {
-		//DBG_P("ct->cstruct_size =%d, request_size = %d", ct->cstruct_size, head+body);
 		if(ct->searchSimilarClassNULL == NULL) {
 			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 			newct->cflag |= kClass_Private;
 			newct->cstruct_size = ct->cstruct_size * 2;
-			KINITv(newct->cparam, ct->cparam);
 			KINITv(newct->methods, ct->methods);
 			((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 		}
@@ -622,37 +640,21 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 	return ct;
 }
 
-static kbool_t CParam_equals(kParam *cpa, int psize, kparam_t *p)
+static kclass_t *CT_Generics(CTX, kclass_t *ct, ktype_t rtype, int psize, kparam_t *p)
 {
-	int i;
-	for(i = 0; i < psize; i++) {
-		if(cpa->p[i].ty != p[i].ty) return false;
-	}
-	return true;
-}
-
-static kParam *new_CParam(CTX, kclass_t *ct, int psize, kparam_t *p)
-{
-	int i;
-	for( i = 0; i < psize; i++) {
-		p[i].fn = ct->cparam->p[i].fn;
-	}
-	return new_kParam2(TY_void, psize, p);
-}
-
-static kclass_t *CT_Generics(CTX, kclass_t *ct, int psize, kparam_t *p)
-{
+	kparamid_t paramdom = Kparamdom(_ctx, psize, p);
 	kclass_t *ct0 = ct;
-	while(ct != NULL) {
-		kParam *cpa = ct->cparam;
-		if(cpa->psize ==  psize && CParam_equals(cpa, psize, p)) {
+	int isNotFuncClass = (ct->bcid != CLASS_Func);
+	do {
+		if(ct->paramdom == paramdom && (isNotFuncClass || ct->p0 == rtype)) {
 			return ct;
 		}
 		if(ct->searchSimilarClassNULL == NULL) break;
 		ct = ct->searchSimilarClassNULL;
-	}
-	struct _kclass *newct = new_CT(_ctx, ct, NULL, NOPLINE);
-	KINITv(newct->cparam, new_CParam(_ctx, ct, psize, p));
+	} while(ct != NULL);
+	struct _kclass *newct = new_CT(_ctx, ct0, NULL, NOPLINE);
+	newct->paramdom = paramdom;
+	newct->p0 = isNotFuncClass ? p[0].ty : rtype;
 	KINITv(newct->methods, K_EMPTYARRAY);
 	if(newct->searchSuperMethodClassNULL == NULL) {
 		newct->searchSuperMethodClassNULL = ct0;
@@ -660,31 +662,33 @@ static kclass_t *CT_Generics(CTX, kclass_t *ct, int psize, kparam_t *p)
 	((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 	return ct->searchSimilarClassNULL;
 }
+
 static kString* CT_shortName(CTX, kclass_t *ct)
 {
 	if(ct->shortNameNULL == NULL) {
-		if(ct->cparam == K_NULLPARAM) {
+		if(ct->paramdom == 0) {
 			KINITv(((struct _kclass*)ct)->shortNameNULL, S_UN(ct->nameid));
 		}
 		else {
-			size_t i;
-			kString *s;
-			for(i=0; i < ct->cparam->psize; i++) {
-				CT_shortName(_ctx, CT_(ct->cparam->p[i].ty));
-			}
+			size_t i, c = 0;
+			kParam *cparam = CT_cparam(ct);
 			kwb_t wb;
+			for(i = 0; i < cparam->psize; i++) {
+				CT_shortName(_ctx, CT_(cparam->p[i].ty));
+			}
+			CT_shortName(_ctx, CT_(ct->p0));
 			Kwb_init(&(_ctx->stack->cwb), &wb);
-			s = S_UN(ct->nameid);
+
+			kString *s = S_UN(ct->nameid);
 			kwb_write(&wb, S_text(s), S_size(s));
 			kwb_putc(&wb, '[');
-			for(i=0; i < ct->cparam->psize; i++) {
-				if(i>0)	kwb_putc(&wb, ',');
-				s = CT_shortName(_ctx, CT_(ct->cparam->p[i].ty));
-				kwb_write(&wb, S_text(s), S_size(s));
+			if(ct->bcid == CLASS_Func) {
+				s = CT_shortName(_ctx, CT_(ct->p0));
+				kwb_write(&wb, S_text(s), S_size(s)); c++;
 			}
-			if(ct->cparam->rtype != TY_void) {
-				if(i>0)	kwb_putc(&wb, '-', '>');
-				s = CT_shortName(_ctx, CT_(ct->cparam->rtype));
+			for(i = 0; i < cparam->psize; i++) {
+				if(c > 0) kwb_putc(&wb, ',');
+				s = CT_shortName(_ctx, CT_(cparam->p[i].ty));
 				kwb_write(&wb, S_text(s), S_size(s));
 			}
 			kwb_putc(&wb, ']');
@@ -695,6 +699,7 @@ static kString* CT_shortName(CTX, kclass_t *ct)
 	}
 	return ct->shortNameNULL;
 }
+
 static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
 {
 	uintptr_t lname = longid(ct->packdom, ct->nameid);
@@ -708,9 +713,6 @@ static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
 		if(ct->cid > CLASS_Object) {
 			ct->searchSuperMethodClassNULL = CT_(ct->supcid);
 		}
-	}
-	if(ct->cparam == NULL) {
-		KINITv(ct->cparam, K_NULLPARAM);
 	}
 }
 
@@ -776,6 +778,12 @@ static void loadInitStructData(CTX)
 		.p    = String_p,
 		.unbox = String_unbox
 	};
+	KDEFINE_CLASS defArray = {
+		CLASSNAME(Array),
+		.init = Array_init,
+		.reftrace = Array_reftrace,
+		.free = Array_free,
+	};
 	KDEFINE_CLASS defParam = {
 		CLASSNAME(Param),
 		.init = Param_init,
@@ -785,13 +793,10 @@ static void loadInitStructData(CTX)
 		.init = Method_init,
 		.reftrace = Method_reftrace,
 	};
-	kparam_t ArrayCparam = {TY_Object, 1};
-	KDEFINE_CLASS defArray = {
-		CLASSNAME(Array),
-		.init = Array_init,
-		.reftrace = Array_reftrace,
-		.free = Array_free,
-//		.psize = 1, .cparams = &ArrayCparam,
+	KDEFINE_CLASS defFunc = {
+		CLASSNAME(Func),
+		.init = Func_init,
+		.reftrace = Func_reftrace,
 	};
 	KDEFINE_CLASS defSystem = {
 		CLASSNAME(System),
@@ -809,20 +814,23 @@ static void loadInitStructData(CTX)
 		&defBoolean,
 		&defInt,
 		&defString,
+		&defArray,
 		&defParam,
 		&defMethod,
-		&defArray,
+		&defFunc,
 		&defSystem,
 		&defT0,
 		NULL,
 	};
 	KDEFINE_CLASS **dd = DATATYPES;
-	while(dd[0] != NULL) {
-		new_CT(_ctx, NULL, dd[0], 0);
-		dd++;
+	int cid = 0;
+	while(dd[cid] != NULL) {
+		DBG_ASSERT(dd[cid]->cid == cid);
+		new_CT(_ctx, NULL, dd[cid], 0);
+		cid++;
 	}
 	struct _kclass *ct = (struct _kclass *)CT_Array;
-	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
+	ct->p0 = TY_Object;
 }
 
 static void initStructData(CTX)
@@ -835,6 +843,10 @@ static void initStructData(CTX)
 		ct->nameid = kuname(name, strlen(name), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
 		CT_setName(_ctx, ct, 0);
 	}
+//	struct _kclass *ct = (struct _kclass *)CT_Array;
+//	kparam_t p = { .ty = TY_Object};
+//	ct->paramdom = Kparamdom(_ctx, 1, &p);
+//	DBG_P("ct->paramdom=%d", ct->paramdom);
 }
 
 static void KCLASSTABLE_initklib2(struct _klib2 *l)
@@ -887,6 +899,7 @@ static void KCLASSTABLE_init(CTX, kcontext_t *ctx)
 	KINITv(share->emptyArray,  new_(Array, 0));
 
 	Kparam(_ctx, TY_void, 0, NULL);  // PARAM_void
+	Kparamdom(_ctx, 0, NULL); // PARAMDOM_void
 	FILEID_("(konoha.c)");
 	PN_("konoha");    // PN_konoha
 	PN_("sugar");     // PKG_sugar
@@ -912,7 +925,6 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 		kclass_t *ct = cts[i];
 		{
 			BEGIN_REFTRACE(4);
-			KREFTRACEv(ct->cparam);
 			KREFTRACEv(ct->methods);
 			KREFTRACEn(ct->shortNameNULL);
 			KREFTRACEn(ct->nulvalNUL);

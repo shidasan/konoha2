@@ -148,6 +148,23 @@ static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 	RETURN_(s);
 }
 
+////## This Func.new(Object self, Method mtd);
+//static KMETHOD Func_new(CTX, ksfp_t *sfp _RIX)
+//{
+//	struct _kFunc *fo = (struct _kFunc*)sfp[0].fo;
+//	KSETv(fo->self, sfp[1].o);
+//	KSETv(fo->mtd, sfp[2].mtd);
+//	RETURN_(fo);
+//}
+//
+////## @Hidden T0 Func.invoke();
+//static KMETHOD Func_invoke(CTX, ksfp_t *sfp _RIX)
+//{
+//	kFunc* fo = sfp[0].fo;
+//	KSETv(sfp[0].o, fo->self);
+//	KSELFCALL(sfp, fo->mtd);
+//}
+
 int konoha_AssertResult = 0;
 
 //## @Const @Static void System.assert(boolean x)
