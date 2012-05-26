@@ -30,6 +30,7 @@
 typedef const struct _kFile kFile;
 struct _kFile {
 	kObjectHeader h;
+	const char *path;
 	FILE *fp;
 };
 
@@ -52,6 +53,7 @@ static void File_free(CTX, kObject *o)
 					KEYVALUE_s("errstr", strerror(errno))
 			);
 		}
+		free(file->path); // free path
 		file->fp = NULL;
 	}
 }
@@ -59,7 +61,9 @@ static void File_free(CTX, kObject *o)
 
 static void File_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	//TODO
+	kFile *file = (kFile*)sfp[pos].o;
+	FILE *fp = file->fp;
+	kwb_printf(wb, "FILE :%p, path=%s", fp, file->path);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -69,6 +73,7 @@ static KMETHOD System_fopen(CTX, ksfp_t *sfp _RIX)
 	kString *s = sfp[1].s;
 	const char *mode = IS_NULL(sfp[2].s) ? "r" : S_text(sfp[2].s);
 	FILE *fp = fopen(S_text(s), mode);
+
 	if (fp == NULL) {
 		ktrace(_SystemFault|_ScriptFault,
 				KEYVALUE_s("@", "fopen"),
@@ -77,7 +82,11 @@ static KMETHOD System_fopen(CTX, ksfp_t *sfp _RIX)
 				KEYVALUE_s("errstr", strerror(errno))
 		);
 	}
-	RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), fp));
+	kObject *obj = new_kObject(O_ct(sfp[K_RTNIDX].o), fp);
+	struct _kFile *file = (struct _kFile*)obj;
+	file->path = realpath(S_text(s), NULL);
+	RETURN_(file);
+	//RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), fp));
 }
 //## @Native int File.read(Bytes buf, int offset, int len);
 static KMETHOD File_read(CTX, ksfp_t *sfp _RIX)

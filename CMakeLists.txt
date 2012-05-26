@@ -100,6 +100,7 @@ set(PACKAGES
 	konoha.math
 	konoha.string
 	konoha.float
+	konoha.boolean
 ##	konoha.int
 	llvm
 	konoha.pcre

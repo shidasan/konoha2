@@ -144,6 +144,12 @@ static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 	RETURNf_((kfloat_t)strtod(S_text(sfp[0].s), NULL));
 }
 
+//## @Const method Int Int.opMINUS();
+static KMETHOD Float_opMINUS(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNf_(-(sfp[0].fvalue));
+}
+
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Im       kMethod_Immutable
@@ -182,6 +188,7 @@ static	kbool_t float_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		_Public|_Const|_Im|_Coercion, _F(Int_toFloat), TY_Float, TY_Int, MN_to(TY_Float), 0,
 		_Public|_Const|_Im, _F(Float_toString), TY_String, TY_Float, MN_to(TY_String), 0,
 		_Public|_Const|_Im, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
+		_Public|_Const|_Im, _F(Float_opMINUS), TY_Float, TY_Float, MN_("opMINUS"), 0,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
