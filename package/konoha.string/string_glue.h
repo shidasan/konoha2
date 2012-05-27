@@ -72,19 +72,6 @@ static size_t text_mlen(const char *s_text, size_t s_size)
 /* 	return s; */
 /* } */
 
-/* ------------------------------------------------------------------------ */
-//## @Const method Boolean String.equals(String s);
-//## @Const method Boolean String.opEQ(String s);
-
-static KMETHOD String_opEQ(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s0 = sfp[0].s;
-	kString *s1 = sfp[1].s;
-	if(S_size(s0) == S_size(s1)) {
-		RETURNb_(strncmp(S_text(s0), S_text(s1), S_size(s0)) == 0);
-	}
-	RETURNb_(0);
-}
 
 /* ------------------------------------------------------------------------ */
 //## method @Const Int String.getSize();
@@ -382,8 +369,6 @@ static kbool_t string_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	int FN_s = FN_("s");
 	int FN_n = FN_("n");
 	intptr_t MethodData[] = {
-		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("opEQ"),  1, TY_String, FN_s,
-		_Public|_Const|_Im, _F(String_opEQ),        TY_Boolean, TY_String, MN_("equals"),  1, TY_String, FN_s,
 		_Public|_Const|_Im, _F(String_opHAS),       TY_Boolean, TY_String, MN_("opHAS"), 1, TY_String, FN_s,
 		_Public|_Const|_Im, _F(String_trim),        TY_String, TY_String, MN_("trim"), 0,
 		_Public|_Const|_Im, _F(String_get),         TY_String, TY_String, MN_("get"), 1, TY_Int, FN_n,

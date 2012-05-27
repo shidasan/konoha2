@@ -148,6 +148,28 @@ static KMETHOD String_opADD(CTX, ksfp_t *sfp _RIX)
 	RETURN_(s);
 }
 
+//## @Const method Boolean String.equals(String s);
+//## @Const method Boolean String.opEQ(String s);
+static KMETHOD String_opEQ(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s0 = sfp[0].s;
+	kString *s1 = sfp[1].s;
+	if(S_size(s0) == S_size(s1)) {
+		RETURNb_(strncmp(S_text(s0), S_text(s1), S_size(s0)) == 0);
+	}
+	RETURNb_(0);
+}
+
+static KMETHOD String_opNEQ(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s0 = sfp[0].s;
+	kString *s1 = sfp[1].s;
+	if(S_size(s0) == S_size(s1)) {
+		RETURNb_(strncmp(S_text(s0), S_text(s1), S_size(s0)) != 0);
+	}
+	RETURNb_(1);
+}
+
 ////## This Func.new(Object self, Method mtd);
 //static KMETHOD Func_new(CTX, ksfp_t *sfp _RIX)
 //{
