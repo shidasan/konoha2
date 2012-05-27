@@ -475,7 +475,7 @@ static void Func_init(CTX, kObject *o, void *conf)
 {
 	struct _kFunc *fo = (struct _kFunc*)o;
 	KINITv(fo->self, K_NULL);
-	KINITv(fo->mtd,  KNULL(Method));
+	KINITv(fo->mtd, conf != NULL ? KNULL(Method) : (kMethod*)conf);
 }
 
 static void Func_reftrace(CTX, kObject *o)

@@ -347,10 +347,15 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		if(mtd != NULL) {
 			return new_GetterExpr(_ctx, tk, mtd, new_ConstValue(cid, genv->ks->scrNUL));
 		}
-//		mtd = kKonohaSpace_getMethodNULL(genv->ks, cid, fn);
-//		if(mtd != NULL) {
-//			CT_Generics();
-//		}
+		mtd = kKonohaSpace_getMethodNULL(genv->ks, cid, fn);
+		if(mtd != NULL) {
+			kParam *pa = kMethod_param(mtd);
+			kclass_t *ct = kClassTable_Generics(CT_Func, pa->rtype, pa->psize, (kparam_t*)pa->p);
+			struct _kFunc *fo = (struct _kFunc*)new_kObject(ct, mtd);
+			PUSH_GCSTACK(fo);
+			KSETv(fo->self, genv->ks->scrNUL);
+			return new_ConstValue(ct->cid, fo);
+		}
 	}
 	return kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk));
 }
