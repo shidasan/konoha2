@@ -32,8 +32,8 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, TY_var, 0);
-	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, rexpr->ty, TPOL_ALLOWVOID);
+	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
+	kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
 	if(rexpr != K_NULLEXPR && lexpr != K_NULLEXPR) {
 		rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
 		if(rexpr != K_NULLEXPR) {
