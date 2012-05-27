@@ -619,7 +619,7 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 	};
 	kclass_t *cSockAddr = Konoha_addClassDef(ks->packid, ks->packdom, NULL, &defSockAddr, pline);
 	kparam_t pi = {TY_Int, FN_("ivalue")};
-	kclass_t *CT_IntArray = kClassTable_Generics(CT_Array, 1, &pi);
+	kclass_t *CT_IntArray = kClassTable_Generics(CT_Array, TY_Int, 1, &pi);
 	kcid_t TY_IntArray = CT_IntArray->cid;
 
 	intptr_t MethodData[] = {
