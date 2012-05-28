@@ -1,4 +1,3 @@
-mport("konoha.float")
 K.import("konoha")
 
 class Hoge {
