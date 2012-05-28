@@ -97,7 +97,7 @@ static fd_set* toFd(fd_set* s, kArray *a )
 	int fd;
 	for(indx = 0; indx < kArray_size(a); indx++ ) {
 		fd = WORD2INT(a->ilist[indx]);
-		if ((fd >= 0) && (fd < FD_SETSIZE)) {
+		if((fd >= 0) && (fd < FD_SETSIZE)) {
 			FD_SET(fd, s);
 		}
 	}
@@ -121,7 +121,7 @@ static void fromFd(CTX, fd_set* s, kArray *a )
 static int getArrayMax(kArray *a)
 {
 	int ret = -1;
-	if(kArray_size(a) > 0)	{
+	if(kArray_size(a) > 0) {
 		int cnt;
 		int fd;
 		for(cnt = 0; cnt < kArray_size(a); cnt++) {
@@ -139,13 +139,13 @@ static int getNfd(kArray *a1, kArray *a2, kArray *a3)
 	int ret = -1;
 	int tmp;
 
-	if ((tmp=getArrayMax(a1)) > ret) {
+	if((tmp=getArrayMax(a1)) > ret) {
 		ret = tmp;
 	}
-	if ((tmp=getArrayMax(a2)) > ret) {
+	if((tmp=getArrayMax(a2)) > ret) {
 		ret = tmp;
 	}
-	if ((tmp=getArrayMax(a3)) > ret) {
+	if((tmp=getArrayMax(a3)) > ret) {
 		ret = tmp;
 	}
 	return ret;
@@ -190,9 +190,10 @@ KMETHOD System_accept(CTX, ksfp_t* sfp _RIX)
 			(struct sockaddr *)addr,
 			(socklen_t*)&addrLen
 	);
-	if (ret >= 0) {
+	if(ret >= 0) {
 //		fromSockaddr(_ctx, sa, addr);
-	} else {
+	}
+	else {
 		ktrace(_SystemFault,
 				KEYVALUE_s("@", "accept"),
 				KEYVALUE_u("errno", errno),
@@ -215,7 +216,7 @@ KMETHOD System_bind(CTX, ksfp_t* sfp _RIX)
 			(struct sockaddr*)&addr,
 			sizeof(addr)
 	);
-	if (ret != 0) {
+	if(ret != 0) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "bind"),
 			KEYVALUE_u("errno", errno),
@@ -230,7 +231,7 @@ KMETHOD System_close(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = close(WORD2INT(sfp[1].ivalue) );
 
-	if (ret != 0 ) {
+	if(ret != 0 ) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "close"),
 			KEYVALUE_u("errno", errno),
@@ -254,7 +255,7 @@ KMETHOD System_connect(CTX, ksfp_t* sfp _RIX)
 			(struct sockaddr*)&addr,
 			sizeof(addr)
 	);
-	if (ret != 0) {
+	if(ret != 0) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "connect"),
 			KEYVALUE_u("errno", errno),
@@ -268,7 +269,7 @@ KMETHOD System_connect(CTX, ksfp_t* sfp _RIX)
 KMETHOD System_listen(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = listen(WORD2INT(sfp[1].ivalue), WORD2INT(sfp[2].ivalue));
-	if (ret != 0) {
+	if(ret != 0) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "listen"),
 			KEYVALUE_u("errno", errno),
@@ -310,9 +311,10 @@ KMETHOD System_getsockopt(CTX, ksfp_t* sfp _RIX)
 			&val,
 			(socklen_t*)&valLen
 	);
-	if (ret == 0) {
+	if(ret == 0) {
 		ret = val;
-	} else {
+	}
+	else {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "getsockopt"),
 			KEYVALUE_u("errno", errno),
@@ -370,7 +372,7 @@ static KMETHOD System_recv(CTX, ksfp_t* sfp _RIX)
 					  ba->buf,
 					  ba->bytesize,
 					  (int)sfp[3].ivalue );
-	if (ret < 0 ) {
+	if(ret < 0 ) {
 		ktrace(_SystemFault,
 				KEYVALUE_s("@", "recv"),
 				KEYVALUE_s("perror", strerror(errno))
@@ -419,12 +421,13 @@ static KMETHOD System_select(CTX, ksfp_t* sfp _RIX)
 	tv.tv_usec = (long)sfp[5].ivalue;
 
 	int ret = select(nfd+1, rfd, wfd, efd, &tv );
-	if (ret > 0 ) {
+	if(ret > 0) {
 		fromFd(_ctx, rfd, a1 );
 		fromFd(_ctx, wfd, a2 );
 		fromFd(_ctx, efd, a3 );
-	} else {
-		if (ret < 0 ) {
+	}
+	else {
+		if(ret < 0 ) {
 			ktrace(_SystemFault,
 					KEYVALUE_s("@", "select"),
 					KEYVALUE_s("perror", strerror(errno))
@@ -450,7 +453,7 @@ static KMETHOD System_send(CTX, ksfp_t* sfp _RIX)
 	sig_t oldset = signal(SIGPIPE, SIG_IGN);
 	sig_t ret_signal = SIG_ERR;
 #endif
-	if (oldset == SIG_ERR) {
+	if(oldset == SIG_ERR) {
 		ktrace(_DataFault,
 				KEYVALUE_s("@", "signal"),
 				KEYVALUE_s("perror", strerror(errno))
@@ -460,15 +463,15 @@ static KMETHOD System_send(CTX, ksfp_t* sfp _RIX)
 					  ba->buf,
 					  ba->bytesize,
 					  (int)sfp[3].ivalue );
-	if (ret < 0 ) {
+	if(ret < 0) {
 		ktrace(_DataFault,
 				KEYVALUE_s("@", "send"),
 				KEYVALUE_s("perror", strerror(errno))
 		);
 	}
-	if (oldset != SIG_ERR ) {
+	if(oldset != SIG_ERR) {
 		ret_signal = signal(SIGPIPE, oldset);
-		if (ret_signal == SIG_ERR) {
+		if(ret_signal == SIG_ERR) {
 			ktrace(_DataFault,
 					KEYVALUE_s("@", "signal"),
 					KEYVALUE_s("perror", strerror(errno))
@@ -501,16 +504,16 @@ static KMETHOD System_sendto(CTX, ksfp_t* sfp _RIX)
 			(struct sockaddr *)&addr,
 			sizeof(struct sockaddr)
 	);
-	if (ret < 0 ) {
+	if(ret < 0) {
 		ktrace(_SystemFault,
 				KEYVALUE_s("@", "sendto"),
 				KEYVALUE_u("errno", errno),
 				KEYVALUE_s("errstr", strerror(errno))
 		);
 	}
-	if (oldset != SIG_ERR ) {
+	if(oldset != SIG_ERR) {
 		ret_signal = signal(SIGPIPE, oldset);
-		if (ret_signal == SIG_ERR) {
+		if(ret_signal == SIG_ERR) {
 			ktrace(_SystemFault,
 				KEYVALUE_s("@", "signal"),
 				KEYVALUE_u("errno", errno),
@@ -525,7 +528,7 @@ static KMETHOD System_sendto(CTX, ksfp_t* sfp _RIX)
 KMETHOD System_shutdown(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = shutdown(WORD2INT(sfp[1].ivalue), WORD2INT(sfp[2].ivalue));
-	if (ret != 0) {
+	if(ret != 0) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "shutdown"),
 			KEYVALUE_u("errno", errno),
@@ -539,7 +542,7 @@ KMETHOD System_shutdown(CTX, ksfp_t* sfp _RIX)
 KMETHOD System_sockatmark(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = sockatmark(WORD2INT(sfp[1].ivalue));
-	if (ret < 0) {
+	if(ret < 0) {
 		ktrace(_SystemFault,
 			KEYVALUE_s("@", "sockadmark"),
 			KEYVALUE_u("errno", errno),
@@ -555,7 +558,7 @@ KMETHOD System_socket(CTX, ksfp_t* sfp _RIX)
 	int ret = socket(WORD2INT(sfp[1].ivalue),
 					WORD2INT(sfp[2].ivalue),
 					WORD2INT(sfp[3].ivalue));
-	if (ret < 0) {
+	if(ret < 0) {
 		ktrace(_SystemFault,
 				KEYVALUE_s("@", "socket"),
 				KEYVALUE_u("errno", errno),
@@ -570,7 +573,7 @@ static KMETHOD System_socketpair(CTX, ksfp_t* sfp _RIX)
 {
 	int ret = -2;
 	kArray *a = sfp[4].a;
-	if (kArray_size(a)) {
+	if(kArray_size(a)) {
 		int pairFd[2];
 		if((ret = socketpair(WORD2INT(sfp[1].ivalue),
 				WORD2INT(sfp[2].ivalue),
@@ -578,7 +581,8 @@ static KMETHOD System_socketpair(CTX, ksfp_t* sfp _RIX)
 				pairFd)) == 0) {
 			a->ilist[0] = pairFd[0];
 			a->ilist[1] = pairFd[1];
-		} else {
+		}
+		else {
 			ktrace(_SystemFault,
 					KEYVALUE_s("@", "socketpair"),
 					KEYVALUE_u("errno", errno),
@@ -633,7 +637,6 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im, _F(System_setsockopt), TY_Int, TY_System, MN_("setsockopt"), 3, TY_Int, FN_("fd"), TY_Int, FN_("opt"), TY_Int, FN_("value"),
 //		_Public|_Const|_Im, _F(System_getpeername), TY_Map, TY_System, MN_("getpeername"), 1, TY_Int, FN_("fd"),
 		_Public, _F(System_select), TY_Int, TY_System, MN_("select"), 5, TY_IntArray, FN_("readsocks"), TY_IntArray, FN_("writesocks"), TY_IntArray, FN_("exceptsocks"), TY_Int, FN_("timeoutSec"), TY_Int, FN_("timeoutUSec"),
-		_Public|_Const|_Im, _F(System_sendto), TY_Int, TY_System, MN_("sendto"), 6, TY_Int, FN_("socket"), TY_Bytes, FN_("msg"), TY_Int, FN_("flag"), TY_String, FN_("dstIP"), TY_Int, FN_("dstPort"), TY_Int, FN_("family"),
 		_Public|_Const|_Im, _F(System_shutdown), TY_Int, TY_System, MN_("shutdown"), 2, TY_Int, FN_("fd"), TY_Int, FN_("how"),
 		_Public|_Const|_Im, _F(System_sockatmark), TY_Int, TY_System, MN_("sockatmark"), 1, TY_Int, FN_("fd"),
 		_Public|_Const|_Im, _F(System_socket), TY_Int, TY_System, MN_("socket"), 3, TY_Int, FN_("family"), TY_Int, FN_("type"), TY_Int, FN_("protocol"),
@@ -642,15 +645,17 @@ static	kbool_t socket_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
-	if (IS_defineBytes()) {
+	if(IS_defineBytes()) {
 		intptr_t MethodData2[] = {
+				_Public|_Const|_Im, _F(System_sendto), TY_Int, TY_System, MN_("sendto"), 6, TY_Int, FN_("socket"), TY_Bytes, FN_("msg"), TY_Int, FN_("flag"), TY_String, FN_("dstIP"), TY_Int, FN_("dstPort"), TY_Int, FN_("family"),
 				_Public|_Const|_Im, _F(System_recv), TY_Int, TY_System, MN_("recv"), 3, TY_Int, FN_("fd"), TY_Bytes, FN_("buf"), TY_Int, FN_("flags"),
 //				_Public|_Const|_Im, _F(System_recvfrom), TY_Int, TY_System, MN_("recvfrom"), 4, TY_Int, FN_x, TY_Bytes, FN_y, TY_Int, FN_z, TY_Map, FN_v,
 				_Public|_Const|_Im, _F(System_send), TY_Int, TY_System, MN_("send"), 3, TY_Int, FN_("fd"), TY_Bytes, FN_("msg"), TY_Int, FN_("flags"),
 				DEND,
 			};
 		kKonohaSpace_loadMethodData(ks, MethodData2);
-	} else {
+	}
+	else {
 		kreportf(INFO_, pline, "konoha.bytes package hasn't imported. Some features are still disabled.");
 	}
 	KDEFINE_INT_CONST IntData[] = {
