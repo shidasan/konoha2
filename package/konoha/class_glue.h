@@ -363,13 +363,13 @@ static void ObjectField_reftrace (CTX, kObject *o)
 	END_REFTRACE();
 }
 
-static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kline_t pline)
+static struct _kclass* defineClassName(CTX, kKonohaSpace *ks, kflag_t cflag, kString *name, kcid_t supcid, kline_t pline)
 {
 	KDEFINE_CLASS defNewClass = {
 		.cflag  = cflag,
 		.cid    = CLASS_newid,
 		.bcid   = CLASS_Object,
-		.supcid = CLASS_Object,
+		.supcid = supcid,
 //		.init   = ObjectField_init,
 	};
 	kclass_t *ct = Konoha_addClassDef(ks->packid, ks->packdom, name, &defNewClass, pline);
@@ -410,15 +410,15 @@ static void CT_setField(CTX, struct _kclass *ct, kclass_t *supct, int fctsize)
 	ct->cstruct_size = size64(fctsize * sizeof(kObject*) + sizeof(kObjectHeader));
 	DBG_P("supct->fsize=%d, fctsize=%d, cstruct_size=%d", supct->fsize, fctsize, ct->cstruct_size);
 	if(fsize > 0) {
-		ct->fnull(_ctx, ct);  //
+		ct->fnull(_ctx, ct);
 		ct->init = ObjectField_init;
 		ct->reftrace = ObjectField_reftrace;
 		ct->fields = (kfield_t*)KCALLOC(fsize, sizeof(kfield_t));
 		ct->fsize = supct->fsize;
 		ct->fallocsize = fsize;
 		if(supct->fsize > 0) {
-			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*ct->fsize);
-			memcpy(ct->WnulvalNUL, supct->WnulvalNUL, sizeof(kObject*) * ct->fsize);
+			memcpy(ct->fields, supct->fields, sizeof(kfield_t)*supct->fsize);
+			memcpy(ct->WnulvalNUL, supct->WnulvalNUL, sizeof(kObject*) * supct->fsize);
 		}
 	}
 }
@@ -509,11 +509,14 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 	USING_SUGAR;
 	VAR_StmtTyCheck(stmt, syn, gma);
 	kToken *tkC = kStmt_token(stmt, KW_Usymbol, NULL);
-	kToken *tkE = kStmt_token(stmt, KW_Type,  NULL);
+	kToken *tkE= kStmt_token(stmt, KW_("extends"), NULL);
 	kflag_t cflag = 0;
+	kcid_t supcid = TY_Object;
 	kclass_t *supct = CT_Object;
-	if(tkE != NULL) {
-		supct = CT_(TK_type(tkE));
+	if (tkE) {
+		assert(tkE->tt == KW_Usymbol);
+		supcid = TK_type(tkE);
+		supct = CT_(supcid);
 		if(CT_isFinal(supct)) {
 			SUGAR p(_ctx, ERR_, stmt->uline, -1, "%s is final", T_CT(supct));
 			RETURNb_(false);
@@ -523,7 +526,7 @@ static KMETHOD StmtTyCheck_class(CTX, ksfp_t *sfp _RIX)
 			RETURNb_(false);
 		}
 	}
-	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, stmt->uline);
+	struct _kclass *ct = defineClassName(_ctx, gma->genv->ks, cflag, tkC->text, supcid, stmt->uline);
 	((struct _kToken*)tkC)->kw = KW_Type;
 	((struct _kToken*)tkC)->ty = ct->cid;
 	Stmt_parseClassBlock(_ctx, stmt, tkC);
@@ -542,7 +545,8 @@ static kbool_t class_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("new"), ParseExpr_(new), },
-		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [ \"extends\" $type ] $block", TopStmtTyCheck_(class), },
+		{ TOKEN("class"), .rule = "\"class\" $USYMBOL [\"extends\" extends: $USYMBOL] $block", TopStmtTyCheck_(class), },
+		{ TOKEN("extends"), .rule = "\"extends\" $USYMBOL", }, 
 		{ TOKEN("."), ExprTyCheck_(Getter) },
 		{ .name = NULL, },
 	};
