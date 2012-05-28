@@ -26,6 +26,7 @@
 #define FLOAT_GLUE_H_
 
 #include<float.h>
+#include "./mt19937ar.h"
 
 // Int
 static void Float_init(CTX, kObject *o, void *conf)
@@ -150,6 +151,26 @@ static KMETHOD Float_opMINUS(CTX, ksfp_t *sfp _RIX)
 	RETURNf_(-(sfp[0].fvalue));
 }
 
+//double genrand64_real1(void);
+
+static kfloat_t kfloat_rand(void)
+{
+#if defined(K_USING_NOFLOAT)
+	return (kfloat_t)knh_rand();
+#elif defined(K_USING_INT32)
+	return (kfloat_t)genrand_real1();
+#else
+	return (kfloat_t)genrand64_real1();
+#endif
+}
+
+static KMETHOD Float_random(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNf_(kfloat_rand());
+}
+
+/* ------------------------------------------------------------------------ */
+
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
 #define _Im       kMethod_Immutable
@@ -189,6 +210,7 @@ static	kbool_t float_initPackage(CTX, kKonohaSpace *ks, int argc, const char**ar
 		_Public|_Const|_Im, _F(Float_toString), TY_String, TY_Float, MN_to(TY_String), 0,
 		_Public|_Const|_Im, _F(String_toFloat), TY_Float, TY_String, MN_to(TY_Float), 0,
 		_Public|_Const|_Im, _F(Float_opMINUS), TY_Float, TY_Float, MN_("opMINUS"), 0,
+		_Public|_Im, _F(Float_random), TY_Float, TY_Float, MN_("random"), 0,
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
