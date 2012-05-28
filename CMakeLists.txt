@@ -103,6 +103,7 @@ set(PACKAGES
 ##	konoha.int
 	llvm
 	konoha.pcre
+	konoha.hashmap
 ##	konoha.io
 	konoha.while
 	konoha.class
@@ -111,7 +112,8 @@ set(PACKAGES
 ##	konoha.assert
 	posix.process
 	posix.file
-##	konoha.socket
+	posix.fd
+	konoha.socket
 	konoha.rope
 ##	konoha.subproc
 ##	konoha.mpi
