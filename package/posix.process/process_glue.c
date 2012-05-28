@@ -29,41 +29,49 @@
 
 //## @Static @Public Int System.getpid();
 
-static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getpid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getpid());
 }
 
-static KMETHOD System_getPpid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getppid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getppid());
 }
 
-static KMETHOD System_getUid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getuid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getuid());
 }
 
-static KMETHOD System_geteUid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_geteuid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(geteuid());
 }
 
-static KMETHOD System_getGid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getgid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getgid());
 }
 
-static KMETHOD System_geteGid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getegid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getegid());
 }
 
-static KMETHOD System_getPgid(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getpgid(CTX, ksfp_t *sfp _RIX)
 {
 	int pid = sfp[1].ivalue;
-	int gid = getpgid(pid);
-	RETURNi_(gid);
+	int ret = getpgid(pid);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_setpgid(CTX, ksfp_t *sfp _RIX)
+{
+	int pid = sfp[1].ivalue;
+	int pgid = sfp[2].ivalue;
+	int ret = setpgid(pid, pgid);
+	RETURNi_(ret);
 }
 
 static KMETHOD System_chdir(CTX, ksfp_t *sfp _RIX)
@@ -88,24 +96,25 @@ static KMETHOD System_chroot(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(ret);
 }
 
-static KMETHOD System_getPriority(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getpriority(CTX, ksfp_t *sfp _RIX)
 {
-	int arg1 = sfp[1].ivalue;
-	int arg2 = sfp[2].ivalue;
-	int ret = getpriority(arg1, arg2);
+
+	int which = sfp[1].ivalue;
+	int who = sfp[2].ivalue;
+	int ret = getpriority(which, who);
 	RETURNi_(ret);
 }
 
-static KMETHOD System_setPriority(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_setpriority(CTX, ksfp_t *sfp _RIX)
 {
-	int arg1 = sfp[1].ivalue;
-	int arg2 = sfp[2].ivalue;
-	int arg3 = sfp[3].ivalue;
-	int ret = setpriority(arg1, arg2, arg3);
+	int which = sfp[1].ivalue;
+	int who = sfp[2].ivalue;
+	int priority = sfp[3].ivalue;
+	int ret = setpriority(which, who, priority);
 	RETURNi_(ret);
 }
 
-static KMETHOD System_getGroups(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_getgroups(CTX, ksfp_t *sfp _RIX)
 {
 	int size = kArray_size(sfp[2].a);
 	kArray *list = sfp[2].a;
@@ -113,150 +122,11 @@ static KMETHOD System_getGroups(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(ret);
 }
 
-static KMETHOD System_setGroups(CTX, ksfp_t *sfp _RIX)
+static KMETHOD System_setgroups(CTX, ksfp_t *sfp _RIX)
 {
 	int size = kArray_size(sfp[2].a);
 	kArray *list = sfp[2].a;
 	int ret = setgroups(size, list);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Link(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s1 = sfp[1].s;
-	kString *s2 = sfp[2].s;
-	const char *oldpath = S_text(s1);
-	const char *newpath = S_text(s2);
-	int ret = link(oldpath, newpath);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Rename(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s1 = sfp[1].s;
-	kString *s2 = sfp[2].s;
-	const char *oldpath = S_text(s1);
-	const char *newpath = S_text(s2);
-	int ret = rename(oldpath, newpath);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Rmdir(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	const char *pathname = S_text(s);
-	int ret = rmdir(pathname);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_symLink(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s1 = sfp[1].s;
-	kString *s2 = sfp[2].s;
-	const char *oldpath = S_text(s1);
-	const char *newpath = S_text(s2);
-	int ret = symlink(oldpath, newpath);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_readLink(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s1 = sfp[1].s;
-	kString *s2 = sfp[2].s;
-	const char *pathname = S_text(s1);
-	const char *buf = S_text(s2);
-	size_t bufsize = strlen(buf);
-	ssize_t ret = readlink(pathname, buf, bufsize);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Chown(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	const char *pathname = S_text(s);
-	int owner = sfp[2].ivalue;
-	int group = sfp[3].ivalue;
-	int ret = chown(pathname, owner, group);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_lChown(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	const char *pathname = S_text(s);
-	int owner = sfp[2].ivalue;
-	int group = sfp[3].ivalue;
-	int ret = lchown(pathname, owner, group);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_fChown(CTX, ksfp_t *sfp _RIX)
-{
-	int fd = sfp[1].ivalue;
-	int owner = sfp[2].ivalue;
-	int group = sfp[3].ivalue;
-	int ret = fchown(fd, owner, group);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Access(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	const char *dir = S_text(s);
-	int mode = sfp[2].ivalue;
-	int ret = access(dir, mode);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Flock(CTX, ksfp_t *sfp _RIX)
-{
-	int arg1 = sfp[1].ivalue;
-	int arg2 = sfp[2].ivalue;
-	int ret = flock(arg1, arg2);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_Sync(CTX, ksfp_t *sfp _RIX)
-{
-	sync();
-	RETURNvoid_();
-}
-
-static KMETHOD System_Fsync(CTX, ksfp_t *sfp _RIX)
-{
-	int fd = sfp[1].ivalue;
-	int ret = fsync(fd);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_getPagesize(CTX, ksfp_t *sfp _RIX)
-{
-	RETURNi_(getpagesize());
-}
-
-static KMETHOD System_Kill(CTX, ksfp_t *sfp _RIX)
-{
-	int pid = sfp[1].ivalue;
-	int sig = sfp[2].ivalue;
-	int ret = kill(pid, sig);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_getHostname(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	char *name = S_text(s);
-	size_t len = strlen(name);
-	int ret = gethostname(name, len);
-	RETURNi_(ret);
-}
-
-static KMETHOD System_setHostname(CTX, ksfp_t *sfp _RIX)
-{
-	kString *s = sfp[1].s;
-	const char *name = S_text(s);
-	size_t len = strlen(name);
-	int ret = sethostname(name, len);
 	RETURNi_(ret);
 }
 
@@ -271,36 +141,21 @@ static KMETHOD System_setHostname(CTX, ksfp_t *sfp _RIX)
 static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	intptr_t MethodData[] = {
-		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
-		_Public|_Static, _F(System_getPpid), TY_Int, TY_System, MN_("getPpid"), 0,
-		_Public|_Static, _F(System_getUid), TY_Int, TY_System, MN_("getUid"), 0,
-		_Public|_Static, _F(System_geteUid), TY_Int, TY_System, MN_("geteUid"), 0,
-		_Public|_Static, _F(System_getGid), TY_Int, TY_System, MN_("getGid"), 0,
-		_Public|_Static, _F(System_geteGid), TY_Int, TY_System, MN_("geteGid"), 0,
-		_Public|_Static, _F(System_getPgid), TY_Int, TY_System, MN_("getPgid"), 1, TY_Int, FN_("pid"),
-		_Public|_Static, _F(System_chdir), TY_Int, TY_System, MN_("chdir"), 1, TY_String, FN_("chdir"),
-		_Public|_Static, _F(System_fchdir), TY_Int, TY_System, MN_("fchdir"), 1, TY_Int, FN_("fchdir"),
-		_Public|_Static, _F(System_chroot), TY_Int, TY_System, MN_("chroot"), 1, TY_String, FN_("chroot"),
-		_Public|_Static, _F(System_getPriority), TY_Int, TY_System, MN_("getPriority"), 2, TY_Int, FN_("Priorityarg1"), TY_Int, FN_("Priorityarg2"),
-		_Public|_Static, _F(System_setPriority), TY_Int, TY_System, MN_("setPriority"), 3, TY_Int, FN_("Priorityarg1"), TY_Int, FN_("Priorityarg2"), TY_Int, FN_("Priorityarg3"),
-		_Public|_Static, _F(System_getGroups), TY_Int, TY_System, MN_("getGroups"), 2, TY_Int, FN_("getgroupsarg1"), TY_Array, FN_("getgroupsarg2"),
-		_Public|_Static, _F(System_setGroups), TY_Int, TY_System, MN_("setGroups"), 2, TY_Int, FN_("setgroupsarg1"), TY_Array, FN_("setgroupsarg2"),
-		_Public|_Static, _F(System_Link), TY_Int, TY_System, MN_("Link"), 2, TY_String, FN_("linkarg1"), TY_String, FN_("linkarg2"),
-		_Public|_Static, _F(System_Rename), TY_Int, TY_System, MN_("Rename"), 2, TY_String, FN_("renamearg1"), TY_String, FN_("renamearg2"),
-		_Public|_Static, _F(System_Rmdir), TY_Int, TY_System, MN_("Rmdir"), 1, TY_String, FN_("rmdirarg"),
-		_Public|_Static, _F(System_symLink), TY_Int, TY_System, MN_("symLink"), 2, TY_String, FN_("symlinkarg1"), TY_String, FN_("symlikarg2"),
-		_Public|_Static, _F(System_readLink), TY_Int, TY_System, MN_("readLink"), 3, TY_String, FN_("readlinkarg1"), TY_String, FN_("readlikarg2"), TY_Int, FN_("readlinkarg3"),
-		_Public|_Static, _F(System_Chown), TY_Int, TY_System, MN_("Chown"), 3, TY_String, FN_("chownarg1"), TY_Int, FN_("chownarg2"), TY_Int, FN_("chownarg3"),
-		_Public|_Static, _F(System_lChown), TY_Int, TY_System, MN_("lChown"), 3, TY_String, FN_("lchownarg1"), TY_Int, FN_("lchownarg2"), TY_Int, FN_("lchownarg3"),
-		_Public|_Static, _F(System_fChown), TY_Int, TY_System, MN_("fChown"), 3, TY_Int, FN_("fchownarg1"), TY_Int, FN_("fchownarg2"), TY_Int, FN_("fchownarg3"),
-		_Public|_Static, _F(System_Access), TY_Int, TY_System, MN_("Access"), 2, TY_String, FN_("accessarg1"), TY_Int, FN_("accessarg2"),
-		_Public|_Static, _F(System_Flock), TY_Int, TY_System, MN_("Flock"), 2, TY_Int, FN_("flockarg1"), TY_Int, FN_("flockarg2"),
-		_Public|_Static, _F(System_Sync), TY_void, TY_System, MN_("Sync"), 0,
-		_Public|_Static, _F(System_Fsync), TY_Int, TY_System, MN_("Fsync"), 1, TY_Int, FN_("fsynarg1"),
-		_Public|_Static, _F(System_getPagesize), TY_Int, TY_System, MN_("getPagesize"), 0,
-		_Public|_Static, _F(System_Kill), TY_Int, TY_System, MN_("Kill"), 2, TY_Int, FN_("killarg1"), TY_Int, FN_("killarg2"),
-		_Public|_Static, _F(System_getHostname), TY_Int, TY_System, MN_("getHostname"), 2, TY_String, FN_("gethostnamearg1"), TY_Int, FN_("gethostnamearg2"),
-		_Public|_Static, _F(System_setHostname), TY_Int, TY_System, MN_("setHostname"), 2, TY_String, FN_("sethostnamearg1"), TY_Int, FN_("sethostnamearg2"),
+		_Public|_Static, _F(System_getpid), TY_Int, TY_System, MN_("getpid"), 0,
+		_Public|_Static, _F(System_getppid), TY_Int, TY_System, MN_("getppid"), 0,
+		_Public|_Static, _F(System_getuid), TY_Int, TY_System, MN_("getuid"), 0,
+		_Public|_Static, _F(System_geteuid), TY_Int, TY_System, MN_("geteuid"), 0,
+		_Public|_Static, _F(System_getgid), TY_Int, TY_System, MN_("getgid"), 0,
+		_Public|_Static, _F(System_getegid), TY_Int, TY_System, MN_("getegid"), 0,
+		_Public|_Static, _F(System_getpgid), TY_Int, TY_System, MN_("getpgid"), 1, TY_Int, FN_("pid"),
+		_Public|_Static, _F(System_setpgid), TY_Int, TY_System, MN_("setpgid"), 2, TY_Int, FN_("pid"), TY_Int, FN_("pgid"),
+		_Public|_Static, _F(System_chdir), TY_Int, TY_System, MN_("chdir"), 1, TY_String, FN_("pathname"),
+		_Public|_Static, _F(System_fchdir), TY_Int, TY_System, MN_("fchdir"), 1, TY_Int, FN_("fd"),
+		_Public|_Static, _F(System_chroot), TY_Int, TY_System, MN_("chroot"), 1, TY_String, FN_("pathname"),
+		_Public|_Static, _F(System_getpriority), TY_Int, TY_System, MN_("getpriority"), 2, TY_Int, FN_("which"), TY_Int, FN_("who"),
+		_Public|_Static, _F(System_setpriority), TY_Int, TY_System, MN_("setpriority"), 3, TY_Int, FN_("which"), TY_Int, FN_("who"), TY_Int, FN_("priority"),
+		_Public|_Static, _F(System_getgroups), TY_Int, TY_System, MN_("getgroups"), 2, TY_Int, FN_("size"), TY_Array, FN_("list[]"),
+		_Public|_Static, _F(System_setgroups), TY_Int, TY_System, MN_("setgroups"), 2, TY_Int, FN_("size"), TY_Array, FN_("*list"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
@@ -342,3 +197,4 @@ KDEFINE_PACKAGE* process_init(void)
 	};
 	return &d;
 }
+
