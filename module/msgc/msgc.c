@@ -110,6 +110,8 @@ typedef struct objpageTBL_t {
 #define ARENA_COUNT_SIZE(size,c) (size) >> (c)
 #ifdef K_USING_TINYVM
 #define K_ARENA_COUNT 2
+#elif defined TINYKONOHA_DEBUG
+#define K_ARENA_COUNT 2
 #else
 #define K_ARENA_COUNT 3
 #endif
@@ -240,7 +242,13 @@ static void Kfree(CTX, void *p, size_t s)
 {
 	size_t *pp = (size_t*)p;
 	DBG_ASSERT(pp[-1] == s);
+#ifdef K_USING_TINYVM
+	do_free(pp, s);
+#elif defined TINYKONOHA_DEBUG
+	do_free(pp, s);
+#else
 	do_free(pp - 1, s + sizeof(size_t));
+#endif
 	klib2_malloced -= s;
 }
 
@@ -337,9 +345,6 @@ static void ObjectPage_init0(objpage0_t *opage)
 	kGCObject0 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(0) - 1;
 	for(i = 0; i < t; ++i) {
-#ifndef K_USING_TINYVM
-		DBG_ASSERT(K_OPAGE((opage->slots + i),0) == opage);
-#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -353,9 +358,6 @@ static void ObjectPage_init1(objpage1_t *opage)
 	kGCObject1 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(1) - 1;
 	for(i = 0; i < t; ++i) {
-#ifndef K_USING_TINYVM
-		DBG_ASSERT(K_OPAGE(opage->slots + i,1) == opage);
-#endif
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -382,9 +384,6 @@ static void ObjectPage_init2(objpage2_t *opage)
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage0_t *opage = (objpage0_t *)do_malloc(arenasize);
-#ifndef K_USING_TINYVM
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
-#endif
 	oat->head0 =   opage;
 	oat->bottom0 = (objpage0_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -398,9 +397,6 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
-#ifndef K_USING_TINYVM
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
-#endif
 	oat->head1 =   opage;
 	oat->bottom1 = (objpage1_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -678,7 +674,6 @@ static void ostack_push(CTX, knh_ostack_t *ostack, kObject *ref)
 {
 #ifdef K_USING_TINYVM
 	if (ostack->tail ==ostack->capacity) {
-		TDBG_abort("ostack_push");
 		size_t newcapacity = ostack->capacity * 2;
 		kObject **newstack = (kObject**)do_malloc(newcapacity * sizeof(kObject*));
 		memcpy(newstack, ostack->stack, ostack->capacity * sizeof(kObject*));
@@ -749,11 +744,8 @@ static void gc_mark(CTX)
 	size_t ref_size = stack->reftail - stack->ref.refhead;
 	goto L_INLOOP;
 	while((ref = ostack_next(ostack)) != NULL) {
-		TDBG_s("reset");
 		context_reset_refs(_ctx);
-		TDBG_s("reset refs");
 		KONOHA_reftraceObject(_ctx, ref);
-		TDBG_s("reset end");
 		ref_size = stack->reftail - stack->ref.refhead;
 		if(ref_size > 0) {
 			L_INLOOP:;
@@ -776,7 +768,7 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 {
 	unsigned i;
 	uintptr_t j = 100;
-	size_t collected = 0;
+	size_t collected = 0, survived;
 	size_t pageSize = K_PAGESIZE/sizeOfObject;
 	for(i = 0; i < pageSize; ++i) {
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
@@ -799,7 +791,6 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 
 static size_t gc_sweep0(CTX)
 {
-	TDBG_s("gc_sweep0");
 	size_t collected = 0;
 	objpageTBL_t *oat = memshare(_ctx)->ObjectArenaTBL[0];
 	size_t atindex, size = memshare(_ctx)->sizeObjectArenaTBL[0];
@@ -857,7 +848,9 @@ static void gc_sweep(CTX)
 	collected += gc_sweep0(_ctx);
 	collected += gc_sweep1(_ctx);
 #ifndef K_USING_TINYVM
+#ifndef TINYKONOHA_DEBUG
 	collected += gc_sweep2(_ctx);
+#endif
 #endif
 }
 
@@ -894,7 +887,9 @@ static void MSGC_setup(CTX, struct kmodshare_t *def, int newctx)
 		MSGC_SETUP(0);
 		MSGC_SETUP(1);
 #ifndef K_USING_TINYVM
+#ifndef TINYKONOHA_DEBUG
 		MSGC_SETUP(2);
+#endif
 #endif
 	}
 }
@@ -950,7 +945,6 @@ kObject *MODGC_omalloc(CTX, size_t size)
 
 void MODGC_gc_invoke(CTX, int needsCStackTrace)
 {
-	TDBG_s("msgc");
 	//TODO : stop the world
 	gc_init(_ctx);
 	gc_mark(_ctx);

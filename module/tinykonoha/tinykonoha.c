@@ -22,10 +22,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
+#ifdef K_USING_TINYVM
 #include "kernel_id.h"
 #include "ecrobot_base.h"
 #include "ecrobot_interface.h"
 #include "balancer.h"
+#endif
 
 #include "tinykonoha.h"
 #include <../../include/konoha2/konoha2.h>
@@ -54,7 +56,6 @@ static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
 
 static void kshare_reftrace(CTX, kcontext_t *ctx)
 {
-	TDBG_s("share reftrace");
 	kshare_t *share = ctx->share;
 	kclass_t **cts = (kclass_t**)_ctx->share->ca.cts;
 	size_t i, size = _ctx->share->ca.bytesize/sizeof(struct _kclass*);
@@ -86,12 +87,10 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 	//KREFTRACEv(share->paramList);
 	//KREFTRACEv(share->paramdomList);
 	END_REFTRACE();
-	TDBG_s("share end");
 }
 
 static void kcontext_reftrace(CTX, kcontext_t *ctx)
 {
-	TDBG_s("context start");
 	size_t i;
 	if(IS_ROOTCTX(_ctx)) {
 		kshare_reftrace(_ctx, ctx);
@@ -109,7 +108,6 @@ static void kcontext_reftrace(CTX, kcontext_t *ctx)
 			p->reftrace(_ctx, p);
 		}
 	}
-	TDBG_s("context end");
 }
 
 void KRUNTIME_reftraceAll(CTX)
@@ -121,12 +119,10 @@ void KONOHA_freeObjectField(CTX, struct _kObject *o)
 {
 	kclass_t *ct = O_ct(o);
 	if(o->h.kvproto->bytemax > 0) {
-		TDBG_s("kfree");
 		karray_t *p = o->h.kvproto;
 		KFREE(p->bytebuf, p->bytemax);
 		KFREE(p, sizeof(karray_t));
 		o->h.kvproto = kvproto_null();
-		TDBG_s("kfree end");
 	}
 	ct->free(_ctx, o);
 }
@@ -293,7 +289,7 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 	//KINITv(base->gcstack, new_(Array, K_PAGESIZE/sizeof(void*)));
 	//KINITv(base->gcstack, new_(Array, 5));
 	//KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
-	KARRAY_INIT(&base->ref, 32);
+	KARRAY_INIT(&base->ref, 128);
 	base->reftail = base->ref.refhead;
 	ctx->esp = base->stack;
 	ctx->stack = base;
@@ -320,11 +316,13 @@ static kcontext_t *new_context(size_t stacksize)
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
+	//FLOAT_init(&_ctx, NULL);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
 }
 
+#ifdef K_USING_TINYVM
 void cyc0(VP_INT exinf)
 {
 
@@ -347,3 +345,17 @@ void TaskDisp(VP_INT exinf)
 		new_kObject(ct, NULL);
 	}
 }
+#else
+int main(int argc, char **args)
+{
+	struct kcontext_t *_ctx = NULL;
+	_ctx = new_context(K_STACK_SIZE);
+	//new_CT(_ctx, NULL, NULL, 0);
+	//VirtualMachine_run(_ctx, sfp, NULL);
+	kclass_t *ct = CT_(CLASS_String);
+	TDBG_s("loop start");
+	while (1) {
+		new_kObject(ct, NULL);
+	}
+}
+#endif

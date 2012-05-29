@@ -61,9 +61,9 @@
 
 #else
 #define K_PAGESIZE        4096
-#define TDBG_i(KEY, VALUE) 
-#define TDBG_s(KEY, VALUE) 
-#define TDBG_abort(KEY, VALUE) 
+#define TDBG_i(KEY, VALUE) fprintf(stderr, "%s: %d\n", KEY, VALUE)
+#define TDBG_s(KEY) fprintf(stderr, "%s\n", KEY)
+#define TDBG_abort(MSG) fprintf(stderr, "%s\n", MSG); abort()
 #endif
 
 #ifndef K_OSDLLEXT
@@ -326,6 +326,11 @@ typedef kushort_t       kparamid_t;
 #define MN_isTOCID(mn)    0
 #define MN_as(cid)        0
 #define MN_isASCID(mn)    0
+#elif defined TINYKONOHA_DEBUG
+#define MN_to(cid)        0
+#define MN_isTOCID(mn)    0
+#define MN_as(cid)        0
+#define MN_isASCID(mn)    0
 #else
 #define MN_to(cid)        (cid | MN_TOCID)
 #define MN_isTOCID(mn)    ((mn & MN_TOCID) == MN_TOCID)
@@ -343,6 +348,8 @@ typedef const struct kcontext_t *const CTX_t;
 
 #ifdef K_USING_TINYVM
 #define MOD_MAX    2
+#elif defined TINYKONOHA_DEBUG
+#define MOD_MAX    2
 #else
 #define MOD_MAX    128
 #endif
@@ -350,10 +357,12 @@ struct _kObject;
 
 #ifdef K_USING_TINYVM
 #define MOD_gc       0
-#define MOD_code     1
-#define MOD_logger   2
-#define MOD_sugar    3
-#define MOD_float   11
+#define MOD_float    1
+#define MOD_sugar    11
+#elif defined TINYKONOHA_DEBUG
+#define MOD_gc       0
+#define MOD_float    1
+#define MOD_sugar    11
 #else
 #define MOD_logger   0
 #define MOD_gc       1
@@ -1227,7 +1236,15 @@ struct _klib2 {
 #define SYMPOL_RAW                0
 #define SYMPOL_NAME               1
 #define SYMPOL_METHOD             2
+
 #ifdef K_USING_TINYVM
+#define ksymbol(T,L,D,P)          0
+#define KSYMBOL(T)                0
+#define FN_(T)                    0
+#define MN_(T)                    0
+#define MN_new                    0
+#define T_mn(B, X)                0
+#elif defined TINYKONOHA_DEBUG
 #define ksymbol(T,L,D,P)          0
 #define KSYMBOL(T)                0
 #define FN_(T)                    0

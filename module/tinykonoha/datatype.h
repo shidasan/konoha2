@@ -1,6 +1,9 @@
 #define KVPROTO_INIT  8
 #define KVPROTO_DELTA 7
 
+#include<../../include/konoha2/float.h>
+#include<../../package/konoha/float_glue.h>
+
 static inline karray_t* kvproto_null(void)  // for proto_get safe null
 {
 	static kvs_t dnull[KVPROTO_DELTA] = {};
@@ -374,7 +377,6 @@ static void Array_reftrace(CTX, kObject *o)
 	if(!kArray_isUnboxData(a)) {
 		size_t i;
 		BEGIN_REFTRACE(kArray_size(a));
-		TDBG_i("array", kArray_size(a));
 		for(i = 0; i < kArray_size(a); i++) {
 			KREFTRACEv(a->list[i]);
 		}
@@ -489,20 +491,20 @@ static void loadInitStructData(CTX)
 	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
 }
 
-static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
-{
-	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
-	ct->packid = packid;
-	ct->packdom = packdom;
-	if (name == NULL) {
-		const char *n = cdef->structname;
-		//ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
-	} else {
-		//ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
-	}
-	//CT_setName(_ctx, ct, pline);
-	return (kclass_t*)ct;
-}
+//static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
+//{
+//	struct _kclass *ct = new_CT(_ctx, NULL, cdef, pline);
+//	ct->packid = packid;
+//	ct->packdom = packdom;
+//	if (name == NULL) {
+//		const char *n = cdef->structname;
+//		//ct->nameid = kuname(n, strlen(n), SPOL_ASCII|SPOL_POOL|SPOL_TEXT, _NEWID);
+//	} else {
+//		//ct->nameid = kuname(S_text(name), S_size(name), 0, _NEWID);
+//	}
+//	//CT_setName(_ctx, ct, pline);
+//	return (kclass_t*)ct;
+//}
 
 static KMETHOD Fmethod_abstract(CTX, ksfp_t *sfp _RIX)
 {
@@ -542,9 +544,9 @@ static void KCLASSTABLE_initklib2(struct _klib2 *l)
 {
 	l->Knew_Object = new_Object;
 	l->Knew_Method   = new_Method;
-	l->KaddClassDef = addClassDef;
 	l->KMethod_setFunc = Method_setFunc;
 	l->KArray_add = Array_add;
+	//l->KaddClassDef = addClassDef;
 }
 
 static void CT_setName(CTX, struct _kclass *ct, kline_t pline)
@@ -578,6 +580,8 @@ static void initStructData(CTX)
 	}
 }
 
+static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks);
+
 static void KCLASSTABLE_init(kcontext_t *_ctx)
 {
 	static kshare_t share;
@@ -590,6 +594,7 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	//
 	KINITv(share.emptyArray, new_(Array, 0));
 	initStructData(_ctx);
+	FLOAT_init(_ctx, NULL);
 }
 
 #define _Public    kMethod_Public
@@ -623,28 +628,48 @@ static void KCLASSTABLE_loadMethod(CTX)
 		_F(System_p), TY_System, MN_("p"),
 		_F(System_gc), TY_System, MN_("gc"),
 		DEND,
-		//_Public|_Immutable|_Const, _F(Object_toString), TY_String, TY_Object, MN_to(TY_String), 0,
-		//_Public|_Immutable|_Const, _F(Boolean_opNOT), TY_Boolean, TY_Boolean, MN_("opNOT"), 0,
-		//_Public|_Immutable|_Const, _F(Int_opMINUS), TY_Int, TY_Int, MN_("opMINUS"), 0,
-		//_Public|_Immutable|_Const, _F(Int_opADD), TY_Int, TY_Int, MN_("opADD"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opSUB), TY_Int, TY_Int, MN_("opSUB"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opMUL), TY_Int, TY_Int, MN_("opMUL"), 1, TY_Int, FN_x,
-		///* opDIV and opMOD raise zero divided exception. Don't set _Const */
-		//_Public|_Immutable, _F(Int_opDIV), TY_Int, TY_Int, MN_("opDIV"), 1, TY_Int, FN_x,
-		//_Public|_Immutable, _F(Int_opMOD), TY_Int, TY_Int, MN_("opMOD"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opEQ),  TY_Boolean, TY_Int, MN_("opEQ"),  1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opNEQ), TY_Boolean, TY_Int, MN_("opNEQ"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opLT),  TY_Boolean, TY_Int, MN_("opLT"),  1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opLTE), TY_Boolean, TY_Int, MN_("opLTE"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opGT),  TY_Boolean, TY_Int, MN_("opGT"),  1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_opGTE), TY_Boolean, TY_Int, MN_("opGTE"), 1, TY_Int, FN_x,
-		//_Public|_Immutable|_Const, _F(Int_toString), TY_String, TY_Int, MN_to(TY_String), 0,
-		//_Public|_Immutable|_Const, _F(String_toInt), TY_Int, TY_String, MN_to(TY_Int), 0,
-		//_Public|_Immutable|_Const, _F(String_opADD), TY_String, TY_String, MN_("opADD"), 1, TY_String, FN_x | FN_COERCION,
-		//_Public|_Immutable, _F(System_assert), TY_void, TY_System, MN_("assert"), 1, TY_Boolean, FN_x,
-		//_Public|_Immutable, _F(System_p), TY_void, TY_System, MN_("p"), 1, TY_String, FN_("s") | FN_COERCION,
-		//_Public|_Immutable, _F(System_gc), TY_void, TY_System, MN_("gc"), 0,
-		//DEND,
 	};
+
 	kKonohaSpace_loadMethodData(NULL, MethodData);
+}
+
+static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
+{
+	kmodfloat_t *base = (kmodfloat_t*)KCALLOC(sizeof(kmodfloat_t), 1);
+	base->h.name     = "float";
+	base->h.setup    = kmodfloat_setup;
+	base->h.reftrace = kmodfloat_reftrace;
+	base->h.free     = kmodfloat_free;
+	Konoha_setModule(MOD_float, &base->h, 0);
+
+	KDEFINE_CLASS defFloat = {
+		STRUCTNAME(Float),
+		.cflag = CFLAG_Int,
+		.init = Float_init,
+	};
+
+	//base->cFloat = Konoha_addClassDef(0/*ks->packid*/, PN_konoha, NULL, &defFloat, 0);
+	base->cFloat = new_CT(_ctx, NULL, &defFloat, 0);
+	CT_setName(_ctx, base->cFloat, 0);
+
+	int FN_x = FN_("x");
+	intptr_t MethodData[] = {
+		_F(Float_opADD), TY_Float, MN_("opADD"),
+		_F(Float_opSUB), TY_Float, MN_("opSUB"),
+		_F(Float_opMUL), TY_Float, MN_("opMUL"),
+		_F(Float_opDIV), TY_Float, MN_("opDIV"),
+		_F(Float_opEQ),  TY_Float, MN_("opEQ"),
+		_F(Float_opNEQ), TY_Float, MN_("opNEQ"),
+		_F(Float_opLT),  TY_Float, MN_("opLT"),
+		_F(Float_opLTE), TY_Float, MN_("opLTE"),
+		_F(Float_opGT),  TY_Float, MN_("opGT"),
+		_F(Float_opGTE), TY_Float, MN_("opGTE"),
+		_F(Float_toInt), TY_Float, MN_to(TY_Int),
+		_F(Int_toFloat), TY_Int, MN_to(TY_Float),
+		_F(Float_toString), TY_Float, MN_to(TY_String),
+		_F(String_toFloat), TY_String, MN_to(TY_Float),
+		DEND,
+	};
+	kKonohaSpace_loadMethodData(ks, MethodData);
+	return true;
 }

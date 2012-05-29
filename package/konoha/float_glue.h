@@ -34,10 +34,12 @@ static void Float_init(CTX, kObject *o, void *conf)
 	n->ndata = (uintptr_t)conf;  // conf is unboxed data
 }
 
+#ifndef K_USING_TINYVM
 static void Float_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
 	kwb_printf(wb, KFLOAT_FMT, sfp[pos].fvalue);
 }
+#endif
 
 static void kmodfloat_setup(CTX, struct kmodshare_t *def, int newctx)
 {
@@ -76,9 +78,11 @@ static KMETHOD Float_opMUL(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Float_opDIV(CTX, ksfp_t *sfp _RIX)
 {
 	kfloat_t n = sfp[1].fvalue;
+#ifndef K_USING_TINYVM
 	if(unlikely(n == 0.0)) {
 		kreportf(CRIT_, sfp[K_RTNIDX].uline, "Script!!: zero divided");
 	}
+#endif
 	RETURNf_(sfp[0].fvalue / n);
 }
 
@@ -133,16 +137,22 @@ static KMETHOD Int_toFloat(CTX, ksfp_t *sfp _RIX)
 /* float to String */
 static KMETHOD Float_toString(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	char buf[40];
 	snprintf(buf, sizeof(buf), KFLOAT_FMT, sfp[0].fvalue);
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));
+#endif
 }
 
 /* String to float */
 static KMETHOD String_toFloat(CTX, ksfp_t *sfp _RIX)
 {
+#ifndef K_USING_TINYVM
 	RETURNf_((kfloat_t)strtod(S_text(sfp[0].s), NULL));
+#endif
 }
+
+#ifndef K_USING_TINYVM
 
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
@@ -226,5 +236,7 @@ static kbool_t float_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
+
+#endif /* K_USING_TINYVM */
 
 #endif /* FLOAT_GLUE_H_ */
