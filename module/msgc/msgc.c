@@ -34,10 +34,8 @@ static inline void *do_malloc(size_t size);
 static inline void *do_realloc(void *ptr, size_t oldSize, size_t newSize);
 static inline void  do_free(void *ptr, size_t size);
 static inline void  do_bzero(void *ptr, size_t size);
-static void knh_vfree(CTX, void *block, size_t size);
 
 /* ------------------------------------------------------------------------ */
-#define K_OPAGE(o,i)    ((objpage##i##_t*)((((uintptr_t)(o)) / K_PAGESIZE) * K_PAGESIZE))
 #define K_SHIFTPTR(p, size)   ((char*)p + (size))
 #define K_MEMSIZE(p, p2)      (((char*)p) - ((char*)p2))
 
@@ -128,12 +126,6 @@ typedef struct kmemshare_t {
 #define memlocal(_ctx) ((kmemlocal_t*)((_ctx)->modlocal[MOD_gc]))
 #define memshare(_ctx) ((kmemshare_t*)((_ctx)->modshare[MOD_gc]))
 
-static void THROW_OutOfMemory(CTX, size_t size)
-{
-	/* TODO */
-	abort();
-}
-
 static void Arena_init(CTX, kmemshare_t *memshare)
 {
 	size_t i;
@@ -150,7 +142,7 @@ static void Arena_init(CTX, kmemshare_t *memshare)
 	for(i = 0; i < memshare->sizeObjectArenaTBL[j]; i++) {\
 		objpageTBL_t *oat = memshare->ObjectArenaTBL[j] + i;\
 		DBG_ASSERT(K_MEMSIZE(oat->bottom##j, oat->head##j) == oat->arenasize);\
-		knh_vfree(_ctx, oat->head##j, oat->arenasize);\
+		do_free(oat->head##j, oat->arenasize);\
 	}\
 	do_free(memshare->ObjectArenaTBL[j], memshare->capacityObjectArenaTBL[j] * sizeof(objpageTBL_t));\
 	memshare->ObjectArenaTBL[j] = NULL;\
@@ -224,70 +216,6 @@ static void Kfree(CTX, void *p, size_t s)
 	klib2_malloced -= s;
 }
 
-static void *knh_valloc(CTX, size_t size)
-{
-#if defined(HAVE_POSIX_MEMALIGN)
-	void *block = NULL;
-	int ret = posix_memalign(&block, K_PAGESIZE, size);
-	MEMLOG("valloc", "ptr=%p, size=%lu", block, size);
-	if(ret != 0) {
-		THROW_OutOfMemory(_ctx, size);
-	}
-	//STAT_mem(_ctx, size);
-	return block;
-#elif defined(HAVE_MEMALIGN)
-	void *block = memalign(K_PAGESIZE, size);
-	MEMLOG("valloc", "ptr=%p, size=%lu", block, size);
-	if (unlikely(block == NULL)) {
-		THROW_OutOfMemory(_ctx, size);
-	}
-	return block;
-#elif defined(K_USING_WINDOWS_)
-	void *block = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-	MEMLOG("valloc", "ptr=%p, size=%lu", block, size);
-	if (unlikely(block == NULL)) {
-		THROW_OutOfMemory(_ctx, size);
-	}
-	return block;
-#else
-	void *block = malloc(size + K_PAGESIZE);
-	MEMLOG("valloc", "ptr=%p, size=%lu", block, size);
-	if (unlikely(block == NULL)) {
-		THROW_OutOfMemory(_ctx, size);
-	}
-	if((uintptr_t)block % K_PAGESIZE != 0) {
-		char *t2 = (char*)((((uintptr_t)block / K_PAGESIZE) + 1) * K_PAGESIZE);
-		void **p = (void**)(t2 + size);
-		DBG_ASSERT((char*)p < ((char*)block) + size + K_PAGESIZE);
-		p[0] = block;
-		block = (void*)t2;
-		DBG_ASSERT((uintptr_t)block % K_PAGESIZE == 0);
-	}
-	else {
-		void **p = (void**)((char*)block + size);
-		p[0] = block;
-	}
-	//STAT_mem(_ctx, size + K_PAGESIZE);
-	return block;
-#endif
-}
-
-static void knh_vfree(CTX, void *block, size_t size)
-{
-	MEMLOG("vfree", "ptr=%p, size=%lu", block, size);
-#if defined(HAVE_POSIX_MEMALIGN) || defined(HAVE_MEMALIGN)
-	free(block);
-	//STAT_dmem(_ctx, size);
-#elif defined(K_USING_WINDOWS_)
-	VirtualFree(block, 0, MEM_RELEASE);
-	//STAT_dmem(_ctx, size);
-#else
-	void **p = (void**)((char*)block + size);
-	block = p[0];
-	free(block);
-#endif
-}
-
 /* ------------------------------------------------------- */
 #define FREELIST_POP(o,i) do {\
 	if(memlocal(_ctx)->freeObjectList[i] == NULL) {\
@@ -317,7 +245,6 @@ static void ObjectPage_init0(objpage0_t *opage)
 	kGCObject0 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(0) - 1;
 	for(i = 0; i < t; ++i) {
-		DBG_ASSERT(K_OPAGE((opage->slots + i),0) == opage);
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -331,7 +258,6 @@ static void ObjectPage_init1(objpage1_t *opage)
 	kGCObject1 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(1) - 1;
 	for(i = 0; i < t; ++i) {
-		DBG_ASSERT(K_OPAGE(opage->slots + i,1) == opage);
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -345,7 +271,6 @@ static void ObjectPage_init2(objpage2_t *opage)
 	kGCObject2 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(2) - 1;
 	for(i = 0; i < t; ++i) {
-		DBG_ASSERT(K_OPAGE(opage->slots + i,2) == opage);
 		o[i].h.ct = NULL;
 		o[i].ref = &(o[i+1]);
 	}
@@ -355,8 +280,7 @@ static void ObjectPage_init2(objpage2_t *opage)
 
 static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage0_t *opage = (objpage0_t *)knh_valloc(_ctx, arenasize);
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+	objpage0_t *opage = (objpage0_t *)do_malloc(arenasize);
 	oat->head0 =   opage;
 	oat->bottom0 = (objpage0_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -369,8 +293,7 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage1_t *opage = (objpage1_t *)knh_valloc(_ctx, arenasize);
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
 	oat->head1 =   opage;
 	oat->bottom1 = (objpage1_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
@@ -383,8 +306,7 @@ static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 
 static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 {
-	objpage2_t *opage = (objpage2_t *)knh_valloc(_ctx, arenasize);
-	KNH_ASSERT((uintptr_t)opage % K_PAGESIZE == 0);
+	objpage2_t *opage = (objpage2_t *)do_malloc(arenasize);
 	oat->head2 =   opage;
 	oat->bottom2 = (objpage2_t *)K_SHIFTPTR(opage, arenasize);
 	oat->arenasize = arenasize;
