@@ -214,7 +214,7 @@ static kterm_t TT_ch(int ch)
 	switch(ch) {
 		case '{': case '}': return TT_BRACE;
 		case '(': case ')': return TT_PARENTHESIS;
-		case '[': case ']': return TT_BRANCET;
+		case '[': case ']': return TT_BRACKET;
 #ifdef TT_SIZE
 		case '|': return TT_SIZE;
 #endif
@@ -411,13 +411,13 @@ static void TermBlock_add(CTX, kTerm *tkB, kTerm *tm)
 		goto L_JOIN1;
 	}
 	if(TT_(tkPREV) == TT_BYTE) {
-		if(TT_(tm) == TT_BRANCET && IS_NULL((tm)->data)) { // byte[]
+		if(TT_(tm) == TT_BRACKET && IS_NULL((tm)->data)) { // byte[]
 			KSETv(a->list[prev_idx], new_TermCID(_ctx, CLASS_Bytes));
 			goto L_JOIN1;
 		}
 	}
 	if(isTYPE(tkPREV)) {
-		if(TT_(tm) == TT_BRANCET && IS_NULL((tm)->data)) { // String[]
+		if(TT_(tm) == TT_BRACKET && IS_NULL((tm)->data)) { // String[]
 			KSETv(a->list[prev_idx], new_TermPTYPE(_ctx, CLASS_Array, tkPREV));
 			goto L_JOIN1;
 		}
@@ -1501,7 +1501,7 @@ static int TokenArray_parseTerm(CTX, kArray *a, int s, kTerm *tkB, int closech)
 			return 0;
 		}
 		case '[': {
-			kTerm *tkSUB = new_Term(_ctx, TT_BRANCET);
+			kTerm *tkSUB = new_Term(_ctx, TT_BRACKET);
 			if((i = TokenArray_parseTerm(_ctx, a, i + 1, tkSUB, ']'))) {
 				TermBlock_add(_ctx, tkB, tkSUB);
 				continue;
@@ -2432,7 +2432,7 @@ static void _EXPR1(CTX, kStmtExpr *stmt, tkitr_t *itr)
 				}
 				break;
 			}
-			case TT_BRANCET: {  /* @CODE: [] */
+			case TT_BRACKET: {  /* @CODE: [] */
 				tkitr_t pbuf, *pitr = ITR_new(tkCUR, &pbuf);
 				kcid_t cid = CLASS_Array;
 				kindex_t idx = ITR_indexTT(pitr, TT_TO, -1);
@@ -2518,7 +2518,7 @@ static void _CALLPARAM(CTX, kStmtExpr *stmt, tkitr_t *itr)
 		while(ITR_isDOTNAME(itr, 0)) {
 			stmt = Stmt_addFUNC(_ctx, stmt, ITR_nextTK(itr));
 		}
-		if(ITR_is(itr, TT_BRANCET)) {   /* @CODE: expr[...] */
+		if(ITR_is(itr, TT_BRACKET)) {   /* @CODE: expr[...] */
 			tkitr_t pbuf, *pitr = ITR_new(ITR_nextTK(itr), &pbuf);
 			int idx = ITR_indexTOUNTIL(pitr);
 			if(idx == -1) {
@@ -2607,7 +2607,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 				_ASIS(_ctx, stmt, itr);
 				break;
 			}
-			if(ITR_is(itr, TT_BYTE) && ITR_isN(itr, +1, TT_BRANCET)) {
+			if(ITR_is(itr, TT_BYTE) && ITR_isN(itr, +1, TT_BRACKET)) {
 				TT_(tkCUR) = TT_MN; /* new byte[10] */
 				(tkCUR)->mn = MN_newARRAY;
 				knh_Stmt_add(_ctx, stmt, new_TermCID(_ctx, CLASS_Bytes));
@@ -2615,7 +2615,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 				TT_(itr->ts[itr->c]) = TT_PARENTHESIS;
 				break;
 			}
-			if(ITR_isT(itr, isTYPE) && ITR_isN(itr, +1, TT_BRANCET)) {
+			if(ITR_isT(itr, isTYPE) && ITR_isN(itr, +1, TT_BRACKET)) {
 				kTerm *tkC = ITR_nextTK(itr);
 				TT_(tkCUR) = TT_MN; /* new C[10] */
 				(tkCUR)->mn = MN_newARRAY;
@@ -2623,7 +2623,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 				TT_(itr->ts[itr->c]) = TT_PARENTHESIS;
 				break;
 			}
-			if(ITR_is(itr, TT_BRANCET)) { /* new [] */
+			if(ITR_is(itr, TT_BRACKET)) { /* new [] */
 				TT_(tkCUR) = TT_MN; /* new [10] */
 				(tkCUR)->mn = MN_newARRAY;
 				_ASIS(_ctx, stmt, itr);
@@ -2663,7 +2663,7 @@ static void _EXPRCALL(CTX, kStmtExpr *stmt, tkitr_t *itr)
 			_EXPR1(_ctx, stmt, itr);
 		}
 	}
-	if(isCALL || ITR_isDOTNAME(itr, 0) || ITR_is(itr, TT_PARENTHESIS) || ITR_is(itr, TT_BRANCET)) {
+	if(isCALL || ITR_isDOTNAME(itr, 0) || ITR_is(itr, TT_PARENTHESIS) || ITR_is(itr, TT_BRACKET)) {
 		_CALLPARAM(_ctx, stmt, itr);
 	}
 	else {
@@ -2778,7 +2778,7 @@ static void _DECL2(CTX, kStmtExpr *stmt, tkitr_t *itr)
 		DBG_ASSERT(isVARN(ITR_tk(aitr)));  // already checked
 		knh_Stmt_add(_ctx, stmt, ITR_nextTK(aitr));
 
-		if(ITR_is(aitr, TT_BRANCET)) {  /* @ac(DeclareCStyleArray) */
+		if(ITR_is(aitr, TT_BRACKET)) {  /* @ac(DeclareCStyleArray) */
 			WARN_MuchBetter(_ctx, "Type[]", NULL);  // int a[] // C-sytle array
 			KSETv(tmNN(stmt, 0), new_TermPTYPE(_ctx, CLASS_Array, tkT));
 			ITR_next(aitr);
@@ -3551,7 +3551,7 @@ static int Term_isMAP(CTX, kTerm *tk)
 		else if(tt == TT_COMMA) comma++;
 	}
 	if(colon == 0 && titr->e > 0) {
-		TT_(tk) = TT_BRANCET;
+		TT_(tk) = TT_BRACKET;
 		isMAP = 1;
 	}
 	if(colon > 0) {
@@ -3667,7 +3667,7 @@ static kStmtExpr *new_StmtSTMT1(CTX, tkitr_t *itr)
 		case TT_FUNCNAME:
 		case TT_FMT:
 		case TT_PARENTHESIS:
-		case TT_BRANCET:
+		case TT_BRACKET:
 		case TT_TRUE: case TT_FALSE: case TT_NULL:
 		case TT_NOT: case TT_EXISTS: case TT_TLINK:
 		case TT_LNOT:

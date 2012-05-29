@@ -2676,7 +2676,7 @@ static void Term_p(CTX, kOutputStream *w, kObject *o, int level)
 	kterm_t tt = tk->tt;
 	if(tt < TT_NUM) {
 		knh_write_ascii(_ctx, w, TT__(tt));
-		if(tt == TT_PARENTHESIS || tt == TT_BRACE || tt == TT_BRANCET) {
+		if(tt == TT_PARENTHESIS || tt == TT_BRACE || tt == TT_BRACKET) {
 			if(IS_Term(tk->data)) {
 				knh_write_InObject(_ctx, w, tk->data, level);
 			}

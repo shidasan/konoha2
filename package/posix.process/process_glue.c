@@ -28,13 +28,107 @@
 #include <signal.h>
 
 //## @Static @Public Int System.getpid();
-static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
+
+static KMETHOD System_getpid(CTX, ksfp_t *sfp _RIX)
 {
 	RETURNi_(getpid());
 }
 
+static KMETHOD System_getppid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(getppid());
+}
 
-// --------------------------------------------------------------------------
+static KMETHOD System_getuid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(getuid());
+}
+
+static KMETHOD System_geteuid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(geteuid());
+}
+
+static KMETHOD System_getgid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(getgid());
+}
+
+static KMETHOD System_getegid(CTX, ksfp_t *sfp _RIX)
+{
+	RETURNi_(getegid());
+}
+
+static KMETHOD System_getpgid(CTX, ksfp_t *sfp _RIX)
+{
+	int pid = sfp[1].ivalue;
+	int ret = getpgid(pid);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_setpgid(CTX, ksfp_t *sfp _RIX)
+{
+	int pid = sfp[1].ivalue;
+	int pgid = sfp[2].ivalue;
+	int ret = setpgid(pid, pgid);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_chdir(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s = sfp[1].s;
+	const char *dir = S_text(s);
+	int ret = chdir(dir);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_fchdir(CTX, ksfp_t *sfp _RIX)
+{
+	int ch = fchdir(sfp[1].ivalue);
+	RETURNi_(ch);
+}
+
+static KMETHOD System_chroot(CTX, ksfp_t *sfp _RIX)
+{
+	kString *s = sfp[1].s;
+	const char *root = S_text(s);
+	int ret = chroot(root);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_getpriority(CTX, ksfp_t *sfp _RIX)
+{
+
+	int which = sfp[1].ivalue;
+	int who = sfp[2].ivalue;
+	int ret = getpriority(which, who);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_setpriority(CTX, ksfp_t *sfp _RIX)
+{
+	int which = sfp[1].ivalue;
+	int who = sfp[2].ivalue;
+	int priority = sfp[3].ivalue;
+	int ret = setpriority(which, who, priority);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_getgroups(CTX, ksfp_t *sfp _RIX)
+{
+	int size = kArray_size(sfp[2].a);
+	kArray *list = sfp[2].a;
+	int ret = getgroups(size, list);
+	RETURNi_(ret);
+}
+
+static KMETHOD System_setgroups(CTX, ksfp_t *sfp _RIX)
+{
+	int size = kArray_size(sfp[2].a);
+	kArray *list = sfp[2].a;
+	int ret = setgroups(size, list);
+	RETURNi_(ret);
+}
 
 #define _Public   kMethod_Public
 #define _Const    kMethod_Const
@@ -47,7 +141,21 @@ static KMETHOD System_getPid(CTX, ksfp_t *sfp _RIX)
 static	kbool_t process_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	intptr_t MethodData[] = {
-		_Public|_Static, _F(System_getPid), TY_Int, TY_System, MN_("getPid"), 0,
+		_Public|_Static, _F(System_getpid), TY_Int, TY_System, MN_("getpid"), 0,
+		_Public|_Static, _F(System_getppid), TY_Int, TY_System, MN_("getppid"), 0,
+		_Public|_Static, _F(System_getuid), TY_Int, TY_System, MN_("getuid"), 0,
+		_Public|_Static, _F(System_geteuid), TY_Int, TY_System, MN_("geteuid"), 0,
+		_Public|_Static, _F(System_getgid), TY_Int, TY_System, MN_("getgid"), 0,
+		_Public|_Static, _F(System_getegid), TY_Int, TY_System, MN_("getegid"), 0,
+		_Public|_Static, _F(System_getpgid), TY_Int, TY_System, MN_("getpgid"), 1, TY_Int, FN_("pid"),
+		_Public|_Static, _F(System_setpgid), TY_Int, TY_System, MN_("setpgid"), 2, TY_Int, FN_("pid"), TY_Int, FN_("pgid"),
+		_Public|_Static, _F(System_chdir), TY_Int, TY_System, MN_("chdir"), 1, TY_String, FN_("pathname"),
+		_Public|_Static, _F(System_fchdir), TY_Int, TY_System, MN_("fchdir"), 1, TY_Int, FN_("fd"),
+		_Public|_Static, _F(System_chroot), TY_Int, TY_System, MN_("chroot"), 1, TY_String, FN_("pathname"),
+		_Public|_Static, _F(System_getpriority), TY_Int, TY_System, MN_("getpriority"), 2, TY_Int, FN_("which"), TY_Int, FN_("who"),
+		_Public|_Static, _F(System_setpriority), TY_Int, TY_System, MN_("setpriority"), 3, TY_Int, FN_("which"), TY_Int, FN_("who"), TY_Int, FN_("priority"),
+		_Public|_Static, _F(System_getgroups), TY_Int, TY_System, MN_("getgroups"), 2, TY_Int, FN_("size"), TY_Array, FN_("list[]"),
+		_Public|_Static, _F(System_setgroups), TY_Int, TY_System, MN_("setgroups"), 2, TY_Int, FN_("size"), TY_Array, FN_("*list"),
 		DEND,
 	};
 	kKonohaSpace_loadMethodData(ks, MethodData);
@@ -89,3 +197,4 @@ KDEFINE_PACKAGE* process_init(void)
 	};
 	return &d;
 }
+

@@ -336,6 +336,10 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		if(mtd != NULL) {
 			return new_GetterExpr(_ctx, tk, mtd, new_Variable(LOCAL, genv->this_cid, 0, gma));
 		}
+//		mtd = kKonohaSpace_getMethodNULL(genv->ks, genv->this_cid, fn);
+//		if(mtd != NULL) {
+//			return new_FuncValue(_ctx, mtd, 0);
+//		}
 	}
 	if(genv->ks->scrNUL != NULL) {
 		ktype_t cid = O_cid(genv->ks->scrNUL);
@@ -343,7 +347,15 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		if(mtd != NULL) {
 			return new_GetterExpr(_ctx, tk, mtd, new_ConstValue(cid, genv->ks->scrNUL));
 		}
-
+		mtd = kKonohaSpace_getMethodNULL(genv->ks, cid, fn);
+		if(mtd != NULL) {
+			kParam *pa = kMethod_param(mtd);
+			kclass_t *ct = kClassTable_Generics(CT_Func, pa->rtype, pa->psize, (kparam_t*)pa->p);
+			struct _kFunc *fo = (struct _kFunc*)new_kObject(ct, mtd);
+			PUSH_GCSTACK(fo);
+			KSETv(fo->self, genv->ks->scrNUL);
+			return new_ConstValue(ct->cid, fo);
+		}
 	}
 	return kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk));
 }
@@ -528,6 +540,7 @@ static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma
 	kParam *pa = kMethod_param(mtd);
 	if(pa->psize + 2 != size) {
 		char mbuf[128];
+		DBG_P("mtd=%p, mtd->paramid=%d, mtd->paramdom=%d", mtd, mtd->paramid, mtd->paramdom);
 		return kExpr_p(expr, ERR_, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_CT(this_ct), T_mn(mbuf, mtd->mn), (int)pa->psize, (int)size-2);
 	}
 	for(i = 0; i < pa->psize; i++) {
@@ -1233,7 +1246,6 @@ static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, k
 	return 1;
 }
 
-/* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 // eval
 

@@ -658,10 +658,9 @@ static kbool_t pcre_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 	};
 	base->cRegex = Konoha_addClassDef(ks->packid, PN_konoha, NULL, &RegexDef, pline);
 
-	kparam_t p = { .ty = TY_String, .fn = FN_("i"), };
-	kclass_t *cStrArray = kClassTable_Generics(CT_(TY_Array), 1, &p);
+	kparam_t p = { .ty = TY_String,  };
+	kclass_t *cStrArray = kClassTable_Generics(CT_(TY_Array), TY_void, 1, &p);
 #define TY_StrArray (cStrArray->cid)
-
 	int FN_x = FN_("x");
 	int FN_y = FN_("y");
 	intptr_t MethodData[] = {

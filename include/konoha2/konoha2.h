@@ -251,6 +251,7 @@ typedef kushort_t       kparamid_t;
 #define TY_unknown         ((kcid_t)-2)
 
 #define CT_(t)              (_ctx->share->ca.cts[t])
+#define CT_cparam(CT)       (_ctx->share->paramdomList->params[(CT)->paramdom])
 #define TY_isUnbox(t)       FLAG_is(CT_(t)->cflag, kClass_UnboxType)
 #define CT_isUnbox(C)       FLAG_is(C->cflag, kClass_UnboxType)
 
@@ -357,8 +358,6 @@ typedef struct kshare_t {
 	const struct _kBoolean      *constFalse;
 	const struct _kString       *emptyString;
 	const struct _kArray        *emptyArray;
-//	const struct _kParam        *nullParam;
-//	const struct _kParam        *defParam;
 
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //
@@ -390,34 +389,31 @@ typedef struct kshare_t {
 		const struct _kObject *o;  \
 		struct _kObject       *Wo; \
 		const struct _kInt    *i; \
-		const struct _kFloat *f; \
+		const struct _kFloat  *f; \
 		const struct _kString *s; \
-		struct kClass  *c; \
-		struct kDate *dt;\
 		const struct _kBytes  *ba; \
-		struct kRegex  *re; \
-		struct kRange  *range; \
 		const struct _kArray  *a; \
-		struct kIterator *it; \
-		struct kMap           *m;    \
-		struct kFunc         *fo; \
-		struct kPath         *pth; \
-		struct kInputStream  *in; \
-		struct kOutputStream *w;  \
-		struct kView *rel;\
 		const struct _kMethod            *mtd;\
-		struct kException         *e;\
-		struct kExceptionHandler  *hdr; \
+		const struct _kFunc         *fo; \
 		const struct _kKonohaSpace             *ks;\
-		const struct _kObject   *p; \
-		struct kConverter         *conv;\
-		struct kContext           *cx;\
-		struct kScript            *scr;\
 		const struct _kToken             *tk;\
 		const struct _kStmt              *stmt;\
 		const struct _kExpr              *expr;\
 		const struct _kBlock             *bk;\
 		struct _kGamma  *gma;\
+		struct kClass  *c; \
+		struct kDate *dt;\
+		struct kRegex  *re; \
+		struct kRange  *range; \
+		struct kIterator *it; \
+		struct kMap           *m;    \
+		struct kInputStream  *in; \
+		struct kOutputStream *w;  \
+		struct kException         *e;\
+		struct kExceptionHandler  *hdr; \
+		struct kConverter         *conv;\
+		struct kContext           *cx;\
+		struct kScript            *scr;\
 		kint_t     dummy_ivalue;\
 		kfloat_t   dummy_fvalue \
 
@@ -504,6 +500,7 @@ struct _kclass {
 	kpack_t   packid;       kpack_t   packdom;
 	kcid_t   cid;           kflag_t  cflag;
 	kcid_t   bcid;          kcid_t   supcid;
+	ktype_t  p0;            kparamid_t paramdom;
 	kmagicflag_t magicflag;
 	size_t     cstruct_size;
 	kfield_t  *fields;
@@ -512,7 +509,6 @@ struct _kclass {
 	kuname_t                  nameid;
 	kushort_t                 optvalue;
 
-	const struct _kParam     *cparam;
 	const struct _kArray     *methods;
 	const struct _kString    *shortNameNULL;
 	union {   // default value
@@ -536,11 +532,12 @@ struct _kclass {
 #define CLASS_Boolean           ((kcid_t)3)
 #define CLASS_Int               ((kcid_t)4)
 #define CLASS_String            ((kcid_t)5)
-#define CLASS_Param             ((kcid_t)6)
-#define CLASS_Method            ((kcid_t)7)
-#define CLASS_Array             ((kcid_t)8)
-#define CLASS_System            ((kcid_t)9)
-#define CLASS_T0                ((kcid_t)10)    /* ParamType*/
+#define CLASS_Array             ((kcid_t)6)
+#define CLASS_Param             ((kcid_t)7)
+#define CLASS_Method            ((kcid_t)8)
+#define CLASS_Func              ((kcid_t)9)
+#define CLASS_System            ((kcid_t)10)
+#define CLASS_T0                ((kcid_t)11)    /* ParamType*/
 
 #define CT_Object               CT_(CLASS_Object)
 #define CT_Boolean              CT_(CLASS_Boolean)
@@ -549,6 +546,7 @@ struct _kclass {
 #define CT_Array                CT_(CLASS_Array)
 #define CT_Param                CT_(CLASS_Param)
 #define CT_Method               CT_(CLASS_Method)
+#define CT_Func                 CT_(CLASS_Func)
 
 #define CT_StringArray          CT_Array
 #define kStringArray            kArray
@@ -565,16 +563,13 @@ struct _kclass {
 #define kClass_Interface        ((kflag_t)(1<<8))
 #define kClass_TypeVar          ((kflag_t)(1<<9))
 
-//#define T_isRef(t)          (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Ref))
-//#define T_isPrototype(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Expando))
-//#define T_isImmutable(t)    (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Immutable))
 #define CT_isPrivate(ct)      (TFLAG_is(kflag_t,(ct)->cflag, kClass_Private))
-//#define T_isFinal(t)        (TFLAG_is(kflag_t,(ClassTBL(t))->cflag, kClass_Final))
 
 #define TY_isSingleton(T)     (TFLAG_is(kflag_t,(CT_(T))->cflag, kClass_Singleton))
 #define CT_isSingleton(ct)    (TFLAG_is(kflag_t,(ct)->cflag, kClass_Singleton))
 
 #define CT_isFinal(ct)         (TFLAG_is(kflag_t,(ct)->cflag, kClass_Final))
+
 // this is used in konoha.class
 #define CT_isDefined(ct)  ((ct)->fallocsize == 0 || (ct)->fsize == (ct)->fallocsize)
 
@@ -672,7 +667,7 @@ typedef struct kvs_t {
 #define O_cid(o)            (O_ct(o)->cid)
 #define O_bcid(o)           (O_ct(o)->bcid)
 #define O_unbox(o)          (O_ct(o)->unbox(_ctx, o))
-#define O_p0(o)             (O_ct(o)->cparam->p[0].ty)
+#define O_p0(o)             (O_ct(o)->p0)
 
 /* ------------------------------------------------------------------------ */
 //## @Immutable class Boolean Object;
@@ -768,16 +763,10 @@ struct _kBytes {
 	COMMON_BYTEARRAY;
 };
 
-//typedef struct {
-//	COMMON_BYTEARRAY;
-//} kbytes_t;
-
-
 typedef const struct _kString kString;
 struct _kString /* extends _Bytes */ {
 	kObjectHeader h;
 	COMMON_BYTEARRAY;
-//	kuint_t hashCode;
 	const char inline_text[SIZEOF_INLINETEXT];
 };
 
@@ -858,7 +847,7 @@ struct _kParam {
 #define CFLAG_Method              kClass_Final
 #define OFLAG_Method              MAGICFLAG(0)
 #define TY_Method                 CLASS_Method
-#define IS_Method(o)              (O_cid(o) == CLASS_Method)
+#define IS_Method(o)              (O_bcid(o) == CLASS_Method)
 
 typedef const struct _kMethod kMethod;
 
@@ -942,16 +931,31 @@ struct _kMethod {
 		FmethodCallCC         callcc_1;
 	};
 	uintptr_t         flag;
-	kcid_t            cid;   kmethodn_t  mn;
+	kcid_t            cid;      kmethodn_t  mn;
 	kparamid_t        paramid;  kparamid_t paramdom;
-	kshort_t delta;          kpack_t packid;
-	const struct _kToken            *tcode;
+	kshort_t          delta;    kpack_t packid;
+	const struct _kToken        *tcode;
 	union {
 		kObject              *objdata;
 		const struct _kKonohaCode   *kcode;
 		const struct _kKonohaSpace  *lazyns;       // lazy compilation
 	};
 	const struct _kMethod           *proceedNUL;   // proceed
+};
+
+/* ------------------------------------------------------------------------ */
+//## class Func Object;
+
+#define CFLAG_Func              kClass_Final
+#define OFLAG_Func              MAGICFLAG(0)
+#define TY_Func                 CLASS_Func
+#define IS_Func(o)              (O_bcid(o) == CLASS_Func)
+
+typedef const struct _kFunc kFunc;
+struct _kFunc {
+	kObjectHeader h;
+	kObject *self;
+	kMethod *mtd;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -1028,6 +1032,13 @@ struct _kSystem {
 		tsfp[K_MTDIDX].mtdNC = NULL;\
 	} \
 
+#define KSELFCALL(TSFP, MTD) { \
+		ksfp_t *tsfp = TSFP;\
+		tsfp[K_MTDIDX].mtdNC = MTD;\
+		(MTD)->fastcall_1(_ctx, tsfp K_RIXPARAM);\
+		tsfp[K_MTDIDX].mtdNC = NULL;\
+	} \
+
 
 /* ----------------------------------------------------------------------- */
 // klib2
@@ -1073,7 +1084,7 @@ struct _klib2 {
 	kbool_t     (*KimportPackage)(CTX, const struct _kKonohaSpace*, const char *, kline_t);
 	kclass_t*   (*Kclass)(CTX, kcid_t, kline_t);
 	kString*    (*KCT_shortName)(CTX, kclass_t *ct);
-	kclass_t*   (*KCT_Generics)(CTX, kclass_t *ct, int psize, kparam_t *p);
+	kclass_t*   (*KCT_Generics)(CTX, kclass_t *ct, ktype_t rty, int psize, kparam_t *p);
 
 	kObject*    (*Knew_Object)(CTX, kclass_t *, void *);
 	kObject*    (*Knull)(CTX, kclass_t *);
@@ -1215,7 +1226,7 @@ struct _klib2 {
 #define KEXPORT_PACKAGE(NAME, KS, UL)                (KPI)->KimportPackage(_ctx, KS, NAME, UL)
 
 #define KCLASS(cid)                          S_text(CT(cid)->name)
-#define kClassTable_Generics(CT, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, PSIZE, P)
+#define kClassTable_Generics(CT, RTY, PSIZE, P)    (KPI)->KCT_Generics(_ctx, CT, RTY, PSIZE, P)
 #define Konoha_setModule(N,D,P)              (KPI)->KsetModule(_ctx, N, D, P)
 #define Konoha_addClassDef(PAC, DOM, NAME, DEF, UL)    (KPI)->KaddClassDef(_ctx, PAC, DOM, NAME, DEF, UL)
 #define kKonohaSpace_getCT(NS, THIS, S, L, C)      (KPI)->KS_getCT(_ctx, NS, THIS, S, L, C)

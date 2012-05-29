@@ -559,7 +559,7 @@ static const char *kToken_s_(CTX, kToken *tk)
 	case TK_CODE: ;
 	case AST_BRACE: return "{... }";
 	case AST_PARENTHESIS: return "(... )";
-	case AST_BRANCET: return "[... ]";
+	case AST_BRACKET: return "[... ]";
 	default:  return S_text(tk->text);
 	}
 }

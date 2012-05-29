@@ -27,23 +27,25 @@
 #ifndef FILE_GLUE_H_
 #define FILE_GLUE_H_
 
-typedef const struct _kFile kFile;
-struct _kFile {
+typedef const struct _kFILE kFILE;
+struct _kFILE {
 	kObjectHeader h;
 	FILE *fp;
+	const char *realpath;
 };
 
 /* ------------------------------------------------------------------------ */
 
 static void File_init(CTX, kObject *o, void *conf)
 {
-	struct _kFile *file = (struct _kFile*)o;
+	struct _kFILE *file = (struct _kFILE*)o;
 	file->fp = (conf != NULL) ? conf : NULL;
+	file->realpath = NULL;
 }
 
 static void File_free(CTX, kObject *o)
 {
-	struct _kFile *file = (struct _kFile*)o;
+	struct _kFILE *file = (struct _kFILE*)o;
 	if (file->fp != NULL) {
 		int ret = fclose(file->fp);
 		if (ret != 0) {
@@ -54,16 +56,21 @@ static void File_free(CTX, kObject *o)
 		}
 		file->fp = NULL;
 	}
+	if(file->realpath != NULL) {
+		free((void*)file->realpath); // free path
+		file->realpath = NULL;
+	}
 }
-
 
 static void File_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 {
-	//TODO
+	kFILE *file = (kFILE*)sfp[pos].o;
+	FILE *fp = file->fp;
+	kwb_printf(wb, "FILE :%p, path=%s", fp, file->realpath);
 }
 
 /* ------------------------------------------------------------------------ */
-//## @Native @Throwable File System.fopen(String path, String mode);
+//## @Native @Throwable FILE System.fopen(String path, String mode);
 static KMETHOD System_fopen(CTX, ksfp_t *sfp _RIX)
 {
 	kString *s = sfp[1].s;
@@ -77,12 +84,15 @@ static KMETHOD System_fopen(CTX, ksfp_t *sfp _RIX)
 				KEYVALUE_s("errstr", strerror(errno))
 		);
 	}
-	RETURN_(new_kObject(O_ct(sfp[K_RTNIDX].o), fp));
+	struct _kFILE *file = (struct _kFILE*)new_kObject(O_ct(sfp[K_RTNIDX].o), fp);
+	file->realpath = realpath(S_text(s), NULL);
+	RETURN_(file);
 }
+
 //## @Native int File.read(Bytes buf, int offset, int len);
 static KMETHOD File_read(CTX, ksfp_t *sfp _RIX)
 {
-	kFile *file = (kFile*)sfp[0].o;
+	kFILE *file = (kFILE*)sfp[0].o;
 	FILE *fp = file->fp;
 	size_t size = 0;
 	if(fp != NULL) {
@@ -110,7 +120,7 @@ static KMETHOD File_read(CTX, ksfp_t *sfp _RIX)
 //## @Native int File.write(Bytes buf, int offset, int len);
 static KMETHOD File_write(CTX , ksfp_t *sfp _RIX)
 {
-	kFile *file = (kFile*)sfp[0].o;
+	kFILE *file = (kFILE*)sfp[0].o;
 	FILE *fp = file->fp;
 	size_t size = 0;
 	if(fp != NULL) {
@@ -134,7 +144,7 @@ static KMETHOD File_write(CTX , ksfp_t *sfp _RIX)
 //## @Native void File.close();
 static KMETHOD File_close(CTX, ksfp_t *sfp _RIX)
 {
-	struct _kFile *file = (struct _kFile*)sfp[0].o;
+	struct _kFILE *file = (struct _kFILE*)sfp[0].o;
 	FILE *fp = file->fp;
 	if(fp != NULL) {
 		int ret = fclose(fp);
@@ -152,7 +162,7 @@ static KMETHOD File_close(CTX, ksfp_t *sfp _RIX)
 //## @Native int File.getC();
 static KMETHOD File_getC(CTX, ksfp_t *sfp _RIX)
 {
-	FILE *fp = ((kFile*)sfp[0].o)->fp;
+	FILE *fp = ((kFILE*)sfp[0].o)->fp;
 	int ch = EOF;
 	if (fp != NULL) {
 		ch = fgetc(fp);
@@ -169,7 +179,7 @@ static KMETHOD File_getC(CTX, ksfp_t *sfp _RIX)
 //## @Native boolean File.putC(int ch);
 static KMETHOD File_putC(CTX, ksfp_t *sfp _RIX)
 {
-	FILE *fp = ((kFile*)sfp[0].o)->fp;
+	FILE *fp = ((kFILE*)sfp[0].o)->fp;
 	if (fp != NULL) {
 		int ch = fputc(sfp[1].ivalue, fp);
 		if (ch == EOF) {
@@ -183,31 +193,6 @@ static KMETHOD File_putC(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(0);
 }
 
-//## @Native boolean File.sync();
-KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
-{
-	kFile *file = (kFile*)sfp[0].o;
-	FILE *fp = file->fp;
-	int ret = 1;
-	if(fp != NULL) {
-		int fd = fileno(fp);
-		if (fd == -1) {
-			ktrace(LOGPOL_DEBUG | _DataFault,
-					KEYVALUE_s("@", "fileno"),
-					KEYVALUE_p("fp", fp)
-			);
-			RETURNb_(0);
-		}
-		ret =  fsync(fd);
-		if (ret == -1) {
-			ktrace(_SystemFault,
-					KEYVALUE_s("@", "fsync"),
-					KEYVALUE_p("errstr", strerror(errno))
-			);
-		}
-	}
-	RETURNb_(ret == 0);
-}
 // --------------------------------------------------------------------------
 
 #define _Public   kMethod_Public
@@ -223,7 +208,7 @@ KMETHOD File_sync(CTX, ksfp_t *sfp _RIX)
 static kbool_t file_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	KDEFINE_CLASS defFile = {
-		STRUCTNAME(File),
+		STRUCTNAME(FILE),
 		.cflag = kClass_Final,
 		.init  = File_init,
 		.free  = File_free,
@@ -234,7 +219,6 @@ static kbool_t file_initPackage(CTX, kKonohaSpace *ks, int argc, const char**arg
 	intptr_t MethodData[] = {
 		_Public|_Const|_Im, _F(System_fopen), TY_File, TY_System, MN_("fopen"), 2, TY_String, FN_("path"), TY_String, FN_("mode"),
 		_Public|_Const|_Im, _F(File_close), TY_void, TY_File, MN_("close"), 0,
-		_Public|_Const|_Im, _F(File_sync), TY_Boolean, TY_File, MN_("sync"), 0,
 		_Public|_Const|_Im, _F(File_getC), TY_Int, TY_File, MN_("getC"), 0,
 		_Public|_Const|_Im, _F(File_putC), TY_Boolean, TY_File, MN_("putC"), 1, TY_Int, FN_("ch"),
 		DEND,

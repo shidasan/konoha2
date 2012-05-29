@@ -702,6 +702,7 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 }
 
 // -------------------------------------------------------------------------
+
 static void Kdbg_p(const char *file, const char *func, int line, const char *fmt, ...)
 {
 	if(verbose_debug) {

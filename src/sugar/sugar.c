@@ -56,7 +56,7 @@ static void defineDefaultSyntax(CTX, kKonohaSpace *ks)
 		{ TOKEN("$FLOAT"), _TERM, /* ExprTyCheck_(FLOAT), */},
 		{ TOKEN("$type"), _TERM, ParseStmt_(Type), .rule = "$type $expr", StmtTyCheck_(TypeDecl), ExprTyCheck_(Type), },
 		{ TOKEN("()"), .flag = SYNFLAG_ExprPostfixOp2, ParseExpr_(Parenthesis), .priority_op2 = 16, ExprTyCheck_(FuncStyleCall),}, //AST_PARENTHESIS
-		{ TOKEN("[]"),  },  //AST_BRANCET
+		{ TOKEN("[]"),  },  //AST_BRACKET
 		{ TOKEN("{}"),  }, // AST_BRACE
 		{ TOKEN("$block"), ParseStmt_(Block), ExprTyCheck_(Block), },
 		{ TOKEN("$params"), ParseStmt_(Params), TopStmtTyCheck_(ParamsDecl), ExprTyCheck_(MethodCall),},
