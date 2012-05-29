@@ -314,7 +314,7 @@ add_builtin_test(Release/Kvproto --builtin-test=test_kvproto)
 
 install(TARGETS konoha2 konoha2_bin
 		RUNTIME DESTINATION bin
-		LIBRARY DESTINATION lib
+		LIBRARY DESTINATION lib${LIB_SUFFIX}
 		)
 
 install(DIRECTORY include/ DESTINATION include 
