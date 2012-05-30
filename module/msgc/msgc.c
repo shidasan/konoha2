@@ -897,7 +897,6 @@ void MODGC_free(CTX, kcontext_t *ctx)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
-	TDBG_i("malloc", size);
 	int page_size = (size / sizeof(kGCObject0)) >> 1;
 	DBG_ASSERT(page_size <= 4);
 	kGCObject *o = NULL;
