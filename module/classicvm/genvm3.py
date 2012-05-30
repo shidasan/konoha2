@@ -472,17 +472,13 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	};
 #endif
 	krbp_t *rbp = (krbp_t*)sfp0;
-	USE_PROF(
-	uint64_t _utime = knh_getTime();
-	static uint64_t _UTIME[OPCODE_NOP+1] = {0};
-	static size_t _UC[OPCODE_NOP+1] = {0};)
 	DISPATCH_START(pc);
 ''')
 	for kc in KCODE_LIST:
 # DBG_P("%%p %%s", pc-1, T_opcode((pc-1)->opcode));
 		f.write('''
 	%s(%s) {
-		%s *op = (%s*)pc; (void)op;
+		%s *op = (%s*)pc;
 		%s; pc++;
 		GOTO_NEXT();
 	} ''' % (kc.ifdef, kc.name, kc.ctype, kc.ctype, getmacro(kc, 'JUMP')))

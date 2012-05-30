@@ -69,7 +69,7 @@
 } while (0)
 
 #ifdef _CLASSICVM
-#include "../../module/classicvm/classicvm_.h"
+#include "../../module/classicvm/classicvm_gen.h"
 #include "../../module/classicvm/classicvm.h"
 #else
 #include "minivm.h"
