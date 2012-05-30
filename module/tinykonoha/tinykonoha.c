@@ -22,7 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#ifdef K_USING_TINYVM
+#ifdef K_USING_TOPPERS
 #include "kernel_id.h"
 #include "ecrobot_base.h"
 #include "ecrobot_interface.h"
@@ -322,7 +322,7 @@ static kcontext_t *new_context(size_t stacksize)
 	return &_ctx;
 }
 
-#ifdef K_USING_TINYVM
+#ifdef K_USING_TOPPERS
 void cyc0(VP_INT exinf)
 {
 

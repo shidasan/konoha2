@@ -45,12 +45,23 @@ static void knh_vfree(CTX, void *block, size_t size);
 
 #ifdef K_USING_TINYVM
 #define K_ARENATBL_INITSIZE     1
+typedef struct _ObjectHeader {
+	kmagicflag_t magicflag;
+	kclass_t *ct;  //@RENAME
+	void *unused0;
+	void *unused1;
+}_ObjectHeader;
 #else
 #define K_ARENATBL_INITSIZE     32
 #endif
 
+
 typedef struct kGCObject0 {
+#ifdef K_USING_TINYVM
+	_ObjectHeader h;
+#else
 	kObjectHeader h;
+#endif
 	struct kGCObject0 *ref;
 	void *ref2_unused;
 	void *ref3_unused;
@@ -58,7 +69,11 @@ typedef struct kGCObject0 {
 } kGCObject0;
 
 typedef struct kGCObject1 {
+#ifdef K_USING_TINYVM
+	_ObjectHeader h;
+#else
 	kObjectHeader h;
+#endif
 	struct kGCObject1 *ref;
 	void *ref2_unused;
 	void *ref3_unused;
@@ -67,7 +82,11 @@ typedef struct kGCObject1 {
 } kGCObject1;
 
 typedef struct kGCObject2 {
+#ifdef K_USING_TINYVM
+	_ObjectHeader h;
+#else
 	kObjectHeader h;
+#endif
 	struct kGCObject2 *ref;
 	void *ref2_unused;
 	void *ref3_unused;
@@ -109,8 +128,6 @@ typedef struct objpageTBL_t {
 
 #define ARENA_COUNT_SIZE(size,c) (size) >> (c)
 #ifdef K_USING_TINYVM
-#define K_ARENA_COUNT 2
-#elif defined TINYKONOHA_DEBUG
 #define K_ARENA_COUNT 2
 #else
 #define K_ARENA_COUNT 3
@@ -243,8 +260,6 @@ static void Kfree(CTX, void *p, size_t s)
 	size_t *pp = (size_t*)p;
 	DBG_ASSERT(pp[-1] == s);
 #ifdef K_USING_TINYVM
-	do_free(pp, s);
-#elif defined TINYKONOHA_DEBUG
 	do_free(pp, s);
 #else
 	do_free(pp - 1, s + sizeof(size_t));
@@ -860,9 +875,7 @@ static void gc_sweep(CTX)
 	collected += gc_sweep0(_ctx);
 	collected += gc_sweep1(_ctx);
 #ifndef K_USING_TINYVM
-#ifndef TINYKONOHA_DEBUG
 	collected += gc_sweep2(_ctx);
-#endif
 #endif
 }
 
@@ -899,9 +912,7 @@ static void MSGC_setup(CTX, struct kmodshare_t *def, int newctx)
 		MSGC_SETUP(0);
 		MSGC_SETUP(1);
 #ifndef K_USING_TINYVM
-#ifndef TINYKONOHA_DEBUG
 		MSGC_SETUP(2);
-#endif
 #endif
 	}
 }

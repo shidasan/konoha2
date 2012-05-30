@@ -1,7 +1,7 @@
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
-#ifdef K_USING_TINYVM
+#ifdef K_USING_TOPPERS
 #include <t_services.h>
 #endif
 #define K_USING_THCODE_ 1
@@ -24,7 +24,7 @@ enum {
 	MPREWAIT
 };
 
-#ifdef K_USING_TINYVM
+#ifdef K_USING_TOPPERS
 extern void TaskMain(VP_INT exinf);
 extern void TaskDisp(VP_INT exinf);
 extern void cyc0(VP_INT exinf);

@@ -650,7 +650,7 @@ static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
 
 	//base->cFloat = Konoha_addClassDef(0/*ks->packid*/, PN_konoha, NULL, &defFloat, 0);
 	base->cFloat = new_CT(_ctx, NULL, &defFloat, 0);
-	CT_setName(_ctx, base->cFloat, 0);
+	CT_setName(_ctx, (struct _kclass*)base->cFloat, 0);
 
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {

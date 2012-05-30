@@ -106,7 +106,7 @@ CDEFS := $(CDEFS)
 INCLUDES := -I. -I$(SRCDIR)/include -I$(SRCDIR)/nxt/device -I$(SRCDIR)/nxt/ecrobot -I$(SRCDIR)/nxt/balancer $(INCLUDES) -I../../include
 LDFLAGS := -nostdlib $(LDFLAGS)
 LIBS := $(LIBS) $(CXXLIBS) -lc -lgcc
-CFLAGS = $(COPTS) $(CDEFS) $(INCLUDES) -DK_USING_TINYVM=1
+CFLAGS = $(COPTS) $(CDEFS) $(INCLUDES) -DK_USING_TINYVM=1 -DK_USING_TOPPERS=1
 
 #
 #  アプリケーションプログラムに関する定義
@@ -519,4 +519,4 @@ $(UTASK_ASMOBJS:.o=.d): %.d: %.S
 DEBUG_CC = gcc
 DEBUG_CFLAGS = -g -O0 -I../../include -I.
 debug :
-	$(DEBUG_CC) $(UNAME).c -o $(UNAME) $(DEBUG_CFLAGS) -DTINYKONOHA_DEBUG=1
+	$(DEBUG_CC) $(UNAME).c -o $(UNAME) $(DEBUG_CFLAGS) -DK_USING_TINYVM=1
