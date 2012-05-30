@@ -354,8 +354,11 @@ int main(int argc, char **args)
 	//VirtualMachine_run(_ctx, sfp, NULL);
 	kclass_t *ct = CT_(CLASS_String);
 	TDBG_s("loop start");
-	//while (1) {
-	//	new_kObject(ct, NULL);
-	//}
+	int i = 0;
+	while (i < 1000) {
+		new_kObject(ct, NULL);
+		i++;
+	}
+	return 0;
 }
 #endif

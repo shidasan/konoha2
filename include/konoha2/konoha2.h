@@ -881,8 +881,8 @@ struct _kString /* extends _Bytes */ {
 #define TY_Array                 CLASS_Array
 #define IS_Array(o)              (O_bcid(o) == CLASS_Array)
 
-#define kArray_isUnboxData(o)    (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local1))
-#define kArray_setUnboxData(o,b) TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local1,b)
+#define kArray_isUnboxData(o)    (TFLAG_is(kmagicflag_t,(o)->h.magicflag,kObject_Local1))
+#define kArray_setUnboxData(o,b) TFLAG_set(kmagicflag_t,(o)->h.magicflag,kObject_Local1,b)
 
 typedef const struct _kArray kArray;
 struct _kArray {

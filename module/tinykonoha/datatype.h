@@ -260,7 +260,7 @@ static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 	//struct _kclass *ct = share->ca[newcid];
 	if (bct != NULL) {
 		DBG_ASSERT(s == NULL);
-		memcpy(ct, bct, offsetof(kclass_t, cparam));
+		memcpy(ct, bct, offsetof(kclass_t, methods));
 		ct->cid = newid;
 		//if (ct->fnull == DEFAULT_fnull) ct->fnull = DEFAULT_fnullinit;
 	} else {
@@ -273,8 +273,9 @@ static struct _kclass *new_CT(CTX, kclass_t *bct, KDEFINE_CLASS *s, kline_t plin
 		ct->fsize = s->fsize;
 		ct->fallocsize = s->fallocsize;
 		ct->cstruct_size = size64(s->cstruct_size);
-		if (s->cparams != NULL) {
+		if (s->psize > 0 && s->cparams != NULL) {
 			DBG_P("params");
+			ct->p0 = s->cparams[0].ty;
 			//KINITv(ct->cparam, new_kParam2(s->rtype, s->psize, s->cparams));
 		}
 		ct->init = (s->init != NULL) ? s->init : DEFAULT_init;
@@ -302,7 +303,6 @@ static kclass_t *CT_body(CTX, kclass_t *ct, size_t head, size_t body)
 			struct _kclass *newct = new_CT(_ctx, bct, NULL, NOPLINE);
 			newct->cflag |= kClass_Private;
 			newct->cstruct_size = ct->cstruct_size * 2;
-			KINITv(newct->cparam, ct->cparam);
 			KINITv(newct->methods, ct->methods);
 			((struct _kclass*)ct)->searchSimilarClassNULL = (kclass_t*)newct;
 		}
@@ -368,6 +368,8 @@ static void Array_init(CTX, kObject *o, void *conf)
 	}
 	if(TY_isUnbox(O_p0(a))) {
 		kArray_setUnboxData(a, 1);
+	} else {
+		kArray_setUnboxData(a, 0);
 	}
 }
 
@@ -390,10 +392,26 @@ static void Array_free(CTX, kObject *o)
 	KARRAY_FREE(&a->a);
 }
 
+static void Func_init(CTX, kObject *o, void *conf)
+{
+	struct _kFunc *fo = (struct _kFunc*)o;
+	KINITv(fo->self, K_NULL);
+	KINITv(fo->mtd, conf != NULL ? KNULL(Method) : (kMethod*)conf);
+}
+
+static void Func_reftrace(CTX, kObject *o)
+{
+	BEGIN_REFTRACE(4);
+	kFunc *fo = (kFunc*)o;
+	KREFTRACEv(fo->self);
+	KREFTRACEv(fo->mtd);
+	END_REFTRACE();
+}
 static kclass_t *T_realtype(CTX, kclass_t *ct, kclass_t *self)
 {
-	DBG_ASSERT(ct->optvalue < self->cparam->psize);
-	kclass_t *pct = CT_(self->cparam->p[ct->optvalue].ty);
+	kParam *cparam = CT_cparam(self);
+	DBG_ASSERT(ct->optvalue < cparam->psize);
+	kclass_t *pct = CT_(cparam->p[ct->optvalue].ty);
 	return pct->realtype(_ctx, pct, self);
 }
 
@@ -442,6 +460,14 @@ static void loadInitStructData(CTX)
 		.p    = String_p,
 		.unbox = String_unbox
 	};
+	kparam_t ArrayCparam = {TY_Object, 1};
+	KDEFINE_CLASS defArray = {
+		CLASSNAME(Array),
+		.init = Array_init,
+		.reftrace = Array_reftrace,
+		.free = Array_free,
+//		.psize = 1, .cparams = &ArrayCparam,
+	};
 	KDEFINE_CLASS defParam = {
 		CLASSNAME(Param),
 		.init = Param_init,
@@ -451,13 +477,10 @@ static void loadInitStructData(CTX)
 		.init = Method_init,
 		.reftrace = Method_reftrace,
 	};
-	kparam_t ArrayCparam = {TY_Object, 1};
-	KDEFINE_CLASS defArray = {
-		CLASSNAME(Array),
-		.init = Array_init,
-		.reftrace = Array_reftrace,
-		.free = Array_free,
-//		.psize = 1, .cparams = &ArrayCparam,
+	KDEFINE_CLASS defFunc = {
+		CLASSNAME(Func),
+		.init = Func_init,
+		.reftrace = Func_reftrace,
 	};
 	KDEFINE_CLASS defSystem = {
 		CLASSNAME(System),
@@ -475,9 +498,10 @@ static void loadInitStructData(CTX)
 		&defBoolean,
 		&defInt,
 		&defString,
+		&defArray,
 		&defParam,
 		&defMethod,
-		&defArray,
+		&defFunc,
 		&defSystem,
 		&defT0,
 		NULL,
@@ -488,7 +512,7 @@ static void loadInitStructData(CTX)
 		dd++;
 	}
 	struct _kclass *ct = (struct _kclass *)CT_Array;
-	ct->cparam = new_Param(_ctx, TY_void, 1, &ArrayCparam);
+	ct->p0 = TY_Object;
 }
 
 //static kclass_t *addClassDef(CTX, kpack_t packid, kpack_t packdom, kString *name, KDEFINE_CLASS *cdef, kline_t pline)
