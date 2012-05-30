@@ -230,26 +230,26 @@ static KMETHOD PyObject_toString(CTX, ksfp_t *sfp _RIX)
 #define _BITS 8
 #define PY_SSIZE_MAX (size_t)(1 << 31)
 
-static KMETHOD Array_toPyObject(CTX, ksfp_t *sfp _RIX)
-{
-	kArray *a = sfp[0].a;
-	size_t i, n = kArray_size(a);
-	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
-	PyObject* pa = PyList_New((Py_ssize_t)n);
-	if (kArray_isUnboxData(a)) {
-		for (i = 0; i < pa_size; i++) {
-			// [TODO] transfer array element to PyObject
-			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
-		}
-	}
-	else {
-		for (i = 0; i < pa_size; i++) {
-			// [TODO] transfer array element to PyObject
-			//PyList_Append(pa, i, a->list[n]);
-		}
-	}
-	RETURN_PyObject(pa);
-}
+//static KMETHOD Array_toPyObject(CTX, ksfp_t *sfp _RIX)
+//{
+//	kArray *a = sfp[0].a;
+//	size_t i, n = kArray_size(a);
+//	Py_ssize_t pa_size = (n < PY_SSIZE_MAX)? n : PY_SSIZE_MAX - 1;
+//	PyObject* pa = PyList_New((Py_ssize_t)n);
+//	if (kArray_isUnboxData(a)) {
+//		for (i = 0; i < pa_size; i++) {
+//			// [TODO] transfer array element to PyObject
+//			PyList_SetItem(pa, i, PyInt_FromLong(a->ndata[n]));
+//		}
+//	}
+//	else {
+//		for (i = 0; i < pa_size; i++) {
+//			// [TODO] transfer array element to PyObject
+//			//PyList_Append(pa, i, a->list[n]);
+//		}
+//	}
+//	RETURN_PyObject(pa);
+//}
 
 //static KMETHOD PyObject_toList(CTX, ksfp_t *sfp _RIX)
 //{
@@ -385,60 +385,60 @@ static KMETHOD Python_eval(CTX, ksfp_t *sfp _RIX)
 	RETURNb_(PyRun_SimpleString(S_text(sfp[1].s)) == 0);
 }
 
-#define DEFAULT_SIZE 16
-
-char** pyenv_split(char* line, char target)
-{
-	char* c = line;
-	size_t slen, size = 0, maxsize = DEFAULT_SIZE;
-	char **tmp, **ret = (char**)malloc(sizeof(char**) * DEFAULT_SIZE);
-	memset(ret, '\0', sizeof(char**) * DEFAULT_SIZE);
-	while (line[0] != '\0'){
-		if (line[0] == target){
-			if (size >= maxsize) {
-				maxsize *= 2;
-				tmp = (char**)realloc(ret, maxsize);
-				assert(tmp != NULL);
-				memset(tmp, '\0', maxsize);
-				memcpy(ret, tmp, maxsize);
-			}
-			slen = line - c + 1;
-			char* p = (char*)malloc(slen);
-			memset(p, '\0', slen);
-			strncpy(p, c, slen - 1);
-			ret[size] = p;
-			size++;
-			c = ++line;
-			continue;
-		}
-		line++;
-	}
-	slen = line - c;
-	char* p = (char*)malloc(slen);
-	memset(p, '\0', slen);
-	strncpy(p, c, slen);
-	ret[size] = p;
-	return ret;
-}
+//#define DEFAULT_SIZE 16
+//
+//char** pyenv_split(char* line, char target)
+//{
+//	char* c = line;
+//	size_t slen, size = 0, maxsize = DEFAULT_SIZE;
+//	char **tmp, **ret = (char**)malloc(sizeof(char**) * DEFAULT_SIZE);
+//	memset(ret, '\0', sizeof(char**) * DEFAULT_SIZE);
+//	while (line[0] != '\0'){
+//		if (line[0] == target){
+//			if (size >= maxsize) {
+//				maxsize *= 2;
+//				tmp = (char**)realloc(ret, maxsize);
+//				assert(tmp != NULL);
+//				memset(tmp, '\0', maxsize);
+//				memcpy(ret, tmp, maxsize);
+//			}
+//			slen = line - c + 1;
+//			char* p = (char*)malloc(slen);
+//			memset(p, '\0', slen);
+//			strncpy(p, c, slen - 1);
+//			ret[size] = p;
+//			size++;
+//			c = ++line;
+//			continue;
+//		}
+//		line++;
+//	}
+//	slen = line - c;
+//	char* p = (char*)malloc(slen);
+//	memset(p, '\0', slen);
+//	strncpy(p, c, slen);
+//	ret[size] = p;
+//	return ret;
+//}
 
 //## PyObject System.importPtModule(String name);
 static KMETHOD System_importPyModule(CTX, ksfp_t *sfp _RIX)
 {
-	//PySys_SetPath("."); // add home dir to python search path.
-	PyListObject* ppath;
-	ppath = (PyListObject*)PyList_New(0);
-	PyList_Append((PyObject*)ppath, PyString_FromString("."));
-	char *path = getenv("PYTHONPATH"); // add home dir to python search path.
-	if (path != NULL) {
-		size_t i;
-		char** pathes = pyenv_split(path, ':');
-		for (i = 0; pathes[i] != NULL; i++) {
-			PyList_Append((PyObject*)ppath, PyString_FromString(pathes[i]));
-			free(pathes[i]);
-		}
-		free(pathes);
-	}
-	PySys_SetObject("path", (PyObject*)ppath);
+	PySys_SetPath("."); // add home dir to python search path.
+	//PyListObject* ppath;
+	//ppath = (PyListObject*)PyList_New(0);
+	//PyList_Append((PyObject*)ppath, PyString_FromString("."));
+	//char *path = getenv("PYTHONPATH"); // add home dir to python search path.
+	//if (path != NULL) {
+	//	size_t i;
+	//	char** pathes = pyenv_split(path, ':');
+	//	for (i = 0; pathes[i] != NULL; i++) {
+	//		PyList_Append((PyObject*)ppath, PyString_FromString(pathes[i]));
+	//		free(pathes[i]);
+	//	}
+	//	free(pathes);
+	//}
+	//PySys_SetObject("path", (PyObject*)ppath);
 	RETURN_PyObject(PyImport_ImportModule(S_text(sfp[1].s)));
 }
 
@@ -504,6 +504,7 @@ static	kbool_t python_initPackage(CTX, kKonohaSpace *ks, int argc, const char**a
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_to(TY_String), 0,
 		_Public|_Const|_Im|_Coercion, _F(String_toPyObject), TY_PyObject, TY_String, MN_to(TY_PyObject), 0,
 		_Public|_Const|_Im|_Coercion, _F(PyObject_toString), TY_String, TY_PyObject, MN_("toString"),  0,
+		//_Public,                      _F(Array_add), TY_void, TY_Array, MN_("add"), 1, TY_T0, FN_("value"),
 		// [TODO] add following konoha class.
 		//_Public|_Const|_Im|_Coercion, _F(PyObject_toList), TY_Array, TY_PyObject, MN_to(TY_Array), 0,
 		//_Public|_Const|_Im|_Coercion, _F(Array_toPyObject), TY_PyObject, TY_Array, MN_to(TY_PyObject), 0,

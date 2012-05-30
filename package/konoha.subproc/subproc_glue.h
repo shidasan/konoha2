@@ -213,15 +213,18 @@ static int spSplit(char* str, char* args[]) {
  * @return child process id
  *         -1 is Internal Error
  */
+
+#include <syslog.h>
+
 static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 {
 	if (IS_NULL(command)) {
 		return -1;
 	}
 	int pid  = -1;
-	int rmode = (spd->r.mode==M_DEFAULT) ? defaultMode : spd->r.mode ;
-	int wmode = (spd->w.mode==M_DEFAULT) ? defaultMode : spd->w.mode ;
-	int emode = (spd->e.mode==M_DEFAULT) ? defaultMode : spd->e.mode ;
+	int rmode = (spd->r.mode==M_DEFAULT) ? defaultMode : spd->r.mode;
+	int wmode = (spd->w.mode==M_DEFAULT) ? defaultMode : spd->w.mode;
+	int emode = (spd->e.mode==M_DEFAULT) ? defaultMode : spd->e.mode;
 	int c2p[2];
 	int p2c[2];
 	int err[2];
@@ -230,24 +233,24 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			return -1;
 		}
 	}
-	if(wmode == M_PIPE ) {
-		if(pipe(p2c) != 0 ) {
+	if(wmode == M_PIPE) {
+		if(pipe(p2c) != 0) {
 			ktrace(_SystemFault,
 					KEYVALUE_s("@", "pipe"),
 					KEYVALUE_u("errno", errno),
 					KEYVALUE_s("errstr", strerror(errno))
-					);
+			);
 			close(c2p[0]); close(c2p[1]);
 			return -1;
 		}
 	}
-	if(emode == M_PIPE ) {
-		if(pipe2(err, O_NONBLOCK) != 0 ) {
+	if(emode == M_PIPE) {
+		if(pipe2(err, O_NONBLOCK) != 0) {
 			ktrace(_SystemFault,
 					KEYVALUE_s("@", "pipe"),
 					KEYVALUE_u("errno", errno),
 					KEYVALUE_s("errstr", strerror(errno))
-					);
+			);
 			close(c2p[0]); close(c2p[1]);
 			close(p2c[0]); close(p2c[1]);
 			return -1;
@@ -255,13 +258,13 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 	}
 	if((pid = fork()) < 0) {
 		// parent process illegal route
-		if( rmode == M_PIPE ) {
+		if(rmode == M_PIPE) {
 			close(c2p[0]); close(c2p[1]);
 		}
-		if( wmode == M_PIPE ) {
+		if(wmode == M_PIPE) {
 			close(p2c[0]); close(p2c[1]);
 		}
-		if( emode == M_PIPE ) {
+		if(emode == M_PIPE) {
 			close(err[0]); close(err[1]);
 		}
 	}else if(pid == 0) {
@@ -276,7 +279,8 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				);
 			}
 			close(p2c[0]); close(p2c[1]);
-		}else if(wmode == M_FILE) {
+		}
+		else if(wmode == M_FILE) {
 			close(0);
 			if(dup2(fileno(spd->w.fp), 0) == -1) {
 				ktrace(_SystemFault,
@@ -296,9 +300,10 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				);
 			}
 			close(c2p[0]); close(c2p[1]);
-		} else if ( rmode == M_FILE ) {
+		}
+		else if(rmode == M_FILE) {
 			close(1);
-			if (dup2(fileno(spd->r.fp), 1) == -1) {
+			if(dup2(fileno(spd->r.fp), 1) == -1) {
 				ktrace(_SystemFault,
 						KEYVALUE_s("@", "dup2"),
 						KEYVALUE_u("errno", errno),
@@ -306,28 +311,30 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				);
 			}
 		}
-		if ( emode == M_PIPE ) {
+		if(emode == M_PIPE) {
 			close(2);
 			dup2(err[1], 2);
 			close(err[0]); close(err[1]);
-		} else if ( emode == M_FILE ) {
+		}
+		else if(emode == M_FILE) {
 			close(2);
 			dup2(fileno(spd->e.fp), 2);
-		} else if ( emode == M_STDOUT ) {
+		}
+		else if(emode == M_STDOUT) {
 			close(2);
 			dup2(1, 2);
 		}
-		if (spd->closefds == 1) {
+		if(spd->closefds == 1) {
 			// close other than 0, 1, and 2
 			int cfd = 3;
 			int maxFd = sysconf(_SC_OPEN_MAX);
 			do {
 				close(cfd);
-			} while ( ++cfd < maxFd );
+			} while (++cfd < maxFd);
 		}
 		setsid(); // separation from tty
-		if (!IS_NULL(spd->cwd)) { // TODO!!
-			if (chdir(S_text((spd->cwd))) != 0){
+		if(!IS_NULL(spd->cwd)) { // TODO!!
+			if(chdir(S_text((spd->cwd))) != 0) {
 				ktrace(_ScriptFault,
 						KEYVALUE_s("@", "chdir"),
 						KEYVALUE_s("cwd", S_text(spd->cwd)),
@@ -338,7 +345,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			}
 		}
 		char *args[MAXARGS];
-		if(spd->shell == 0){
+		if(spd->shell == 0) {
 			// division of a commnad parameter
 			if(spSplit((char*)S_text(command), args) < 0){
 				ktrace(_ScriptFault,
@@ -348,20 +355,19 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				args[0] = NULL;
 			}
 		}
-		if((spd->env != NULL)) {
+		if(!IS_NULL(spd->env)) {
 			// division of a environment parameter
 			kArray *a = spd->env;
-			int num = a->bytesize;
+			int num = kArray_size(a);
 			char *envs[num+1];
 			int i;
-			for(i=0 ; i<num ; i++) {
+			for(i = 0 ; i<num ; i++) {
 				envs[i] = (char*)S_text(a->strings[i]);
 			}
 			envs[num] = NULL;
 			// exec load new process image if success.
 			// if its not, they will return with -1.
-			if(spd->shell == 0){
-				fprintf(stderr, "shell=%d, exec=%s\n", spd->shell, args[0]);
+			if(spd->shell == 0) {
 				if(execve(args[0], args, envs) == -1) {
 					ktrace(_SystemFault | _ScriptFault,
 							KEYVALUE_s("@", "execve"),
@@ -369,7 +375,8 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 							KEYVALUE_s("errstr", strerror(errno))
 					);
 				}
-			} else {
+			}
+			else {
 				if (execle("/bin/sh", "sh", "-c", S_text(command), NULL, envs) == -1) {
 					ktrace(_SystemFault | _ScriptFault,
 							KEYVALUE_s("@", "execle"),
@@ -379,17 +386,17 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				}
 			}
 		} else {
-			if ( spd->shell == 0 ) {
-				fprintf(stderr, "shell=%d, exec=%s\n", spd->shell, args[0]);
-				if (execvp(args[0], args) == -1) {
+			if(spd->shell == 0) {
+				if(execvp(args[0], args) == -1) {
 					ktrace(_SystemFault | _ScriptFault,
 							KEYVALUE_s("@", "execvp"),
 							KEYVALUE_u("errno", errno),
 							KEYVALUE_s("errstr", strerror(errno))
 					);
 				}
-			} else {
-				if (execlp("sh", "sh", "-c", S_text(command), NULL) == -1) {
+			}
+			else {
+				if(execlp("sh", "sh", "-c", S_text(command), NULL) == -1) {
 					ktrace(_SystemFault | _ScriptFault,
 							KEYVALUE_s("@", "execlp"),
 							KEYVALUE_u("errno", errno),
@@ -400,18 +407,19 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		}
 		perror("knh_popen :");
 		_exit(1);
-	} else {
+	}
+	else {
 		// parent process normal route
-		if ( rmode == M_PIPE ) {
-			spd->r.fp = fdopen( c2p[0], "r" );
+		if(rmode == M_PIPE) {
+			spd->r.fp = fdopen(c2p[0], "r");
 			close(c2p[1]);
 		}
-		if ( wmode == M_PIPE ) {
-			spd->w.fp = fdopen( p2c[1], "w" );
+		if(wmode == M_PIPE) {
+			spd->w.fp = fdopen(p2c[1], "w");
 			close(p2c[0]);
 		}
-		if ( emode == M_PIPE ) {
-			spd->e.fp = fdopen( err[0], "r" );
+		if(emode == M_PIPE) {
+			spd->e.fp = fdopen(err[0], "r");
 			close(err[1]);
 		}
 	}
@@ -434,31 +442,32 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 	sig_t keyInt_oldset = SIG_ERR;
 	sig_t ret = SIG_ERR;
 #endif
-	if ( timeout > 0 ) {
-		if( sigsetjmp(env, 1) ) {
+	if(timeout > 0) {
+		if(sigsetjmp(env, 1)) {
 			// wait timeout return route
 			setitimer(ITIMER_REAL, NULL, NULL);
-			if ( alarm_oldset != SIG_ERR ) {
+			if(alarm_oldset != SIG_ERR) {
 				ret = signal(SIGALRM, alarm_oldset);
-			} else {
+			}
+			else {
 				ret = signal(SIGALRM, SIG_DFL);
 			}
-			if (ret == SIG_ERR) {
+			if(ret == SIG_ERR) {
 				ktrace(_SystemFault,
 						KEYVALUE_s("@", "signal"),
 						KEYVALUE_u("errno", errno),
 						KEYVALUE_s("errstr", strerror(errno))
-						);
+				);
 			}
 			return S_TIMEOUT;
 		}
 	}
-	if ( bg != 1 ) {
+	if(bg != 1) {
 		// SIGINT registration
 		fgPid = pid;
 		keyInt_oldset = signal(SIGINT, keyIntHandler);
 	}
-	if ( timeout > 0 ) {
+	if(timeout > 0) {
 		// SIGALRM registration
 		struct itimerval its;
 		its.it_value.tv_sec  = timeout / 1000;
@@ -469,40 +478,42 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 		alarm_oldset = signal(SIGALRM, alarmHandler);
 	}
 	int stat;
-	waitpid( pid, &stat, WUNTRACED );
-	if ( timeout > 0 ) {
+	waitpid(pid, &stat, WUNTRACED);
+	if(timeout > 0) {
 		// SIGALRM release
 		setitimer(ITIMER_REAL, NULL, NULL);
-		if ( alarm_oldset != SIG_ERR ) {
+		if(alarm_oldset != SIG_ERR) {
 			signal(SIGALRM, alarm_oldset);
-		} else {
+		}
+		else {
 			signal(SIGALRM, SIG_DFL);
 		}
 	}
-	if ( bg != 1 ) {
+	if(bg != 1) {
 		// SIGINT release
-		if ( keyInt_oldset != SIG_ERR ) {
+		if(keyInt_oldset != SIG_ERR) {
 			ret = signal(SIGINT, keyInt_oldset);
-		} else {
+		}
+		else {
 			ret = signal(SIGINT, SIG_DFL);
 		}
-		if (ret == SIG_ERR) {
+		if(ret == SIG_ERR) {
 			ktrace(_SystemFault,
 					KEYVALUE_s("@", "signal"),
 					KEYVALUE_u("errno", errno),
 					KEYVALUE_s("errstr", strerror(errno))
-					);
+			);
 		}
 	}
-	if ( status != NULL ) {
+	if(status != NULL) {
 		*status = stat;
 	}
 	// return value creation
-	if ( WIFSIGNALED(stat) ) {
+	if(WIFSIGNALED(stat)) {
 		return WTERMSIG(stat) * -1;
-	} else if ( WIFSTOPPED(stat) ) {
+	}else if ( WIFSTOPPED(stat) ) {
 		return WSTOPSIG(stat) * -1;
-	} else {
+	}else {
 		return S_EXIT;
 	}
 }
@@ -515,16 +526,15 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 static int proc_start(CTX, subprocData_t *sp ) {
 	int ret = S_PREEXECUTION;
 	int pid = knh_popen(_ctx, sp->command, sp, M_NREDIRECT );
-	if ( pid > 0 ) {
+	if(pid > 0) {
 		sp->cpid  = pid;
-		if (sp->bg != 1) {
+		if(sp->bg != 1) {
 			ret = knh_wait(_ctx, sp->cpid, sp->bg, sp->timeout, &sp->status );
-		} else {
+		}else {
 			// nomal end status for bg
 			ret = 0;
 		}
-	} else {
-		// fail
+	}else {
 		DBG_P("failed");
 	}
 	return ret;
@@ -538,7 +548,7 @@ inline void initFd(pfd_t *p) {
 
 // for setFileXXX & PipemodeXXX(true) & enableStandardXXX(true) & enableERR2StdOUT(true)
 static void setFd(CTX, pfd_t *p, int changeMode, FILE* ptr) {
-	if ( ((p->mode == M_PIPE) || (p->mode == M_FILE)) && !(p->mode == changeMode) ) {
+	if(((p->mode == M_PIPE) || (p->mode == M_FILE)) && !(p->mode == changeMode)) {
 		// warning of the pipe or file mode overwrite
 		//char *msg = (p->mode == M_PIPE) ? "pipe has already set, but we overwrite it." :
 		//"file has already set, but we overwrite it." ;
@@ -551,7 +561,7 @@ static void setFd(CTX, pfd_t *p, int changeMode, FILE* ptr) {
 
 // for exec & restart
 static void clearFd(pfd_t *p) {
-	if ( ( (p->mode == M_PIPE) || (p->mode == M_DEFAULT) ) && (p->fp != NULL) ) {
+	if(((p->mode == M_PIPE) || (p->mode == M_DEFAULT)) && (p->fp != NULL)) {
 		// a file identification child does not close
 		fclose(p->fp);
 		p->fp = NULL;
@@ -559,10 +569,10 @@ static void clearFd(pfd_t *p) {
 }
 
 // for new
-static void initData (CTX, subprocData_t* p ) {
-    p->command     = KNULL(String);
-    p->cwd         = KNULL(String);
-    p->env         = KNULL(Array);
+static void initData (CTX, subprocData_t* p) {
+	p->command     = KNULL(String);
+	p->cwd         = KNULL(String);
+	p->env         = KNULL(Array);
 	p->cpid        = -1;
 	p->closefds    = 0;
 	p->bg          = 0;
@@ -576,12 +586,12 @@ static void initData (CTX, subprocData_t* p ) {
 }
 
 // for poll
-static int getPidStatus( int pid, int *status ) {
-    return waitpid(pid, status, WNOHANG | WUNTRACED | WCONTINUED );
+static int getPidStatus(int pid, int *status) {
+	return waitpid(pid, status, WNOHANG | WUNTRACED | WCONTINUED);
 }
 
 // for Subproc_free & fg & exec & communicate & restart
-static void killWait( int pid ) {
+static void killWait(int pid) {
 	int status;
 	kill(pid, SIGKILL);
 	usleep(DELAY);
@@ -614,7 +624,7 @@ static KMETHOD Subproc_bg(CTX, ksfp_t *sfp _RIX)
 		p->timeoutKill = 0;
 		p->bg = 1;
 		if ( (ret = proc_start(_ctx, p)) != 0 ) {
-//			KNH_NTRACE2(_ctx, "package.subproc.bg ", K_PERROR, KNH_LDATA0);
+//		KNH_NTRACE2(_ctx, "package.subproc.bg ", K_PERROR, KNH_LDATA0);
 		}
 	}
 	RETURNb_( (ret == 0) );
@@ -661,18 +671,21 @@ KMETHOD Subproc_exec(CTX, ksfp_t *sfp _RIX)
 						KEYVALUE_u("errno", errno),
 						KEYVALUE_s("errstr", strerror(errno))
 				);
-			}else if ( (p->r.mode == M_PIPE) || (p->r.mode == M_DEFAULT) ) {
+			}
+			else if ( (p->r.mode == M_PIPE) || (p->r.mode == M_DEFAULT) ) {
 				char buf[BUFSIZE] = {0};
 				if(fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0) {
 					ret_s = new_kString(buf, strlen(buf), 0);
-				} else {
-					if (ferror(p->r.fp)) {
+				}
+				else {
+					if(ferror(p->r.fp)) {
 						ktrace(_SystemFault,
 								KEYVALUE_s("@", "fread"),
 								KEYVALUE_u("errno", errno),
 								KEYVALUE_s("errstr", strerror(errno))
 						);
-					} else {
+					}
+					else {
 						// reached eof?
 						// do nothing
 					}
@@ -680,7 +693,7 @@ KMETHOD Subproc_exec(CTX, ksfp_t *sfp _RIX)
 				clearFd(&p->r);
 				clearFd(&p->w);
 				clearFd(&p->e);
-			}else if ( p->r.mode == M_FILE ) {
+			}else if (p->r.mode == M_FILE) {
 				char *msg = " will be ignored.";
 				char *cmd = (char*)S_text(sfp[1].s);
 				char mbuf[strlen(msg)+strlen(cmd)+1];
@@ -729,11 +742,11 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 				);
 //				KNH_NTRACE2(ctx, "package.subproc.communicate ", K_PERROR, KNH_LDATA0);
 			}
-			if( oldset != SIG_ERR ) {
+			if(oldset != SIG_ERR) {
 				signal(SIGPIPE, oldset);
 			}
 		}
-		if( knh_wait(_ctx, p->cpid, p->bg, p->timeout, &p->status ) == S_TIMEOUT ) {
+		if(knh_wait(_ctx, p->cpid, p->bg, p->timeout, &p->status ) == S_TIMEOUT) {
 			p->timeoutKill = 1;
 			killWait(p->cpid);
 			ktrace(_SystemFault,
@@ -743,13 +756,14 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 			);
 		}else {
 			ret_a = (kArray*)new_kObject(CT_Array, NULL);
-			if( p->r.mode == M_PIPE ) {
+			if(p->r.mode == M_PIPE) {
 				char buf[BUFSIZE];
 				memset(buf, 0x00, sizeof(buf));
 				// what if there's more than bufsize output?!
 				if(fread(buf, sizeof(char), sizeof(buf)-1, p->r.fp) > 0) {
 					kArray_add(ret_a, new_kString(buf, BUFSIZE, 0));//TODO!
-				} else {
+				}
+				else {
 					kArray_add(ret_a, KNULL(String));
 					ktrace(_SystemFault,
 							KEYVALUE_s("@", "fread"),
@@ -758,19 +772,21 @@ static KMETHOD Subproc_communicate(CTX, ksfp_t *sfp _RIX)
 					);
 //					KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
 				}
-			}else {
+			}
+			else {
 				kArray_add( ret_a, KNULL(String));
 			}
-			if(p->e.mode == M_PIPE ) {
+			if(p->e.mode == M_PIPE) {
 				char buf[BUFSIZE];
 				memset(buf, 0x00, sizeof(buf));
-				if(fread(buf, sizeof(char), sizeof(buf)-1, p->e.fp) > 0 ) {
+				if(fread(buf, sizeof(char), sizeof(buf)-1, p->e.fp) > 0) {
 					kArray_add(ret_a, new_kString(buf, BUFSIZE, 0)); // TODO!
 				} else {
 					kArray_add(ret_a, KNULL(String));
 //					KNH_NTRACE2(ctx, "package.subprocess.communicate.fread ", K_PERROR, KNH_LDATA0);
 				}
-			}else {
+			}
+			else {
 				kArray_add(ret_a, KNULL(Object));
 			}
 		}
@@ -822,7 +838,7 @@ KMETHOD Subproc_setCwd(CTX, ksfp_t *sfp _RIX)
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
 	int ret = PREEXEC(p);
-	if ( ret ) {
+	if(ret) {
 		p->cwd = new_kString(S_text(sfp[1].s), S_size(sfp[1].s), 0);
 	}
 	RETURNb_( ret );
@@ -1043,7 +1059,7 @@ KMETHOD Subproc_enableStandardOUT(CTX, ksfp_t *sfp _RIX)
 		if(sfp[1].bvalue == 1) {
 			setFd(_ctx, &p->r, M_NREDIRECT, NULL);
 		} else {
-			if ( p->r.mode == M_NREDIRECT ) {
+			if(p->r.mode == M_NREDIRECT) {
 				initFd(&p->r);
 			}
 		}
@@ -1057,16 +1073,16 @@ KMETHOD Subproc_enableStandardERR(CTX, ksfp_t *sfp _RIX)
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
 	int ret = PREEXEC(p);
-	if ( ret ) {
-		if ( sfp[1].bvalue == 1 ) {
+	if(ret) {
+		if(sfp[1].bvalue == 1) {
 			setFd(_ctx, &p->e, M_NREDIRECT, NULL);
 		} else {
-			if ( p->e.mode == M_NREDIRECT ) {
+			if(p->e.mode == M_NREDIRECT) {
 				initFd(&p->e);
 			}
 		}
 	}
-	RETURNb_( ret );
+	RETURNb_(ret);
 }
 
 //## boolean Subproc.enableERR2StdOUT(Boolean isStdout);
@@ -1075,16 +1091,16 @@ KMETHOD Subproc_enableERR2StdOUT(CTX, ksfp_t *sfp _RIX)
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
 	int ret = PREEXEC(p);
-	if ( ret ) {
-		if ( sfp[1].bvalue == 1 ) {
+	if(ret) {
+		if(sfp[1].bvalue == 1) {
 			setFd(_ctx, &p->e, M_STDOUT, NULL);
 		} else {
-			if ( p->e.mode == M_STDOUT ) {
+			if(p->e.mode == M_STDOUT) {
 				initFd(&p->e);
 			}
 		}
 	}
-	RETURNb_( ret );
+	RETURNb_(ret);
 }
 
 //## boolean Subproc.isShellmode();
@@ -1092,7 +1108,7 @@ KMETHOD Subproc_isShellmode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->shell==1) : 0 );
+	RETURNb_((p!=NULL) ? (p->shell==1) : 0);
 }
 
 //## boolean Subproc.isPipemodeIN();
@@ -1100,7 +1116,7 @@ KMETHOD Subproc_isPipemodeIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->w.mode==M_PIPE) : 0 );
+	RETURNb_((p!=NULL) ? (p->w.mode==M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeOUT();
@@ -1108,7 +1124,7 @@ KMETHOD Subproc_isPipemodeOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->r.mode==M_PIPE) : 0 );
+	RETURNb_((p!=NULL) ? (p->r.mode==M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeERR();
@@ -1116,7 +1132,7 @@ KMETHOD Subproc_isPipemodeERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->e.mode==M_PIPE) : 0 );
+	RETURNb_((p!=NULL) ? (p->e.mode==M_PIPE) : 0);
 }
 
 //## boolean Subproc.isStandardIN();
@@ -1124,7 +1140,7 @@ KMETHOD Subproc_isStandardIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->w.mode==M_NREDIRECT) : 0 );
+	RETURNb_((p!=NULL) ? (p->w.mode==M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardOUT();
@@ -1132,7 +1148,7 @@ KMETHOD Subproc_isStandardOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->r.mode==M_NREDIRECT) : 0 );
+	RETURNb_((p!=NULL) ? (p->r.mode==M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardERR();
@@ -1140,7 +1156,7 @@ KMETHOD Subproc_isStandardERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->e.mode==M_NREDIRECT) : 0 );
+	RETURNb_((p!=NULL) ? (p->e.mode==M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isERR2StdOUT();
@@ -1148,7 +1164,7 @@ KMETHOD Subproc_isERR2StdOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_( (p!=NULL) ? (p->e.mode==M_STDOUT) : 0 );
+	RETURNb_((p!=NULL) ? (p->e.mode==M_STDOUT) : 0);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1171,9 +1187,9 @@ static void kmodsubproc_free(CTX, struct kmodshare_t *baseh)
 static void Subproc_init(CTX, kObject *o, void *conf)
 {
 	struct _kSubproc *proc = (struct _kSubproc*)o;
-	if (conf != NULL) {
+	if(conf != NULL) {
 		proc->spd = (subprocData_t*)conf;
-	} else {
+	}else {
 		proc->spd = (subprocData_t *)KCALLOC(sizeof(subprocData_t), 1);
 	}
 }
@@ -1181,7 +1197,7 @@ static void Subproc_init(CTX, kObject *o, void *conf)
 static void Subproc_free(CTX, kObject *o)
 {
 	struct _kSubproc *proc = (struct _kSubproc*)o;
-	if (proc->spd != NULL) {
+	if(proc->spd != NULL) {
 		KFREE(proc->spd, sizeof(subprocData_t));
 		proc->spd = NULL;
 	}
