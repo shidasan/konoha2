@@ -667,6 +667,12 @@ struct _kclass {
 #define kObject_is(O,A)            (TFLAG_is(kmagicflag_t,(O)->h.magicflag,A))
 #define kObject_set(O,A,B)         TFLAG_set(kmagicflag_t,(O)->h.magicflag,A,B)
 
+#ifdef K_USING_TINYVM
+#define kObject_Marked           (kObject_Local1)
+#define kObject_isMarked(O)      (kObject_is(O, kObject_Marked))
+#define kObject_setMarked(o,b) TFLAG_set(kmagicflag_t,((struct _kObject*)o)->h.magicflag,kObject_Marked,b)
+#endif
+
 #define kField_Hidden          ((kflag_t)(1<<0))
 #define kField_Protected       ((kflag_t)(1<<1))
 #define kField_Getter          ((kflag_t)(1<<2))
@@ -710,12 +716,14 @@ struct _kclass {
 typedef struct kObjectHeader {
 	kmagicflag_t magicflag;
 	kclass_t *ct;  //@RENAME
+#ifndef K_USING_TINYVM
 	union {
 		uintptr_t refc;  // RCGC
 		void *gcinfo;
 		uintptr_t hashcode; // reserved
 	};
 	karray_t *kvproto;
+#endif
 } kObjectHeader ;
 
 typedef const struct _kObject kObject;
@@ -1011,10 +1019,12 @@ struct _kMethod {
 		struct kopl_t        *pc_start;
 		FmethodCallCC         callcc_1;
 	};
-	uintptr_t         flag;
 	kcid_t            cid;   kmethodn_t  mn;
+	kshort_t delta;
+	uintptr_t         flag;
+#ifndef K_USING_TINYVM
 	kparamid_t        paramid;  kparamid_t paramdom;
-	kshort_t delta;          kpack_t packid;
+	kpack_t packid;
 	const struct _kToken            *tcode;
 	union {
 		kObject              *objdata;
@@ -1022,6 +1032,7 @@ struct _kMethod {
 		const struct _kKonohaSpace  *lazyns;       // lazy compilation
 	};
 	const struct _kMethod           *proceedNUL;   // proceed
+#endif
 };
 
 /* ------------------------------------------------------------------------ */

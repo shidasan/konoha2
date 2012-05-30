@@ -118,12 +118,12 @@ void KRUNTIME_reftraceAll(CTX)
 void KONOHA_freeObjectField(CTX, struct _kObject *o)
 {
 	kclass_t *ct = O_ct(o);
-	if(o->h.kvproto->bytemax > 0) {
-		karray_t *p = o->h.kvproto;
-		KFREE(p->bytebuf, p->bytemax);
-		KFREE(p, sizeof(karray_t));
-		o->h.kvproto = kvproto_null();
-	}
+	//if(o->h.kvproto->bytemax > 0) {
+	//	karray_t *p = o->h.kvproto;
+	//	KFREE(p->bytebuf, p->bytemax);
+	//	KFREE(p, sizeof(karray_t));
+	//	o->h.kvproto = kvproto_null();
+	//}
 	ct->free(_ctx, o);
 }
 

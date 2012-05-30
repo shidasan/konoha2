@@ -51,7 +51,7 @@ static kObject *new_Object(CTX, kclass_t *ct, void *conf)
 	struct _kObject *o = (struct _kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
 	o->h.magicflag = ct->magicflag;
 	o->h.ct = ct;
-	o->h.kvproto = kvproto_null();
+	//o->h.kvproto = kvproto_null();
 	ct->init(_ctx, (kObject*)o, conf);
 	return (kObject*)o;
 }
@@ -328,17 +328,17 @@ static void Method_init(CTX, kObject *o, void *conf)
 {
 	struct _kMethod *mtd = (struct _kMethod*)o;
 	bzero(&mtd->fcall_1, sizeof(kMethod) - sizeof(kObjectHeader));
-	KINITv(mtd->tcode, (struct kToken*)K_NULL);
-	KINITv(mtd->kcode, K_NULL);
+	//KINITv(mtd->tcode, (struct kToken*)K_NULL);
+	//KINITv(mtd->kcode, K_NULL);
 }
 
 static void Method_reftrace(CTX, kObject *o)
 {
 	BEGIN_REFTRACE(3);
 	kMethod *mtd = (kMethod*)o;
-	KREFTRACEn(mtd->tcode);
-	KREFTRACEn(mtd->kcode);
-	KREFTRACEn(mtd->proceedNUL);
+	//KREFTRACEn(mtd->tcode);
+	//KREFTRACEn(mtd->kcode);
+	//KREFTRACEn(mtd->proceedNUL);
 	END_REFTRACE();
 }
 

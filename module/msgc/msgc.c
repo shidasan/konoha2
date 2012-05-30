@@ -335,7 +335,6 @@ static void knh_vfree(CTX, void *block, size_t size)
 
 #define OBJECT_REUSE(used,i) do {\
 	(used)->h.ct = NULL;\
-	(used)->h.refc = 0;\
 	FREELIST_PUSH(used,i);\
 } while(0)
 
@@ -718,8 +717,13 @@ static void ostack_free(CTX, knh_ostack_t *ostack)
 static int marked = 0;
 static void mark_ostack(CTX, kObject *ref, knh_ostack_t *ostack,int i)
 {
+#ifdef K_USING_TINYVM
+	if(kObject_isMarked(ref)) {
+		kObject_setMarked(ref, 1);
+#else
 	if(ref->h.refc != 1) {
 		((struct _kObject *)ref)->h.refc = 1;
+#endif
 		++marked;
 		ostack_push(_ctx, ostack, ref);
 	}
@@ -772,7 +776,11 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 	size_t pageSize = K_PAGESIZE/sizeOfObject;
 	for(i = 0; i < pageSize; ++i) {
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
+#ifdef K_USING_TINYVM
+		if(kObject_isMarked(o)) {
+#else
 		if(o->h.refc != 1) {
+#endif
 			if( O_ct(o)) {
 				//TDBG_s("dead");
 				//DBG_ASSERT(!IS_Method(o));
@@ -784,7 +792,11 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 				memlocal(_ctx)->freeObjectListSize[n] += 1;
 			}
 		}
+#ifdef K_USING_TINYVM
+		kObject_setMarked(o, 0);
+#else
 		o->h.refc = 0;
+#endif
 	}
 	return collected;
 }
