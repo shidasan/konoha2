@@ -745,7 +745,7 @@ static int marked = 0;
 static void mark_ostack(CTX, kObject *ref, knh_ostack_t *ostack,int i)
 {
 #ifdef K_USING_TINYVM
-	if(kObject_isMarked(ref)) {
+	if(!kObject_isMarked(ref)) {
 		kObject_setMarked(ref, 1);
 #else
 	if(ref->h.refc != 1) {
@@ -804,7 +804,7 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 	for(i = 0; i < pageSize; ++i) {
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
 #ifdef K_USING_TINYVM
-		if(kObject_isMarked(o)) {
+		if(!kObject_isMarked(o)) {
 			if (o->h.cid != CLASS_Tvoid) {
 #else
 		if(o->h.refc != 1) {
@@ -842,6 +842,8 @@ static size_t gc_sweep0(CTX)
 			listSize += K_PAGEOBJECTSIZE(0);
 		}
 	}
+	//TDBG_i("listSize0", listSize);
+	//TDBG_i("unused", memlocal(_ctx)->freeObjectListSize[0]);
 	CHECK_EXPAND(listSize,0);
 	return collected;
 }
@@ -859,6 +861,8 @@ static size_t gc_sweep1(CTX)
 			listSize += K_PAGEOBJECTSIZE(1);
 		}
 	}
+	//TDBG_i("listSize1", listSize);
+	//TDBG_i("unused", memlocal(_ctx)->freeObjectListSize[1]);
 	CHECK_EXPAND(listSize,1);
 	return collected;
 }
@@ -967,6 +971,7 @@ void MODGC_free(CTX, kcontext_t *ctx)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
+	TDBG_i("malloc", size);
 	int page_size = (size / sizeof(kGCObject0)) >> 1;
 	DBG_ASSERT(page_size <= 4);
 	kGCObject *o = NULL;

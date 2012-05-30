@@ -729,10 +729,17 @@ typedef const struct _kObject kObject;
 
 struct _kObject {
 	kObjectHeader h;
+#ifdef K_USING_TINYVM
+	union {
+		const struct _kObject *fields[3];
+		uintptr_t ndata[3];
+	};
+#else
 	union {
 		const struct _kObject *fields[4];
 		uintptr_t ndata[4];
 	};
+#endif
 };
 
 typedef struct kvs_t {
