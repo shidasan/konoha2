@@ -1,5 +1,5 @@
-#ifndef CLASSICVM_H
-#define CLASSICVM_H
+#ifndef CLASSICVM_GEN_H
+#define CLASSICVM_GEN_H
 // THIS FILE WAS AUTOMATICALLY GENERATED
 
 
@@ -2156,4 +2156,4 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	return pc;
 }
 
-#endif /* CLASSICVM_H */
+#endif /* CLASSICVM_GEN_H */

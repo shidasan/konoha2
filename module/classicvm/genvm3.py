@@ -519,9 +519,9 @@ def gen_vm_c(bdir):
 #	f = open_c(fname, ['"vm.h"', '"minivm.h"'])
 #	close_c(f, fname)
 	
-	f = open('src/vm/classicvm_.h', 'w')
-	f.write('#ifndef %s\n' % 'classicvm_h'.upper());
-	f.write('#define %s\n' % 'classicvm_h'.upper());
+	f = open('module/classicvm/classicvm_gen.h', 'w')
+	f.write('#ifndef %s\n' % 'classicvm_gen_h'.upper());
+	f.write('#define %s\n' % 'classicvm_gen_h'.upper());
 	f.write('''// THIS FILE WAS AUTOMATICALLY GENERATED
 
 ''')
@@ -529,7 +529,7 @@ def gen_vm_c(bdir):
 	write_inst_c(f)
 	write_exec(f)
 
-	f.write('#endif /* %s */\n' % 'classicvm_h'.upper());
+	f.write('#endif /* %s */\n' % 'classicvm_gen_h'.upper());
 	f.close()
 
 
