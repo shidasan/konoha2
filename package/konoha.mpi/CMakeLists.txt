@@ -1,5 +1,5 @@
 find_package(MPI)
-message(STATUS "${MPI_INCLUDE_PATH}")
+#message(STATUS "${MPI_INCLUDE_PATH}")
 if(MPI_FOUND)
 set(PACKAGE_SOURCE_CODE mpi_glue.c)
 set(PACKAGE_SCRIPT_CODE mpi_glue.k)
