@@ -44,15 +44,19 @@ static void knh_vfree(CTX, void *block, size_t size);
 #define K_PAGEOBJECTSIZE(i) (K_PAGESIZE / sizeof(kGCObject##i))
 
 #ifdef K_USING_TINYVM
+
+#define Object_ClearCT(o)   ((o)->h.cid = 0)
 #define K_ARENATBL_INITSIZE     1
 typedef struct _ObjectHeader {
 	kmagicflag_t magicflag;
-	kclass_t *ct;  //@RENAME
-	void *unused0;
-	void *unused1;
+	kcid_t cid;
 }_ObjectHeader;
+
 #else
+
+#define Object_ClearCT(o)   ((o)->h.ct = NULL)
 #define K_ARENATBL_INITSIZE     32
+
 #endif
 
 
@@ -61,10 +65,10 @@ typedef struct kGCObject0 {
 	_ObjectHeader h;
 #else
 	kObjectHeader h;
+	void *ref3_unused;
 #endif
 	struct kGCObject0 *ref;
 	void *ref2_unused;
-	void *ref3_unused;
 	struct kGCObject0 *ref4_tail;
 } kGCObject0;
 
@@ -73,10 +77,10 @@ typedef struct kGCObject1 {
 	_ObjectHeader h;
 #else
 	kObjectHeader h;
+	void *ref3_unused;
 #endif
 	struct kGCObject1 *ref;
 	void *ref2_unused;
-	void *ref3_unused;
 	struct kGCObject1 *ref4_tail;
 	uint8_t unused[sizeof(kGCObject0)*2-sizeof(kGCObject0)];
 } kGCObject1;
@@ -349,7 +353,7 @@ static void knh_vfree(CTX, void *block, size_t size)
 } while(0)
 
 #define OBJECT_REUSE(used,i) do {\
-	(used)->h.ct = NULL;\
+	Object_ClearCT(used);\
 	FREELIST_PUSH(used,i);\
 } while(0)
 
@@ -359,10 +363,10 @@ static void ObjectPage_init0(objpage0_t *opage)
 	kGCObject0 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(0) - 1;
 	for(i = 0; i < t; ++i) {
-		o[i].h.ct = NULL;
+		Object_ClearCT(o+i);
 		o[i].ref = &(o[i+1]);
 	}
-	opage->slots[t].h.ct = NULL;
+	Object_ClearCT(opage->slots+t);
 	opage->slots[t].ref = opage[1].slots;
 }
 
@@ -372,10 +376,10 @@ static void ObjectPage_init1(objpage1_t *opage)
 	kGCObject1 *o = opage->slots;
 	size_t t = K_PAGEOBJECTSIZE(1) - 1;
 	for(i = 0; i < t; ++i) {
-		o[i].h.ct = NULL;
+		Object_ClearCT(o+i);
 		o[i].ref = &(o[i+1]);
 	}
-	opage->slots[t].h.ct = NULL;
+	Object_ClearCT(opage->slots+t);
 	opage->slots[t].ref = opage[1].slots;
 }
 
@@ -533,7 +537,11 @@ static void knh_ObjectObjectArenaTBL_free0(CTX, const objpageTBL_t *oat)
 		size_t i;
 		for(i = 0; i < K_PAGEOBJECTSIZE(0) - 1; ++i) {
 			kGCObject0 *o = &opage->slots[i];
+#ifdef K_USING_TINYVM
+			if(o->h.cid == CLASS_Tvoid) continue;
+#else
 			if(o->h.ct == NULL) continue;
+#endif
 			KONOHA_freeObjectField(_ctx, (struct _kObject*)o);
 		}
 		opage++;
@@ -547,7 +555,11 @@ static void knh_ObjectObjectArenaTBL_free1(CTX, const objpageTBL_t *oat)
 		size_t i;
 		for(i = 0; i < K_PAGEOBJECTSIZE(1) - 1; ++i) {
 			kGCObject1 *o = &opage->slots[i];
+#ifdef K_USING_TINYVM
+			if(o->h.cid == CLASS_Tvoid) continue;
+#else
 			if(o->h.ct == NULL) continue;
+#endif
 			KONOHA_freeObjectField(_ctx, (struct _kObject*)o);
 		}
 		opage++;
@@ -793,10 +805,11 @@ static size_t sweep0(CTX, void *p, int n, size_t sizeOfObject)
 		kGCObject0 *o = (kGCObject0 *) K_SHIFTPTR(p,sizeOfObject*i);
 #ifdef K_USING_TINYVM
 		if(kObject_isMarked(o)) {
+			if (o->h.cid != CLASS_Tvoid) {
 #else
 		if(o->h.refc != 1) {
+			if(O_ct(o)) {
 #endif
-			if( O_ct(o)) {
 				//TDBG_s("dead");
 				//DBG_ASSERT(!IS_Method(o));
 				//DBG_P("~Object%d %s", n, O_ct(o)->DBG_NAME);

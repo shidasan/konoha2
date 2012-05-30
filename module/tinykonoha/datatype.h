@@ -50,7 +50,7 @@ static kObject *new_Object(CTX, kclass_t *ct, void *conf)
 	DBG_ASSERT(ct->cstruct_size > 0);
 	struct _kObject *o = (struct _kObject*) MODGC_omalloc(_ctx, ct->cstruct_size);
 	o->h.magicflag = ct->magicflag;
-	o->h.ct = ct;
+	o->h.cid = ct->cid;
 	//o->h.kvproto = kvproto_null();
 	ct->init(_ctx, (kObject*)o, conf);
 	return (kObject*)o;

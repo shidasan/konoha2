@@ -559,7 +559,11 @@ typedef struct KDEFINE_CLASS {
 struct _kString;
 struct _kObject;
 //struct _kclass;
+#ifdef K_USING_TINYVM
+typedef kushort_t  kmagicflag_t;
+#else
 typedef uintptr_t kmagicflag_t;
+#endif
 
 typedef const struct _kclass kclass_t;
 struct _kclass {
@@ -708,8 +712,10 @@ struct _kclass {
 
 typedef struct kObjectHeader {
 	kmagicflag_t magicflag;
+#ifdef K_USING_TINYVM
+	kcid_t cid;
+#else
 	kclass_t *ct;  //@RENAME
-#ifndef K_USING_TINYVM
 	union {
 		uintptr_t refc;  // RCGC
 		void *gcinfo;
@@ -739,7 +745,11 @@ typedef struct kvs_t {
 	};
 } kvs_t;
 
+#ifdef K_USING_TINYVM
+#define O_ct(o)             (CT_((o)->h.cid))
+#else
 #define O_ct(o)             ((o)->h.ct)
+#endif
 #define O_cid(o)            (O_ct(o)->cid)
 #define O_bcid(o)           (O_ct(o)->bcid)
 #define O_unbox(o)          (O_ct(o)->unbox(_ctx, o))
@@ -1004,6 +1014,15 @@ typedef KMETHODCC (*FmethodCallCC)(CTX, ksfp_t *, int, int, struct kopl_t*);
 
 struct _kMethod {
 	kObjectHeader     h;
+#ifdef K_USING_TINYVM
+	union {
+		knh_Fmethod          fcall_1;
+		FmethodFastCall      fastcall_1;
+		struct kopl_t       *pc_start;
+		FmethodCallCC        callcc_1;
+	};
+	kshort_t flag;
+#else
 	union {
 		knh_Fmethod          fcall_1;
 		FmethodFastCall      fastcall_1;
@@ -1012,9 +1031,10 @@ struct _kMethod {
 		struct kopl_t        *pc_start;
 		FmethodCallCC         callcc_1;
 	};
+	uintptr_t         flag;
+#endif
 	kcid_t            cid;   kmethodn_t  mn;
 	kshort_t delta;
-	uintptr_t         flag;
 #ifndef K_USING_TINYVM
 	kparamid_t        paramid;  kparamid_t paramdom;
 	kpack_t packid;
