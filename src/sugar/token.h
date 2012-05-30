@@ -536,7 +536,7 @@ static kbool_t makeSyntaxRule(CTX, kArray *tls, int s, int e, kArray *adst)
 		if(tk->tt == TK_INDENT) continue;
 		if(tk->tt == TK_TEXT /*|| tk->tt == TK_STEXT*/) {
 			if(checkNestedSyntax(_ctx, tls, &i, e, AST_PARENTHESIS, '(', ')') ||
-				checkNestedSyntax(_ctx, tls, &i, e, AST_BRANCET, '[', ']') ||
+				checkNestedSyntax(_ctx, tls, &i, e, AST_BRACKET, '[', ']') ||
 				checkNestedSyntax(_ctx, tls, &i, e, AST_BRACE, '{', '}')) {
 			}
 			else {

@@ -103,6 +103,7 @@ set(PACKAGES
 ##	konoha.int
 	llvm
 	konoha.pcre
+	konoha.hashmap
 ##	konoha.io
 	konoha.while
 	konoha.class
@@ -110,8 +111,9 @@ set(PACKAGES
 	konoha.i
 ##	konoha.assert
 	posix.process
-##	posix.file
-##	konoha.socket
+	posix.file
+	posix.fd
+	konoha.socket
 	konoha.rope
 ##	konoha.subproc
 ##	konoha.mpi
@@ -268,8 +270,8 @@ foreach(dir ${PACKAGES})
 	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/package/${dir})
 endforeach()
 
-add_executable(test_konoha src/tool/test_konoha.c)
-target_link_libraries(test_konoha ${ExtraLibs})
+#add_executable(test_konoha src/tool/test_konoha.c)
+#target_link_libraries(test_konoha ${ExtraLibs})
 
 #macro(add_konoha_test scr)
 #set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test/parser)
@@ -312,7 +314,7 @@ add_builtin_test(Release/Kvproto --builtin-test=test_kvproto)
 
 install(TARGETS konoha2 konoha2_bin
 		RUNTIME DESTINATION bin
-		LIBRARY DESTINATION lib
+		LIBRARY DESTINATION lib${LIB_SUFFIX}
 		)
 
 install(DIRECTORY include/ DESTINATION include 

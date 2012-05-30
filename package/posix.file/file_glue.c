@@ -26,7 +26,11 @@
 #include<konoha2/sugar.h>
 
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/file.h>
 #include <konoha2/bytes.h>
+#include <errno.h>
 
 #include"file_glue.h"
 

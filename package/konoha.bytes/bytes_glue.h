@@ -193,18 +193,17 @@ static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const cha
 				KEYVALUE_s("from", fromCoding),
 				KEYVALUE_s("to", toCoding)
 		);
-		return (kBytes*)(CT_Bytes->nulvalNUL);
+		return KNULL(Bytes);
 	}
 	size_t iconv_ret = -1;
 	size_t processedSize = 0;
 	size_t processedTotalSize = processedSize;
-	DBG_P("start converting!");
 //	karray_t *buf = new_karray(_ctx, 0, 64);
 	kwb_init(&(_ctx->stack->cwb), &wb);
 	while (inBytesLeft > 0 && iconv_ret == -1) {
 		iconv_ret = kmodiconv->ficonv(conv, inbuf, &inBytesLeft, outbuf, &outBytesLeft);
 		if (iconv_ret == -1 && errno == E2BIG) {
-			DBG_P("too big");
+			// input is too big.
 			processedSize = CONV_BUFSIZE - outBytesLeft;
 			processedTotalSize += processedSize;
 			kwb_printf(&wb, "%s", convBuf);
@@ -229,19 +228,19 @@ static kBytes* convFromTo(CTX, kBytes *fromBa, const char *fromCoding, const cha
 		}
 	} /* end of converting loop */
 	kmodiconv->ficonv_close(conv);
-	DBG_P("processedTotalSize=%d, inbuf='%s', outbuf='%s'", processedTotalSize, *inbuf, *outbuf);
+
 	const char *kwb_topChar = kwb_top(&wb, 1);
 	DBG_P("kwb:'%s'", kwb_topChar);
-	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize);
-	memcpy(toBa->buf, kwb_topChar, processedTotalSize);
+	kBytes *toBa = (kBytes*)new_kObject(CT_Bytes, (void*)processedTotalSize+1);
+	memcpy(toBa->buf, kwb_topChar, processedTotalSize+1); // including NUL terminate by ensuredZeo
 	return toBa;
 }
 
 //## @Const method Bytes Bytes.encodeTo(String toEncoding);
 static KMETHOD Bytes_encodeTo(CTX, ksfp_t *sfp _RIX)
 {
-	kBytes* ba = sfp[0].ba;
-	kString* toCoding = sfp[1].s;
+	kBytes *ba = sfp[0].ba;
+	kString *toCoding = sfp[1].s;
 	RETURN_(convFromTo(_ctx, ba, "UTF-8", S_text(toCoding)));
 }
 
@@ -265,17 +264,24 @@ static KMETHOD String_toBytes(CTX, ksfp_t *sfp _RIX)
 {
 	kString* s = sfp[0].s;
 	kBytes* ba = (kBytes*)new_kObject(CT_Bytes, S_size(s));
-	memcpy(ba->buf, s->utext, S_size(s));
+	if (S_size(s) != 0) {
+		memcpy(ba->buf, s->utext, S_size(s)+1); // including NUL char
+	}
 	RETURN_(ba);
 }
 
 // this method is same as Bytes.decodeFrom(defaultencoding);
+// this methods needs string_glue.h for counting mlen...
+//#include "../konoha.string/string_glue.h"
+
 //## @Const method String Bytes.toString();
 static KMETHOD Bytes_toString(CTX, ksfp_t *sfp _RIX)
 {
 	kBytes *from = sfp[0].ba;
 	kBytes *to = convFromTo(_ctx, from, getSystemEncoding(), "UTF-8");
-	RETURN_(new_kString(to->buf, to->bytesize, 0));
+	//calculate strlen
+	size_t strsize = strlen(to->buf);
+	RETURN_(new_kString(to->buf, strsize, 0));
 }
 
 //## Int Bytes.get(Int n);

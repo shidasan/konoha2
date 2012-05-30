@@ -6,7 +6,7 @@ K.import("konoha.bytes");
 K.import("posix.file");
 
 void f () {
-	File f = System.fopen("newfile.txt", "w");
+	FILE f = System.fopen("../../../package/posix.file/test/Debug/newfile.txt", "w");
 	String contents = "hello world";
 	int len = contents.getSize();
 	f.write(contents.toBytes(), 0, len);

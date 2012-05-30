@@ -32,10 +32,9 @@ static KMETHOD ExprTyCheck_assignment(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ExprTyCheck(expr, syn, gma, reqty);
-	kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, TY_var, 0);
-	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, rexpr->ty, TPOL_ALLOWVOID);
+	kExpr *lexpr = kExpr_tyCheckAt(expr, 1, gma, TY_var, TPOL_ALLOWVOID);
+	kExpr *rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
 	if(rexpr != K_NULLEXPR && lexpr != K_NULLEXPR) {
-		rexpr = kExpr_tyCheckAt(expr, 2, gma, lexpr->ty, 0);
 		if(rexpr != K_NULLEXPR) {
 			if(lexpr->build == TEXPR_LOCAL || lexpr->build == TEXPR_LOCAL_ || lexpr->build == TEXPR_FIELD) {
 				((struct _kExpr*)expr)->build = TEXPR_LET;
@@ -73,23 +72,7 @@ static kbool_t assignment_setupPackage(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
-static KMETHOD StmtTyCheck_AddAssignment(CTX, ksfp_t *sfp _RIX)
-{
-}
-
-static KMETHOD StmtTyCheck_SubAssignment(CTX, ksfp_t *sfp _RIX)
-{
-}
-
-static KMETHOD StmtTyCheck_MulAssignment(CTX, ksfp_t *sfp _RIX)
-{
-}
-
-static KMETHOD StmtTyCheck_DivAssignment(CTX, ksfp_t *sfp _RIX)
-{
-}
-
-static KMETHOD StmtTyCheck_ModAssignment(CTX, ksfp_t *sfp _RIX)
+static KMETHOD StmtTyCheck_DefaultAssignment(CTX, ksfp_t *sfp _RIX)
 {
 }
 
@@ -100,19 +83,34 @@ static KMETHOD StmtTyCheck_ModAssignment(CTX, ksfp_t *sfp _RIX)
 		tk->kw = k;\
 	}
 
-static int transform_oprAssignment(CTX, kArray* tls, int s, int c, int e, int kw)
+static int transform_oprAssignment(CTX, kArray* tls, int s, int c, int e)
 {
-	struct _kToken *tmp, *tkNew, *tkHead;
+	USING_SUGAR;
+	struct _kToken *tkNew, *tkNewOp;
+	kToken *tmp, *tkHead;
 	int newc, news = e;
 	int i = s;
 
 	while (i < c) {
 		tkNew = new_W(Token, 0);
-		tmp = (struct _kToken*)tls->toks[i];
+		tmp = tls->toks[i];
 		setToken(tkNew, S_text(tmp->text), S_size(tmp->text), tmp->tt, tmp->topch, tmp->kw);
 		kArray_add(tls, tkNew);
 		i++;
 	}
+
+	// check operator
+	tkNewOp = new_W(Token, 0);
+	tmp = tls->toks[c];
+	const char* opr = S_text(tmp->text);
+	int osize = S_size(tmp->text);
+	int j = 0;
+	char newopr[osize];
+	for (j = 0; j < osize-1; j++) {
+		newopr[j] = opr[j];
+	}
+	newopr[osize-1] = '\0';
+	setToken(tkNewOp, newopr, osize, tmp->tt, tmp->topch, KW_(newopr));
 
 	tkNew = new_W(Token, 0);
 	setToken(tkNew, "=", 1, TK_OPERATOR, '=', KW_LET);
@@ -120,7 +118,7 @@ static int transform_oprAssignment(CTX, kArray* tls, int s, int c, int e, int kw
 	newc = kArray_size(tls)-1;
 
 	struct _kToken *newtk = new_W(Token, 0);
-	tkHead = (struct _kToken*)tls->toks[e+1];
+	tkHead = tls->toks[e+1];
 	newtk->tt = AST_PARENTHESIS; newtk->kw = AST_PARENTHESIS; newtk->uline = tkHead->uline;
 	//newtk->topch = tkHead->topch; newtk->lpos = tkHead->closech;
 	KSETv(newtk->sub, new_(TokenArray, 0));
@@ -128,38 +126,20 @@ static int transform_oprAssignment(CTX, kArray* tls, int s, int c, int e, int kw
 
 	while (i < newc) {
 		tkNew = new_W(Token, 0);
-		tmp = (struct _kToken*)tls->toks[i];
+		tmp = tls->toks[i];
 		setToken(tkNew, S_text(tmp->text), S_size(tmp->text), tmp->tt, tmp->topch, tmp->kw);
 		kArray_add(newtk->sub, tkNew);
 		i++;
 	}
 	kArray_add(tls, newtk);
 
-	tkNew = new_W(Token, 0);
-	switch (kw) {
-		case KW_ADD:
-			setToken(tkNew, "+", 1, TK_OPERATOR, '+', KW_ADD);
-			break;
-		case KW_SUB:
-			setToken(tkNew, "-", 1, TK_OPERATOR, '-', KW_SUB);
-			break;
-		case KW_MUL:
-			setToken(tkNew, "*", 1, TK_OPERATOR, '*', KW_MUL);
-			break;
-		case KW_DIV:
-			setToken(tkNew, "/", 1, TK_OPERATOR, '/', KW_DIV);
-			break;
-		case KW_MOD:
-			setToken(tkNew, "%", 1, TK_OPERATOR, '%', KW_MOD);
-			break;
-	}
-	kArray_add(tls, tkNew);
+	kArray_add(tls, tkNewOp);
 
 	tkNew = new_W(Token, 0);
 	i = c+1;
 	while (i < news) {
 		tkNew = new_W(Token, 0);
-		tmp = (struct _kToken*)tls->toks[i];
+		tmp = tls->toks[i];
 		setToken(tkNew, S_text(tmp->text), S_size(tmp->text), tmp->tt, tmp->topch, tmp->kw);
 		kArray_add(tls, tkNew);
 		i++;
@@ -167,56 +147,12 @@ static int transform_oprAssignment(CTX, kArray* tls, int s, int c, int e, int kw
 	return news;
 }
 
-static KMETHOD ParseExpr_AddAssignment(CTX, ksfp_t *sfp _RIX)
+static KMETHOD ParseExpr_OprAssignment(CTX, ksfp_t *sfp _RIX)
 {
 	USING_SUGAR;
 	VAR_ParseExpr(stmt, syn, tls, s, c, e);
 	size_t atop = kArray_size(tls);
-	s = transform_oprAssignment(_ctx, tls, s, c, e, KW_ADD);
-	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
-	kArray_clear(tls, atop);
-	RETURN_(expr);
-}
-
-static KMETHOD ParseExpr_SubAssignment(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	size_t atop = kArray_size(tls);
-	s = transform_oprAssignment(_ctx, tls, s, c, e, KW_SUB);
-	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
-	kArray_clear(tls, atop);
-	RETURN_(expr);
-}
-
-static KMETHOD ParseExpr_MulAssignment(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	size_t atop = kArray_size(tls);
-	s = transform_oprAssignment(_ctx, tls, s, c, e, KW_MUL);
-	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
-	kArray_clear(tls, atop);
-	RETURN_(expr);
-}
-
-static KMETHOD ParseExpr_DivAssignment(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	size_t atop = kArray_size(tls);
-	s = transform_oprAssignment(_ctx, tls, s, c, e, KW_DIV);
-	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
-	kArray_clear(tls, atop);
-	RETURN_(expr);
-}
-
-static KMETHOD ParseExpr_ModAssignment(CTX, ksfp_t *sfp _RIX)
-{
-	USING_SUGAR;
-	VAR_ParseExpr(stmt, syn, tls, s, c, e);
-	size_t atop = kArray_size(tls);
-	s = transform_oprAssignment(_ctx, tls, s, c, e, KW_MOD);
+	s = transform_oprAssignment(_ctx, tls, s, c, e);
 	kExpr *expr = SUGAR Stmt_newExpr2(_ctx, stmt, tls, s, kArray_size(tls));
 	kArray_clear(tls, atop);
 	RETURN_(expr);
@@ -227,11 +163,11 @@ static kbool_t assignment_initKonohaSpace(CTX,  kKonohaSpace *ks, kline_t pline)
 	USING_SUGAR;
 	KDEFINE_SYNTAX SYNTAX[] = {
 		{ TOKEN("="), /*.op2 = "*", .priority_op2 = 4096,*/ ExprTyCheck_(assignment)},
-		{ TOKEN("+="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(AddAssignment), ParseExpr_(AddAssignment), .priority_op2 = 4096,},
-		{ TOKEN("-="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(SubAssignment), ParseExpr_(SubAssignment), .priority_op2 = 4096,},
-		{ TOKEN("*="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(MulAssignment), ParseExpr_(MulAssignment), .priority_op2 = 4096,},
-		{ TOKEN("/="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DivAssignment), ParseExpr_(DivAssignment), .priority_op2 = 4096,},
-		{ TOKEN("%="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(ModAssignment), ParseExpr_(ModAssignment), .priority_op2 = 4096,},
+		{ TOKEN("+="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DefaultAssignment), ParseExpr_(OprAssignment), .priority_op2 = 4096,},
+		{ TOKEN("-="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DefaultAssignment), ParseExpr_(OprAssignment), .priority_op2 = 4096,},
+		{ TOKEN("*="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DefaultAssignment), ParseExpr_(OprAssignment), .priority_op2 = 4096,},
+		{ TOKEN("/="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DefaultAssignment), ParseExpr_(OprAssignment), .priority_op2 = 4096,},
+		{ TOKEN("%="), _OPLeft, /*.priority_op2 =*/ StmtTyCheck_(DefaultAssignment), ParseExpr_(OprAssignment), .priority_op2 = 4096,},
 		{ .name = NULL, },
 	};
 	SUGAR KonohaSpace_defineSyntax(_ctx, ks, SYNTAX);

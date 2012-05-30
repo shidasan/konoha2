@@ -23,6 +23,7 @@
  ***************************************************************************/
 
 #include <konoha2/konoha2.h>
+#include <konoha2/sugar.h>
 #include "konoha2/gc.h"
 #include <dlfcn.h>
 #include <stdio.h>
@@ -48,6 +49,7 @@ extern int verbose_code;
 extern int verbose_sugar;
 extern int verbose_gc;
 
+static const char* preimport      = NULL;
 static const char* startup_script = NULL;
 static const char* test_script    = NULL;
 static const char* builtin_test   = NULL;
@@ -60,6 +62,7 @@ static struct option long_options[] = {
 	{"verbose:code",  no_argument, &verbose_code, 1},
 	{"interactive", no_argument,   0, 'i'},
 	{"typecheck",   no_argument,   0, 'c'},
+	{"preimport",     required_argument, 0, 'P'},
 	{"start-with", required_argument, 0, 'S'},
 	{"test",  required_argument, 0, 'T'},
 	{"test-with",  required_argument, 0, 'T'},
@@ -103,6 +106,10 @@ static int konoha_ginit(int argc, char **argv)
 			builtin_test = optarg;
 			break;
 
+		case 'P':
+			preimport = optarg;
+			break;
+
 		case 'S':
 //			DUMP_P ("option --start-with `%s'\n", optarg);
 			startup_script = optarg;
@@ -124,13 +131,31 @@ static int konoha_ginit(int argc, char **argv)
 	if(!(optind < argc)) {
 		interactive_flag = 1;
 	}
+	if(preimport == NULL) {
+		preimport = getenv("KONOHA_PREIMPORT");
+	}
 	return optind;
+}
+
+// -------------------------------------------------------------------------
+// preimport
+
+static void konoha_preimport(CTX, const char *preimport)
+{
+	size_t len = strlen(preimport)+1;
+	char bufname[len];
+	memcpy(bufname, preimport, len);
+	// TODO: --preimport konoha.i:konoha.bytes
+	if(!KREQUIRE_PACKAGE(bufname, 0)) {
+		exit(1);
+	}
+	KEXPORT_PACKAGE(bufname, kmodsugar->rootks, 0);
 }
 
 // -------------------------------------------------------------------------
 // startup
 
-void konoha_startup(konoha_t konoha, const char *startup_script)
+static void konoha_startup(konoha_t konoha, const char *startup_script)
 {
 	char buf[256];
 	char *path = getenv("KONOHA_SCRIPTPATH"), *local = "";
@@ -330,9 +355,6 @@ static void Kreport(CTX, int level, const char *msg)
 	fputs(" - ", stdlog);
 	fputs(msg, stdlog);
 	fputs("\n", stdlog);
-//	fputs(" - ", stdout);
-//	fputs(msg, stdout);
-//	fputs("\n", stdout);
 }
 
 static const char *T_ERR(int level)
@@ -352,23 +374,17 @@ static void Kreportf(CTX, int level, kline_t pline, const char *fmt, ...)
 	if(level == DEBUG_ && !verbose_sugar) return;
 	va_list ap;
 	va_start(ap , fmt);
-//	va_copy(ap2, ap);
 	fflush(stdlog);
 	if(pline != 0) {
 		const char *file = T_file(pline);
-//		fprintf(stdout, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
 		fprintf(stdlog, " - (%s:%d) %s" , shortname(file), (kushort_t)pline, T_ERR(level));
 	}
 	else {
-//		fprintf(stdout, " - %s" , T_ERR(level));
 		fprintf(stdlog, " - %s" , T_ERR(level));
 	}
-//	vfprintf(stdout, fmt, ap);
-//	fprintf(stdout, "\n");
 	vfprintf(stdlog, fmt, ap);
 	fprintf(stdlog, "\n");
 	va_end(ap);
-//	va_end(ap2);
 	if(level == CRIT_) {
 		kraise(0);
 	}
@@ -397,12 +413,14 @@ static int check_result(FILE *fp0, FILE *fp1)
 
 static int konoha_test(const char *testname)
 {
-	// reduced error message
 	verbose_debug = 0;
 	verbose_sugar = 0;
 	verbose_gc    = 0;
 	verbose_code  = 0;
 	konoha_t konoha = konoha_open();
+	if(preimport != NULL) {
+		konoha_preimport((CTX_t)konoha, preimport);
+	}
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);
 	}
@@ -488,6 +506,9 @@ int main(int argc, char *argv[])
 		return konoha_test(test_script);
 	}
 	konoha_t konoha = konoha_open();
+	if(preimport != NULL) {
+		konoha_preimport((CTX_t)konoha, preimport);
+	}
 	if(startup_script != NULL) {
 		konoha_startup(konoha, startup_script);
 	}

@@ -559,7 +559,7 @@ static void NMOV_asm(CTX, int a, ktype_t ty, int b)
 
 static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 {
-	DBG_P("a=%d, shift=%d, espidx=%d", a, shift, espidx);
+	//DBG_P("a=%d, shift=%d, espidx=%d", a, shift, espidx);
 	switch(expr->build) {
 	case TEXPR_CONST : {
 		kObject *v = expr->data;
@@ -636,7 +636,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 		LETEXPR_asm(_ctx, a, expr, shift, espidx);
 		break;
 	case TEXPR_STACKTOP  :
-		DBG_P("STACKTOP mov %d, %d, < %d", a, expr->index + shift, espidx);
+		//DBG_P("STACKTOP mov %d, %d, < %d", a, expr->index + shift, espidx);
 		DBG_ASSERT(expr->index + shift < espidx);
 		NMOV_asm(_ctx, a, expr->ty, expr->index + shift);
 		break;
@@ -653,14 +653,13 @@ static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 	DBG_ASSERT(IS_Method(mtd));
 	int i, s = kMethod_isStatic(mtd) ? 2 : 1, thisidx = espidx + K_CALLDELTA;
 #ifdef _CLASSICVM
-	if (CLASSICVM_CALL_asm(_ctx, mtd, expr, espidx)) {
+	if (CLASSICVM_CALL_asm(_ctx, mtd, expr, shift, espidx)) {
 		return;
 	}
 #endif
 	for(i = s; i < kArray_size(expr->cons); i++) {
 		kExpr *exprN = kExpr_at(expr, i);
 		DBG_ASSERT(IS_Expr(exprN));
-		DBG_P("param: i=%d shift=%d,espidx=%d", i, shift, thisidx + i - 1);
 		EXPR_asm(_ctx, thisidx + i - 1, exprN, shift, thisidx + i - 1);
 	}
 	int argc = kArray_size(expr->cons) - 2;
@@ -679,9 +678,6 @@ static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 			ASM(VCALL, ctxcode->uline, SFP_(thisidx), ESP_(espidx, argc), mtd, knull(CT_(expr->ty)));
 		}
 	}
-//	if (mtd->mn == MN_new) {
-//		ASM(NMOV, OC_(espidx), OC_(thisidx), CT_(expr->ty));
-//	}
 }
 
 static void OR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
@@ -737,10 +733,10 @@ static void LETEXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 		kshort_t index = (kshort_t)exprL->index;
 		kshort_t xindex = (kshort_t)(exprL->index >> (sizeof(kshort_t)*8));
 		if(TY_isUnbox(exprR->ty)) {
-			ASM(XNMOV, OC_(index), xindex, NC_(espidx));
+			ASM(XNMOV, OC_(index), xindex, NC_(espidx), CT_(exprL->ty));
 		}
 		else {
-			ASM(XNMOV, OC_(index), xindex, OC_(espidx));
+			ASM(XNMOV, OC_(index), xindex, OC_(espidx), CT_(exprL->ty));
 		}
 		if(a != espidx) {
 			NMOV_asm(_ctx, a, exprL->ty, espidx);

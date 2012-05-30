@@ -27,15 +27,16 @@
 #include<konoha2/float.h>
 
 //#include"array_glue.h"
+#include "../konoha/array_glue.h"
 
 KDEFINE_PACKAGE* array_init(void)
 {
 	static KDEFINE_PACKAGE d = {
 		KPACKNAME("array", "1.0"),
-//		.initPackage = array_initPackage,
-//		.setupPackage = array_setupPackage,
-//		.initKonohaSpace = array_initKonohaSpace,
-//		.setupKonohaSpace = array_setupKonohaSpace,
+		.initPackage = array_initPackage,
+		.setupPackage = array_setupPackage,
+		.initKonohaSpace = array_initKonohaSpace,
+		.setupKonohaSpace = array_setupKonohaSpace,
 	};
 	return &d;
 }

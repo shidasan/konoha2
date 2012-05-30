@@ -336,6 +336,10 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		if(mtd != NULL) {
 			return new_GetterExpr(_ctx, tk, mtd, new_Variable(LOCAL, genv->this_cid, 0, gma));
 		}
+//		mtd = kKonohaSpace_getMethodNULL(genv->ks, genv->this_cid, fn);
+//		if(mtd != NULL) {
+//			return new_FuncValue(_ctx, mtd, 0);
+//		}
 	}
 	if(genv->ks->scrNUL != NULL) {
 		ktype_t cid = O_cid(genv->ks->scrNUL);
@@ -343,9 +347,16 @@ static kExpr* Expr_tyCheckVariable2(CTX, kExpr *expr, kGamma *gma, ktype_t reqty
 		if(mtd != NULL) {
 			return new_GetterExpr(_ctx, tk, mtd, new_ConstValue(cid, genv->ks->scrNUL));
 		}
-
+		mtd = kKonohaSpace_getMethodNULL(genv->ks, cid, fn);
+		if(mtd != NULL) {
+			kParam *pa = kMethod_param(mtd);
+			kclass_t *ct = kClassTable_Generics(CT_Func, pa->rtype, pa->psize, (kparam_t*)pa->p);
+			struct _kFunc *fo = (struct _kFunc*)new_kObject(ct, mtd);
+			PUSH_GCSTACK(fo);
+			KSETv(fo->self, genv->ks->scrNUL);
+			return new_ConstValue(ct->cid, fo);
+		}
 	}
-	DBG_P("reqty=%s", T_ty(reqty));
 	return kToken_p(tk, ERR_, "undefined name: %s", kToken_s(tk));
 }
 
@@ -492,8 +503,14 @@ static int param_policy(ksymbol_t fn)
 
 static kExpr* Expr_typedWithMethod(CTX, kExpr *expr, kMethod *mtd, ktype_t reqty)
 {
+	kExpr *expr1 = kExpr_at(expr, 1);
 	KSETv(expr->cons->methods[0], mtd);
-	kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : ktype_var(_ctx, kMethod_rtype(mtd), CT_(kExpr_at(expr, 1)->ty)));
+	if(expr1->build == TEXPR_NEW) {
+		kExpr_typed(expr, CALL, expr1->ty);
+	}
+	else {
+		kExpr_typed(expr, CALL, kMethod_isSmartReturn(mtd) ? reqty : ktype_var(_ctx, kMethod_rtype(mtd), CT_(expr1->ty)));
+	}
 	return expr;
 }
 
@@ -523,6 +540,7 @@ static kExpr *Expr_tyCheckCallParams(CTX, kExpr *expr, kMethod *mtd, kGamma *gma
 	kParam *pa = kMethod_param(mtd);
 	if(pa->psize + 2 != size) {
 		char mbuf[128];
+		DBG_P("mtd=%p, mtd->paramid=%d, mtd->paramdom=%d", mtd, mtd->paramid, mtd->paramdom);
 		return kExpr_p(expr, ERR_, "%s.%s takes %d parameter(s), but given %d parameter(s)", T_CT(this_ct), T_mn(mbuf, mtd->mn), (int)pa->psize, (int)size-2);
 	}
 	for(i = 0; i < pa->psize; i++) {
@@ -582,6 +600,11 @@ static kExpr *Expr_lookupMethod(CTX, kExpr *expr, kcid_t this_cid, kGamma *gma, 
 				if(mtd != NULL) {
 					return Expr_tyCheckDynamicCallParams(_ctx, expr, mtd, gma, tkMN->text, tkMN->mn, reqty);
 				}
+			}
+			if(tkMN->mn == MN_new && kArray_size(expr->cons) == 2 && CT_(kExpr_at(expr, 1)->ty)->bcid == TY_Object) {
+				//DBG_P("bcid=%s", T_cid(CT_(kExpr_at(expr, 1)->ty)->bcid));
+				DBG_ASSERT(kExpr_at(expr, 1)->ty != TY_var);
+				return kExpr_at(expr, 1);  // new Person(); // default constructor
 			}
 			kToken_p(tkMN, ERR_, "undefined %s: %s.%s", T_mntype(tkMN->mn_type), T_cid(this_cid), kToken_s(tkMN));
 		}
@@ -1223,7 +1246,6 @@ static kbool_t Method_compile(CTX, kMethod *mtd, kString *text, kline_t uline, k
 	return 1;
 }
 
-/* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 // eval
 

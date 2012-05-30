@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 set(PACKAGE_SOURCE_CODE math_glue.c)
 set(PACKAGE_SCRIPT_CODE math_glue.k)
+find_library(PACKAGE_EXTRA_LIBRARY NAMES m)
 add_konoha_package(konoha.math)

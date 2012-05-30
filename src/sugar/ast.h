@@ -78,7 +78,7 @@ static kbool_t Token_resolved(CTX, kKonohaSpace *ks, struct _kToken *tk)
 
 static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _kToken *tk, kToken *tkP)
 {
-	if(tkP->tt == AST_BRANCET) {
+	if(tkP->tt == AST_BRACKET) {
 		size_t i, psize= 0, size = kArray_size(tkP->sub);
 		kparam_t p[size];
 		for(i = 0; i < size; i++) {
@@ -91,14 +91,19 @@ static struct _kToken* TokenType_resolveGenerics(CTX, kKonohaSpace *ks, struct _
 			if(tkT->topch == ',') continue;
 			return NULL; // new int[10];  // not generics
 		}
-		kclass_t *ct;
+		kclass_t *ct = NULL;
 		if(psize > 0) {
 			ct = CT_(TK_type(tk));
-			if(ct->cparam == K_NULLPARAM) {
+			if(ct->bcid == CLASS_Func) {
+				ct = kClassTable_Generics(ct, p[0].ty, psize-1, p+1);
+			}
+			else if(ct->p0 == TY_void) {
 				SUGAR_P(ERR_, tk->uline, tk->lpos, "not generic type: %s", T_ty(TK_type(tk)));
 				return tk;
 			}
-			ct = kClassTable_Generics(ct, psize, p);
+			else {
+				ct = kClassTable_Generics(ct, TY_void, psize, p);
+			}
 		}
 		else {
 			ct = CT_p0(_ctx, CT_Array, TK_type(tk));
@@ -146,7 +151,7 @@ static int appendKeyword(CTX, kKonohaSpace *ks, kArray *tls, int s, int e, kArra
 			if(tkB->topch != '[') break;
 			kArray *abuf = ctxsugar->tokens;
 			size_t atop = kArray_size(abuf);
-			next = makeTree(_ctx, ks, AST_BRANCET, tls,  next+1, e, ']', abuf, tkERR);
+			next = makeTree(_ctx, ks, AST_BRACKET, tls,  next+1, e, ']', abuf, tkERR);
 			if(!(kArray_size(abuf) > atop)) return next;
 			tkB = abuf->toks[atop];
 			tk = TokenType_resolveGenerics(_ctx, ks, tk, tkB);
@@ -198,7 +203,10 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 	KSETv(tkP->sub, new_(TokenArray, 0));
 	for(i = s + 1; i < e; i++) {
 		tk = tls->toks[i];
-		DBG_ASSERT(tk->kw == 0);
+		if(tk->kw != 0) {
+			kArray_add(tkP->sub, tk);
+			continue;
+		}
 		if(tk->tt == TK_ERR) break;  // ERR
 		DBG_ASSERT(tk->topch != '{');
 		if(tk->topch == '(') {
@@ -206,7 +214,7 @@ static int makeTree(CTX, kKonohaSpace *ks, ktoken_t tt, kArray *tls, int s, int 
 			continue;
 		}
 		if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tkP->sub, tkERRRef);
+			i = makeTree(_ctx, ks, AST_BRACKET, tls, i, e, ']', tkP->sub, tkERRRef);
 			continue;
 		}
 		if(tk->topch == closech) {
@@ -269,7 +277,7 @@ static int selectStmtLine(CTX, kKonohaSpace *ks, int *indent, kArray *tls, int s
 			continue;
 		}
 		else if(tk->topch == '[') {
-			i = makeTree(_ctx, ks, AST_BRANCET, tls, i, e, ']', tlsdst, tkERRRef);
+			i = makeTree(_ctx, ks, AST_BRACKET, tls, i, e, ']', tlsdst, tkERRRef);
 			continue;
 		}
 		else if(tk->tt == TK_ERR) {
@@ -408,7 +416,7 @@ static int matchSyntaxRule(CTX, kStmt *stmt, kArray *rules, kline_t /*parent*/ul
 			ti = next;
 			continue;
 		}
-		else if(rule->tt == AST_PARENTHESIS || rule->tt == AST_BRACE || rule->tt == AST_BRANCET) {
+		else if(rule->tt == AST_PARENTHESIS || rule->tt == AST_BRACE || rule->tt == AST_BRACKET) {
 			if(tk->tt == rule->tt && rule->topch == tk->topch) {
 				int next = matchSyntaxRule(_ctx, stmt, rule->sub, uline, tk->sub, 0, kArray_size(tk->sub), 0);
 				if(next == -1) return -1;
@@ -698,7 +706,6 @@ static KMETHOD ParseExpr_Parenthesis(CTX, ksfp_t *sfp _RIX)
 			((struct _kExpr*)lexpr)->syn = SYN_(kStmt_ks(stmt), KW_ExprMethodCall); // CALL
 		}
 		else if(lexpr->syn->kw != KW_ExprMethodCall) {
-			DBG_P("function calls  .. ");
 			syn = SYN_(kStmt_ks(stmt), KW_Parenthesis);    // (f null ())
 			lexpr  = new_ConsExpr(_ctx, syn, 2, lexpr, K_NULL);
 		}

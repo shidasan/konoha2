@@ -62,7 +62,7 @@ string(REPLACE "svn" "" K_LLVM_VERSION ${K_LLVM_VERSION})
 add_definitions(-DLLVM_VERSION=${K_LLVM_VERSION})
 include_directories(${LLVM_INCLUDEDIR})
 
-message(STATUS "${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
+#message(STATUS "${CMAKE_CXX_FLAGS_${uppercase_CMAKE_BUILD_TYPE}}")
 if(${LLVM_VERSION} VERSION_LESS "2.8")
 message(FATAL ERROR
         "konoha.llvm package not support old version of llvm (<=llvm-2.8)")
