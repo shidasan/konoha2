@@ -653,7 +653,7 @@ static void CALL_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 	DBG_ASSERT(IS_Method(mtd));
 	int i, s = kMethod_isStatic(mtd) ? 2 : 1, thisidx = espidx + K_CALLDELTA;
 #ifdef _CLASSICVM
-	if (CLASSICVM_CALL_asm(_ctx, mtd, expr, espidx)) {
+	if (CLASSICVM_CALL_asm(_ctx, mtd, expr, shift, espidx)) {
 		return;
 	}
 #endif
