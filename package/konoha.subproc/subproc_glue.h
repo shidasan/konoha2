@@ -37,6 +37,70 @@ extern int pipe2 (int __pipedes[2], int __flags);
 extern int sigignore (int __sig);
 
 
+#define SUBPROC_RESOURCE_MONITOR
+// for resource monitoring
+#if defined(__APPLE__) && defined(SUBPROC_RESOURCE_MONITOR)
+// for mac
+#include <mach/mach.h>
+typedef struct mach_send_port_msg {
+	mach_msg_header_t          header;
+	mach_msg_body_t            body;
+	mach_msg_port_descriptor_t task_port;
+}mach_send_port_msg;
+
+typedef struct mach_recv_port_msg {
+	mach_send_port_msg m;
+	mach_msg_trailer_t trailer;
+} mach_recv_port_msg;
+
+#define SLEEP_NSEC 10000
+
+static int setup_recv_port (mach_port_t *recv_port) {
+	mach_port_t   port = MACH_PORT_NULL;
+	if (KERN_SUCCESS !=
+		mach_port_allocate (mach_task_self (), MACH_PORT_RIGHT_RECEIVE, &port))
+	if (KERN_SUCCESS !=
+		mach_port_insert_right (mach_task_self (), port, port, MACH_MSG_TYPE_MAKE_SEND))
+	*recv_port = port;
+	return 0;
+}
+
+static int send_port (mach_port_t remote_port, mach_port_t port) {
+	mach_send_port_msg msg;
+
+	msg.header.msgh_remote_port = remote_port;
+	msg.header.msgh_local_port  = MACH_PORT_NULL;
+	msg.header.msgh_bits        = MACH_MSGH_BITS (MACH_MSG_TYPE_COPY_SEND, 0) |
+			MACH_MSGH_BITS_COMPLEX;
+	msg.header.msgh_size        = sizeof (mach_send_port_msg);
+
+	msg.body.msgh_descriptor_count = 1;
+	msg.task_port.name             = port;
+	msg.task_port.disposition      = MACH_MSG_TYPE_COPY_SEND;
+	msg.task_port.type             = MACH_MSG_PORT_DESCRIPTOR;
+
+	if (KERN_SUCCESS != mach_msg_send (&msg.header)) {
+//		fprintf(stderr, "failed msg send\n");
+	}
+	return 0;
+}
+
+static int recv_port (mach_port_t recv_port, mach_port_t *port) {
+	mach_recv_port_msg msg;
+
+	if (KERN_SUCCESS !=
+			mach_msg (&msg.m.header, MACH_RCV_MSG, 0, sizeof (mach_recv_port_msg), recv_port,
+					MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL))
+		{
+//		fprintf(stderr, "failed mac_msg\n");
+		}
+
+	*port = msg.m.task_port.name;
+	return 0;
+}
+
+#endif /* ifdef __APPLE__ */
+
 #define MOD_subproc 23
 
 typedef struct {
@@ -214,8 +278,7 @@ static int spSplit(char* str, char* args[]) {
  *         -1 is Internal Error
  */
 
-#include <syslog.h>
-
+task_t                     task = MACH_PORT_NULL;
 static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 {
 	if (IS_NULL(command)) {
@@ -244,6 +307,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			return -1;
 		}
 	}
+
 	if(emode == M_PIPE) {
 		if(pipe2(err, O_NONBLOCK) != 0) {
 			ktrace(_SystemFault,
@@ -256,7 +320,18 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			return -1;
 		}
 	}
-	if((pid = fork()) < 0) {
+
+#if defined(SUBPROC_RESOURCE_MONITOR)
+	mach_port_t    parent_recv_port = MACH_PORT_NULL;
+	mach_port_t    child_recv_port  =  MACH_PORT_NULL;
+	kern_return_t kerr;
+	if (setup_recv_port (&parent_recv_port) != 0) return -1;
+	if (KERN_SUCCESS != task_set_bootstrap_port(mach_task_self(), parent_recv_port)) {
+		fprintf(stderr, "ERROR!!!");
+	}
+#endif
+	switch(pid = fork()) {
+	case -1:
 		// parent process illegal route
 		if(rmode == M_PIPE) {
 			close(c2p[0]); close(c2p[1]);
@@ -267,8 +342,26 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		if(emode == M_PIPE) {
 			close(err[0]); close(err[1]);
 		}
-	}else if(pid == 0) {
+#if defined(SUBPROC_RESOURCE_MONITOR)
+		if (KERN_SUCCESS != mach_port_deallocate (mach_task_self(), parent_recv_port)) {
+			ktrace(_SystemFault,
+					KEYVALUE_s("@", "dup2"),
+					KEYVALUE_u("errno", errno),
+					KEYVALUE_s("errstr", strerror(errno))
+			);
+		}
+#endif
+		break;
+	case 0:
 		// child process normal route
+#if defined(SUBPROC_RESOURCE_MONITOR)
+		kerr = task_get_bootstrap_port(mach_task_self(), &parent_recv_port);
+		if (setup_recv_port(&child_recv_port) != 0) return -1;
+		if (send_port (parent_recv_port, mach_task_self()) != 0) return -1;
+		if (send_port(parent_recv_port, child_recv_port) != 0) return -1;
+		if (recv_port(child_recv_port, &bootstrap_port) != 0) return -1;
+		kerr = task_set_bootstrap_port(mach_task_self(), bootstrap_port);
+#endif
 		if(wmode == M_PIPE){
 			close(0);
 			if (dup2(p2c[0], 0) == -1) {
@@ -407,9 +500,28 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		}
 		perror("knh_popen :");
 		_exit(1);
-	}
-	else {
+	default:
 		// parent process normal route
+#if defined(SUBPROC_RESOURCE_MONITOR)
+		kerr = task_set_bootstrap_port(mach_task_self(), bootstrap_port);
+		if (recv_port(parent_recv_port, &task) != 0) return -1;
+		if (recv_port(parent_recv_port, &child_recv_port) != 0) return -1;
+		if (send_port(child_recv_port, bootstrap_port) != 0) return -1;
+		size_t mem = 0;
+		struct task_basic_info t_info = {0};
+		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+		do {
+			if (KERN_SUCCESS != task_info(task, TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
+					break;
+			if (mem < t_info.resident_size) mem = t_info.resident_size;
+		}while (!usleep(SLEEP_NSEC));
+		/*fprintf(stderr, "basic task info, suspend_count:%d, user_time=%d[msec] system_time:%d[msec] RSS: %.1fM\n",
+				t_info.suspend_count,
+				t_info.user_time.microseconds, t_info.system_time.microseconds,
+				(double)mem / (1024.0 * 1024.0));
+				*/
+		kerr = mach_port_deallocate(mach_task_self(), parent_recv_port);
+#endif
 		if(rmode == M_PIPE) {
 			spd->r.fp = fdopen(c2p[0], "r");
 			close(c2p[1]);
@@ -479,6 +591,7 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 	}
 	int stat;
 	waitpid(pid, &stat, WUNTRACED);
+
 	if(timeout > 0) {
 		// SIGALRM release
 		setitimer(ITIMER_REAL, NULL, NULL);
@@ -523,13 +636,13 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
  * @return in the case of foreground, it is start status of a child process
  *         in the case of background, it is termination status of a child process
  */
-static int proc_start(CTX, subprocData_t *sp ) {
+static int proc_start(CTX, subprocData_t *spd) {
 	int ret = S_PREEXECUTION;
-	int pid = knh_popen(_ctx, sp->command, sp, M_NREDIRECT );
+	int pid = knh_popen(_ctx, spd->command, spd, M_NREDIRECT );
 	if(pid > 0) {
-		sp->cpid  = pid;
-		if(sp->bg != 1) {
-			ret = knh_wait(_ctx, sp->cpid, sp->bg, sp->timeout, &sp->status );
+		spd->cpid  = pid;
+		if(spd->bg != 1) {
+			ret = knh_wait(_ctx, spd->cpid, spd->bg, spd->timeout, &spd->status );
 		}else {
 			// nomal end status for bg
 			ret = 0;
@@ -956,7 +1069,7 @@ KMETHOD Subproc_getPid(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->cpid : -1 );
+	RETURNi_( (p!= NULL) ? p->cpid : -1 );
 }
 
 //## int Subproc.getTimeout();
@@ -964,7 +1077,7 @@ KMETHOD Subproc_getTimeout(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->timeout : -1 );
+	RETURNi_( (p!= NULL) ? p->timeout : -1 );
 }
 
 //## int Subproc.getReturncode();
@@ -972,7 +1085,7 @@ KMETHOD Subproc_getReturncode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->status : -1 );
+	RETURNi_( (p!= NULL) ? p->status : -1 );
 }
 
 //## boolean Subproc.enablePipemodeIN(Boolean isPipemode);
@@ -1108,7 +1221,7 @@ KMETHOD Subproc_isShellmode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->shell==1) : 0);
+	RETURNb_((p != NULL) ? (p->shell == 1) : 0);
 }
 
 //## boolean Subproc.isPipemodeIN();
@@ -1116,7 +1229,7 @@ KMETHOD Subproc_isPipemodeIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->w.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->w.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeOUT();
@@ -1124,7 +1237,7 @@ KMETHOD Subproc_isPipemodeOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->r.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->r.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeERR();
@@ -1132,7 +1245,7 @@ KMETHOD Subproc_isPipemodeERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isStandardIN();
@@ -1140,7 +1253,7 @@ KMETHOD Subproc_isStandardIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->w.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->w.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardOUT();
@@ -1148,7 +1261,7 @@ KMETHOD Subproc_isStandardOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->r.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->r.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardERR();
@@ -1156,7 +1269,7 @@ KMETHOD Subproc_isStandardERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isERR2StdOUT();
@@ -1164,7 +1277,7 @@ KMETHOD Subproc_isERR2StdOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_STDOUT) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_STDOUT) : 0);
 }
 
 /* ------------------------------------------------------------------------ */
