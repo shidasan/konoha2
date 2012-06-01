@@ -71,7 +71,9 @@
 #ifdef _CLASSICVM
 #include "../../module/classicvm/classicvm_gen.h"
 #include "../../module/classicvm/classicvm.h"
-#else
+#elif defined K_USING_TINYVM
+#include "../../module/tinyvm/tinyvm.h"
+#include "../../module/tinyvm/tinyvm_opcodes.h"
 #include "minivm.h"
 #endif
 

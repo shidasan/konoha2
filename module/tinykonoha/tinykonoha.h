@@ -4,7 +4,6 @@
 #ifdef K_USING_TOPPERS
 #include <t_services.h>
 #endif
-#define K_USING_THCODE_ 1
 #define MAX_CT     16
 
 #ifdef __cplusplus

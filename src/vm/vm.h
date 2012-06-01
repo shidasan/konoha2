@@ -102,6 +102,13 @@ typedef struct {
 
 #endif/*K_USING_THCODE_*/
 
+#ifdef K_USING_TINYVM
+typedef struct kopl_t {
+	uint8_t opcode;
+	uint8_t data[3];
+	void *ptr;
+} kopl_t;
+#else
 typedef struct kopl_t {
 	KCODE_HEAD;
 	union {
@@ -112,6 +119,7 @@ typedef struct kopl_t {
 		char *u[5];
 	};
 } kopl_t;
+#endif
 
 #define K_CALLDELTA   4
 #define K_RTNIDX    (-4)

@@ -30,9 +30,8 @@
 #endif
 
 #include "tinykonoha.h"
-#include <../../include/konoha2/konoha2.h>
-#include "vm.h"
-#include "tinyvm.h"
+#include "../../include/konoha2/konoha2.h"
+#include "../tinyvm/tinyvm_gen.h"
 #include "allocate.h"
 #include "../msgc/msgc.c"
 #include "../../include/konoha2/sugar.h"
