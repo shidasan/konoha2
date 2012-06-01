@@ -38,11 +38,13 @@ extern "C" {
 enum e_resource{
 	R_MEMORY,
 	R_CPU,
-	R_CONTEXTSWITCH
+	R_CONTEXTSWITCH,
 };
+
 #define SLEEP_NSEC 10000
 
 #define SUBPROC_RESOURCEMON_INSTANCE subproc_resource_mon_t rmon
+
 #define INIT_RESOURCE_MONITOR(spd) init_resourcemonitor(_ctx, &(spd->rmon))
 #define SETUP_RESOURCE_MONITOR(spd) setup_resourcemonitor(_ctx, &(spd->rmon))
 #define CLEANUP_RESOURCE_MONITOR(spd) cleanup_resourcemonitor(_ctx, &(spd->rmon))
@@ -51,17 +53,13 @@ enum e_resource{
 
 #define FETCH_MEM_FROM_RESOURCE_MONITOR(spd) fetch_resourcemonitor_about(_ctx, &(spd->rmon), R_MEMORY)
 
-#if defined(__APPLE__)
-
-#include "subproc_resourcemonitor_mac.h"
-
-#elif defined(__linux__)
-
-//#include "subproc_resourcemonitor_linux.h"
-typedef struct subproc_resource_mon_t {
-	FILE *procfs;
-} subproc_resource_mon_t;
-
+ #if defined(__APPLE__)
+ #include "subproc_resourcemonitor_mac.h"
+ #elif defined(__linux__)
+ #include "subproc_resourcemonitor_linux.h"
+ #else
+	// TODO: for example, BSD
+ #endif
 
 #else
 #define SUBPROC_RESOURCEMON_INSTANCE
@@ -71,13 +69,11 @@ typedef struct subproc_resource_mon_t {
 #define SETUP_RESOURCE_MONITOR_FOR_CHILD(spd)
 #define RECV_RESOURCE_MONITOR_FROM_CHILD(spd)
 
-FETCH_MEM_FROM_RESOURCE_MONITOR(spd) 0
+#define FETCH_MEM_FROM_RESOURCE_MONITOR(spd) 0
 #undef SUBPROC_ENABLE_RESOURCEMONITOR
-#endif
-
-
-
 #endif /* SUBPROC_RESOURCE_MONITOR */
+
+
 
 #ifdef __cplusplus
 }

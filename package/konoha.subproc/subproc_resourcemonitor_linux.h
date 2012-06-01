@@ -22,40 +22,50 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include<konoha2/konoha2.h>
-#include<konoha2/sugar.h>
-#include <konoha2/bytes.h>
+/* ************************************************************************ */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <poll.h>
-#include <signal.h>
-#include <sys/time.h>
+#ifndef SUBPROC_RESOURCEMONITOR_LINUX_H_
+#define SUBPROC_RESOURCEMONITOR_LINUX_H_
 
-#if defined(__linux__)
-#include <linux/version.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
-#define __USE_LOCAL_PIPE2__
+#ifdef __cplusplus
+extern "C" {
 #endif
-#endif /* __linux__ */
 
-#include "subproc_resourcemonitor.h"
-#include "subproc_glue.h"
+typedef struct subproc_resource_mon_t {
+	FILE *procfs;
+} subproc_resource_mon_t;
 
-// --------------------------------------------------------------------------
 
-KDEFINE_PACKAGE* subproc_init(void)
+static void init_resourcemonitor(CTX, subproc_resource_mon_t *mon)
 {
-	static KDEFINE_PACKAGE d = {
-		KPACKNAME("subproc", "1.0"),
-		.initPackage = subproc_initPackage,
-		.setupPackage = subproc_setupPackage,
-		.initKonohaSpace = subproc_initKonohaSpace,
-		.setupKonohaSpace = subproc_setupKonohaSpace,
-	};
-	return &d;
+	mon->procfs = NULL;
 }
+
+static int setup_resourcemonitor(CTX, subproc_resource_mon_t *mon)
+{
+	// DO NOTHING;
+	return 0;
+}
+
+static int cleanup_resourcemonitor(CTX, subproc_resource_mon_t *mon)
+{
+	return 0;
+}
+
+static int setup_resourcemonitor_for_chlid(CTX, subproc_resource_mon_t *mon)
+{
+	return 0;
+}
+static int recv_resourcemonitor_from_child(CTX, subproc_resource_mon_t *mon)
+{
+	return 0;
+}
+static int fetch_resourcemonitor_about(CTX, subproc_resource_mon_t *mon, enum e_resource res)
+{
+	return 0;
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* SUBPROC_RESOURCEMONITOR_LINUX_H_ */
