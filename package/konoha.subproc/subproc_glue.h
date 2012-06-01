@@ -415,7 +415,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 	default:
 		// parent process normal route
 #if defined(SUBPROC_ENABLE_RESOURCEMONITOR)
-		RECV_RESOURCE_MONITOR_FROM_CHILD(spd);
+		ATTACH_RESOURCE_MONITOR_FOR_CHILD(spd, pid);
 		size_t mem = FETCH_MEM_FROM_RESOURCE_MONITOR(spd);
 //		fprintf(stderr, "menusage:%.1fM\n", (double)mem / (1024.0 * 1024.0));
 		CLEANUP_RESOURCE_MONITOR(spd);

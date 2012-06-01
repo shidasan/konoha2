@@ -145,7 +145,7 @@ static int setup_resourcemonitor_for_chlid(CTX, subproc_resource_mon_t *mon) {
 }
 
 
-static int recv_resourcemonitor_from_child(CTX, subproc_resource_mon_t *mon) {
+static int attach_resourcemonitor_for_child(CTX, subproc_resource_mon_t *mon, int pid) {
 	kern_return_t err = task_set_bootstrap_port(mach_task_self(), bootstrap_port);
 	if (recv_port(mon->parent_recv_port, &(mon->task)) != 0) return -1;
 	if (recv_port(mon->parent_recv_port, &(mon->child_recv_port)) != 0) return -1;

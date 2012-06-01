@@ -49,7 +49,7 @@ enum e_resource{
 #define SETUP_RESOURCE_MONITOR(spd) setup_resourcemonitor(_ctx, &(spd->rmon))
 #define CLEANUP_RESOURCE_MONITOR(spd) cleanup_resourcemonitor(_ctx, &(spd->rmon))
 #define SETUP_RESOURCE_MONITOR_FOR_CHILD(spd) setup_resourcemonitor_for_chlid(_ctx, &(spd->rmon))
-#define RECV_RESOURCE_MONITOR_FROM_CHILD(spd) recv_resourcemonitor_from_child(_ctx, &(spd->rmon))
+#define ATTACH_RESOURCE_MONITOR_FOR_CHILD(spd, pid) attach_resourcemonitor_for_child(_ctx, &(spd->rmon), pid)
 
 #define FETCH_MEM_FROM_RESOURCE_MONITOR(spd) fetch_resourcemonitor_about(_ctx, &(spd->rmon), R_MEMORY)
 
@@ -66,7 +66,7 @@ enum e_resource{
 #define INIT_RESOURCE_MONITOR(spd)
 #define SETUP_RESOURCE_MONITOR(spd)
 #define CLEANUP_RESOURCE_MONITOR(spd)
-#define SETUP_RESOURCE_MONITOR_FOR_CHILD(spd)
+#define ATTACH_RESOURCE_MONITOR_FOR_CHILD(spd, pid)
 #define RECV_RESOURCE_MONITOR_FROM_CHILD(spd)
 
 #define FETCH_MEM_FROM_RESOURCE_MONITOR(spd) 0
