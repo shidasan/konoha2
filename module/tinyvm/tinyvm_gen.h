@@ -354,7 +354,12 @@ typedef struct klr_fCAST_t {
 	int8_t/* rn */ b;
 } klr_fCAST_t;
 
-//#define OPCODE_NGETIDX ((kopcode_t)48)
+#define OPCODE_RET ((kopcode_t)48)
+typedef struct klr_RET_t {
+	unsigned opcode;
+} klr_RET_t;
+
+//#define OPCODE_NGETIDX ((kopcode_t)49)
 //typedef struct klr_NGETIDX_t {
 //	unsigned opcode;
 //	int8_t/* rn */ c;
@@ -362,7 +367,7 @@ typedef struct klr_fCAST_t {
 //	int8_t/* rn */ n;
 //} klr_NGETIDX_t;
 //
-//#define OPCODE_NSETIDX ((kopcode_t)49)
+//#define OPCODE_NSETIDX ((kopcode_t)50)
 //typedef struct klr_NSETIDX_t {
 //	unsigned opcode;
 //	int8_t/* rn */ c;
@@ -371,7 +376,7 @@ typedef struct klr_fCAST_t {
 //	int8_t/* rn */ v;
 //} klr_NSETIDX_t;
 //
-//#define OPCODE_OGETIDX ((kopcode_t)50)
+//#define OPCODE_OGETIDX ((kopcode_t)51)
 //typedef struct klr_OGETIDX_t {
 //	unsigned opcode;
 //	int8_t/* ro */ c;
@@ -379,7 +384,7 @@ typedef struct klr_fCAST_t {
 //	int8_t/* rn */ n;
 //} klr_OGETIDX_t;
 //
-//#define OPCODE_OSETIDX ((kopcode_t)51)
+//#define OPCODE_OSETIDX ((kopcode_t)52)
 //typedef struct klr_OSETIDX_t {
 //	unsigned opcode;
 //	int8_t/* ro */ c;
@@ -389,7 +394,7 @@ typedef struct klr_fCAST_t {
 //} klr_OSETIDX_t;
 
 
-#define KOPCODE_MAX ((kopcode_t)52)
+#define KOPCODE_MAX ((kopcode_t)49)
 
 #define VMT_VOID     0
 #define VMT_ADDR     1

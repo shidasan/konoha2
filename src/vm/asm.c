@@ -74,6 +74,7 @@
 #elif defined K_USING_TINYVM
 #include "../../module/tinyvm/tinyvm.h"
 #include "../../module/tinyvm/tinyvm_opcodes.h"
+#else
 #include "minivm.h"
 #endif
 

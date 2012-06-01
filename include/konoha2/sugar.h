@@ -28,9 +28,11 @@
 /* ------------------------------------------------------------------------ */
 /* sugar.h */
 
-//#include <dlfcn.h>
-//#include "konoha2.h"
-//#include "klib.h"
+#ifndef K_USING_TINYVM
+#include <dlfcn.h>
+#include "konoha2.h"
+#include "klib.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

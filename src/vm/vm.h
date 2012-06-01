@@ -22,7 +22,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include <../../include/konoha2/konoha2.h>
+#include <konoha2/konoha2.h>
+#ifndef K_USING_TINYVM
+#include <konoha2/sugar.h>
+#endif
 
 #ifndef KONOHA_VM_H_
 #define KONOHA_VM_H_
