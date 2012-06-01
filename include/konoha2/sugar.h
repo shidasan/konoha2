@@ -211,11 +211,13 @@ struct _kKonohaSpace {
 	kObjectHeader h;
 	kpack_t packid;  kpack_t packdom;
 	const struct _kKonohaSpace   *parentNULL;
+#ifndef K_USING_TINYVM
 	const Ftokenizer *fmat;
 	struct kmap_t   *syntaxMapNN;
 	//
 	void         *gluehdr;
 	kObject      *scrNUL;
+#endif
 	kcid_t static_cid;   kcid_t function_cid;
 	kArray*       methods;  // default K_EMPTYARRAY
 	karray_t      cl;

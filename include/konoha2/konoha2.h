@@ -843,7 +843,12 @@ struct _kInt /* extends kNumber */ {
 #define S_setASCII(o,b)      TFLAG_set(uintptr_t,((struct _kObject*)o)->h.magicflag,kObject_Local4,b)
 #define S_isPooled(o)        (TFLAG_is(uintptr_t,(o)->h.magicflag,kObject_Local5))
 #define S_setPooled(o,b)     TFLAG_set(uintptr_t,(o)->h.magicflag,kObject_Local5,b)
+
+#ifdef K_USING_TINYVM
+#define SIZEOF_INLINETEXT    (0)
+#else
 #define SIZEOF_INLINETEXT    (sizeof(void*)*8 - sizeof(kBytes))
+#endif
 
 typedef const struct _kBytes kBytes;
 struct _kBytes {
