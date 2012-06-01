@@ -660,7 +660,7 @@ struct _kclass {
 #define kObject_set(O,A,B)         TFLAG_set(kmagicflag_t,(O)->h.magicflag,A,B)
 
 #ifdef K_USING_TINYVM
-#define kObject_Marked           (kObject_Local1)
+#define kObject_Marked           (kObject_Local6)
 #define kObject_isMarked(O)      (kObject_is(O, kObject_Marked))
 #define kObject_setMarked(o,b) TFLAG_set(kmagicflag_t,((struct _kObject*)o)->h.magicflag,kObject_Marked,b)
 #endif

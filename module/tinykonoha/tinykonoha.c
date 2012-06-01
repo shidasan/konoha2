@@ -355,7 +355,7 @@ int main(int argc, char **args)
 	kclass_t *ct = CT_(CLASS_String);
 	TDBG_s("loop start");
 	int i = 0;
-	while (i < 1000) {
+	while (i < 100) {
 		new_kObject(ct, NULL);
 		i++;
 	}
