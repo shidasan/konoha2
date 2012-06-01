@@ -57,3 +57,6 @@
 
 /* The size of `void*', as computed by sizeof. */
 #cmakedefine SIZEOF_VOIDP ${SIZEOF_VOIDP}
+
+/* tinyvm codegen */
+#cmakedefine TINYVM_CODEGEN ${TINYVM_CODEGEN}

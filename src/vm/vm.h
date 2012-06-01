@@ -212,6 +212,19 @@ struct _kKonohaCode {
 		goto L_RETURN;\
 	}\
 
+
+#ifdef K_USING_TINYVM
+
+#define OPEXEC_OSET(a, i) {\
+	klr_mov(Ro_(a), _ctx->share->constData->list[i]);\
+}\
+
+#else
+
+#define OPEXEC_OSET(A, N, CT) rbp[(A)].ndata = N
+
+#endif
+
 #define OPEXEC_NSET(A, N, CT) rbp[(A)].ndata = N
 #define OPEXEC_NMOV(A, B, CT) rbp[(A)].ndata = rbp[(B)].ndata
 #define OPEXEC_NMOVx(A, B, BX, CT) rbp[(A)].o = (rbp[(B)].Wo)->fields[(BX)]
@@ -268,6 +281,11 @@ struct _kKonohaCode {
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
 		(mtd_)->fcall_1(_ctx, sfp_ K_RIXPARAM); \
 		sfp_[K_MTDIDX].mtdNC = NULL;\
+	} \
+
+#define OPEXEC_CONST(TY, CONF) { \
+		/* do nothing */ \
+		(void)TY; (void)CONF; \
 	} \
 
 

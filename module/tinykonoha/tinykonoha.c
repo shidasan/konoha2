@@ -74,6 +74,7 @@ static void kshare_reftrace(CTX, kcontext_t *ctx)
 
 	BEGIN_REFTRACE(2);
 	KREFTRACEn(share->constNull);
+	KREFTRACEn(share->constData);
 	//KREFTRACEv(share->constTrue);
 	//KREFTRACEv(share->constFalse);
 	//KREFTRACEv(share->emptyString);
@@ -347,6 +348,8 @@ void TaskDisp(VP_INT exinf)
 #else
 int main(int argc, char **args)
 {
+	fprintf(stderr, "%zd, %zd\n", sizeof(klr_SCALL_t), sizeof(kopl_t));
+	opcode_check();
 	struct kcontext_t *_ctx = NULL;
 	_ctx = new_context(K_STACK_SIZE);
 	//new_CT(_ctx, NULL, NULL, 0);
@@ -355,7 +358,8 @@ int main(int argc, char **args)
 	TDBG_s("loop start");
 	int i = 0;
 	while (i < 100) {
-		new_kObject(ct, NULL);
+		//new_kObject(ct, NULL);
+		new_(Int, 10);
 		i++;
 	}
 	return 0;

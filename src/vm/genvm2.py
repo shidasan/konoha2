@@ -13,6 +13,7 @@ ENTER      0
 EXIT       0
 
 NSET       0                  a:rn n:int ty:cid
+@OSET      0                  a:ro n:int ty:cid
 NMOV       0                  a:rn b:rn  ty:cid
 NMOVx      0                  a:rn b:ro  bx:u ty:cid
 XNMOV      0                  a:ro ax:u  b:rn ty:cid
@@ -126,7 +127,6 @@ VCALL      0                  uline:u thisidx:ro espshift:ro mtd:Method  tyo:co
 #RCINC      _JIT              a:ro
 #RCDEC      _JIT              a:ro
 
-#@OSET      _DEF|_JIT|_CONST  a:ro o:Object
 #@OMOV      _DEF|_JIT         a:ro b:ro
 #@OOMOV     _DEF|_JIT         a:ro b:ro c:ro d:ro
 #@ONMOV     _DEF|_JIT         a:ro b:ro c:rn d:rn

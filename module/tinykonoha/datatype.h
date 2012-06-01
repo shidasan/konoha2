@@ -616,6 +616,7 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	KINITv(share.constNull, new_(Object, NULL));
 	kObject_setNullObject(share.constNull, 1);
 	//
+	KINITv(share.constData, new_(Array, 0));
 	KINITv(share.emptyArray, new_(Array, 0));
 	initStructData(_ctx);
 	FLOAT_init(_ctx, NULL);

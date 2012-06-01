@@ -5,15 +5,15 @@
 
 #define OPCODE_NSET ((kopcode_t)0)
 typedef struct klr_NSET_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
-	uint8_t/* int */ n;
+	int32_t/* int */ n;
 	uint16_t/* cid */ ty;
 } klr_NSET_t;
 
 #define OPCODE_NMOV ((kopcode_t)1)
 typedef struct klr_NMOV_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
 	uint16_t/* cid */ ty;
@@ -21,7 +21,7 @@ typedef struct klr_NMOV_t {
 
 #define OPCODE_NMOVx ((kopcode_t)2)
 typedef struct klr_NMOVx_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
 	int8_t/* ro */ b;
 	uint16_t/* u */ bx;
@@ -30,7 +30,7 @@ typedef struct klr_NMOVx_t {
 
 #define OPCODE_XNMOV ((kopcode_t)3)
 typedef struct klr_XNMOV_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
 	uint16_t/* u */ ax;
 	int8_t/* rn */ b;
@@ -39,7 +39,7 @@ typedef struct klr_XNMOV_t {
 
 #define OPCODE_NEW ((kopcode_t)4)
 typedef struct klr_NEW_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
 	uint16_t/* u */ p;
 	uint16_t/* cid */ ty;
@@ -47,14 +47,14 @@ typedef struct klr_NEW_t {
 
 #define OPCODE_NULL ((kopcode_t)5)
 typedef struct klr_NULL_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
 	uint16_t/* cid */ ty;
 } klr_NULL_t;
 
 #define OPCODE_BOX ((kopcode_t)6)
 typedef struct klr_BOX_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
 	int8_t/* rn */ b;
 	uint16_t/* cid */ ty;
@@ -62,7 +62,7 @@ typedef struct klr_BOX_t {
 
 #define OPCODE_UNBOX ((kopcode_t)7)
 typedef struct klr_UNBOX_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
 	int8_t/* ro */ b;
 	uint16_t/* cid */ ty;
@@ -70,7 +70,7 @@ typedef struct klr_UNBOX_t {
 
 #define OPCODE_CALL ((kopcode_t)8)
 typedef struct klr_CALL_t {
-	unsigned opcode;
+	int8_t opcode;
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
@@ -79,68 +79,68 @@ typedef struct klr_CALL_t {
 
 #define OPCODE_BNOT ((kopcode_t)9)
 typedef struct klr_BNOT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 } klr_BNOT_t;
 
 #define OPCODE_JMP ((kopcode_t)10)
 typedef struct klr_JMP_t {
-	unsigned opcode;
+	int8_t opcode;
 	uint16_t jumppc;
 } klr_JMP_t;
 
 #define OPCODE_JMPF ((kopcode_t)11)
 typedef struct klr_JMPF_t {
-	unsigned opcode;
+	int8_t opcode;
 	uint16_t jumppc;
 	int8_t/* rn */ a;
 } klr_JMPF_t;
 
 #define OPCODE_SAFEPOINT ((kopcode_t)12)
 typedef struct klr_SAFEPOINT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ espshift;
 } klr_SAFEPOINT_t;
 
 #define OPCODE_ERROR ((kopcode_t)13)
 typedef struct klr_ERROR_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ start;
 	kString* msg;
 } klr_ERROR_t;
 
 #define OPCODE_bNUL ((kopcode_t)14)
 typedef struct klr_bNUL_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* ro */ a;
 } klr_bNUL_t;
 
 #define OPCODE_bNN ((kopcode_t)15)
 typedef struct klr_bNN_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* ro */ a;
 } klr_bNN_t;
 
 #define OPCODE_iNEG ((kopcode_t)16)
 typedef struct klr_iNEG_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 } klr_iNEG_t;
 
 #define OPCODE_fNEG ((kopcode_t)17)
 typedef struct klr_fNEG_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 } klr_fNEG_t;
 
 #define OPCODE_iADD ((kopcode_t)18)
 typedef struct klr_iADD_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -148,7 +148,7 @@ typedef struct klr_iADD_t {
 
 #define OPCODE_iSUB ((kopcode_t)19)
 typedef struct klr_iSUB_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -156,7 +156,7 @@ typedef struct klr_iSUB_t {
 
 #define OPCODE_iMUL ((kopcode_t)20)
 typedef struct klr_iMUL_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -164,7 +164,7 @@ typedef struct klr_iMUL_t {
 
 #define OPCODE_iDIV ((kopcode_t)21)
 typedef struct klr_iDIV_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -172,7 +172,7 @@ typedef struct klr_iDIV_t {
 
 #define OPCODE_iMOD ((kopcode_t)22)
 typedef struct klr_iMOD_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -180,7 +180,7 @@ typedef struct klr_iMOD_t {
 
 #define OPCODE_iEQ ((kopcode_t)23)
 typedef struct klr_iEQ_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -188,7 +188,7 @@ typedef struct klr_iEQ_t {
 
 #define OPCODE_iNEQ ((kopcode_t)24)
 typedef struct klr_iNEQ_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -196,7 +196,7 @@ typedef struct klr_iNEQ_t {
 
 #define OPCODE_iLT ((kopcode_t)25)
 typedef struct klr_iLT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -204,7 +204,7 @@ typedef struct klr_iLT_t {
 
 #define OPCODE_iLTE ((kopcode_t)26)
 typedef struct klr_iLTE_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -212,7 +212,7 @@ typedef struct klr_iLTE_t {
 
 #define OPCODE_iGT ((kopcode_t)27)
 typedef struct klr_iGT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -220,7 +220,7 @@ typedef struct klr_iGT_t {
 
 #define OPCODE_iGTE ((kopcode_t)28)
 typedef struct klr_iGTE_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -228,7 +228,7 @@ typedef struct klr_iGTE_t {
 
 #define OPCODE_fADD ((kopcode_t)29)
 typedef struct klr_fADD_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -236,7 +236,7 @@ typedef struct klr_fADD_t {
 
 #define OPCODE_fSUB ((kopcode_t)30)
 typedef struct klr_fSUB_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -244,7 +244,7 @@ typedef struct klr_fSUB_t {
 
 #define OPCODE_fMUL ((kopcode_t)31)
 typedef struct klr_fMUL_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -252,7 +252,7 @@ typedef struct klr_fMUL_t {
 
 #define OPCODE_fDIV ((kopcode_t)32)
 typedef struct klr_fDIV_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -260,7 +260,7 @@ typedef struct klr_fDIV_t {
 
 #define OPCODE_fEQ ((kopcode_t)33)
 typedef struct klr_fEQ_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -268,7 +268,7 @@ typedef struct klr_fEQ_t {
 
 #define OPCODE_fNEQ ((kopcode_t)34)
 typedef struct klr_fNEQ_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -276,7 +276,7 @@ typedef struct klr_fNEQ_t {
 
 #define OPCODE_fLT ((kopcode_t)35)
 typedef struct klr_fLT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -284,7 +284,7 @@ typedef struct klr_fLT_t {
 
 #define OPCODE_fLTE ((kopcode_t)36)
 typedef struct klr_fLTE_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -292,7 +292,7 @@ typedef struct klr_fLTE_t {
 
 #define OPCODE_fGT ((kopcode_t)37)
 typedef struct klr_fGT_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -300,7 +300,7 @@ typedef struct klr_fGT_t {
 
 #define OPCODE_fGTE ((kopcode_t)38)
 typedef struct klr_fGTE_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ c;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
@@ -308,21 +308,21 @@ typedef struct klr_fGTE_t {
 
 #define OPCODE_OSET ((kopcode_t)39)
 typedef struct klr_OSET_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
-	kObject* o;
+	int8_t/* rn */ n;
 } klr_OSET_t;
 
 #define OPCODE_OMOV ((kopcode_t)40)
 typedef struct klr_OMOV_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* ro */ a;
 	int8_t/* ro */ b;
 } klr_OMOV_t;
 
-#define OPCODE_SCALL ((kopcode_t)44)
+#define OPCODE_SCALL ((kopcode_t)41)
 typedef struct klr_SCALL_t {
-	unsigned opcode;
+	int8_t opcode;
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
@@ -330,9 +330,9 @@ typedef struct klr_SCALL_t {
 	kMethod* mtd;
 } klr_SCALL_t;
 
-#define OPCODE_VCALL ((kopcode_t)45)
+#define OPCODE_VCALL ((kopcode_t)42)
 typedef struct klr_VCALL_t {
-	unsigned opcode;
+	int8_t opcode;
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
@@ -340,53 +340,53 @@ typedef struct klr_VCALL_t {
 	kMethod* mtd;
 } klr_VCALL_t;
 
-#define OPCODE_iCAST ((kopcode_t)46)
+#define OPCODE_iCAST ((kopcode_t)43)
 typedef struct klr_iCAST_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
 } klr_iCAST_t;
 
-#define OPCODE_fCAST ((kopcode_t)47)
+#define OPCODE_fCAST ((kopcode_t)44)
 typedef struct klr_fCAST_t {
-	unsigned opcode;
+	int8_t opcode;
 	int8_t/* rn */ a;
 	int8_t/* rn */ b;
 } klr_fCAST_t;
 
-#define OPCODE_RET ((kopcode_t)48)
+#define OPCODE_RET ((kopcode_t)45)
 typedef struct klr_RET_t {
-	unsigned opcode;
+	int8_t opcode;
 } klr_RET_t;
 
-//#define OPCODE_NGETIDX ((kopcode_t)49)
+//#define OPCODE_NGETIDX ((kopcode_t)46)
 //typedef struct klr_NGETIDX_t {
-//	unsigned opcode;
+//	int8_t opcode;
 //	int8_t/* rn */ c;
 //	int8_t/* ro */ a;
 //	int8_t/* rn */ n;
 //} klr_NGETIDX_t;
 //
-//#define OPCODE_NSETIDX ((kopcode_t)50)
+//#define OPCODE_NSETIDX ((kopcode_t)47)
 //typedef struct klr_NSETIDX_t {
-//	unsigned opcode;
+//	int8_t opcode;
 //	int8_t/* rn */ c;
 //	int8_t/* ro */ a;
 //	int8_t/* rn */ n;
 //	int8_t/* rn */ v;
 //} klr_NSETIDX_t;
 //
-//#define OPCODE_OGETIDX ((kopcode_t)51)
+//#define OPCODE_OGETIDX ((kopcode_t)48)
 //typedef struct klr_OGETIDX_t {
-//	unsigned opcode;
+//	int8_t opcode;
 //	int8_t/* ro */ c;
 //	int8_t/* ro */ a;
 //	int8_t/* rn */ n;
 //} klr_OGETIDX_t;
 //
-//#define OPCODE_OSETIDX ((kopcode_t)52)
+//#define OPCODE_OSETIDX ((kopcode_t)49)
 //typedef struct klr_OSETIDX_t {
-//	unsigned opcode;
+//	int8_t opcode;
 //	int8_t/* ro */ c;
 //	int8_t/* ro */ a;
 //	int8_t/* rn */ n;
@@ -394,7 +394,7 @@ typedef struct klr_RET_t {
 //} klr_OSETIDX_t;
 
 
-#define KOPCODE_MAX ((kopcode_t)49)
+#define KOPCODE_MAX ((kopcode_t)46)
 
 #define VMT_VOID     0
 #define VMT_ADDR     1
@@ -464,7 +464,7 @@ static const kOPDATA_t OPDATA[] = {
 	{"fLTE", 3, { VMT_RN, VMT_RN, VMT_RN, VMT_VOID}},
 	{"fGT", 3, { VMT_RN, VMT_RN, VMT_RN, VMT_VOID}},
 	{"fGTE", 3, { VMT_RN, VMT_RN, VMT_RN, VMT_VOID}},
-	{"OSET", 2, { VMT_RO, VMT_OBJECT, VMT_VOID}},
+	{"OSET", 2, { VMT_RO, VMT_RN, VMT_VOID}},
 	{"OMOV", 2, { VMT_RO, VMT_RO, VMT_VOID}},
 	{"SCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_METHOD, VMT_VOID}},
 	{"VCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_METHOD, VMT_VOID}},
@@ -768,7 +768,7 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(OSET) {
 		klr_OSET_t *op = (klr_OSET_t*)pc;
-		OPEXEC_OSET(op->a, op->o); pc++;
+		OPEXEC_OSET(op->a, op->n); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(OMOV) {

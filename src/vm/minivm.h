@@ -55,7 +55,15 @@ typedef struct klr_NSET_t {
 	kclass_t* ty;
 } klr_NSET_t;
 
-#define OPCODE_NMOV ((kopcode_t)5)
+#define OPCODE_OSET ((kopcode_t)5)
+typedef struct klr_OSET_t {
+	KCODE_HEAD;
+	kreg_t a;
+	kint_t n;
+	kclass_t* ty;
+} klr_OSET_t;
+
+#define OPCODE_NMOV ((kopcode_t)6)
 typedef struct klr_NMOV_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -63,7 +71,7 @@ typedef struct klr_NMOV_t {
 	kclass_t* ty;
 } klr_NMOV_t;
 
-#define OPCODE_NMOVx ((kopcode_t)6)
+#define OPCODE_NMOVx ((kopcode_t)7)
 typedef struct klr_NMOVx_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -72,7 +80,7 @@ typedef struct klr_NMOVx_t {
 	kclass_t* ty;
 } klr_NMOVx_t;
 
-#define OPCODE_XNMOV ((kopcode_t)7)
+#define OPCODE_XNMOV ((kopcode_t)8)
 typedef struct klr_XNMOV_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -81,7 +89,7 @@ typedef struct klr_XNMOV_t {
 	kclass_t* ty;
 } klr_XNMOV_t;
 
-#define OPCODE_NEW ((kopcode_t)8)
+#define OPCODE_NEW ((kopcode_t)9)
 typedef struct klr_NEW_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -89,14 +97,14 @@ typedef struct klr_NEW_t {
 	kclass_t* ty;
 } klr_NEW_t;
 
-#define OPCODE_NULL ((kopcode_t)9)
+#define OPCODE_NULL ((kopcode_t)10)
 typedef struct klr_NULL_t {
 	KCODE_HEAD;
 	kreg_t a;
 	kclass_t* ty;
 } klr_NULL_t;
 
-#define OPCODE_BOX ((kopcode_t)10)
+#define OPCODE_BOX ((kopcode_t)11)
 typedef struct klr_BOX_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -104,7 +112,7 @@ typedef struct klr_BOX_t {
 	kclass_t* ty;
 } klr_BOX_t;
 
-#define OPCODE_UNBOX ((kopcode_t)11)
+#define OPCODE_UNBOX ((kopcode_t)12)
 typedef struct klr_UNBOX_t {
 	KCODE_HEAD;
 	kreg_t a;
@@ -112,7 +120,7 @@ typedef struct klr_UNBOX_t {
 	kclass_t* ty;
 } klr_UNBOX_t;
 
-#define OPCODE_CALL ((kopcode_t)12)
+#define OPCODE_CALL ((kopcode_t)13)
 typedef struct klr_CALL_t {
 	KCODE_HEAD;
 	uintptr_t uline;
@@ -121,7 +129,7 @@ typedef struct klr_CALL_t {
 	kObject* tyo;
 } klr_CALL_t;
 
-#define OPCODE_SCALL ((kopcode_t)13)
+#define OPCODE_SCALL ((kopcode_t)14)
 typedef struct klr_SCALL_t {
 	KCODE_HEAD;
 	uintptr_t uline;
@@ -131,50 +139,50 @@ typedef struct klr_SCALL_t {
 	kObject* tyo;
 } klr_SCALL_t;
 
-#define OPCODE_RET ((kopcode_t)14)
+#define OPCODE_RET ((kopcode_t)15)
 typedef struct klr_RET_t {
 	KCODE_HEAD;
 } klr_RET_t;
 
-#define OPCODE_NCALL ((kopcode_t)15)
+#define OPCODE_NCALL ((kopcode_t)16)
 typedef struct klr_NCALL_t {
 	KCODE_HEAD;
 } klr_NCALL_t;
 
-#define OPCODE_BNOT ((kopcode_t)16)
+#define OPCODE_BNOT ((kopcode_t)17)
 typedef struct klr_BNOT_t {
 	KCODE_HEAD;
 	kreg_t c;
 	kreg_t a;
 } klr_BNOT_t;
 
-#define OPCODE_JMP ((kopcode_t)17)
+#define OPCODE_JMP ((kopcode_t)18)
 typedef struct klr_JMP_t {
 	KCODE_HEAD;
 	kopl_t  *jumppc;
 } klr_JMP_t;
 
-#define OPCODE_JMPF ((kopcode_t)18)
+#define OPCODE_JMPF ((kopcode_t)19)
 typedef struct klr_JMPF_t {
 	KCODE_HEAD;
 	kopl_t  *jumppc;
 	kreg_t a;
 } klr_JMPF_t;
 
-#define OPCODE_SAFEPOINT ((kopcode_t)19)
+#define OPCODE_SAFEPOINT ((kopcode_t)20)
 typedef struct klr_SAFEPOINT_t {
 	KCODE_HEAD;
 	kreg_t espshift;
 } klr_SAFEPOINT_t;
 
-#define OPCODE_ERROR ((kopcode_t)20)
+#define OPCODE_ERROR ((kopcode_t)21)
 typedef struct klr_ERROR_t {
 	KCODE_HEAD;
 	kreg_t start;
 	kString* msg;
 } klr_ERROR_t;
 
-#define OPCODE_VCALL ((kopcode_t)21)
+#define OPCODE_VCALL ((kopcode_t)22)
 typedef struct klr_VCALL_t {
 	KCODE_HEAD;
 	uintptr_t uline;
@@ -185,7 +193,7 @@ typedef struct klr_VCALL_t {
 } klr_VCALL_t;
 
 	
-#define KOPCODE_MAX ((kopcode_t)22)
+#define KOPCODE_MAX ((kopcode_t)23)
 
 #define VMT_VOID     0
 #define VMT_ADDR     1
@@ -226,6 +234,7 @@ static const kOPDATA_t OPDATA[] = {
 	{"ENTER", 0, 0, { VMT_VOID}}, 
 	{"EXIT", 0, 0, { VMT_VOID}}, 
 	{"NSET", 0, 3, { VMT_RN, VMT_INT, VMT_CID, VMT_VOID}}, 
+	{"OSET", 0, 3, { VMT_RO, VMT_INT, VMT_CID, VMT_VOID}}, 
 	{"NMOV", 0, 3, { VMT_RN, VMT_RN, VMT_CID, VMT_VOID}}, 
 	{"NMOVx", 0, 4, { VMT_RN, VMT_RO, VMT_U, VMT_CID, VMT_VOID}}, 
 	{"XNMOV", 0, 4, { VMT_RO, VMT_U, VMT_RN, VMT_CID, VMT_VOID}}, 
@@ -252,6 +261,7 @@ static void opcode_check(void)
 	assert(sizeof(klr_ENTER_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_EXIT_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_NSET_t) <= sizeof(kopl_t));
+	assert(sizeof(klr_OSET_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_NMOV_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_NMOVx_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_XNMOV_t) <= sizeof(kopl_t));
@@ -339,11 +349,11 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 #ifdef K_USING_THCODE_
 	static void *OPJUMP[] = {
 		&&L_NOP, &&L_THCODE, &&L_ENTER, &&L_EXIT, 
-		&&L_NSET, &&L_NMOV, &&L_NMOVx, &&L_XNMOV, 
-		&&L_NEW, &&L_NULL, &&L_BOX, &&L_UNBOX, 
-		&&L_CALL, &&L_SCALL, &&L_RET, &&L_NCALL, 
-		&&L_BNOT, &&L_JMP, &&L_JMPF, &&L_SAFEPOINT, 
-		&&L_ERROR, &&L_VCALL, 
+		&&L_NSET, &&L_OSET, &&L_NMOV, &&L_NMOVx, 
+		&&L_XNMOV, &&L_NEW, &&L_NULL, &&L_BOX, 
+		&&L_UNBOX, &&L_CALL, &&L_SCALL, &&L_RET, 
+		&&L_NCALL, &&L_BNOT, &&L_JMP, &&L_JMPF, 
+		&&L_SAFEPOINT, &&L_ERROR, &&L_VCALL, 
 	};
 #endif
 	krbp_t *rbp = (krbp_t*)sfp0;
@@ -372,6 +382,11 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	CASE(NSET) {
 		klr_NSET_t *op = (klr_NSET_t*)pc;
 		OPEXEC_NSET(op->a, op->n, op->ty); pc++;
+		GOTO_NEXT();
+	} 
+	CASE(OSET) {
+		klr_OSET_t *op = (klr_OSET_t*)pc;
+		OPEXEC_OSET(op->a, op->n, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NMOV) {

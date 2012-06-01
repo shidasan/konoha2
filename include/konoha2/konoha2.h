@@ -419,6 +419,9 @@ typedef struct kshare_t {
 	const struct _kBoolean      *constFalse;
 	const struct _kString       *emptyString;
 	const struct _kArray        *emptyArray;
+#ifdef K_USING_TINYVM
+	const struct _kArray        *constData;
+#endif
 
 	const struct _kArray         *fileidList;    // file, http://
 	struct kmap_t         *fileidMapNN;   //

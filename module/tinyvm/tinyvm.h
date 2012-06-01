@@ -161,9 +161,6 @@ struct vmop {
 
 #define OPEXEC_bNUL(c, a)  Rb_(c) = IS_NULL(Ro_(a))
 #define OPEXEC_bNN(c, a)   Rb_(c) = IS_NOTNULL(Ro_(a))
-#define OPEXEC_OSET(a, v) {\
-	klr_mov(Ro_(a), v);\
-}\
 
 #define OPEXEC_OMOV(A, B) rbp[(A)].ndata = rbp[(B)].ndata
 

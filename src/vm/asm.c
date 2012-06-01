@@ -390,7 +390,64 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 }
 
 /* ------------------------------------------------------------------------ */
+static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
+{
+	static int constdatasize = 0;
+	size_t i, size = OPDATA[c->opcode].size;
+	const kushort_t *vmt = OPDATA[c->opcode].types;
+	if (c->opcode == OPCODE_OSET) {
 
+	}
+	DUMP_P("{OPCODE_%s", T_opcode(c->opcode));
+	if (size > 0) {
+		DUMP_P(", ");
+	}
+	//if(pc_start == NULL) {
+	//	DUMP_P("[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
+	//}
+	//else {
+	//	DUMP_P("[L%d:%d]\t%s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
+	//}
+	for(i = 0; i < size; i++) {
+		switch(vmt[i]) {
+		case VMT_VOID: break;
+		case VMT_ADDR:
+			if(pc_start == NULL) {
+				DUMP_P("%p/*addr*/", c->p[i]);
+			}
+			else {
+				DUMP_P("%d/*L*/", (int)((kopl_t*)c->p[i] - pc_start));
+			}
+			break;
+		case VMT_R:
+			DUMP_P("%d/*r*/", (int)c->data[i]);
+			break;
+		case VMT_U:
+			DUMP_P("%lu/*u*/", c->data[i]); break;
+		case VMT_I:
+		case VMT_INT:
+			DUMP_P("%ld/*i*/", c->data[i]); break;
+		case VMT_F:
+			DUMP_P("%p/*function*/", c->p[i]); break;
+		case VMT_CID:
+			DUMP_P("%zd/*cid*/", i); break;
+			//DUMP_P("CT(%s)", T_CT(c->ct[i])); break;
+		case VMT_CO:
+			DUMP_P("%s/*CT*/", T_CT(O_ct(c->o[i]))); break;
+		case VMT_METHOD: {
+			kMethod *mtd = (kMethod*)c->o[i];
+			DUMP_P("%d/*cid*/, ", mtd->cid);
+			DUMP_P("%d/*mn*/", mtd->mn);
+		}
+		}/*switch*/
+		if (c->opcode != OPCODE_RET && i != size-1) {
+		DUMP_P(", ");
+		}
+	}
+	DUMP_P("},\n");
+}
+
+#ifndef TINYVM_CODEGEN
 static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 {
 	size_t i, size = OPDATA[c->opcode].size;
@@ -431,6 +488,7 @@ static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 	}
 	DUMP_P("\n");
 }
+#endif
 
 static KMETHOD Fmethod_runVM(CTX, ksfp_t *sfp _RIX)
 {
@@ -445,6 +503,17 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 	kMethod_setFunc(mtd, Fmethod_runVM);
 	KSETv(Wmtd->kcode, kcode);
 	Wmtd->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
+	fprintf(stderr, "dump tinykonoha\n");
+#ifdef TINYVM_CODEGEN
+	kopl_t *pc = mtd->pc_start;
+	while(1) {
+		dumpBYTECODE(_ctx, pc, mtd->pc_start);
+		if (pc->opcode == OPCODE_RET) {
+			break;
+		}
+		pc++;
+	}
+#else
 	if(verbose_code) {
 		DBG_P("DUMP CODE");
 		kopl_t *pc = mtd->pc_start;
@@ -456,6 +525,7 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 			pc++;
 		}
 	}
+#endif
 	WASSERT(mtd);
 }
 
@@ -566,7 +636,7 @@ static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx)
 		}
 		else {
 			v = BUILD_addConstPool(_ctx, v);
-			ASM(NSET, OC_(a), (uintptr_t)v, CT_(expr->ty));
+			ASM(OSET, OC_(a), (uintptr_t)v, CT_(expr->ty));
 		}
 		break;
 	}
