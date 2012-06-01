@@ -43,6 +43,7 @@
 #endif
 #endif
 
+#include "subproc_resourcemonitor.h"
 #include"subproc_glue.h"
 
 // --------------------------------------------------------------------------

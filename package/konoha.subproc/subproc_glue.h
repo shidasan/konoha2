@@ -36,83 +36,6 @@ extern int pipe2 (int __pipedes[2], int __flags);
 #endif
 extern int sigignore (int __sig);
 
-
-#define SUBPROC_RESOURCE_MONITOR
-// for resource monitoring
-#if defined(__APPLE__) && defined(SUBPROC_RESOURCE_MONITOR)
-// for mac
-#include <mach/mach.h>
-typedef struct mach_send_port_msg {
-	mach_msg_header_t          header;
-	mach_msg_body_t            body;
-	mach_msg_port_descriptor_t task_port;
-}mach_send_port_msg;
-
-typedef struct mach_recv_port_msg {
-	mach_msg_header_t header;
-	mach_msg_body_t body;
-	mach_msg_port_descriptor_t task_port;
-	mach_msg_trailer_t trailer;
-} mach_recv_port_msg;
-
-#define SLEEP_NSEC 10000
-
-#define setup_recv_port(port) k_setup_recv_port(_ctx, port)
-#define send_port(p1, p2) k_send_port (_ctx, p1, p2)
-#define recv_port(p1, p2) k_recv_port (_ctx, p1, p2)
-
-static int k_setup_recv_port (CTX, mach_port_t *recv_port) {
-	kern_return_t err;
-	mach_port_t port = MACH_PORT_NULL;
-	err = mach_port_allocate (mach_task_self (), MACH_PORT_RIGHT_RECEIVE, &port);
-	// TODO: error handling
-	err = mach_port_insert_right (mach_task_self (), port, port, MACH_MSG_TYPE_MAKE_SEND);
-	//TODO: error handling
-	*recv_port = port;
-	return 0;
-}
-
-static int k_send_port (CTX, mach_port_t remote_port, mach_port_t port) {
-	mach_send_port_msg msg;
-	kern_return_t err;
-	msg.header.msgh_remote_port = remote_port;
-	msg.header.msgh_local_port  = MACH_PORT_NULL;
-	msg.header.msgh_bits        = MACH_MSGH_BITS (MACH_MSG_TYPE_COPY_SEND, 0) |
-			MACH_MSGH_BITS_COMPLEX;
-	msg.header.msgh_size        = sizeof (msg);
-
-	msg.body.msgh_descriptor_count = 1;
-	msg.task_port.name             = port;
-	msg.task_port.disposition      = MACH_MSG_TYPE_COPY_SEND;
-	msg.task_port.type             = MACH_MSG_PORT_DESCRIPTOR;
-
-	err = mach_msg_send (&msg.header);
-	if (err != KERN_SUCCESS) {
-		ktrace(_SystemFault,
-				KEYVALUE_s("@", "mach_msg_send"),
-				KEYVALUE_s("msg", "mach msg failed")
-		);
-	}
-	return 0;
-}
-
-static int k_recv_port (CTX, mach_port_t recv_port, mach_port_t *port) {
-	mach_recv_port_msg msg;
-	kern_return_t err;
-	err = mach_msg (&msg.header, MACH_RCV_MSG, 0, sizeof (msg), recv_port,
-					MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
-	if(err != KERN_SUCCESS){
-		ktrace(_SystemFault,
-				KEYVALUE_s("@", "mach_msg"),
-				KEYVALUE_s("msg", "recv port failed")
-		);
-	}
-	*port = msg.task_port.name;
-	return 0;
-}
-
-#endif /* ifdef __APPLE__ */
-
 #define MOD_subproc 23
 
 typedef struct {
@@ -123,7 +46,6 @@ typedef struct {
 typedef struct {
 	kmodlocal_t h;
 } ctxsubproc_t;
-
 
 typedef struct {
 	int mode;                              // the kind of identifier
@@ -146,6 +68,7 @@ typedef struct {
 	int timeout;                           // child process timeout value
 	int status;                            // waitpid status
 	int timeoutKill;                       // child process Timeout ending flag [true/false]
+	SUBPROC_RESOURCEMON_INSTANCE;
 } subprocData_t;                           // subproc data structure
 
 
@@ -332,15 +255,8 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		}
 	}
 
-#if defined(SUBPROC_RESOURCE_MONITOR)
-	mach_port_t    parent_recv_port = MACH_PORT_NULL;
-	mach_port_t    child_recv_port  =  MACH_PORT_NULL;
-	task_t                     task = MACH_PORT_NULL;
-	kern_return_t kerr;
-	if (setup_recv_port (&parent_recv_port) != 0) return -1;
-	kerr = task_set_bootstrap_port(mach_task_self(), parent_recv_port);
-	// error handler
-#endif
+	SETUP_RESOURCE_MONITOR(spd);
+
 	switch(pid = fork()) {
 	case -1:
 		// parent process illegal route
@@ -353,26 +269,11 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		if(emode == M_PIPE) {
 			close(err[0]); close(err[1]);
 		}
-#if defined(SUBPROC_RESOURCE_MONITOR)
-		if (KERN_SUCCESS != mach_port_deallocate (mach_task_self(), parent_recv_port)) {
-			ktrace(_SystemFault,
-					KEYVALUE_s("@", "dup2"),
-					KEYVALUE_u("errno", errno),
-					KEYVALUE_s("errstr", strerror(errno))
-			);
-		}
-#endif
+		CLEANUP_RESOURCE_MONITOR(spd);
 		break;
 	case 0:
 		// child process normal route
-#if defined(SUBPROC_RESOURCE_MONITOR)
-		kerr = task_get_bootstrap_port(mach_task_self(), &parent_recv_port);
-		if (setup_recv_port(&child_recv_port) != 0) return -1;
-		if (send_port (parent_recv_port, mach_task_self()) != 0) return -1;
-		if (send_port(parent_recv_port, child_recv_port) != 0) return -1;
-		if (recv_port(child_recv_port, &bootstrap_port) != 0) return -1;
-		kerr = task_set_bootstrap_port(mach_task_self(), bootstrap_port);
-#endif
+		SETUP_RESOURCE_MONITOR_FOR_CHILD(spd);
 		if(wmode == M_PIPE){
 			close(0);
 			if (dup2(p2c[0], 0) == -1) {
@@ -513,25 +414,11 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		_exit(1);
 	default:
 		// parent process normal route
-#if defined(SUBPROC_RESOURCE_MONITOR)
-		kerr = task_set_bootstrap_port(mach_task_self(), bootstrap_port);
-		if (recv_port(parent_recv_port, &task) != 0) return -1;
-		if (recv_port(parent_recv_port, &child_recv_port) != 0) return -1;
-		if (send_port(child_recv_port, bootstrap_port) != 0) return -1;
-		size_t mem = 0;
-		struct task_basic_info t_info;
-		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
-		do {
-			if (KERN_SUCCESS != task_info(task, TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
-					break;
-			if (mem < t_info.resident_size) mem = t_info.resident_size;
-		}while (!usleep(SLEEP_NSEC));
-		/*fprintf(stderr, "basic task info, suspend_count:%d, user_time=%d[msec] system_time:%d[msec] RSS: %.1fM\n",
-				t_info.suspend_count,
-				t_info.user_time.microseconds, t_info.system_time.microseconds,
-				(double)mem / (1024.0 * 1024.0));
-		 */
-		kerr = mach_port_deallocate(mach_task_self(), parent_recv_port);
+#if defined(SUBPROC_ENABLE_RESOURCEMONITOR)
+		RECV_RESOURCE_MONITOR_FROM_CHILD(spd);
+		size_t mem = FETCH_MEM_FROM_RESOURCE_MONITOR(spd);
+//		fprintf(stderr, "menusage:%.1fM\n", (double)mem / (1024.0 * 1024.0));
+		CLEANUP_RESOURCE_MONITOR(spd);
 #endif
 		if(rmode == M_PIPE) {
 			spd->r.fp = fdopen(c2p[0], "r");
@@ -707,6 +594,7 @@ static void initData (CTX, subprocData_t* p) {
 	initFd(&p->r);
 	initFd(&p->w);
 	initFd(&p->e);
+	INIT_RESOURCE_MONITOR(p);
 }
 
 // for poll
@@ -1410,4 +1298,7 @@ static kbool_t subproc_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SUBPROC_GLUE_H_ */
