@@ -49,53 +49,65 @@ typedef struct mach_send_port_msg {
 }mach_send_port_msg;
 
 typedef struct mach_recv_port_msg {
-	mach_send_port_msg m;
+	mach_msg_header_t header;
+	mach_msg_body_t body;
+	mach_msg_port_descriptor_t task_port;
 	mach_msg_trailer_t trailer;
 } mach_recv_port_msg;
 
 #define SLEEP_NSEC 10000
 
-static int setup_recv_port (mach_port_t *recv_port) {
-	mach_port_t   port = MACH_PORT_NULL;
-	if (KERN_SUCCESS !=
-		mach_port_allocate (mach_task_self (), MACH_PORT_RIGHT_RECEIVE, &port))
-	if (KERN_SUCCESS !=
-		mach_port_insert_right (mach_task_self (), port, port, MACH_MSG_TYPE_MAKE_SEND))
+#define setup_recv_port(port) k_setup_recv_port(_ctx, port)
+#define send_port(p1, p2) k_send_port (_ctx, p1, p2)
+#define recv_port(p1, p2) k_recv_port (_ctx, p1, p2)
+
+static int k_setup_recv_port (CTX, mach_port_t *recv_port) {
+	kern_return_t err;
+	mach_port_t port = MACH_PORT_NULL;
+	err = mach_port_allocate (mach_task_self (), MACH_PORT_RIGHT_RECEIVE, &port);
+	// TODO: error handling
+	err = mach_port_insert_right (mach_task_self (), port, port, MACH_MSG_TYPE_MAKE_SEND);
+	//TODO: error handling
 	*recv_port = port;
 	return 0;
 }
 
-static int send_port (mach_port_t remote_port, mach_port_t port) {
+static int k_send_port (CTX, mach_port_t remote_port, mach_port_t port) {
 	mach_send_port_msg msg;
-
+	kern_return_t err;
 	msg.header.msgh_remote_port = remote_port;
 	msg.header.msgh_local_port  = MACH_PORT_NULL;
 	msg.header.msgh_bits        = MACH_MSGH_BITS (MACH_MSG_TYPE_COPY_SEND, 0) |
 			MACH_MSGH_BITS_COMPLEX;
-	msg.header.msgh_size        = sizeof (mach_send_port_msg);
+	msg.header.msgh_size        = sizeof (msg);
 
 	msg.body.msgh_descriptor_count = 1;
 	msg.task_port.name             = port;
 	msg.task_port.disposition      = MACH_MSG_TYPE_COPY_SEND;
 	msg.task_port.type             = MACH_MSG_PORT_DESCRIPTOR;
 
-	if (KERN_SUCCESS != mach_msg_send (&msg.header)) {
-//		fprintf(stderr, "failed msg send\n");
+	err = mach_msg_send (&msg.header);
+	if (err != KERN_SUCCESS) {
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "mach_msg_send"),
+				KEYVALUE_s("msg", "mach msg failed")
+		);
 	}
 	return 0;
 }
 
-static int recv_port (mach_port_t recv_port, mach_port_t *port) {
+static int k_recv_port (CTX, mach_port_t recv_port, mach_port_t *port) {
 	mach_recv_port_msg msg;
-
-	if (KERN_SUCCESS !=
-			mach_msg (&msg.m.header, MACH_RCV_MSG, 0, sizeof (mach_recv_port_msg), recv_port,
-					MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL))
-		{
-//		fprintf(stderr, "failed mac_msg\n");
-		}
-
-	*port = msg.m.task_port.name;
+	kern_return_t err;
+	err = mach_msg (&msg.header, MACH_RCV_MSG, 0, sizeof (msg), recv_port,
+					MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
+	if(err != KERN_SUCCESS){
+		ktrace(_SystemFault,
+				KEYVALUE_s("@", "mach_msg"),
+				KEYVALUE_s("msg", "recv port failed")
+		);
+	}
+	*port = msg.task_port.name;
 	return 0;
 }
 
@@ -278,13 +290,12 @@ static int spSplit(char* str, char* args[]) {
  *         -1 is Internal Error
  */
 
-task_t                     task = MACH_PORT_NULL;
 static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 {
 	if (IS_NULL(command)) {
 		return -1;
 	}
-	int pid  = -1;
+	pid_t pid  = -1;
 	int rmode = (spd->r.mode==M_DEFAULT) ? defaultMode : spd->r.mode;
 	int wmode = (spd->w.mode==M_DEFAULT) ? defaultMode : spd->w.mode;
 	int emode = (spd->e.mode==M_DEFAULT) ? defaultMode : spd->e.mode;
@@ -324,11 +335,11 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 #if defined(SUBPROC_RESOURCE_MONITOR)
 	mach_port_t    parent_recv_port = MACH_PORT_NULL;
 	mach_port_t    child_recv_port  =  MACH_PORT_NULL;
+	task_t                     task = MACH_PORT_NULL;
 	kern_return_t kerr;
 	if (setup_recv_port (&parent_recv_port) != 0) return -1;
-	if (KERN_SUCCESS != task_set_bootstrap_port(mach_task_self(), parent_recv_port)) {
-		fprintf(stderr, "ERROR!!!");
-	}
+	kerr = task_set_bootstrap_port(mach_task_self(), parent_recv_port);
+	// error handler
 #endif
 	switch(pid = fork()) {
 	case -1:
@@ -508,7 +519,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		if (recv_port(parent_recv_port, &child_recv_port) != 0) return -1;
 		if (send_port(child_recv_port, bootstrap_port) != 0) return -1;
 		size_t mem = 0;
-		struct task_basic_info t_info = {0};
+		struct task_basic_info t_info;
 		mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
 		do {
 			if (KERN_SUCCESS != task_info(task, TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count))
@@ -519,7 +530,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 				t_info.suspend_count,
 				t_info.user_time.microseconds, t_info.system_time.microseconds,
 				(double)mem / (1024.0 * 1024.0));
-				*/
+		 */
 		kerr = mach_port_deallocate(mach_task_self(), parent_recv_port);
 #endif
 		if(rmode == M_PIPE) {
