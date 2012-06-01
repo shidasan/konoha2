@@ -25,50 +25,24 @@
 /* ************************************************************************ */
 
 #include "vm.h"
-#ifdef _CLASSICVM
-#include "../../module/classicvm/classicvm_.h"
-#else
-#include "minivm.h"
-#endif
-
-/* ************************************************************************ */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <konoha2/konoha2_local.h>
-
-/* ------------------------------------------------------------------------ */
-/* kcode */
-
-int verbose_code = 0;  // global variable
-
-#define BBSIZE(BB)  ((BB)->op.bytesize / sizeof(kopl_t))
-#define BBOP(BB)     (BB)->op.opl
-#define BBOPn(BB,N)  (BB)->op.opl[N]
-
-static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
-
-#define GammaBuilderLabel(n)   (kBasicBlock*)(ctxcode->lstacks->list[n])
-
-static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
-{
-	struct _kBasicBlock *bb = new_W(BasicBlock, 0);
-	bb->id = kArray_size(ctxcode->insts);
-	kArray_add(ctxcode->insts, bb);
-	return bb;
-}
 
 #if defined(K_USING_THCODE_)
 #define TADDR   NULL, 0/*counter*/
 #else
 #define TADDR   0/*counter*/
 #endif/*K_USING_THCODE_*/
-
 #define ASMLINE  0
 
 #define OP_T(T) union { kopl_t op; T op_; }
+
+#define NC_(sfpidx)    (((sfpidx) * 2) + 1)
+#define OC_(sfpidx)    ((sfpidx) * 2)
+#define SFP_(sfpidx)   ((sfpidx) * 2)
+#define RIX_(rix)      rix
+
+#define BBSIZE(BB)  ((BB)->op.bytesize / sizeof(kopl_t))
+#define BBOP(BB)     (BB)->op.opl
+#define GammaBuilderLabel(n)   (kBasicBlock*)(ctxcode->lstacks->list[n])
 
 #define ASM(T, ...) do {\
 	klr_##T##_t op_ = {TADDR, OPCODE_##T, ASMLINE, ## __VA_ARGS__};\
@@ -94,14 +68,35 @@ static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
 	BasicBlock_add(_ctx, bb, 0, &tmp_.op, sizeof(klr_##T##_t));\
 } while (0)
 
-#define NC_(sfpidx)    (((sfpidx) * 2) + 1)
-#define OC_(sfpidx)    ((sfpidx) * 2)
-#define SFP_(sfpidx)   ((sfpidx) * 2)
-#define RIX_(rix)      rix
-
 #ifdef _CLASSICVM
+#include "../../module/classicvm/classicvm_gen.h"
 #include "../../module/classicvm/classicvm.h"
+#else
+#include "minivm.h"
 #endif
+
+#include <konoha2/konoha2_local.h>
+
+/* ************************************************************************ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* ------------------------------------------------------------------------ */
+/* kcode */
+
+int verbose_code = 0;  // global variable
+
+static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
+
+static struct _kBasicBlock* new_BasicBlockLABEL(CTX)
+{
+	struct _kBasicBlock *bb = new_W(BasicBlock, 0);
+	bb->id = kArray_size(ctxcode->insts);
+	kArray_add(ctxcode->insts, bb);
+	return bb;
+}
 
 static void BasicBlock_add(CTX, struct _kBasicBlock *bb, kushort_t line, kopl_t *op, size_t size)
 {

@@ -22,40 +22,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include<konoha2/konoha2.h>
-#include<konoha2/sugar.h>
-#include <konoha2/bytes.h>
+/* ************************************************************************ */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <poll.h>
-#include <signal.h>
-#include <sys/time.h>
-
-#if defined(__linux__)
-#include <linux/version.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
-#define __USE_LOCAL_PIPE2__
-#endif
-#endif /* __linux__ */
-
-#include "subproc_resourcemonitor.h"
-#include "subproc_glue.h"
-
-// --------------------------------------------------------------------------
-
-KDEFINE_PACKAGE* subproc_init(void)
-{
-	static KDEFINE_PACKAGE d = {
-		KPACKNAME("subproc", "1.0"),
-		.initPackage = subproc_initPackage,
-		.setupPackage = subproc_setupPackage,
-		.initKonohaSpace = subproc_initKonohaSpace,
-		.setupKonohaSpace = subproc_setupKonohaSpace,
-	};
-	return &d;
-}
+#define _TINYVM 1
+#include "../../src/vm/asm.c"

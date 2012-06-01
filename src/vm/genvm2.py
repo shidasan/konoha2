@@ -421,12 +421,6 @@ def write_exec(f):
 	write_chapter(f, '[exec]')
 	f.write('''
 
-//#ifdef K_USING_VMCOUNT_
-//#define VMCOUNT(op)    ((op)->count)++;
-//#else
-//#define VMCOUNT(op)
-//#endif
-
 //#if (defined(K_USING_LINUX_) && (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) && __GNUC__ >= 3))
 //#define K_USING_VMASMDISPATCH 1
 //#endif
@@ -472,17 +466,13 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	};
 #endif
 	krbp_t *rbp = (krbp_t*)sfp0;
-	USE_PROF(
-	uint64_t _utime = knh_getTime();
-	static uint64_t _UTIME[OPCODE_NOP+1] = {0};
-	static size_t _UC[OPCODE_NOP+1] = {0};)
 	DISPATCH_START(pc);
 ''')
 	for kc in KCODE_LIST:
 # DBG_P("%%p %%s", pc-1, T_opcode((pc-1)->opcode));
 		f.write('''
 	%s(%s) {
-		%s *op = (%s*)pc; (void)op;
+		%s *op = (%s*)pc;
 		%s; pc++;
 		GOTO_NEXT();
 	} ''' % (kc.ifdef, kc.name, kc.ctype, kc.ctype, getmacro(kc, 'JUMP')))
@@ -520,6 +510,30 @@ def gen_vm_c(bdir):
 #	close_c(f, fname)
 	
 	f = open('minivm.h', 'w')
+	f.write('''/****************************************************************************
+ * Copyright (c) 2012, the Konoha project authors. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ***************************************************************************/
+''');
 	f.write('#ifndef %s\n' % 'minivm_h'.upper());
 	f.write('#define %s\n' % 'minivm_h'.upper());
 	f.write('''// THIS FILE WAS AUTOMATICALLY GENERATED

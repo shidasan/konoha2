@@ -2,6 +2,9 @@
 #ifndef CLASSICVM_H_
 #define CLASSICVM_H_
 
+static void EXPR_asm(CTX, int a, kExpr *expr, int shift, int espidx);
+static struct _kBasicBlock* new_BasicBlockLABEL(CTX);
+
 static void BUILD_asm(CTX, kopl_t *op, size_t opsize);
 #define MN_isNotNull MN_("isNotNull")
 #define MN_isNull    MN_("isNull")

@@ -172,7 +172,7 @@ struct _kKonohaCode {
 #define SFPIDX(n) ((n)/2)
 #define RBP(sfp)  ((krbp_t*)(sfp))
 
-#define OPEXEC_NOP()
+#define OPEXEC_NOP() (void)op
 
 #define OPEXEC_THCODE(F) { \
 		F(_ctx, pc, OPJUMP); \
@@ -181,6 +181,7 @@ struct _kKonohaCode {
 	}\
 
 #define OPEXEC_ENTER() {\
+		(void)op;\
 		kopl_t *vpc = PC_NEXT(pc);\
 		pc = (rbp[K_MTDIDX2].mtdNC)->pc_start;\
 		rbp[K_SHIFTIDX2].shift = 0;\
@@ -189,11 +190,13 @@ struct _kKonohaCode {
 	}\
 
 #define OPEXEC_NCALL() { \
+		(void)op;\
 		(rbp[K_MTDIDX2].mtdNC)->fastcall_1(_ctx, SFP(rbp) K_RIXPARAM);\
 		OPEXEC_RET();\
 	} \
 
 #define OPEXEC_EXIT() {\
+		(void)op;\
 		pc = NULL; \
 		goto L_RETURN;\
 	}\
@@ -258,6 +261,7 @@ struct _kKonohaCode {
 
 
 #define OPEXEC_RET() { \
+		(void)op;\
 		intptr_t vshift = rbp[K_SHIFTIDX2].shift;\
 		kopl_t *vpc = rbp[K_PCIDX2].pc;\
 		rbp[K_MTDIDX2].mtdNC = NULL;\
@@ -311,8 +315,6 @@ struct _kKonohaCode {
 	} \
 
 
-#define USE_PROF(C)
-
 #ifdef OPOLD
 /* ------------------------------------------------------------------------ */
 /* KCODE */
@@ -337,13 +339,6 @@ struct _kKonohaCode {
 
 #define PC_PREV(pc)   pc-1
 
-
-#define VMPROF(OPCODE) USE_PROF({\
-		kuint64_t t = knh_getTime();\
-		_UTIME[OPCODE] += (t - _utime);\
-		_UC[OPCODE] += 1;\
-		_utime = t;\
-	})\
 
 /* [HALT] */
 

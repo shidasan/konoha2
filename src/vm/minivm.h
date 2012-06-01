@@ -21,7 +21,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
-
 #ifndef MINIVM_H
 #define MINIVM_H
 // THIS FILE WAS AUTOMATICALLY GENERATED
@@ -303,12 +302,6 @@ static kbool_t kopcode_hasjump(kopcode_t opcode)
 /* [exec] */
 
 
-//#ifdef K_USING_VMCOUNT_
-//#define VMCOUNT(op)    ((op)->count)++;
-//#else
-//#define VMCOUNT(op)
-//#endif
-
 //#if (defined(K_USING_LINUX_) && (defined(__i386__) || defined(__x86_64__)) && (defined(__GNUC__) && __GNUC__ >= 3))
 //#define K_USING_VMASMDISPATCH 1
 //#endif
@@ -354,119 +347,115 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	};
 #endif
 	krbp_t *rbp = (krbp_t*)sfp0;
-	USE_PROF(
-	uint64_t _utime = knh_getTime();
-	static uint64_t _UTIME[OPCODE_NOP+1] = {0};
-	static size_t _UC[OPCODE_NOP+1] = {0};)
 	DISPATCH_START(pc);
 
 	CASE(NOP) {
-		klr_NOP_t *op = (klr_NOP_t*)pc; (void)op;
+		klr_NOP_t *op = (klr_NOP_t*)pc;
 		OPEXEC_NOP(); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(THCODE) {
-		klr_THCODE_t *op = (klr_THCODE_t*)pc; (void)op;
+		klr_THCODE_t *op = (klr_THCODE_t*)pc;
 		OPEXEC_THCODE(op->th); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(ENTER) {
-		klr_ENTER_t *op = (klr_ENTER_t*)pc; (void)op;
+		klr_ENTER_t *op = (klr_ENTER_t*)pc;
 		OPEXEC_ENTER(); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(EXIT) {
-		klr_EXIT_t *op = (klr_EXIT_t*)pc; (void)op;
+		klr_EXIT_t *op = (klr_EXIT_t*)pc;
 		OPEXEC_EXIT(); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NSET) {
-		klr_NSET_t *op = (klr_NSET_t*)pc; (void)op;
+		klr_NSET_t *op = (klr_NSET_t*)pc;
 		OPEXEC_NSET(op->a, op->n, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NMOV) {
-		klr_NMOV_t *op = (klr_NMOV_t*)pc; (void)op;
+		klr_NMOV_t *op = (klr_NMOV_t*)pc;
 		OPEXEC_NMOV(op->a, op->b, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NMOVx) {
-		klr_NMOVx_t *op = (klr_NMOVx_t*)pc; (void)op;
+		klr_NMOVx_t *op = (klr_NMOVx_t*)pc;
 		OPEXEC_NMOVx(op->a, op->b, op->bx, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(XNMOV) {
-		klr_XNMOV_t *op = (klr_XNMOV_t*)pc; (void)op;
+		klr_XNMOV_t *op = (klr_XNMOV_t*)pc;
 		OPEXEC_XNMOV(op->a, op->ax, op->b, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NEW) {
-		klr_NEW_t *op = (klr_NEW_t*)pc; (void)op;
+		klr_NEW_t *op = (klr_NEW_t*)pc;
 		OPEXEC_NEW(op->a, op->p, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NULL) {
-		klr_NULL_t *op = (klr_NULL_t*)pc; (void)op;
+		klr_NULL_t *op = (klr_NULL_t*)pc;
 		OPEXEC_NULL(op->a, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(BOX) {
-		klr_BOX_t *op = (klr_BOX_t*)pc; (void)op;
+		klr_BOX_t *op = (klr_BOX_t*)pc;
 		OPEXEC_BOX(op->a, op->b, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(UNBOX) {
-		klr_UNBOX_t *op = (klr_UNBOX_t*)pc; (void)op;
+		klr_UNBOX_t *op = (klr_UNBOX_t*)pc;
 		OPEXEC_UNBOX(op->a, op->b, op->ty); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(CALL) {
-		klr_CALL_t *op = (klr_CALL_t*)pc; (void)op;
+		klr_CALL_t *op = (klr_CALL_t*)pc;
 		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(SCALL) {
-		klr_SCALL_t *op = (klr_SCALL_t*)pc; (void)op;
+		klr_SCALL_t *op = (klr_SCALL_t*)pc;
 		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(RET) {
-		klr_RET_t *op = (klr_RET_t*)pc; (void)op;
+		klr_RET_t *op = (klr_RET_t*)pc;
 		OPEXEC_RET(); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(NCALL) {
-		klr_NCALL_t *op = (klr_NCALL_t*)pc; (void)op;
+		klr_NCALL_t *op = (klr_NCALL_t*)pc;
 		OPEXEC_NCALL(); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(BNOT) {
-		klr_BNOT_t *op = (klr_BNOT_t*)pc; (void)op;
+		klr_BNOT_t *op = (klr_BNOT_t*)pc;
 		OPEXEC_BNOT(op->c, op->a); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(JMP) {
-		klr_JMP_t *op = (klr_JMP_t*)pc; (void)op;
+		klr_JMP_t *op = (klr_JMP_t*)pc;
 		OPEXEC_JMP(pc = op->jumppc, JUMP); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(JMPF) {
-		klr_JMPF_t *op = (klr_JMPF_t*)pc; (void)op;
+		klr_JMPF_t *op = (klr_JMPF_t*)pc;
 		OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(SAFEPOINT) {
-		klr_SAFEPOINT_t *op = (klr_SAFEPOINT_t*)pc; (void)op;
+		klr_SAFEPOINT_t *op = (klr_SAFEPOINT_t*)pc;
 		OPEXEC_SAFEPOINT(op->espshift); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(ERROR) {
-		klr_ERROR_t *op = (klr_ERROR_t*)pc; (void)op;
+		klr_ERROR_t *op = (klr_ERROR_t*)pc;
 		OPEXEC_ERROR(op->start, op->msg); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(VCALL) {
-		klr_VCALL_t *op = (klr_VCALL_t*)pc; (void)op;
+		klr_VCALL_t *op = (klr_VCALL_t*)pc;
 		OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, op->mtd, op->tyo); pc++;
 		GOTO_NEXT();
 	} 
