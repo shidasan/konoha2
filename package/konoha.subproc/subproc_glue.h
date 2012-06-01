@@ -36,7 +36,6 @@ extern int pipe2 (int __pipedes[2], int __flags);
 #endif
 extern int sigignore (int __sig);
 
-
 #define MOD_subproc 23
 
 typedef struct {
@@ -47,7 +46,6 @@ typedef struct {
 typedef struct {
 	kmodlocal_t h;
 } ctxsubproc_t;
-
 
 typedef struct {
 	int mode;                              // the kind of identifier
@@ -70,6 +68,7 @@ typedef struct {
 	int timeout;                           // child process timeout value
 	int status;                            // waitpid status
 	int timeoutKill;                       // child process Timeout ending flag [true/false]
+	SUBPROC_RESOURCEMON_INSTANCE;
 } subprocData_t;                           // subproc data structure
 
 
@@ -214,14 +213,12 @@ static int spSplit(char* str, char* args[]) {
  *         -1 is Internal Error
  */
 
-#include <syslog.h>
-
 static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 {
 	if (IS_NULL(command)) {
 		return -1;
 	}
-	int pid  = -1;
+	pid_t pid  = -1;
 	int rmode = (spd->r.mode==M_DEFAULT) ? defaultMode : spd->r.mode;
 	int wmode = (spd->w.mode==M_DEFAULT) ? defaultMode : spd->w.mode;
 	int emode = (spd->e.mode==M_DEFAULT) ? defaultMode : spd->e.mode;
@@ -244,6 +241,7 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			return -1;
 		}
 	}
+
 	if(emode == M_PIPE) {
 		if(pipe2(err, O_NONBLOCK) != 0) {
 			ktrace(_SystemFault,
@@ -256,7 +254,11 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 			return -1;
 		}
 	}
-	if((pid = fork()) < 0) {
+
+	SETUP_RESOURCE_MONITOR(spd);
+
+	switch(pid = fork()) {
+	case -1:
 		// parent process illegal route
 		if(rmode == M_PIPE) {
 			close(c2p[0]); close(c2p[1]);
@@ -267,8 +269,11 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		if(emode == M_PIPE) {
 			close(err[0]); close(err[1]);
 		}
-	}else if(pid == 0) {
+		CLEANUP_RESOURCE_MONITOR(spd);
+		break;
+	case 0:
 		// child process normal route
+		SETUP_RESOURCE_MONITOR_FOR_CHILD(spd);
 		if(wmode == M_PIPE){
 			close(0);
 			if (dup2(p2c[0], 0) == -1) {
@@ -407,9 +412,14 @@ static int knh_popen(CTX, kString* command, subprocData_t *spd, int defaultMode)
 		}
 		perror("knh_popen :");
 		_exit(1);
-	}
-	else {
+	default:
 		// parent process normal route
+#if defined(SUBPROC_ENABLE_RESOURCEMONITOR)
+		ATTACH_RESOURCE_MONITOR_FOR_CHILD(spd, pid);
+		size_t mem = FETCH_MEM_FROM_RESOURCE_MONITOR(spd);
+//		fprintf(stderr, "menusage:%.1fM\n", (double)mem / (1024.0 * 1024.0));
+		CLEANUP_RESOURCE_MONITOR(spd);
+#endif
 		if(rmode == M_PIPE) {
 			spd->r.fp = fdopen(c2p[0], "r");
 			close(c2p[1]);
@@ -479,6 +489,7 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
 	}
 	int stat;
 	waitpid(pid, &stat, WUNTRACED);
+
 	if(timeout > 0) {
 		// SIGALRM release
 		setitimer(ITIMER_REAL, NULL, NULL);
@@ -523,13 +534,13 @@ static int knh_wait(CTX, int pid, int bg, int timeout, int *status ) {
  * @return in the case of foreground, it is start status of a child process
  *         in the case of background, it is termination status of a child process
  */
-static int proc_start(CTX, subprocData_t *sp ) {
+static int proc_start(CTX, subprocData_t *spd) {
 	int ret = S_PREEXECUTION;
-	int pid = knh_popen(_ctx, sp->command, sp, M_NREDIRECT );
+	int pid = knh_popen(_ctx, spd->command, spd, M_NREDIRECT );
 	if(pid > 0) {
-		sp->cpid  = pid;
-		if(sp->bg != 1) {
-			ret = knh_wait(_ctx, sp->cpid, sp->bg, sp->timeout, &sp->status );
+		spd->cpid  = pid;
+		if(spd->bg != 1) {
+			ret = knh_wait(_ctx, spd->cpid, spd->bg, spd->timeout, &spd->status );
 		}else {
 			// nomal end status for bg
 			ret = 0;
@@ -583,6 +594,7 @@ static void initData (CTX, subprocData_t* p) {
 	initFd(&p->r);
 	initFd(&p->w);
 	initFd(&p->e);
+	INIT_RESOURCE_MONITOR(p);
 }
 
 // for poll
@@ -956,7 +968,7 @@ KMETHOD Subproc_getPid(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->cpid : -1 );
+	RETURNi_( (p!= NULL) ? p->cpid : -1 );
 }
 
 //## int Subproc.getTimeout();
@@ -964,7 +976,7 @@ KMETHOD Subproc_getTimeout(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->timeout : -1 );
+	RETURNi_( (p!= NULL) ? p->timeout : -1 );
 }
 
 //## int Subproc.getReturncode();
@@ -972,7 +984,7 @@ KMETHOD Subproc_getReturncode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNi_( (p!=NULL) ? p->status : -1 );
+	RETURNi_( (p!= NULL) ? p->status : -1 );
 }
 
 //## boolean Subproc.enablePipemodeIN(Boolean isPipemode);
@@ -1108,7 +1120,7 @@ KMETHOD Subproc_isShellmode(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->shell==1) : 0);
+	RETURNb_((p != NULL) ? (p->shell == 1) : 0);
 }
 
 //## boolean Subproc.isPipemodeIN();
@@ -1116,7 +1128,7 @@ KMETHOD Subproc_isPipemodeIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->w.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->w.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeOUT();
@@ -1124,7 +1136,7 @@ KMETHOD Subproc_isPipemodeOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->r.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->r.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isPipemodeERR();
@@ -1132,7 +1144,7 @@ KMETHOD Subproc_isPipemodeERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_PIPE) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_PIPE) : 0);
 }
 
 //## boolean Subproc.isStandardIN();
@@ -1140,7 +1152,7 @@ KMETHOD Subproc_isStandardIN(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->w.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->w.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardOUT();
@@ -1148,7 +1160,7 @@ KMETHOD Subproc_isStandardOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->r.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->r.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isStandardERR();
@@ -1156,7 +1168,7 @@ KMETHOD Subproc_isStandardERR(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_NREDIRECT) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_NREDIRECT) : 0);
 }
 
 //## boolean Subproc.isERR2StdOUT();
@@ -1164,7 +1176,7 @@ KMETHOD Subproc_isERR2StdOUT(CTX, ksfp_t *sfp _RIX)
 {
 	kSubproc *sp = (kSubproc*)sfp[0].o;
 	subprocData_t *p = sp->spd;
-	RETURNb_((p!=NULL) ? (p->e.mode==M_STDOUT) : 0);
+	RETURNb_((p != NULL) ? (p->e.mode == M_STDOUT) : 0);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1286,4 +1298,7 @@ static kbool_t subproc_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 	return true;
 }
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* SUBPROC_GLUE_H_ */
