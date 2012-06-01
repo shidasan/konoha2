@@ -390,17 +390,52 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 }
 
 /* ------------------------------------------------------------------------ */
+
+#ifdef TINYVM_CODEGEN
+
+static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
+{
+	DUMP_P("{\n");
+	void *p = (void*)"hi";
+	(void)p;
+	while(1) {
+		if (pc->opcode == OPCODE_OSET) {
+			kObject *o = (kObject*)((klr_OSET_t*)pc)->n;
+			DUMP_P("{%d, ", O_cid(o));
+			switch(O_cid(o)) {
+			case CLASS_Int:
+				DUMP_P("(void*)%ld", ((kNumber*)o)->ivalue);
+				break;
+			case CLASS_String:
+				DUMP_P("(void*)\"%s\"", ((kString*)o)->text);
+				break;
+
+			default:
+				asm("int3");
+			}
+			DUMP_P("},\n");
+		}
+		if (pc->opcode == OPCODE_RET) {
+			break;
+		}
+		pc++;
+	}
+	DUMP_P("},\n");
+}
+
 static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 {
 	static int constdatasize = 0;
 	size_t i, size = OPDATA[c->opcode].size;
 	const kushort_t *vmt = OPDATA[c->opcode].types;
-	if (c->opcode == OPCODE_OSET) {
-
-	}
 	DUMP_P("{OPCODE_%s", T_opcode(c->opcode));
 	if (size > 0) {
 		DUMP_P(", ");
+	}
+	if (c->opcode == OPCODE_OSET) {
+		DUMP_P("%d/*r*/, %d/*n*/},\n", (int)c->data[0], constdatasize);
+		constdatasize++;
+		return;
 	}
 	//if(pc_start == NULL) {
 	//	DUMP_P("[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
@@ -447,7 +482,25 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 	DUMP_P("},\n");
 }
 
-#ifndef TINYVM_CODEGEN
+static void tinyvm_dump(CTX, kMethod *mtd)
+{
+	DUMP_P("{\n");
+	DUMP_P("%d/*cid*/, ", mtd->cid);
+	DUMP_P("%d/*mn*/,\n", mtd->mn);
+	kopl_t *pc = mtd->pc_start;
+	dumpConstData(_ctx, pc, mtd);
+	while(1) {
+		dumpBYTECODE(_ctx, pc, mtd->pc_start);
+		if (pc->opcode == OPCODE_RET) {
+			break;
+		}
+		pc++;
+	}
+	DUMP_P("},\n\n");
+}
+
+#else
+
 static void dumpOPCODE(CTX, kopl_t *c, kopl_t *pc_start)
 {
 	size_t i, size = OPDATA[c->opcode].size;
@@ -503,16 +556,8 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 	kMethod_setFunc(mtd, Fmethod_runVM);
 	KSETv(Wmtd->kcode, kcode);
 	Wmtd->pc_start = VirtualMachine_run(_ctx, _ctx->esp + 1, kcode->code);
-	fprintf(stderr, "dump tinykonoha\n");
 #ifdef TINYVM_CODEGEN
-	kopl_t *pc = mtd->pc_start;
-	while(1) {
-		dumpBYTECODE(_ctx, pc, mtd->pc_start);
-		if (pc->opcode == OPCODE_RET) {
-			break;
-		}
-		pc++;
-	}
+	tinyvm_dump(_ctx, mtd);
 #else
 	if(verbose_code) {
 		DBG_P("DUMP CODE");
