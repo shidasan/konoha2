@@ -411,7 +411,7 @@ static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 				break;
 
 			default:
-				asm("int3");
+				DUMP_P("NULL /* default constant */");
 			}
 			DUMP_P("},\n");
 		}
@@ -468,11 +468,11 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 			DUMP_P("%zd/*cid*/", i); break;
 			//DUMP_P("CT(%s)", T_CT(c->ct[i])); break;
 		case VMT_CO:
-			DUMP_P("%s/*CT*/", T_CT(O_ct(c->o[i]))); break;
+			DUMP_P("%d/*%s class*/", O_cid(c->o[i]), T_CT(O_ct(c->o[i]))); break;
 		case VMT_METHOD: {
 			kMethod *mtd = (kMethod*)c->o[i];
 			DUMP_P("%d/*cid*/, ", mtd->cid);
-			DUMP_P("%d/*mn*/", mtd->mn);
+			DUMP_P("%d/*mn of %s*/", mtd->mn, T_fn(mtd->mn));
 		}
 		}/*switch*/
 		if (c->opcode != OPCODE_RET && i != size-1) {
@@ -482,11 +482,40 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 	DUMP_P("},\n");
 }
 
+void dumpCidMn(CTX)
+{
+	size_t i, size = kArray_size(&_ctx->share->ca);
+	static size_t _i; /* static variable */
+	for (i = 0; i < size; i++) {
+		kclass_t *ct = _ctx->share->ca.cts[i];
+		if (_i <= i && ct->cid == ct->bcid) { /* except generics */
+			_i++;
+			DUMP_P("#define CLASS_%s %d\n", T_CT(ct), ct->cid);
+		}
+	}
+	DUMP_P("\n");
+	for (i = 0; i < size; i++) {
+		struct _kclass *ct = (struct _kclass*)_ctx->share->ca.cts[i];
+		kArray *methods = ct->methods;
+		size_t msize = kArray_size(methods);
+		for (; ct->dumpedMethod_size < msize; ct->dumpedMethod_size++) {
+			kMethod *mtd = methods->methods[ct->dumpedMethod_size];
+			DUMP_P("#define MN_%s %d\n", T_fn(mtd->mn), mtd->mn);
+		}
+	}
+	DUMP_P("\n");
+}
+
 static void tinyvm_dump(CTX, kMethod *mtd)
 {
+	static int defined = 0; /* static variable */
+	if (!defined) {
+		defined = 1;
+		dumpCidMn(_ctx);
+	}
 	DUMP_P("{\n");
 	DUMP_P("%d/*cid*/, ", mtd->cid);
-	DUMP_P("%d/*mn*/,\n", mtd->mn);
+	DUMP_P("%d/*mn%s*/,\n", mtd->mn, T_fn(mtd->mn));
 	kopl_t *pc = mtd->pc_start;
 	dumpConstData(_ctx, pc, mtd);
 	while(1) {

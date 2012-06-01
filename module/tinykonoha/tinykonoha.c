@@ -204,7 +204,7 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 		ktype_t rtype = 0;
 		kcid_t cid = (kcid_t)d[1];
 		mn_count++;
-		kmethodn_t mn = mn_count;
+		kmethodn_t mn = (kmethodn_t)d[2];
 		size_t psize = 0;
 		//kparam_t p[1];
 		d += 3;

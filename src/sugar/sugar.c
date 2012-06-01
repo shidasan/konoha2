@@ -638,6 +638,12 @@ static kbool_t KonohaSpace_importPackage(CTX, kKonohaSpace *ks, const char *name
 			}
 		}
 	}
+#ifdef TINYVM_CODEGEN
+	void dumpCidMn(CTX);
+	if (res) {
+		dumpCidMn(_ctx);
+	}
+#endif
 	return res;
 }
 

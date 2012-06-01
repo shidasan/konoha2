@@ -559,7 +559,21 @@ struct _kString;
 struct _kObject;
 //struct _kclass;
 #ifdef K_USING_TINYVM
+
 typedef kushort_t  kmagicflag_t;
+
+typedef struct kconstdata_t {
+	kcid_t cid;
+	void *conf;
+}kconstdata_t;
+
+typedef struct kmethoddecl_t {
+	kcid_t cid;
+	kmethodn_t mn;
+	kconstdata_t constdata[];
+	kopl_t opline[];
+}kmethoddecl_t;
+
 #else
 typedef uintptr_t kmagicflag_t;
 #endif
@@ -580,6 +594,9 @@ struct _kclass {
 	kushort_t                 optvalue;
 
 	const struct _kArray     *methods;
+#ifdef TINYVM_CODEGEN
+	size_t                    dumpedMethod_size;
+#endif
 	const struct _kString    *shortNameNULL;
 	union {   // default value
 		const struct _kObject  *nulvalNUL;
