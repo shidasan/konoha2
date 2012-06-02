@@ -217,8 +217,12 @@ static KMETHOD System_assert(CTX, ksfp_t *sfp _RIX)
 //## method void System.p(@Coercion String msg);
 static KMETHOD System_p(CTX, ksfp_t *sfp _RIX)
 {
+#ifdef K_USING_TINYVM
+	TDBG_s(S_text(sfp[1].s));
+#else
 	kline_t uline = sfp[K_RTNIDX].uline;
 	kreportf(PRINT_, uline, "%s", S_text(sfp[1].s));
+#endif
 }
 
 //## method void System.gc();

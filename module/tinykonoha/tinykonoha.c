@@ -317,7 +317,7 @@ static kcontext_t *new_context(size_t stacksize)
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
-	FLOAT_init(&_ctx, NULL);
+	//FLOAT_init(&_ctx, NULL);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
@@ -332,6 +332,17 @@ static void loadByteCode(CTX)
 		while (data[j].cid != -1) {
 			kArray_add(_ctx->share->constData, new_kObject(CT_(data->cid), data->conf));
 			j++;
+		}
+		kopl_t *pc = (kopl_t*)def->opline;
+		while (pc->opcode != OPCODE_RET) {
+			if (pc->opcode == OPCODE_SCALL) {
+				klr_SCALL_t *_pc = (klr_SCALL_t*)pc;
+				kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, _pc->cid, _pc->mn);
+				if (mtd == NULL || !kMethod_isStatic(mtd)) {
+					_pc->opcode = OPCODE_VCALL;
+				}
+			}
+			pc++;
 		}
 		if (def->cid != 0 && def->mn != 0) {
 			uintptr_t flag = 0;
@@ -349,7 +360,6 @@ static void execTopLevelExpression(CTX)
 		kmethoddecl_t *def = decls[i];
 		if (def->cid == 0 && def->mn == 0) {
 			kopl_u *pc = def->opline;
-			fprintf(stderr, "%d\n", pc->op.opcode);
 			krbp_t *rbp = (krbp_t*)_ctx->esp;
 			rbp[K_PCIDX2].pc = (kopl_t*)&opEXIT;
 			rbp[K_SHIFTIDX2].shift = 0;
@@ -375,10 +385,9 @@ void TaskDisp(VP_INT exinf)
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
 	kclass_t *ct = CT_(CLASS_String);
-	TDBG_s("loop start");
-	while (1) {
-		new_kObject(ct, NULL);
-	}
+	//while (1) {
+	//	new_kObject(ct, NULL);
+	//}
 }
 #else
 int main(int argc, char **args)
@@ -391,12 +400,11 @@ int main(int argc, char **args)
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
 	kclass_t *ct = CT_(CLASS_String);
-	TDBG_s("loop start");
-	int i = 0;
-	while (i < 100) {
-		new_kObject(ct, NULL);
-		i++;
-	}
+	//int i = 0;
+	//while (i < 100) {
+	//	new_kObject(ct, NULL);
+	//	i++;
+	//}
 	return 0;
 }
 #endif

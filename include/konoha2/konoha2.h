@@ -1299,7 +1299,7 @@ struct _klib2 {
 #define ksymbol(T,L,D,P)          0
 #define KSYMBOL(T)                0
 #define FN_(T)                    0
-#define MN_(T)                    0
+#define MN_(T)                    (MN_##T)
 #define MN_new                    0
 #define T_mn(B, X)                0
 #else

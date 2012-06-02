@@ -134,7 +134,7 @@ static void Int_p(CTX, ksfp_t *sfp, int pos, kwb_t *wb, int level)
 static void String_init(CTX, kObject *o, void *conf)
 {
 	struct _kString *s = (struct _kString*)o;
-	s->text = "";
+	s->text = (char*)conf;
 	s->bytesize = 0;
 	S_setTextSgm(s, 1);
 }
@@ -564,12 +564,48 @@ static void Array_add(CTX, kArray *o, kObject *value)
 	a->a.bytesize = (asize+1) * sizeof(void*);
 }
 
+/* KonohaSpace/Class/Method */
+static kMethod* CT_findMethodNULL(CTX, kclass_t *ct, kmethodn_t mn)
+{
+	while(ct != NULL) {
+		size_t i;
+		kArray *a = ct->methods;
+		for(i = 0; i < kArray_size(a); i++) {
+			kMethod *mtd = a->methods[i];
+			if((mtd)->mn == mn) {
+				return mtd;
+			}
+		}
+		ct = ct->searchSuperMethodClassNULL;
+	}
+	return NULL;
+}
+
+#define kKonohaSpace_getStaticMethodNULL(ns, mn)   KonohaSpace_getStaticMethodNULL(_ctx, ns, mn)
+
+static kMethod* KonohaSpace_getMethodNULL(CTX, kKonohaSpace *ks, kcid_t cid, kmethodn_t mn)
+{
+	while(ks != NULL) {
+		size_t i;
+		kArray *a = ks->methods;
+		for(i = 0; i < kArray_size(a); i++) {
+			kMethod *mtd = a->methods[i];
+			if(mtd->cid == cid && mtd->mn == mn) {
+				return mtd;
+			}
+		}
+		ks = ks->parentNULL;
+	}
+	return CT_findMethodNULL(_ctx, CT_(cid), mn);
+}
+
 static void KCLASSTABLE_initklib2(struct _klib2 *l)
 {
 	l->Knew_Object = new_Object;
 	l->Knew_Method   = new_Method;
 	l->KMethod_setFunc = Method_setFunc;
 	l->KArray_add = Array_add;
+	l->KS_getMethodNULL = KonohaSpace_getMethodNULL;
 	//l->KaddClassDef = addClassDef;
 }
 
@@ -678,23 +714,23 @@ static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
 	CT_setName(_ctx, (struct _kclass*)base->cFloat, 0);
 
 	int FN_x = FN_("x");
-	intptr_t MethodData[] = {
-		_F(Float_opADD), TY_Float, MN_(Float_opADD),
-		_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
-		_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
-		_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
-		_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
-		_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
-		_F(Float_opLT),  TY_Float, MN_(Float_opLT),
-		_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
-		_F(Float_opGT),  TY_Float, MN_(Float_opGT),
-		_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
-		_F(Float_toInt), TY_Float, MN_to(TY_Int),
-		_F(Int_toFloat), TY_Int, MN_to(TY_Float),
-		_F(Float_toString), TY_Float, MN_to(TY_String),
-		_F(String_toFloat), TY_String, MN_to(TY_Float),
-		DEND,
-	};
-	kKonohaSpace_loadMethodData(ks, MethodData);
+	//intptr_t MethodData[] = {
+	//	_F(Float_opADD), TY_Float, MN_(Float_opADD),
+	//	_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
+	//	_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
+	//	_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
+	//	_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
+	//	_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
+	//	_F(Float_opLT),  TY_Float, MN_(Float_opLT),
+	//	_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
+	//	_F(Float_opGT),  TY_Float, MN_(Float_opGT),
+	//	_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
+	//	_F(Float_toInt), TY_Float, MN_to(TY_Int),
+	//	_F(Int_toFloat), TY_Int, MN_to(TY_Float),
+	//	_F(Float_toString), TY_Float, MN_to(TY_String),
+	//	_F(String_toFloat), TY_String, MN_to(TY_Float),
+	//	DEND,
+	//};
+	//kKonohaSpace_loadMethodData(ks, MethodData);
 	return true;
 }

@@ -856,13 +856,15 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(SCALL) {
 		klr_SCALL_t *op = (klr_SCALL_t*)pc;
-		//OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd);
+		kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
+		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, mtd);
 		pc++;
 		GOTO_NEXT();
 	} 
 	CASE(VCALL) {
 		klr_VCALL_t *op = (klr_VCALL_t*)pc;
-		//OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd);
+		kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
+		//OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, mtd);
 		pc++;
 		GOTO_NEXT();
 	} 
