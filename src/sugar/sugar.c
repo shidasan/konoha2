@@ -429,7 +429,17 @@ static kstatus_t KonohaSpace_loadscript(CTX, kKonohaSpace *ks, const char *path,
 		FILE *fp = fopen(path, "r");
 		if(fp != NULL) {
 			kline_t uline = uline_init(_ctx, path, len, 1, 1);
+#ifdef TINYVM_CODEGEN
 			status = KonohaSpace_loadstream(_ctx, ks, fp, uline, pline);
+			DUMP_P("kmethoddecl_t *decls[] = {\n");
+			size_t i;
+			for (i = 0; i < _ctx->share->methodDeclSize; i++) {
+				DUMP_P("  &decl%zd,\n", i);
+			}
+			DUMP_P("};\n");
+#else
+			status = KonohaSpace_loadstream(_ctx, ks, fp, uline, pline);
+#endif
 			fclose(fp);
 		}
 		else {

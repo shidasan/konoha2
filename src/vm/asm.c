@@ -393,15 +393,17 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 
 #ifdef TINYVM_CODEGEN
 
+#define _TAB "  "
+
 static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 {
-	DUMP_P("{\n");
+	DUMP_P("{NULL/*unused*/, {\n");
 	void *p = (void*)"hi";
 	(void)p;
 	while(1) {
 		if (pc->opcode == OPCODE_OSET) {
 			kObject *o = (kObject*)((klr_OSET_t*)pc)->n;
-			DUMP_P("{%d, ", O_cid(o));
+			DUMP_P(_TAB "{%d, ", O_cid(o));
 			switch(O_cid(o)) {
 			case CLASS_Int:
 				DUMP_P("(void*)%ld", ((kNumber*)o)->ivalue);
@@ -420,7 +422,7 @@ static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 		}
 		pc++;
 	}
-	DUMP_P("},\n");
+	DUMP_P("}},\n");
 }
 
 static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
@@ -428,7 +430,7 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 	static int constdatasize = 0;
 	size_t i, size = OPDATA[c->opcode].size;
 	const kushort_t *vmt = OPDATA[c->opcode].types;
-	DUMP_P("{OPCODE_%s", T_opcode(c->opcode));
+	DUMP_P(_TAB "{.op%s = {OPCODE_%s", T_opcode(c->opcode), T_opcode(c->opcode));
 	if (size > 0) {
 		DUMP_P(", ");
 	}
@@ -479,7 +481,7 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 		DUMP_P(", ");
 		}
 	}
-	DUMP_P("},\n");
+	DUMP_P("}},\n");
 }
 
 void dumpCidMn(CTX)
@@ -490,7 +492,11 @@ void dumpCidMn(CTX)
 		kclass_t *ct = _ctx->share->ca.cts[i];
 		if (_i <= i && ct->cid == ct->bcid) { /* except generics */
 			_i++;
-			DUMP_P("#define CLASS_%s %d\n", T_CT(ct), ct->cid);
+			if (isupper(*T_CT(ct))) {
+				DUMP_P("#define CLASS_%s %d\n", T_CT(ct), ct->cid);
+			} else {
+				DUMP_P("#define CLASS_T%s %d\n", T_CT(ct), ct->cid);
+			}
 		}
 	}
 	DUMP_P("\n");
@@ -500,7 +506,7 @@ void dumpCidMn(CTX)
 		size_t msize = kArray_size(methods);
 		for (; ct->dumpedMethod_size < msize; ct->dumpedMethod_size++) {
 			kMethod *mtd = methods->methods[ct->dumpedMethod_size];
-			DUMP_P("#define MN_%s %d\n", T_fn(mtd->mn), mtd->mn);
+			DUMP_P("#define MN_%s_%s %d\n", T_CT(ct), T_fn(mtd->mn), mtd->mn);
 		}
 	}
 	DUMP_P("\n");
@@ -513,11 +519,8 @@ static void tinyvm_dump(CTX, kMethod *mtd)
 		defined = 1;
 		dumpCidMn(_ctx);
 	}
-	DUMP_P("{\n");
-	DUMP_P("%d/*cid*/, ", mtd->cid);
-	DUMP_P("%d/*mn%s*/,\n", mtd->mn, T_fn(mtd->mn));
+	DUMP_P("kopl_u opl%zd[] = {\n", _ctx->share->methodDeclSize);
 	kopl_t *pc = mtd->pc_start;
-	dumpConstData(_ctx, pc, mtd);
 	while(1) {
 		dumpBYTECODE(_ctx, pc, mtd->pc_start);
 		if (pc->opcode == OPCODE_RET) {
@@ -525,7 +528,13 @@ static void tinyvm_dump(CTX, kMethod *mtd)
 		}
 		pc++;
 	}
-	DUMP_P("},\n\n");
+	DUMP_P("};\n\n");
+	DUMP_P("kmethoddecl_t decl%zd = {\n", _ctx->share->methodDeclSize);
+	DUMP_P("%d/*cid*/, ", mtd->cid);
+	DUMP_P("%d/*mn%s*/,\n", mtd->mn, T_fn(mtd->mn));
+	dumpConstData(_ctx, pc, mtd);
+	DUMP_P("&opl%zd,\n};\n\n", _ctx->share->methodDeclSize);
+	_ctx->share->methodDeclSize++;
 }
 
 #else

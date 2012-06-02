@@ -393,6 +393,76 @@ typedef struct klr_RET_t {
 //	int8_t/* ro */ v;
 //} klr_OSETIDX_t;
 
+typedef union kopl_u {
+	kopl_t op;
+	klr_NSET_t opNSET;
+	klr_NMOV_t opNMOV;
+	klr_NMOVx_t opNMOVx;
+	klr_XNMOV_t opXNMOV;
+	klr_NEW_t opNEW;
+	klr_NULL_t opNULL;
+	klr_BOX_t opBOX;
+	klr_UNBOX_t opUNBOX;
+	klr_CALL_t opCALL;
+	klr_BNOT_t opBNOT;
+	klr_JMP_t opJMP;
+	klr_JMPF_t opJMPF;
+	klr_SAFEPOINT_t opSAFEPOINT;
+	klr_ERROR_t opERROR;
+	klr_bNUL_t opbNUL;
+	klr_bNN_t opbNN;
+	klr_iNEG_t opiNEG;
+	klr_fNEG_t opfNEG;
+	klr_iADD_t opiADD;
+	klr_iSUB_t opiSUB;
+	klr_iMUL_t opiMUL;
+	klr_iDIV_t opiDIV;
+	klr_iMOD_t opiMOD;
+	klr_iEQ_t opiEQ;
+	klr_iNEQ_t opiNEQ;
+	klr_iLT_t opiLT;
+	klr_iLTE_t opiLTE;
+	klr_iGT_t opiGT;
+	klr_iGTE_t opiGTE;
+	klr_fADD_t opfADD;
+	klr_fSUB_t opfSUB;
+	klr_fMUL_t opfMUL;
+	klr_fDIV_t opfDIV;
+	klr_fEQ_t opfEQ;
+	klr_fNEQ_t opfNEQ;
+	klr_fLT_t opfLT;
+	klr_fLTE_t opfLTE;
+	klr_fGT_t opfGT;
+	klr_fGTE_t opfGTE;
+	klr_OSET_t opOSET;
+	klr_OMOV_t opOMOV;
+	klr_SCALL_t opSCALL;
+	klr_VCALL_t opVCALL;
+	klr_iCAST_t opiCAST;
+	klr_fCAST_t opfCAST;
+	klr_RET_t opRET;
+	//klr_NGETIDX_t opNGETIDX;
+	//klr_NSETIDX_t opNSETIDX;
+	//klr_OGETIDX_t opOGETIDX;
+	//klr_OSETIDX_t opOSETIDX;
+}kopl_u;
+
+typedef struct kconstdata_t {
+	kcid_t cid;
+	void *conf;
+}kconstdata_t;
+
+typedef struct kconstdata_array {
+	void *unused;
+	kconstdata_t constdata[];
+}kconstdata_array;
+
+typedef struct kmethoddecl_t {
+	kcid_t cid;
+	kmethodn_t mn;
+	kconstdata_array constdata;
+	kopl_u **opline;
+}kmethoddecl_t;
 
 #define KOPCODE_MAX ((kopcode_t)46)
 

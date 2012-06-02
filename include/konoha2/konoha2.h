@@ -421,6 +421,8 @@ typedef struct kshare_t {
 	const struct _kArray        *emptyArray;
 #ifdef K_USING_TINYVM
 	const struct _kArray        *constData;
+#elif defined TINYVM_CODEGEN
+	size_t                       methodDeclSize;
 #endif
 
 	const struct _kArray         *fileidList;    // file, http://
@@ -559,21 +561,7 @@ struct _kString;
 struct _kObject;
 //struct _kclass;
 #ifdef K_USING_TINYVM
-
 typedef kushort_t  kmagicflag_t;
-
-typedef struct kconstdata_t {
-	kcid_t cid;
-	void *conf;
-}kconstdata_t;
-
-typedef struct kmethoddecl_t {
-	kcid_t cid;
-	kmethodn_t mn;
-	kconstdata_t constdata[];
-	kopl_t opline[];
-}kmethoddecl_t;
-
 #else
 typedef uintptr_t kmagicflag_t;
 #endif
@@ -613,6 +601,7 @@ struct _kclass {
 /* ------------------------------------------------------------------------ */
 /* mini konoha */
 
+#ifndef K_USING_TINYVM
 #define CLASS_Tvoid             ((kcid_t)0)
 #define CLASS_Tvar              ((kcid_t)1)
 #define CLASS_Object            ((kcid_t)2)
@@ -625,6 +614,7 @@ struct _kclass {
 #define CLASS_Func              ((kcid_t)9)
 #define CLASS_System            ((kcid_t)10)
 #define CLASS_T0                ((kcid_t)11)    /* ParamType*/
+#endif
 
 #define CT_Object               CT_(CLASS_Object)
 #define CT_Boolean              CT_(CLASS_Boolean)
