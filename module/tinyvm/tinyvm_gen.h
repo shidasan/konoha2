@@ -462,15 +462,10 @@ typedef struct kconstdata_t {
 	void *conf;
 }kconstdata_t;
 
-typedef struct kconstdata_array {
-	void *unused;
-	kconstdata_t constdata[];
-}kconstdata_array;
-
 typedef struct kmethoddecl_t {
 	kcid_t cid;
 	kmethodn_t mn;
-	kconstdata_array constdata;
+	kconstdata_t *constdata;
 	kopl_u *opline;
 }kmethoddecl_t;
 

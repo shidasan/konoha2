@@ -64,7 +64,7 @@
 #define TDBG_abort(MSG) fprintf(stderr, "%s\n", MSG); abort()
 #endif
 
-#ifdef K_USING_TINYVM
+#ifdef K_USING_TOPPERS
 #define K_PAGESIZE        2048
 #else
 #define K_PAGESIZE        4096

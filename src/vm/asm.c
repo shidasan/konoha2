@@ -397,9 +397,7 @@ static kKonohaCode* new_KonohaCode(CTX, kBasicBlock *bb, kBasicBlock *bbRET)
 
 static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 {
-	DUMP_P("{NULL/*unused*/, {\n");
-	void *p = (void*)"hi";
-	(void)p;
+	DUMP_P("kconstdata_t data%zd[] = {\n", _ctx->share->methodDeclSize);
 	while(1) {
 		if (pc->opcode == OPCODE_OSET) {
 			kObject *o = (kObject*)((klr_OSET_t*)pc)->n;
@@ -422,7 +420,8 @@ static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 		}
 		pc++;
 	}
-	DUMP_P("}},\n");
+	DUMP_P(_TAB "{-1, (void*)NULL},/* sentinel */\n");
+	DUMP_P("};\n\n");
 }
 
 static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
@@ -530,11 +529,11 @@ static void tinyvm_dump(CTX, kMethod *mtd)
 		pc++;
 	}
 	DUMP_P("};\n\n");
+	dumpConstData(_ctx, mtd->pc_start, mtd);
 	DUMP_P("kmethoddecl_t decl%zd = {\n", _ctx->share->methodDeclSize);
 	DUMP_P("%d/*cid*/, ", mtd->cid);
 	DUMP_P("%d/*method %s*/,\n", mtd->mn, T_fn(mtd->mn));
-	dumpConstData(_ctx, pc, mtd);
-	DUMP_P("opl%zd,\n};\n\n", _ctx->share->methodDeclSize);
+	DUMP_P("data%zd, opl%zd\n};\n\n", _ctx->share->methodDeclSize, _ctx->share->methodDeclSize);
 	_ctx->share->methodDeclSize++;
 }
 

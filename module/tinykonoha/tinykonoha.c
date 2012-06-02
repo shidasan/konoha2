@@ -317,7 +317,7 @@ static kcontext_t *new_context(size_t stacksize)
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
-	//FLOAT_init(&_ctx, NULL);
+	FLOAT_init(&_ctx, NULL);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
@@ -325,9 +325,14 @@ static kcontext_t *new_context(size_t stacksize)
 
 static void loadByteCode(CTX)
 {
-	size_t i, declsize = sizeof(decls) / sizeof(decls[0]);
-	for (i = 0; i < declsize; i++) {
+	size_t i, j, declsize = sizeof(decls) / sizeof(decls[0]);
+	for (i = 0, j = 0; i < declsize; i++) {
 		kmethoddecl_t *def = decls[i];
+		kconstdata_t *data = def->constdata;
+		while (data[j].cid != -1) {
+			kArray_add(_ctx->share->constData, new_kObject(CT_(data->cid), data->conf));
+			j++;
+		}
 		if (def->cid != 0 && def->mn != 0) {
 			uintptr_t flag = 0;
 			kMethod *mtd = new_kMethod(flag, def->cid, def->mn, (knh_Fmethod)def->opline);
