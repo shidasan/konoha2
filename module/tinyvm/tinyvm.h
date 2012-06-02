@@ -172,4 +172,20 @@ struct vmop {
 	Rf_(c) = (kfloat_t)Ri_(a); \
 }\
 
+#define OPEXEC_RET() { \
+		(void)op;\
+		intptr_t vshift = rbp[K_SHIFTIDX2].shift;\
+		kopl_t *vpc = rbp[K_PCIDX2].pc;\
+		rbp[K_MTDIDX2].mtdNC = NULL;\
+		rbp = rshift(rbp, -vshift); \
+		pc = vpc; \
+		GOTO_PC(pc);\
+	}\
+
+#define OPEXEC_EXIT() {\
+		(void)op;\
+		pc = NULL; \
+		goto L_RETURN;\
+	}\
+
 #endif /* end of include guard */

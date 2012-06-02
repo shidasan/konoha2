@@ -435,7 +435,7 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 		DUMP_P(", ");
 	}
 	if (c->opcode == OPCODE_OSET) {
-		DUMP_P("%d/*r*/, %d/*n*/},\n", (int)c->data[0], constdatasize);
+		DUMP_P("%d/*r*/, %d/*n*/}},\n", (int)c->data[0], constdatasize);
 		constdatasize++;
 		return;
 	}
@@ -460,7 +460,8 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 			DUMP_P("%d/*r*/", (int)c->data[i]);
 			break;
 		case VMT_U:
-			DUMP_P("%lu/*u*/", c->data[i]); break;
+			DUMP_P("0/*u*/"); break;
+			//DUMP_P("%ld/*u*/", c->data[i]); break;
 		case VMT_I:
 		case VMT_INT:
 			DUMP_P("%ld/*i*/", c->data[i]); break;
@@ -531,9 +532,9 @@ static void tinyvm_dump(CTX, kMethod *mtd)
 	DUMP_P("};\n\n");
 	DUMP_P("kmethoddecl_t decl%zd = {\n", _ctx->share->methodDeclSize);
 	DUMP_P("%d/*cid*/, ", mtd->cid);
-	DUMP_P("%d/*mn%s*/,\n", mtd->mn, T_fn(mtd->mn));
+	DUMP_P("%d/*method %s*/,\n", mtd->mn, T_fn(mtd->mn));
 	dumpConstData(_ctx, pc, mtd);
-	DUMP_P("&opl%zd,\n};\n\n", _ctx->share->methodDeclSize);
+	DUMP_P("opl%zd,\n};\n\n", _ctx->share->methodDeclSize);
 	_ctx->share->methodDeclSize++;
 }
 

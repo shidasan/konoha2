@@ -326,8 +326,10 @@ typedef struct klr_SCALL_t {
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
+	//kMethod* mtd;
+	int8_t/* cid */ cid;
+	int8_t/* mn */ mn;
 	uint16_t/* co */ tyo;
-	kMethod* mtd;
 } klr_SCALL_t;
 
 #define OPCODE_VCALL ((kopcode_t)42)
@@ -336,8 +338,10 @@ typedef struct klr_VCALL_t {
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
+	//kMethod* mtd;
+	int8_t/* cid */ cid;
+	int8_t/* mn */ mn;
 	uint16_t/* co */ tyo;
-	kMethod* mtd;
 } klr_VCALL_t;
 
 #define OPCODE_iCAST ((kopcode_t)43)
@@ -358,6 +362,11 @@ typedef struct klr_fCAST_t {
 typedef struct klr_RET_t {
 	int8_t opcode;
 } klr_RET_t;
+
+#define OPCODE_EXIT ((kopcode_t)46)
+typedef struct klr_EXIT_t {
+	int8_t opcode;
+} klr_EXIT_t;
 
 //#define OPCODE_NGETIDX ((kopcode_t)46)
 //typedef struct klr_NGETIDX_t {
@@ -441,6 +450,7 @@ typedef union kopl_u {
 	klr_iCAST_t opiCAST;
 	klr_fCAST_t opfCAST;
 	klr_RET_t opRET;
+	klr_EXIT_t opEXIT;
 	//klr_NGETIDX_t opNGETIDX;
 	//klr_NSETIDX_t opNSETIDX;
 	//klr_OGETIDX_t opOGETIDX;
@@ -461,10 +471,10 @@ typedef struct kmethoddecl_t {
 	kcid_t cid;
 	kmethodn_t mn;
 	kconstdata_array constdata;
-	kopl_u **opline;
+	kopl_u *opline;
 }kmethoddecl_t;
 
-#define KOPCODE_MAX ((kopcode_t)46)
+#define KOPCODE_MAX ((kopcode_t)47)
 
 #define VMT_VOID     0
 #define VMT_ADDR     1
@@ -540,6 +550,7 @@ static const kOPDATA_t OPDATA[] = {
 	{"VCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_METHOD, VMT_VOID}},
 	{"iCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
 	{"fCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
+	{"EXIT", 0, { VMT_VOID}},
 	//{"NGETIDX", 3, { VMT_RN, VMT_RO, VMT_RN, VMT_VOID}},
 	//{"NSETIDX", 4, { VMT_RN, VMT_RO, VMT_RN, VMT_RN, VMT_VOID}},
 	//{"OGETIDX", 3, { VMT_RO, VMT_RO, VMT_RN, VMT_VOID}},
@@ -593,6 +604,7 @@ static void opcode_check(void)
 	assert(sizeof(klr_VCALL_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_iCAST_t) <= sizeof(kopl_t));
 	assert(sizeof(klr_fCAST_t) <= sizeof(kopl_t));
+	assert(sizeof(klr_EXIT_t) <= sizeof(kopl_t));
 	//assert(sizeof(klr_NGETIDX_t) <= sizeof(kopl_t));
 	//assert(sizeof(klr_NSETIDX_t) <= sizeof(kopl_t));
 	//assert(sizeof(klr_OGETIDX_t) <= sizeof(kopl_t));
@@ -636,6 +648,7 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 		&&L_fLTE, &&L_fGT, &&L_fGTE, &&L_OSET, 
 		&&L_OMOV,
 		&&L_SCALL, &&L_VCALL, &&L_iCAST, &&L_fCAST, 
+		&&L_RET, &&L_EXIT,
 		//&&L_NGETIDX, &&L_NSETIDX, &&L_OGETIDX, &&L_OSETIDX, 
 	};
 	krbp_t *rbp = (krbp_t*)sfp0;
@@ -693,12 +706,12 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(JMP) {
 		klr_JMP_t *op = (klr_JMP_t*)pc;
-		OPEXEC_JMP(pc = op->jumppc, JUMP); pc++;
+		OPEXEC_JMP(pc += op->jumppc, JUMP); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(JMPF) {
 		klr_JMPF_t *op = (klr_JMPF_t*)pc;
-		OPEXEC_JMPF(pc = op->jumppc, JUMP, op->a); pc++;
+		OPEXEC_JMPF(pc += op->jumppc, JUMP, op->a); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(SAFEPOINT) {
@@ -848,12 +861,14 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(SCALL) {
 		klr_SCALL_t *op = (klr_SCALL_t*)pc;
-		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd); pc++;
+		//OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd);
+		pc++;
 		GOTO_NEXT();
 	} 
 	CASE(VCALL) {
 		klr_VCALL_t *op = (klr_VCALL_t*)pc;
-		OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd); pc++;
+		//OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, op->tyo, op->mtd);
+		pc++;
 		GOTO_NEXT();
 	} 
 	CASE(iCAST) {
@@ -866,6 +881,16 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 		OPEXEC_fCAST(op->a, op->b); pc++;
 		GOTO_NEXT();
 	} 
+	CASE(RET) {
+		klr_RET_t *op = (klr_RET_t*)pc;
+		OPEXEC_RET(); pc++;
+		GOTO_NEXT();
+	}
+	CASE(EXIT) {
+		klr_EXIT_t *op = (klr_EXIT_t*)pc;
+		OPEXEC_EXIT(); pc++;
+		GOTO_NEXT();
+	}
 	//CASE(NGETIDX) {
 	//	klr_NGETIDX_t *op = (klr_NGETIDX_t*)pc;
 	//	OPEXEC_NGETIDX(op->c, op->a, op->n); pc++;

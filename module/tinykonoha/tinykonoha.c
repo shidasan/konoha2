@@ -200,7 +200,7 @@ static void KonohaSpace_loadMethodData(CTX, kKonohaSpace *ks, intptr_t *data)
 	static int mn_count = 0;
 	intptr_t *d = data;
 	while(d[0] != -1) {
-		uintptr_t flag = 0;
+		uintptr_t flag = kMethod_Static|kMethod_Public;
 		knh_Fmethod f = (knh_Fmethod)d[0];
 		ktype_t rtype = 0;
 		kcid_t cid = (kcid_t)d[1];
@@ -292,7 +292,7 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 	//KARRAY_INIT(&base->cwb, K_PAGESIZE * 4);
 	KARRAY_INIT(&base->ref, 128);
 	base->reftail = base->ref.refhead;
-	ctx->esp = base->stack;
+	ctx->esp = base->stack + 4;
 	ctx->stack = base;
 }
 
@@ -323,10 +323,39 @@ static kcontext_t *new_context(size_t stacksize)
 	return &_ctx;
 }
 
+static void loadByteCode(CTX)
+{
+	size_t i, declsize = sizeof(decls) / sizeof(decls[0]);
+	for (i = 0; i < declsize; i++) {
+		kmethoddecl_t *def = decls[i];
+		if (def->cid != 0 && def->mn != 0) {
+			uintptr_t flag = 0;
+			kMethod *mtd = new_kMethod(flag, def->cid, def->mn, (knh_Fmethod)def->opline);
+			CT_addMethod(_ctx, CT_(def->cid), mtd);
+		}
+	}
+}
+
+static void execTopLevelExpression(CTX)
+{
+	klr_EXIT_t opEXIT = {OPCODE_EXIT};
+	size_t i, declsize = sizeof(decls) / sizeof(decls[0]);
+	for (i = 0; i < declsize; i++) {
+		kmethoddecl_t *def = decls[i];
+		if (def->cid == 0 && def->mn == 0) {
+			kopl_u *pc = def->opline;
+			fprintf(stderr, "%d\n", pc->op.opcode);
+			krbp_t *rbp = (krbp_t*)_ctx->esp;
+			rbp[K_PCIDX2].pc = (kopl_t*)&opEXIT;
+			rbp[K_SHIFTIDX2].shift = 0;
+			VirtualMachine_run(_ctx, _ctx->esp, (kopl_t*)pc);
+		}
+	}
+}
+
 #ifdef K_USING_TOPPERS
 void cyc0(VP_INT exinf)
 {
-
 }
 
 void TaskMain(VP_INT exinf)
@@ -349,18 +378,18 @@ void TaskDisp(VP_INT exinf)
 #else
 int main(int argc, char **args)
 {
-	fprintf(stderr, "%zd, %zd\n", sizeof(klr_SCALL_t), sizeof(kopl_t));
 	opcode_check();
 	struct kcontext_t *_ctx = NULL;
 	_ctx = new_context(K_STACK_SIZE);
+	loadByteCode(_ctx);
+	execTopLevelExpression(_ctx);
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
 	kclass_t *ct = CT_(CLASS_String);
 	TDBG_s("loop start");
 	int i = 0;
 	while (i < 100) {
-		//new_kObject(ct, NULL);
-		new_(Int, 10);
+		new_kObject(ct, NULL);
 		i++;
 	}
 	return 0;
