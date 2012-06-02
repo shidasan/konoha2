@@ -1,0 +1,10 @@
+Step for using tinyvm on Mac, Linux (except TOPPERS)
+$ cd /path/to/konoha
+$ mkdir codegen
+$ cd codegen
+$ cmake .. -DTINYVM_CODEGEN=1
+$ make && sudo make install
+$ konoha test.k 2> ../module/tinykonoha/bytecode.h
+$ cd ../module/tinykonoha/
+$ make d
+$ ./tinykonoha

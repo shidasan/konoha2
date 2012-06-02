@@ -32,7 +32,7 @@
 #include "tinykonoha.h"
 #include "../../include/konoha2/konoha2.h"
 #include "../tinyvm/tinyvm_gen.h"
-#include "minimum.h"
+#include "bytecode.h"
 #include "allocate.h"
 #include "../msgc/msgc.c"
 #include "../../include/konoha2/sugar.h"
