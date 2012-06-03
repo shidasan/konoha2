@@ -326,11 +326,17 @@ static kcontext_t *new_context(size_t stacksize)
 static void loadByteCode(CTX)
 {
 	size_t i, j, declsize = sizeof(decls) / sizeof(decls[0]);
-	for (i = 0, j = 0; i < declsize; i++) {
+	for (i = 0; i < declsize; i++) {
+		j = 0;
 		kmethoddecl_t *def = decls[i];
 		kconstdata_t *data = def->constdata;
-		while (data[j].cid != -1) {
-			kArray_add(_ctx->share->constData, new_kObject(CT_(data->cid), data->conf));
+		while (data[j].cid != CLASS_Tvoid) {
+			kclass_t *ct = CT_(data[j].cid);
+			if (ct) {
+				kArray_add(_ctx->share->constData, new_kObject(ct, data->conf));
+			} else {
+				kArray_add(_ctx->share->constData, _ctx->share->constNull);
+			}
 			j++;
 		}
 		kopl_t *pc = (kopl_t*)def->opline;

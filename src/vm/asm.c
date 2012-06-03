@@ -420,7 +420,7 @@ static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 		}
 		pc++;
 	}
-	DUMP_P(_TAB "{-1, (void*)NULL},/* sentinel */\n");
+	DUMP_P(_TAB "{CLASS_Tvoid, (void*)NULL},/* sentinel */\n");
 	DUMP_P("};\n\n");
 }
 
@@ -506,7 +506,13 @@ void dumpCidMn(CTX)
 		size_t msize = kArray_size(methods);
 		for (; ct->dumpedMethod_size < msize; ct->dumpedMethod_size++) {
 			kMethod *mtd = methods->methods[ct->dumpedMethod_size];
-			DUMP_P("#define MN_%s_%s %d\n", T_CT(ct), T_fn(mtd->mn), mtd->mn);
+			if (kMethod_isTransCast(mtd)) {
+				DUMP_P("#define MN_%s_to%s %d\n", T_CT(ct), T_CT(CT_(MN_UNMASK(mtd->mn))), mtd->mn);
+			} else if (kMethod_isCast(mtd)) {
+				DUMP_P("#define MN_%s_as%s %d\n", T_CT(ct), T_CT(CT_(MN_UNMASK(mtd->mn))), mtd->mn);
+			} else {
+				DUMP_P("#define MN_%s_%s %d\n", T_CT(ct), T_fn(mtd->mn), mtd->mn);
+			}
 		}
 	}
 	DUMP_P("\n");

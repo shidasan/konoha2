@@ -171,7 +171,11 @@ typedef uintptr_t        kuint_t;
 #endif/*K_USING_SYS64_*/
 
 typedef intptr_t         kindex_t;
-typedef kushort_t        kflag_t;    /* flag field */
+#ifdef TINYVM_CODEGEN
+typedef int8_t           kflag_t;    /* flag field */
+#else
+typedef kushort_t        kflag_t;
+#endif
 
 #ifdef __GCC__
 #define __PRINT_FMT(idx1, idx2) __attribute__((format(printf, idx1, idx2)))
@@ -327,7 +331,7 @@ typedef kushort_t       kparamid_t;
 #define MN_toSETTER(mn)   ((MN_UNMASK(mn)) | MN_SETTER)
 
 #ifdef K_USING_TINYVM
-#define MN_to(cid)        0
+#define MN_to(F, T)       MN_##F##_to##T
 #define MN_isTOCID(mn)    0
 #define MN_as(cid)        0
 #define MN_isASCID(mn)    0

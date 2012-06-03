@@ -267,6 +267,7 @@ struct _kKonohaCode {
 		rbp[K_ULINEIDX2].uline = UL;\
 		rbp[K_SHIFTIDX2].shift = THIS;\
 		rbp[K_PCIDX2].pc = PC_NEXT(pc);\
+		rbp[K_MTDIDX*2].mtdNC = mtd_;\
 		pc = (mtd_)->pc_start;\
 		GOTO_PC(pc); \
 	} \

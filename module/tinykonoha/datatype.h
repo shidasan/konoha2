@@ -667,7 +667,7 @@ static void KCLASSTABLE_loadMethod(CTX)
 {
 	//int FN_x = FN_("x");
 	intptr_t MethodData[] = {
-		_F(Object_toString), TY_Object, MN_to(TY_String),
+		_F(Object_toString), TY_Object, MN_to(Int, String),
 		_F(Boolean_opNOT), TY_Boolean, MN_(Boolean_opNOT),
 		_F(Int_opMINUS), TY_Int, MN_(Int_opMINUS),
 		_F(Int_opADD), TY_Int, MN_(Int_opADD),
@@ -682,8 +682,8 @@ static void KCLASSTABLE_loadMethod(CTX)
 		_F(Int_opLTE), TY_Int, MN_(Int_opLTE),
 		_F(Int_opGT),  TY_Int, MN_(Int_opGT),
 		_F(Int_opGTE), TY_Int, MN_(Int_opGTE),
-		_F(Int_toString), TY_Int, MN_to(TY_String),
-		_F(String_toInt), TY_String, MN_to(TY_Int),
+		_F(Int_toString), TY_Int, MN_to(Int, String),
+		_F(String_toInt), TY_String, MN_to(String, Int),
 		_F(String_opADD), TY_String, MN_(String_opADD),
 		_F(System_assert), TY_System, MN_(System_assert),
 		_F(System_p), TY_System, MN_(System_p),

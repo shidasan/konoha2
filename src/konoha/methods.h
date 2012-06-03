@@ -132,7 +132,28 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 //## @Const method String Int.toString();
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
-#ifndef K_USING_TINYVM
+#ifdef K_USING_TINYVM
+	char buf[11]; buf[0] = '0'; buf[1] = '\0';
+	int j = 0, i = sfp[0].ivalue; //32 bit
+	int tmp = i;
+	while (tmp > 0) {
+		j++;
+		tmp /= 10;
+	}
+	tmp = 1;
+	while (i > 0) {
+		buf[j-tmp] = i % 10 + '0';
+		tmp++;
+		i /= 10;
+	}
+	if (j > 0) {
+		buf[j] = '\0';
+	}
+	size_t len = strlen(buf);
+	char *text = (char*)KMALLOC(len+1);
+	memcpy(text, buf, len+1);
+	RETURN_(new_kObject(CT_(CLASS_String), text));
+#else
 	char buf[40];
 	snprintf(buf, sizeof(buf), "%ld", (intptr_t)sfp[0].ivalue);
 	RETURN_(new_kString(buf, strlen(buf), SPOL_ASCII));

@@ -168,9 +168,15 @@ struct _ksyntax {
 #define SYNFLAG_ExprLeftJoinOp2    ((kflag_t)1 << 2)
 #define SYNFLAG_ExprPostfixOp2     ((kflag_t)1 << 3)
 
+#ifdef TINYVM_CODEGEN
+#define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 5)  /* return, throw */
+#define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 6)  /* continue */
+#define SYNFLAG_StmtJumpSkip       ((kflag_t)1 << 7)  /* break */
+#else
 #define SYNFLAG_StmtBreakExec      ((kflag_t)1 << 8)  /* return, throw */
 #define SYNFLAG_StmtJumpAhead      ((kflag_t)1 << 9)  /* continue */
 #define SYNFLAG_StmtJumpSkip       ((kflag_t)1 << 10)  /* break */
+#endif
 
 typedef struct KDEFINE_SYNTAX {
 	const char *name;

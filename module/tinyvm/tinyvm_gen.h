@@ -701,12 +701,14 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(JMP) {
 		klr_JMP_t *op = (klr_JMP_t*)pc;
-		OPEXEC_JMP(pc += op->jumppc, JUMP); pc++;
+		kMethod *mtd = rbp[K_MTDIDX*2].mtdNC;
+		OPEXEC_JMP(pc = mtd->pc_start + op->jumppc, JUMP); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(JMPF) {
 		klr_JMPF_t *op = (klr_JMPF_t*)pc;
-		OPEXEC_JMPF(pc += op->jumppc, JUMP, op->a); pc++;
+		kMethod *mtd = rbp[K_MTDIDX*2].mtdNC;
+		OPEXEC_JMPF(pc = mtd->pc_start + op->jumppc, JUMP, op->a); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(SAFEPOINT) {
@@ -864,7 +866,9 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	CASE(VCALL) {
 		klr_VCALL_t *op = (klr_VCALL_t*)pc;
 		kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
-		//OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, mtd);
+		if (mtd != NULL) {
+			OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, mtd);
+		}
 		pc++;
 		GOTO_NEXT();
 	} 
