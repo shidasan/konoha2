@@ -283,7 +283,7 @@ static void KRUNTIME_init(CTX, kcontext_t *ctx, size_t stacksize)
 	base->stacksize = stacksize;
 	base->stack = (ksfp_t*)KCALLOC(sizeof(ksfp_t), stacksize);
 	assert(stacksize>64);
-	base->stack_uplimit = base->stack + (stacksize - 64);
+	base->stack_uplimit = base->stack + (stacksize);
 	for(i = 0; i < stacksize; i++) {
 		KINITv(base->stack[i].o, K_NULL);
 	}

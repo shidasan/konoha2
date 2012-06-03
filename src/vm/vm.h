@@ -237,11 +237,21 @@ struct _kKonohaCode {
 
 #define PC_NEXT(pc)   pc+1
 
+#ifdef K_USING_TINYVM
+
+#define OPEXEC_CHKSTACK(UL) \
+	if(unlikely(_ctx->esp > _ctx->stack->stack_uplimit)) {\
+		TDBG_s("stack overflow");\
+	}\
+
+#else
+
 #define OPEXEC_CHKSTACK(UL) \
 	if(unlikely(_ctx->esp > _ctx->stack->stack_uplimit)) {\
 		kreportf(CRIT_, UL, "stack overflow");\
 	}\
 
+#endif
 
 #define OPEXEC_CALL(UL, THIS, espshift, CTO) { \
 		kMethod *mtd_ = rbp[THIS+K_MTDIDX2].mtdNC;\
