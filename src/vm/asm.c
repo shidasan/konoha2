@@ -463,7 +463,7 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 			//DUMP_P("%ld/*u*/", c->data[i]); break;
 		case VMT_I:
 		case VMT_INT:
-			DUMP_P("%ld/*i*/", c->data[i]); break;
+			DUMP_P("%d/*i*/", c->data[i]); break;
 		case VMT_F:
 			DUMP_P("%p/*function*/", c->p[i]); break;
 		case VMT_CID:
