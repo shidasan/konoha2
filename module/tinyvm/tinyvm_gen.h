@@ -7,7 +7,7 @@
 typedef struct klr_NSET_t {
 	int8_t opcode;
 	int8_t/* rn */ a;
-	int32_t/* int */ n;
+	int32_t/* int */ n __attribute__((packed));
 	uint16_t/* cid */ ty;
 } klr_NSET_t;
 
@@ -74,7 +74,7 @@ typedef struct klr_CALL_t {
 	uint16_t/* u */ uline;
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
-	uint16_t/* co */ tyo;
+	//uint16_t/* co */ tyo;
 } klr_CALL_t;
 
 #define OPCODE_BNOT ((kopcode_t)9)
@@ -329,7 +329,7 @@ typedef struct klr_SCALL_t {
 	//kMethod* mtd;
 	int8_t/* cid */ cid;
 	int8_t/* mn */ mn;
-	uint16_t/* co */ tyo;
+	//uint16_t/* co */ tyo;
 } klr_SCALL_t;
 
 #define OPCODE_VCALL ((kopcode_t)42)
@@ -341,7 +341,7 @@ typedef struct klr_VCALL_t {
 	//kMethod* mtd;
 	int8_t/* cid */ cid;
 	int8_t/* mn */ mn;
-	uint16_t/* co */ tyo;
+	//uint16_t/* co */ tyo;
 } klr_VCALL_t;
 
 #define OPCODE_iCAST ((kopcode_t)43)
@@ -541,8 +541,8 @@ static const kOPDATA_t OPDATA[] = {
 	{"fGTE", 3, { VMT_RN, VMT_RN, VMT_RN, VMT_VOID}},
 	{"OSET", 2, { VMT_RO, VMT_RN, VMT_VOID}},
 	{"OMOV", 2, { VMT_RO, VMT_RO, VMT_VOID}},
-	{"SCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_METHOD, VMT_VOID}},
-	{"VCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_CO, VMT_METHOD, VMT_VOID}},
+	{"SCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
+	{"VCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
 	{"iCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
 	{"fCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
 	{"EXIT", 0, { VMT_VOID}},
@@ -691,7 +691,7 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(CALL) {
 		klr_CALL_t *op = (klr_CALL_t*)pc;
-		OPEXEC_CALL(op->uline, op->thisidx, op->espshift, knull(CT_(op->tyo))); pc++;
+		//OPEXEC_CALL(op->uline, op->thisidx, op->espshift, knull(CT_(op->tyo))); pc++;
 		GOTO_NEXT();
 	} 
 	CASE(BNOT) {

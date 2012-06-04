@@ -289,7 +289,11 @@ typedef kushort_t       kcid_t;    /* class id */
 typedef kushort_t       ktype_t;     /* extended ktype_t */
 typedef kushort_t       ksymbol_t;
 typedef kushort_t       kuname_t;
+#ifdef TINYVM_CODEGEN
+typedef int8_t          kmethodn_t;
+#else
 typedef kushort_t       kmethodn_t;
+#endif
 typedef kushort_t       kparamid_t;
 
 /* kcid_t */

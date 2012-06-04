@@ -470,7 +470,9 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 			DUMP_P("%zd/*cid*/", i); break;
 			//DUMP_P("CT(%s)", T_CT(c->ct[i])); break;
 		case VMT_CO:
-			DUMP_P("%d/*%s class*/", O_cid(c->o[i]), T_CT(O_ct(c->o[i]))); break;
+			//DUMP_P("%d/*%s class*/", O_cid(c->o[i]), T_CT(O_ct(c->o[i]))); break;
+			/*do nothing */
+			break;
 		case VMT_METHOD: {
 			kMethod *mtd = (kMethod*)c->o[i];
 			DUMP_P("%d/*cid*/, ", mtd->cid);
