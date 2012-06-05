@@ -89,11 +89,11 @@ static void heap_init()
 static int total_malloced = 0;
 static void *tiny_malloc(size_t size)
 {
-	size = size + size % 2;
+	size = size + ((4 - size % 4) % 4);
 	total_malloced+=size + sizeof(heap_header);
-	if (total_malloced > HEAP_SIZE / 10 * 9) {
-		TDBG_i("total mallocked", total_malloced);
-	}
+	//if (total_malloced > HEAP_SIZE / 10 * 9) {
+	//	TDBG_i("total mallocked", total_malloced);
+	//}
 	void *mem;
 	mem = heap_alloc(size, &header_global);
 	//TDBG_s("malloc end");
