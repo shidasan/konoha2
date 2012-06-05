@@ -31,12 +31,12 @@
 
 #include "tinykonoha.h"
 #include "../../include/konoha2/konoha2.h"
+#include "allocate.h"
 #include "../tinyvm/tinyvm_gen.h"
 #include "bytecode.h"
-#include "allocate.h"
 #include "../msgc/msgc.c"
-#include "../../include/konoha2/sugar.h"
 #include "../../src/konoha/methods.h"
+#include "../../include/konoha2/sugar.h"
 #include "datatype.h"
 
 #define K_STACK_SIZE 128
@@ -317,7 +317,7 @@ static kcontext_t *new_context(size_t stacksize)
 	_ctx.lib2 = &klib2;
 	MODGC_init(&_ctx, &_ctx);
 	KCLASSTABLE_init(&_ctx);
-	//FLOAT_init(&_ctx, NULL);
+	FLOAT_init(&_ctx, NULL);
 	KRUNTIME_init(&_ctx, &_ctx, stacksize);
 	KCLASSTABLE_loadMethod(&_ctx);
 	return &_ctx;
@@ -407,7 +407,6 @@ int main(int argc, char **args)
 	execTopLevelExpression(_ctx);
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
-	kclass_t *ct = CT_(CLASS_String);
 	//int i = 0;
 	//while (i < 100) {
 	//	new_kObject(ct, NULL);

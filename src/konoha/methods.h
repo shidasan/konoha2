@@ -133,7 +133,7 @@ static KMETHOD Int_opGTE(CTX, ksfp_t *sfp _RIX)
 static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TINYVM
-	char buf[11]; buf[0] = '0'; buf[1] = '\0';
+	static char buf[11]; buf[0] = '0'; buf[1] = '\0';
 	int j = 0, i = sfp[0].ivalue; //32 bit
 	int tmp = i;
 	while (tmp > 0) {
@@ -151,6 +151,7 @@ static KMETHOD Int_toString(CTX, ksfp_t *sfp _RIX)
 	}
 	size_t len = strlen(buf);
 	char *text = (char*)KMALLOC(len+1);
+	//char *text = (char*)tiny_malloc(len + 10);
 	memcpy(text, buf, len+1);
 	RETURN_(new_kObject(CT_(CLASS_String), text));
 #else
