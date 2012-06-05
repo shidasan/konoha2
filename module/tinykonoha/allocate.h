@@ -23,7 +23,7 @@
  ***************************************************************************/
 
 #ifdef K_USING_TOPPERS
-#define HEAP_SIZE (4096 * 2 - 512) /* 12KB */
+#define HEAP_SIZE (4096 * 2) /* 12KB */
 #elif defined K_USING_TINYVM
 #define HEAP_SIZE (4096 * 3 * 3) /* 36KB */
 #else
@@ -89,10 +89,11 @@ static void heap_init()
 static int total_malloced = 0;
 static void *tiny_malloc(size_t size)
 {
-	total_malloced+=size;
-	if (total_malloced > HEAP_SIZE / 10 * 9) {
-		TDBG_i("total mallocked", total_malloced);
-	}
+	size = size + ((4 - size % 4) % 4);
+	total_malloced+=size + sizeof(heap_header);
+	//if (total_malloced > HEAP_SIZE / 10 * 9) {
+	//	TDBG_i("total mallocked", total_malloced);
+	//}
 	void *mem;
 	mem = heap_alloc(size, &header_global);
 	//TDBG_s("malloc end");

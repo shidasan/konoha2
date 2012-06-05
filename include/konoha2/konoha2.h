@@ -66,6 +66,8 @@
 
 #ifdef K_USING_TOPPERS
 #define K_PAGESIZE        1024
+#elif defined K_USING_TINYVM
+#define K_PAGESIZE        2048
 #else
 #define K_PAGESIZE        4096
 #endif
