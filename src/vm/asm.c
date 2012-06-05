@@ -605,6 +605,7 @@ static void Method_threadCode(CTX, kMethod *mtd, kKonohaCode *kcode)
 #ifdef TINYVM_CODEGEN
 	tinyvm_dump(_ctx, mtd);
 #else
+#error
 	if(verbose_code) {
 		DBG_P("DUMP CODE");
 		kopl_t *pc = mtd->pc_start;

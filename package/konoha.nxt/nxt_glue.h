@@ -32,6 +32,28 @@ static KMETHOD System_balanceInit(CTX, ksfp_t *sfp _RIX)
 	balance_init();
 #endif
 }
+static KMETHOD System_dly(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	int delay = Int_to(int, sfp[1]);
+	dly_tsk(delay);
+#endif
+}
+static KMETHOD System_tailControl(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+#define P_GAIN 2.5F
+#define PWM_ABS_MAX 60
+	int angle = Int_to(int, sfp[1]);
+	float pwm = (float)(angle - nxt_motor_get_count(NXT_PORT_A)) * P_GAIN;
+	if (pwm > PWM_ABS_MAX) {
+		pwm = PWM_ABS_MAX;
+	} else if (pwm < -PWM_ABS_MAX) {
+		pwm = -PWM_ABS_MAX;
+	}
+	nxt_motor_set_speed(NXT_PORT_A, (signed char)pwm, 1);
+#endif
+}
 static KMETHOD System_ecrobotInitNxtstate(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
@@ -86,7 +108,7 @@ static KMETHOD System_nxtMotorGetCount(CTX, ksfp_t *sfp _RIX)
 static KMETHOD System_staCyc(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
-	sta_cyc(CYC0);
+	//sta_cyc(CYC0);
 #endif
 }
 static KMETHOD System_waiSem(CTX, ksfp_t *sfp _RIX)
@@ -136,6 +158,8 @@ static	kbool_t nxt_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 	int FN_e = FN_("e");
 	intptr_t MethodData[] = {
 			_Public|_Const, _F(System_balanceInit), TY_void, TY_System, MN_("balanceInit"), 0,
+			_Public|_Const, _F(System_dly), TY_void, TY_System, MN_("dly"), 1, TY_Int, FN_x, 
+			_Public|_Const, _F(System_tailControl), TY_void, TY_System, MN_("tailControl"), 1, TY_Int, FN_x, 
 			_Public|_Const, _F(System_ecrobotInitNxtstate), TY_void, TY_System, MN_("ecrobotInitNxtstate"), 0,
 			_Public|_Const, _F(System_ecrobotInitSensors), TY_void, TY_System, MN_("ecrobotInitSensors"), 0,
 			_Public|_Const, _F(System_ecrobotSetLightSensorActive), TY_void, TY_System, MN_("ecrobotSetLightSensorActive"), 0,

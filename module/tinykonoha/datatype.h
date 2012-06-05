@@ -702,6 +702,8 @@ static kbool_t nxt_init(CTX, kKonohaSpace *ks)
 {
 	intptr_t MethodData[] = {
 		_F(System_balanceInit), TY_System, MN_(System_balanceInit),
+		_F(System_dly), TY_System, MN_(System_dly),
+		_F(System_tailControl), TY_System, MN_(System_tailControl),
 		_F(System_ecrobotInitNxtstate), TY_System, MN_(System_ecrobotInitNxtstate),
 		_F(System_ecrobotInitSensors), TY_System, MN_(System_ecrobotInitSensors),
 		_F(System_ecrobotSetLightSensorActive), TY_System, MN_(System_ecrobotSetLightSensorActive),
@@ -739,16 +741,16 @@ static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
 
 	int FN_x = FN_("x");
 	intptr_t MethodData[] = {
-		_F(Float_opADD), TY_Float, MN_(Float_opADD),
-		_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
-		_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
-		_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
-		_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
-		_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
-		_F(Float_opLT),  TY_Float, MN_(Float_opLT),
-		_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
-		_F(Float_opGT),  TY_Float, MN_(Float_opGT),
-		_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
+		//_F(Float_opADD), TY_Float, MN_(Float_opADD),
+		//_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
+		//_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
+		//_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
+		//_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
+		//_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
+		//_F(Float_opLT),  TY_Float, MN_(Float_opLT),
+		//_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
+		//_F(Float_opGT),  TY_Float, MN_(Float_opGT),
+		//_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
 		_F(Float_toInt), TY_Float, MN_to(Float, Int),
 		_F(Int_toFloat), TY_Int, MN_to(Int, Float),
 		_F(Float_toString), TY_Float, MN_to(Float, String),

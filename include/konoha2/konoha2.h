@@ -1504,23 +1504,21 @@ typedef enum {
 	return; \
 } while (0)
 
-#define K_NODEBUG
-
-#ifndef K_NODEBUG
+//#ifndef K_NODEBUG
 #define KNH_ASSERT(a)    assert(a)
 #define DBG_ASSERT(a)    assert(a)
 #define TODO_ASSERT(a)   assert(a)
 #define DBG_P(fmt, ...)     _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__)
 #define DBG_ABORT(fmt, ...) _ctx->lib2->Kp(__FILE__, __FUNCTION__, __LINE__, fmt, ## __VA_ARGS__); abort()
 #define DUMP_P(fmt, ...)    fprintf(stderr, fmt, ## __VA_ARGS__)
-#else
-#define KNH_ASSERT(a)
-#define DBG_ASSERT(a)
-#define TODO_ASSERT(a)
-#define DBG_P(fmt, ...)
-#define DBG_ABORT(fmt, ...)
-#define DUMP_P(fmt, ...)
-#endif
+//#else
+//#define KNH_ASSERT(a)
+//#define DBG_ASSERT(a)
+//#define TODO_ASSERT(a)
+//#define DBG_P(fmt, ...)
+//#define DBG_ABORT(fmt, ...)
+//#define DUMP_P(fmt, ...)
+//#endif
 
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)
