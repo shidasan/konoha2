@@ -55,13 +55,13 @@
 
 //#include"konoha2/konoha_config.h"
 
-#include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #ifndef K_USING_TOPPERS
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <assert.h>

@@ -2,6 +2,7 @@
 #define KVPROTO_DELTA 7
 
 #include<../../include/konoha2/float.h>
+#include<../../package/konoha.nxt/nxt_glue.h>
 #include<../../package/konoha/float_glue.h>
 
 static inline karray_t* kvproto_null(void)  // for proto_get safe null
@@ -641,6 +642,7 @@ static void initStructData(CTX)
 }
 
 static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks);
+static kbool_t nxt_init(CTX, kKonohaSpace *ks);
 
 static void KCLASSTABLE_init(kcontext_t *_ctx)
 {
@@ -656,6 +658,7 @@ static void KCLASSTABLE_init(kcontext_t *_ctx)
 	KINITv(share.emptyArray, new_(Array, 0));
 	initStructData(_ctx);
 	FLOAT_init(_ctx, NULL);
+	nxt_init(_ctx, NULL);
 }
 
 #define _Public    kMethod_Public
@@ -694,6 +697,29 @@ static void KCLASSTABLE_loadMethod(CTX)
 	kKonohaSpace_loadMethodData(NULL, MethodData);
 }
 
+
+static kbool_t nxt_init(CTX, kKonohaSpace *ks)
+{
+	intptr_t MethodData[] = {
+		_F(System_balanceInit), TY_System, MN_(System_balanceInit),
+		_F(System_dly), TY_System, MN_(System_dly),
+		_F(System_tailControl), TY_System, MN_(System_tailControl),
+		_F(System_ecrobotInitNxtstate), TY_System, MN_(System_ecrobotInitNxtstate),
+		_F(System_ecrobotInitSensors), TY_System, MN_(System_ecrobotInitSensors),
+		_F(System_ecrobotSetLightSensorActive), TY_System, MN_(System_ecrobotSetLightSensorActive),
+		_F(System_ecrobotGetGyroSensor), TY_System, MN_(System_ecrobotGetGyroSensor),
+		_F(System_ecrobotGetLightSensor), TY_System, MN_(System_ecrobotGetLightSensor),
+		_F(System_nxtMotorSetCount), TY_System, MN_(System_nxtMotorSetCount),
+		_F(System_nxtMotorGetCount), TY_System, MN_(System_nxtMotorGetCount),
+		_F(System_staCyc), TY_System, MN_(System_staCyc),
+		_F(System_waiSem), TY_System, MN_(System_waiSem),
+		_F(System_balanceControl), TY_System, MN_(System_balanceControl),
+		DEND,
+	};
+	kKonohaSpace_loadMethodData(ks, MethodData);
+	return true;
+}
+
 static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
 {
 	kmodfloat_t *base = (kmodfloat_t*)KCALLOC(sizeof(kmodfloat_t), 1);
@@ -714,23 +740,23 @@ static	kbool_t FLOAT_init(CTX, kKonohaSpace *ks)
 	CT_setName(_ctx, (struct _kclass*)base->cFloat, 0);
 
 	int FN_x = FN_("x");
-	//intptr_t MethodData[] = {
-	//	_F(Float_opADD), TY_Float, MN_(Float_opADD),
-	//	_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
-	//	_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
-	//	_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
-	//	_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
-	//	_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
-	//	_F(Float_opLT),  TY_Float, MN_(Float_opLT),
-	//	_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
-	//	_F(Float_opGT),  TY_Float, MN_(Float_opGT),
-	//	_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
-	//	_F(Float_toInt), TY_Float, MN_to(TY_Int),
-	//	_F(Int_toFloat), TY_Int, MN_to(TY_Float),
-	//	_F(Float_toString), TY_Float, MN_to(TY_String),
-	//	_F(String_toFloat), TY_String, MN_to(TY_Float),
-	//	DEND,
-	//};
-	//kKonohaSpace_loadMethodData(ks, MethodData);
+	intptr_t MethodData[] = {
+		//_F(Float_opADD), TY_Float, MN_(Float_opADD),
+		//_F(Float_opSUB), TY_Float, MN_(Float_opSUB),
+		//_F(Float_opMUL), TY_Float, MN_(Float_opMUL),
+		//_F(Float_opDIV), TY_Float, MN_(Float_opDIV),
+		//_F(Float_opEQ),  TY_Float, MN_(Float_opEQ),
+		//_F(Float_opNEQ), TY_Float, MN_(Float_opNEQ),
+		//_F(Float_opLT),  TY_Float, MN_(Float_opLT),
+		//_F(Float_opLTE), TY_Float, MN_(Float_opLTE),
+		//_F(Float_opGT),  TY_Float, MN_(Float_opGT),
+		//_F(Float_opGTE), TY_Float, MN_(Float_opGTE),
+		_F(Float_toInt), TY_Float, MN_to(Float, Int),
+		_F(Int_toFloat), TY_Int, MN_to(Int, Float),
+		_F(Float_toString), TY_Float, MN_to(Float, String),
+		_F(String_toFloat), TY_String, MN_to(String, Float),
+		DEND,
+	};
+	kKonohaSpace_loadMethodData(ks, MethodData);
 	return true;
 }
