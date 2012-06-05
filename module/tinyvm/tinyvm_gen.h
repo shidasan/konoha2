@@ -323,7 +323,7 @@ typedef struct klr_OMOV_t {
 #define OPCODE_SCALL ((kopcode_t)41)
 typedef struct klr_SCALL_t {
 	int8_t opcode;
-	uint16_t/* u */ uline;
+	uint16_t/* u */ uline __attribute__((packed));
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
 	//kMethod* mtd;
@@ -335,7 +335,7 @@ typedef struct klr_SCALL_t {
 #define OPCODE_VCALL ((kopcode_t)42)
 typedef struct klr_VCALL_t {
 	int8_t opcode;
-	uint16_t/* u */ uline;
+	uint16_t/* u */ uline __attribute__((packed));
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
 	//kMethod* mtd;
