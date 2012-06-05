@@ -23,7 +23,7 @@
  ***************************************************************************/
 
 #ifdef K_USING_TOPPERS
-#define HEAP_SIZE (4096 * 2) /* 12KB */
+#define HEAP_SIZE ((size_t)(1024 * 6)) /* 6KB */
 #elif defined K_USING_TINYVM
 #define HEAP_SIZE (4096 * 3 * 3) /* 36KB */
 #else
@@ -98,7 +98,7 @@ static void *tiny_malloc(size_t size)
 	mem = heap_alloc(size, &header_global);
 	//TDBG_s("malloc end");
 	if (mem == NULL) {
-		TDBG_s("NULL");
+		TDBG_abort("NULL");
 	}
 	return mem;
 }

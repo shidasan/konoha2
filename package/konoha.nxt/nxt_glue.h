@@ -26,9 +26,16 @@
 #define Float_to(T, a)             ((T)a.fvalue)
 
 
+static KMETHOD System_balanceInit(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	balance_init();
+#endif
+}
 static KMETHOD System_ecrobotInitNxtstate(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
+	syscall(serial_ctl_por(CONSOLE_PORTID, (IOCTL_CRLF | IOCTL_FCSND | IOCTL_FCRCV)));
 	ecrobot_init_nxtstate();
 #endif
 }
@@ -63,7 +70,17 @@ static KMETHOD System_ecrobotGetLightSensor(CTX, ksfp_t *sfp _RIX)
 static KMETHOD System_nxtMotorSetCount(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
-	nxt_motor_set_count(Int_to(int, sfp[1]), Int_to(int, sfp[2]));
+	int i = Int_to(int, sfp[1]);
+	nxt_motor_set_count((i == 1) ? NXT_PORT_C : NXT_PORT_B, Int_to(int, sfp[2]));
+#endif
+}
+static KMETHOD System_nxtMotorGetCount(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	int i = Int_to(int, sfp[1]);
+	RETURNi_(nxt_motor_get_count((i == 1) ? NXT_PORT_C : NXT_PORT_B));
+#else
+	RETURNi_(0);
 #endif
 }
 static KMETHOD System_staCyc(CTX, ksfp_t *sfp _RIX)
@@ -89,7 +106,7 @@ static KMETHOD System_balanceControl(CTX, ksfp_t *sfp _RIX)
 			Float_to(float, sfp[4]),
 			Float_to(float, sfp[5]),
 			Float_to(float, sfp[6]),
-			Float_to(float, sfp[7]),
+			ecrobot_get_battery_voltage(),
 			&pwm_L,
 			&pwm_R);
 	ecrobot_set_motor_speed(NXT_PORT_C, pwm_L);
@@ -101,6 +118,7 @@ static KMETHOD System_balanceControl(CTX, ksfp_t *sfp _RIX)
 #define _Const    kMethod_Const
 #define _F(F)   (intptr_t)(F)
 
+#ifndef K_USING_TINYVM
 static	kbool_t nxt_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args, kline_t pline)
 {
 	KREQUIRE_PACKAGE("konoha.float", pline);
@@ -117,15 +135,17 @@ static	kbool_t nxt_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 	int FN_d = FN_("d");
 	int FN_e = FN_("e");
 	intptr_t MethodData[] = {
+			_Public|_Const, _F(System_balanceInit), TY_void, TY_System, MN_("balanceInit"), 0,
 			_Public|_Const, _F(System_ecrobotInitNxtstate), TY_void, TY_System, MN_("ecrobotInitNxtstate"), 0,
 			_Public|_Const, _F(System_ecrobotInitSensors), TY_void, TY_System, MN_("ecrobotInitSensors"), 0,
 			_Public|_Const, _F(System_ecrobotSetLightSensorActive), TY_void, TY_System, MN_("ecrobotSetLightSensorActive"), 0,
 			_Public|_Const, _F(System_ecrobotGetGyroSensor), TY_Int, TY_System, MN_("ecrobotGetGyroSensor"), 0,
 			_Public|_Const, _F(System_ecrobotGetLightSensor), TY_Int, TY_System, MN_("ecrobotGetLightSensor"), 0,
 			_Public|_Const, _F(System_nxtMotorSetCount), TY_void, TY_System, MN_("nxtMotorSetCount"), 2, TY_Int, FN_x, TY_Int, FN_y,
-			_Public|_Const, _F(System_staCyc), TY_void, TY_System, MN_("staCyc"), 1, TY_Int, FN_x,
-			_Public|_Const, _F(System_waiSem), TY_void, TY_System, MN_("waiSem"), 2, TY_Int, FN_x, TY_Int, FN_y,
-			_Public|_Const, _F(System_balanceControl), TY_void, TY_System, MN_("balanceControl"), 7, TY_Float, FN_x, TY_Float, FN_y, TY_Float, FN_a, TY_Float, FN_b, TY_Float, FN_c, TY_Float, FN_d, TY_Float, FN_e, 
+			_Public|_Const, _F(System_nxtMotorGetCount), TY_Int, TY_System, MN_("nxtMotorGetCount"), 1, TY_Int, FN_x, 
+			_Public|_Const, _F(System_staCyc), TY_void, TY_System, MN_("staCyc"), 0,
+			_Public|_Const, _F(System_waiSem), TY_void, TY_System, MN_("waiSem"), 0,
+			_Public|_Const, _F(System_balanceControl), TY_void, TY_System, MN_("balanceControl"), 6, TY_Float, FN_x, TY_Float, FN_y, TY_Float, FN_a, TY_Float, FN_b, TY_Float, FN_c, TY_Float, FN_d, 
 
 
 
@@ -410,3 +430,4 @@ static kbool_t nxt_setupKonohaSpace(CTX, kKonohaSpace *ks, kline_t pline)
 {
 	return true;
 }
+#endif

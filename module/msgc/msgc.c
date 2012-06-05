@@ -22,7 +22,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "../../src/gc/commons.h"
 #include "konoha2/gc.h"
 #include "konoha2/konoha2_local.h"
 
@@ -130,7 +129,7 @@ typedef struct objpageTBL_t {
 
 #define ARENA_COUNT_SIZE(size,c) (size) >> (c)
 #ifdef K_USING_TINYVM
-#define K_ARENA_COUNT 2
+#define K_ARENA_COUNT 1
 #else
 #define K_ARENA_COUNT 3
 #endif
@@ -182,8 +181,8 @@ static void Arena_init(CTX, kmemshare_t *memshare)
 static void Arena_free(CTX, kmemshare_t *memshare)
 {
 	ARENA_FREE(0);
-	ARENA_FREE(1);
 #ifndef K_USING_TINYVM
+	ARENA_FREE(1);
 	ARENA_FREE(2);
 #endif
 }
@@ -298,6 +297,7 @@ static void ObjectPage_init0(objpage0_t *opage)
 	opage->slots[t].ref = opage[1].slots;
 }
 
+#ifndef K_USING_TINYVM
 static void ObjectPage_init1(objpage1_t *opage)
 {
 	size_t i = 0;
@@ -311,7 +311,6 @@ static void ObjectPage_init1(objpage1_t *opage)
 	opage->slots[t].ref = opage[1].slots;
 }
 
-#ifndef K_USING_TINYVM
 static void ObjectPage_init2(objpage2_t *opage)
 {
 	size_t i = 0;
@@ -339,6 +338,7 @@ static void ObjectArenaTBL_init0(CTX, objpageTBL_t *oat, size_t arenasize)
 	(opage-1)->slots[K_PAGEOBJECTSIZE(0) - 1].ref = NULL;
 }
 
+#ifndef K_USING_TINYVM
 static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage1_t *opage = (objpage1_t *)do_malloc(arenasize);
@@ -352,7 +352,6 @@ static void ObjectArenaTBL_init1(CTX, objpageTBL_t *oat, size_t arenasize)
 	(opage-1)->slots[K_PAGEOBJECTSIZE(1) - 1].ref = NULL;
 }
 
-#ifndef K_USING_TINYVM
 static void ObjectArenaTBL_init2(CTX, objpageTBL_t *oat, size_t arenasize)
 {
 	objpage2_t *opage = (objpage2_t *)do_malloc(arenasize);
@@ -396,6 +395,7 @@ static kGCObject0 *new_ObjectArena0(CTX, size_t arenasize)
 	return p;
 }
 
+#ifndef K_USING_TINYVM
 static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 {
 	objpageTBL_t *oat;
@@ -414,7 +414,6 @@ static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 	kGCObject1 *p = oat->head1->slots;
 	p->ref4_tail = (kGCObject1 *)&(oat->bottom1[-1]);
 
-#ifndef K_USING_TINYVM
 	int i = 0;
 	kGCObject1 *tmp = p;
 	while (tmp != &oat->head1->slots[K_PAGEOBJECTSIZE(1)]) {
@@ -422,11 +421,9 @@ static kGCObject1 *new_ObjectArena1(CTX, size_t arenasize)
 		i++;
 	}
 	assert(i == K_PAGEOBJECTSIZE(1));
-#endif
 	return p;
 }
 
-#ifndef K_USING_TINYVM
 static kGCObject2 *new_ObjectArena2(CTX, size_t arenasize)
 {
 	objpageTBL_t *oat;
@@ -474,6 +471,7 @@ static void knh_ObjectObjectArenaTBL_free0(CTX, const objpageTBL_t *oat)
 	}
 }
 
+#ifndef K_USING_TINYVM
 static void knh_ObjectObjectArenaTBL_free1(CTX, const objpageTBL_t *oat)
 {
 	objpage1_t *opage = oat->head1;
@@ -481,18 +479,14 @@ static void knh_ObjectObjectArenaTBL_free1(CTX, const objpageTBL_t *oat)
 		size_t i;
 		for(i = 0; i < K_PAGEOBJECTSIZE(1) - 1; ++i) {
 			kGCObject1 *o = &opage->slots[i];
-#ifdef K_USING_TINYVM
 			if(o->h.cid == CLASS_Tvoid) continue;
-#else
 			if(o->h.ct == NULL) continue;
-#endif
 			KONOHA_freeObjectField(_ctx, (struct _kObject*)o);
 		}
 		opage++;
 	}
 }
 
-#ifndef K_USING_TINYVM
 static void knh_ObjectObjectArenaTBL_free2(CTX, const objpageTBL_t *oat)
 {
 	objpage2_t *opage = oat->head2;
@@ -521,12 +515,12 @@ static void knh_ObjectArena_finalfree0(CTX, objpageTBL_t *oat, size_t oatSize)
 {
 	KNH_OBJECTARENA_FINALFREE(0);
 }
+#ifndef K_USING_TINYVM
 static void knh_ObjectArena_finalfree1(CTX, objpageTBL_t *oat, size_t oatSize)
 {
 	KNH_OBJECTARENA_FINALFREE(1);
 }
 
-#ifndef K_USING_TINYVM
 static void knh_ObjectArena_finalfree2(CTX, objpageTBL_t *oat, size_t oatSize)
 {
 	KNH_OBJECTARENA_FINALFREE(2);
@@ -537,8 +531,8 @@ void MODGC_destoryAllObjects(CTX, kcontext_t *ctx)
 {
 	if(IS_ROOTCTX(ctx)) {
 		knh_ObjectArena_finalfree0(ctx, memshare(_ctx)->ObjectArenaTBL[0], memshare(_ctx)->sizeObjectArenaTBL[0]);
-		knh_ObjectArena_finalfree1(ctx, memshare(_ctx)->ObjectArenaTBL[1], memshare(_ctx)->sizeObjectArenaTBL[1]);
 #ifndef K_USING_TINYVM
+		knh_ObjectArena_finalfree1(ctx, memshare(_ctx)->ObjectArenaTBL[1], memshare(_ctx)->sizeObjectArenaTBL[1]);
 		knh_ObjectArena_finalfree2(ctx, memshare(_ctx)->ObjectArenaTBL[2], memshare(_ctx)->sizeObjectArenaTBL[2]);
 #endif
 		Arena_free(_ctx, memshare(_ctx));
@@ -579,12 +573,12 @@ static void gc_extendObjectArena0(CTX)
 	gc_extendObjectArena(0);
 }
 
+#ifndef K_USING_TINYVM
 static void gc_extendObjectArena1(CTX)
 {
 	gc_extendObjectArena(1);
 }
 
-#ifndef K_USING_TINYVM
 static void gc_extendObjectArena2(CTX)
 {
 	gc_extendObjectArena(2);
@@ -774,6 +768,7 @@ static size_t gc_sweep0(CTX)
 	return collected;
 }
 
+#ifndef K_USING_TINYVM
 static size_t gc_sweep1(CTX)
 {
 	size_t collected = 0;
@@ -793,7 +788,6 @@ static size_t gc_sweep1(CTX)
 	return collected;
 }
 
-#ifndef K_USING_TINYVM
 static size_t gc_sweep2(CTX)
 {
 	size_t collected = 0;
@@ -816,8 +810,8 @@ static void gc_sweep(CTX)
 {
 	int collected = 0;
 	collected += gc_sweep0(_ctx);
-	collected += gc_sweep1(_ctx);
 #ifndef K_USING_TINYVM
+	collected += gc_sweep1(_ctx);
 	collected += gc_sweep2(_ctx);
 #endif
 }
@@ -853,8 +847,8 @@ static void MSGC_setup(CTX, struct kmodshare_t *def, int newctx)
 		base->h.free     = MSGC_local_free;
 		_ctx->modlocal[MOD_gc] = (kmodlocal_t*)base;
 		MSGC_SETUP(0);
-		MSGC_SETUP(1);
 #ifndef K_USING_TINYVM
+		MSGC_SETUP(1);
 		MSGC_SETUP(2);
 #endif
 	}
@@ -897,15 +891,15 @@ void MODGC_free(CTX, kcontext_t *ctx)
 
 kObject *MODGC_omalloc(CTX, size_t size)
 {
+	if (size > 16) {
+		TDBG_abort("size too big");
+	}
 	int page_size = (size / sizeof(kGCObject0)) >> 1;
 	DBG_ASSERT(page_size <= 4);
 	kGCObject *o = NULL;
 	FREELIST_POP(o,page_size);
 	memlocal(_ctx)->freeObjectListSize[page_size] -= 1;
 	do_bzero((void*)o, size);
-	if (o == NULL) {
-		TDBG_s("omalloc NULL");
-	}
 	return (kObject *)o;
 }
 

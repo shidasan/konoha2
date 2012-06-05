@@ -39,7 +39,7 @@
 #include "../../include/konoha2/sugar.h"
 #include "datatype.h"
 
-#define K_STACK_SIZE 128
+#define K_STACK_SIZE 65
 
 static void KRUNTIME_reftrace(CTX, kcontext_t *ctx)
 {
@@ -377,11 +377,11 @@ static void execTopLevelExpression(CTX)
 #ifdef K_USING_TOPPERS
 void cyc0(VP_INT exinf)
 {
+	isig_sem(EVT_SEM);
 }
 
 void TaskMain(VP_INT exinf)
 {
-
 }
 
 void TaskDisp(VP_INT exinf)
