@@ -388,9 +388,11 @@ void TaskDisp(VP_INT exinf)
 {
 	struct kcontext_t *_ctx = NULL;
 	_ctx = new_context(K_STACK_SIZE);
+	loadByteCode(_ctx);
+	execTopLevelExpression(_ctx);
 	//new_CT(_ctx, NULL, NULL, 0);
 	//VirtualMachine_run(_ctx, sfp, NULL);
-	kclass_t *ct = CT_(CLASS_String);
+	//kclass_t *ct = CT_(CLASS_String);
 	//while (1) {
 	//	new_kObject(ct, NULL);
 	//}

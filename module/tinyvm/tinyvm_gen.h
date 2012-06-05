@@ -328,7 +328,7 @@ typedef struct klr_SCALL_t {
 	int8_t/* ro */ espshift;
 	//kMethod* mtd;
 	int8_t/* cid */ cid;
-	int8_t/* mn */ mn;
+	int16_t/* mn */ mn;
 	//uint16_t/* co */ tyo;
 } klr_SCALL_t;
 
@@ -340,7 +340,7 @@ typedef struct klr_VCALL_t {
 	int8_t/* ro */ espshift;
 	//kMethod* mtd;
 	int8_t/* cid */ cid;
-	int8_t/* mn */ mn;
+	int16_t/* mn */ mn;
 	//uint16_t/* co */ tyo;
 } klr_VCALL_t;
 
@@ -612,7 +612,7 @@ static const char *T_opcode(kopcode_t opcode)
 		return OPDATA[opcode].name;
 	}
 	else {
-		fprintf(stderr, "opcode=%d\n", (int)opcode);
+		//fprintf(stderr, "opcode=%d\n", (int)opcode);
 		return "OPCODE_??";
 	}
 }

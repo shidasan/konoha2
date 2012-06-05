@@ -65,7 +65,7 @@
 #endif
 
 #ifdef K_USING_TOPPERS
-#define K_PAGESIZE        2048
+#define K_PAGESIZE        1024
 #else
 #define K_PAGESIZE        4096
 #endif
@@ -171,11 +171,7 @@ typedef uintptr_t        kuint_t;
 #endif/*K_USING_SYS64_*/
 
 typedef intptr_t         kindex_t;
-#ifdef TINYVM_CODEGEN
-typedef int8_t           kflag_t;    /* flag field */
-#else
 typedef kushort_t        kflag_t;
-#endif
 
 #ifdef __GCC__
 #define __PRINT_FMT(idx1, idx2) __attribute__((format(printf, idx1, idx2)))
@@ -289,11 +285,7 @@ typedef kushort_t       kcid_t;    /* class id */
 typedef kushort_t       ktype_t;     /* extended ktype_t */
 typedef kushort_t       ksymbol_t;
 typedef kushort_t       kuname_t;
-#ifdef TINYVM_CODEGEN
-typedef int8_t          kmethodn_t;
-#else
 typedef kushort_t       kmethodn_t;
-#endif
 typedef kushort_t       kparamid_t;
 
 /* kcid_t */

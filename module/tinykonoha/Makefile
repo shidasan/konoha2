@@ -105,7 +105,7 @@ COPTS := $(COPTS)
 CDEFS := $(CDEFS)
 INCLUDES := -I. -I$(SRCDIR)/include -I$(SRCDIR)/nxt/device -I$(SRCDIR)/nxt/ecrobot -I$(SRCDIR)/nxt/balancer $(INCLUDES) -I../../include
 LDFLAGS := -nostdlib $(LDFLAGS)
-LIBS := $(LIBS) $(CXXLIBS) -lc -lgcc
+LIBS := $(LIBS) $(CXXLIBS) -lgcc -lc
 CFLAGS = $(COPTS) $(CDEFS) $(INCLUDES) -DK_USING_TINYVM=1 -DK_USING_TOPPERS=1
 
 #

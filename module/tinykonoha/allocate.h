@@ -23,7 +23,7 @@
  ***************************************************************************/
 
 #ifdef K_USING_TOPPERS
-#define HEAP_SIZE (4096 * 3) /* 12KB */
+#define HEAP_SIZE (4096 * 2 - 512) /* 12KB */
 #elif defined K_USING_TINYVM
 #define HEAP_SIZE (4096 * 3 * 3) /* 36KB */
 #else
