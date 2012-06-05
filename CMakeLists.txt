@@ -113,7 +113,8 @@ set(PACKAGES
 	posix.process
 	posix.file
 	posix.fd
-	konoha.socket
+##	konoha.socket
+	konoha.nxt
 	konoha.rope
 ##	konoha.subproc
 ##	konoha.mpi
