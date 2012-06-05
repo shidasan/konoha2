@@ -31,40 +31,6 @@
 
 #define K_CLASSTABLE_INIT 64
 #ifdef K_USING_TOPPERS
-#define TDBG_i(KEY, VALUE) \
-	display_clear(0);\
-	display_goto_xy(0, 0);\
-	display_string(KEY);\
-	display_goto_xy(0, 1);\
-	display_int(VALUE, 1);\
-	display_update();\
-	dly_tsk(1000U);\
-
-#define TDBG_s(KEY) \
-	display_clear(0);\
-	display_goto_xy(0, 0);\
-	display_string(KEY);\
-	display_update();\
-	dly_tsk(1000U);\
-
-#define TDBG_abort(MSG) \
-	display_clear(0);\
-	display_goto_xy(0, 0);\
-	display_string("abort");\
-	display_goto_xy(0, 1);\
-	display_string(MSG);\
-	display_update();\
-	while (1) {\
-		dly_tsk(1000U);\
-	}\
-
-#else
-#define TDBG_i(KEY, VALUE) fprintf(stderr, "%s: %d\n", KEY, VALUE)
-#define TDBG_s(KEY) fprintf(stderr, "%s\n", KEY)
-#define TDBG_abort(MSG) fprintf(stderr, "%s\n", MSG); abort()
-#endif
-
-#ifdef K_USING_TOPPERS
 #define K_PAGESIZE        1024
 #elif defined K_USING_TINYVM
 #define K_PAGESIZE        2048
@@ -113,10 +79,8 @@
 
 /* ------------------------------------------------------------------------ */
 /* type */
-
 #include <limits.h>
 #include <float.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -1519,6 +1483,40 @@ typedef enum {
 //#define DBG_ABORT(fmt, ...)
 //#define DUMP_P(fmt, ...)
 //#endif
+
+#ifdef K_USING_TOPPERS
+#define TDBG_i(KEY, VALUE) \
+	display_clear(0);\
+	display_goto_xy(0, 0);\
+	display_string(KEY);\
+	display_goto_xy(0, 1);\
+	display_int(VALUE, 1);\
+	display_update();\
+	dly_tsk(1000U);\
+
+#define TDBG_s(KEY) \
+	display_clear(0);\
+	display_goto_xy(0, 0);\
+	display_string(KEY);\
+	display_update();\
+	dly_tsk(1000U);\
+
+#define TDBG_abort(MSG) \
+	display_clear(0);\
+	display_goto_xy(0, 0);\
+	display_string("abort");\
+	display_goto_xy(0, 1);\
+	display_string(MSG);\
+	display_update();\
+	while (1) {\
+		dly_tsk(1000U);\
+	}\
+
+#else
+#define TDBG_i(KEY, VALUE) fprintf(stderr, "%s: %d\n", KEY, VALUE)
+#define TDBG_s(KEY) fprintf(stderr, "%s\n", KEY)
+#define TDBG_abort(MSG) fprintf(stderr, "%s\n", MSG); abort()
+#endif
 
 #ifndef unlikely
 #define unlikely(x)   __builtin_expect(!!(x), 0)
