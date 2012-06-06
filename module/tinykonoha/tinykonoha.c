@@ -339,21 +339,25 @@ static void loadByteCode(CTX)
 			}
 			j++;
 		}
+		if (def->cid != 0 && def->mn != 0) {
+			uintptr_t flag = 0;
+			kMethod *mtd = new_kMethod(flag, def->cid, def->mn, (knh_Fmethod)def->opline);
+			CT_addMethod(_ctx, CT_(def->cid), mtd);
+		}
+	}
+	for (i = 0; i < declsize; i++) {
+		kmethoddecl_t *def = decls[i];
 		kopl_t *pc = (kopl_t*)def->opline;
 		while (pc->opcode != OPCODE_RET) {
 			if (pc->opcode == OPCODE_SCALL) {
 				klr_SCALL_t *_pc = (klr_SCALL_t*)pc;
 				kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, _pc->cid, _pc->mn);
-				if (mtd == NULL || !kMethod_isStatic(mtd)) {
+				_pc->mtd = mtd;
+				if (mtd == NULL || (mtd != NULL && !kMethod_isStatic(mtd))) {
 					_pc->opcode = OPCODE_VCALL;
 				}
 			}
 			pc++;
-		}
-		if (def->cid != 0 && def->mn != 0) {
-			uintptr_t flag = 0;
-			kMethod *mtd = new_kMethod(flag, def->cid, def->mn, (knh_Fmethod)def->opline);
-			CT_addMethod(_ctx, CT_(def->cid), mtd);
 		}
 	}
 }
@@ -420,9 +424,9 @@ void cyc0(VP_INT exinf)
 
 void TaskMain(VP_INT exinf)
 {
-	struct kcontext_t *_ctx = NULL;
-	_ctx = new_context(K_STACK_SIZE);
+	struct kcontext_t *_ctx = new_context(K_STACK_SIZE);
 	loadByteCode(_ctx);
+
 	mstate = MWAIT;
 	ecrobot_set_light_sensor_active(NXT_PORT_S3);
 	balance_init();
@@ -438,6 +442,7 @@ void TaskMain(VP_INT exinf)
 
 void TaskDisp(VP_INT exinf)
 {
+
 	T_SERIAL_RPOR rpor;
 	UB buf[4];
 	int wtime = 0;
@@ -446,13 +451,10 @@ void TaskDisp(VP_INT exinf)
 
 	vmsk_log(LOG_UPTO(LOG_INFO), LOG_UPTO(LOG_EMERG));
 	syscall(serial_ctl_por(CONSOLE_PORTID,	(IOCTL_CRLF | IOCTL_FCSND | IOCTL_FCRCV)));
-	//show_splash_screen();
 	ecrobot_init_nxtstate();
 	ecrobot_init_sensors();
 	ecrobot_init_sonar_sensor(NXT_PORT_S2); /* 超音波センサ(I2C通信)を初期化 */
-	//show_main_screen();
 	display_status_bar();
-	//ecrobot_sound_tone(1000, 200, 50);
 	mstate = MINIT;
 	keystate = ecrobot_get_touch_sensor(NXT_PORT_S4);
 	nxt_motor_set_count(NXT_PORT_A, 0);		/* 完全停止用モータエンコーダリセット */
@@ -489,7 +491,7 @@ void TaskDisp(VP_INT exinf)
 					wtime = 1;
 			}
 		}
-		ecrobot_status_monitor("sample JSP"); /* LCD display */
+		//ecrobot_status_monitor("sample JSP"); /* LCD display */
 		dly_tsk(40U); /* 40msec wait */
 	}
 }
@@ -501,13 +503,6 @@ int main(int argc, char **args)
 	_ctx = new_context(K_STACK_SIZE);
 	loadByteCode(_ctx);
 	execTopLevelExpression(_ctx);
-	//new_CT(_ctx, NULL, NULL, 0);
-	//VirtualMachine_run(_ctx, sfp, NULL);
-	//int i = 0;
-	//while (i < 100) {
-	//	new_kObject(ct, NULL);
-	//	i++;
-	//}
 	return 0;
 }
 #endif

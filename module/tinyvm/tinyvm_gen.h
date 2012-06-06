@@ -323,25 +323,29 @@ typedef struct klr_OMOV_t {
 #define OPCODE_SCALL ((kopcode_t)41)
 typedef struct klr_SCALL_t {
 	int8_t opcode;
-	uint16_t/* u */ uline __attribute__((packed));
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
-	//kMethod* mtd;
-	int8_t/* cid */ cid;
-	int16_t/* mn */ mn;
-	//uint16_t/* co */ tyo;
+	union {
+		struct {
+			int8_t/* cid */ cid;
+			int16_t/* mn */ mn;
+		};
+		kMethod* mtd;
+	};
 } klr_SCALL_t;
 
 #define OPCODE_VCALL ((kopcode_t)42)
 typedef struct klr_VCALL_t {
 	int8_t opcode;
-	uint16_t/* u */ uline __attribute__((packed));
 	int8_t/* ro */ thisidx;
 	int8_t/* ro */ espshift;
-	//kMethod* mtd;
-	int8_t/* cid */ cid;
-	int16_t/* mn */ mn;
-	//uint16_t/* co */ tyo;
+	union {
+		struct {
+			int8_t/* cid */ cid;
+			int16_t/* mn */ mn;
+		};
+		kMethod* mtd;
+	};
 } klr_VCALL_t;
 
 #define OPCODE_iCAST ((kopcode_t)43)
@@ -541,8 +545,8 @@ static const kOPDATA_t OPDATA[] = {
 	{"fGTE", 3, { VMT_RN, VMT_RN, VMT_RN, VMT_VOID}},
 	{"OSET", 2, { VMT_RO, VMT_RN, VMT_VOID}},
 	{"OMOV", 2, { VMT_RO, VMT_RO, VMT_VOID}},
-	{"SCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
-	{"VCALL", 5, { VMT_U, VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
+	{"SCALL", 4, { /*VMT_U, */VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
+	{"VCALL", 4, { /*VMT_U, */VMT_RO, VMT_RO, VMT_METHOD, VMT_VOID}},
 	{"iCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
 	{"fCAST", 2, { VMT_RN, VMT_RN, VMT_VOID}},
 	{"EXIT", 0, { VMT_VOID}},
@@ -858,16 +862,16 @@ static kopl_t* VirtualMachine_run(CTX, ksfp_t *sfp0, kopl_t *pc)
 	} 
 	CASE(SCALL) {
 		klr_SCALL_t *op = (klr_SCALL_t*)pc;
-		kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
-		OPEXEC_SCALL(op->uline, op->thisidx, op->espshift, mtd);
+		//kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
+		OPEXEC_SCALL(op->thisidx, op->espshift, op->mtd);
 		pc++;
 		GOTO_NEXT();
 	} 
 	CASE(VCALL) {
 		klr_VCALL_t *op = (klr_VCALL_t*)pc;
-		kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
-		if (mtd != NULL) {
-			OPEXEC_VCALL(op->uline, op->thisidx, op->espshift, mtd);
+		//kMethod *mtd = kKonohaSpace_getMethodNULL(NULL, op->cid, op->mn);
+		if (op->mtd != NULL) {
+			OPEXEC_VCALL(op->thisidx, op->espshift, op->mtd);
 		}
 		pc++;
 		GOTO_NEXT();

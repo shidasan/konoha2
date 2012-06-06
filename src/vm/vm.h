@@ -239,7 +239,7 @@ struct _kKonohaCode {
 
 #ifdef K_USING_TINYVM
 
-#define OPEXEC_CHKSTACK(UL) \
+#define OPEXEC_CHKSTACK() \
 	if(unlikely(_ctx->esp > _ctx->stack->stack_uplimit)) {\
 		TDBG_s("stack overflow");\
 	}\
@@ -268,13 +268,11 @@ struct _kKonohaCode {
 
 #ifdef K_USING_TINYVM
 
-#define OPEXEC_VCALL(UL, THIS, espshift, mtdO/*, CTO*/) { \
+#define OPEXEC_VCALL(THIS, espshift, mtdO/*, CTO*/) { \
 		kMethod *mtd_ = mtdO;\
 		klr_setesp(_ctx, SFP(rshift(rbp, espshift)));\
-		OPEXEC_CHKSTACK(UL);\
+		OPEXEC_CHKSTACK();\
 		rbp = rshift(rbp, THIS);\
-		/*rbp[K_ULINEIDX2-1].o = CTO;*/\
-		rbp[K_ULINEIDX2].uline = UL;\
 		rbp[K_SHIFTIDX2].shift = THIS;\
 		rbp[K_PCIDX2].pc = PC_NEXT(pc);\
 		rbp[K_MTDIDX*2].mtdNC = mtd_;\
@@ -282,12 +280,9 @@ struct _kKonohaCode {
 		GOTO_PC(pc); \
 	} \
 
-#define OPEXEC_SCALL(UL, thisidx, espshift, mtdO/*, CTO*/) { \
+#define OPEXEC_SCALL(thisidx, espshift, mtdO/*, CTO*/) { \
 		kMethod *mtd_ = mtdO;\
-		/*prefetch((mtd_)->fcall_1);*/\
 		ksfp_t *sfp_ = SFP(rshift(rbp, thisidx)); \
-		/*sfp_[K_RTNIDX].o = CTO;*/\
-		/*sfp_[K_RTNIDX].uline = UL;*/\
 		sfp_[K_SHIFTIDX].shift = thisidx; \
 		sfp_[K_PCIDX].pc = PC_NEXT(pc);\
 		sfp_[K_MTDIDX].mtdNC = mtd_;\

@@ -438,50 +438,39 @@ static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
 		constdatasize++;
 		return;
 	}
-	//if(pc_start == NULL) {
-	//	DUMP_P("[%p:%d]\t%s(%d)", c, c->line, T_opcode(c->opcode), (int)c->opcode);
-	//}
-	//else {
-	//	DUMP_P("[L%d:%d]\t%s(%d)", (int)(c - pc_start), c->line, T_opcode(c->opcode), (int)c->opcode);
-	//}
 	for(i = 0; i < size; i++) {
 		switch(vmt[i]) {
 		case VMT_VOID: break;
 		case VMT_ADDR:
 			if(pc_start == NULL) {
-				DUMP_P("%p/*addr*/", c->p[i]);
+				DUMP_P("%p/*addr*/, ", c->p[i]);
 			}
 			else {
-				DUMP_P("%d/*L*/", (int)((kopl_t*)c->p[i] - pc_start));
+				DUMP_P("%d/*L*/, ", (int)((kopl_t*)c->p[i] - pc_start));
 			}
 			break;
 		case VMT_R:
-			DUMP_P("%d/*r*/", (int)c->data[i]);
+			DUMP_P("%d/*r*/, ", (int)c->data[i]);
 			break;
 		case VMT_U:
-			DUMP_P("0/*u*/"); break;
-			//DUMP_P("%ld/*u*/", c->data[i]); break;
+			/* do nothing */
+			break;
 		case VMT_I:
 		case VMT_INT:
-			DUMP_P("%d/*i*/", c->data[i]); break;
+			DUMP_P("%d/*i*/, ", c->data[i]); break;
 		case VMT_F:
-			DUMP_P("%p/*function*/", c->p[i]); break;
+			DUMP_P("%p/*function*/, ", c->p[i]); break;
 		case VMT_CID:
-			DUMP_P("%zd/*cid*/", i); break;
-			//DUMP_P("CT(%s)", T_CT(c->ct[i])); break;
+			DUMP_P("%zd/*cid*/, ", i); break;
 		case VMT_CO:
-			//DUMP_P("%d/*%s class*/", O_cid(c->o[i]), T_CT(O_ct(c->o[i]))); break;
 			/*do nothing */
 			break;
 		case VMT_METHOD: {
 			kMethod *mtd = (kMethod*)c->o[i];
 			DUMP_P("%d/*cid*/, ", mtd->cid);
-			DUMP_P("%d/*mn of %s*/", mtd->mn, T_fn(mtd->mn));
+			DUMP_P("%d/*mn of %s*/, ", mtd->mn, T_fn(mtd->mn));
 		}
 		}/*switch*/
-		if (c->opcode != OPCODE_RET && i != size-1) {
-		DUMP_P(", ");
-		}
 	}
 	DUMP_P("}},\n");
 }
