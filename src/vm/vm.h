@@ -287,7 +287,7 @@ struct _kKonohaCode {
 		/*prefetch((mtd_)->fcall_1);*/\
 		ksfp_t *sfp_ = SFP(rshift(rbp, thisidx)); \
 		/*sfp_[K_RTNIDX].o = CTO;*/\
-		sfp_[K_RTNIDX].uline = UL;\
+		/*sfp_[K_RTNIDX].uline = UL;*/\
 		sfp_[K_SHIFTIDX].shift = thisidx; \
 		sfp_[K_PCIDX].pc = PC_NEXT(pc);\
 		sfp_[K_MTDIDX].mtdNC = mtd_;\
@@ -304,7 +304,7 @@ struct _kKonohaCode {
 		OPEXEC_CHKSTACK(UL);\
 		rbp = rshift(rbp, THIS);\
 		rbp[K_ULINEIDX2-1].o = CTO;\
-		rbp[K_ULINEIDX2].uline = UL;\
+		/*rbp[K_ULINEIDX2].uline = UL;*/\
 		rbp[K_SHIFTIDX2].shift = THIS;\
 		rbp[K_PCIDX2].pc = PC_NEXT(pc);\
 		pc = (mtd_)->pc_start;\

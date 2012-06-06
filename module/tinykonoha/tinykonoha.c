@@ -375,6 +375,44 @@ static void execTopLevelExpression(CTX)
 }
 
 #ifdef K_USING_TOPPERS
+
+/* 下記のパラメータはセンサ個体/環境に合わせてチューニングする必要があります */
+#define WHITE               500 /* 白色の光センサ値 */
+#define BLACK		        700 /* 黒色の光センサ値 */
+#define STOPWAIT            10	/* 停止までの時間(*40ms) */
+
+#define TAIL_ANGLE_STAND_UP 108 /* 完全停止時の角度[度] */
+#define TAIL_ANGLE_DRIVE      0 /* バランス走行時の角度[度] */
+#define P_GAIN             2.5F /* 完全停止用モータ制御比例係数 */
+#define PWM_ABS_MAX          60 /* 完全停止用モータ制御PWM絶対最大値 */
+
+static char mstate;				/* 走行体の状態 */
+static char keystate;			/* タッチセンサーの状態 */
+
+
+static void tail_control(signed int angle)
+{
+	float pwm = (float)(angle - nxt_motor_get_count(NXT_PORT_A))*P_GAIN; /* 比例制御 */
+	/* PWM出力飽和処理 */
+	if(pwm > PWM_ABS_MAX)
+		pwm = PWM_ABS_MAX;
+	else if(pwm < -PWM_ABS_MAX)
+		pwm = -PWM_ABS_MAX;
+	nxt_motor_set_speed(NXT_PORT_A, (signed char)pwm, 1);
+}
+
+void manipulate_tail()
+{
+	if (mstate == MRUNNING) {
+		tail_control(TAIL_ANGLE_DRIVE);
+	} else if (mstate == MSTOP1) {
+		nxt_motor_set_count(NXT_PORT_A, 0);
+		mstate = MSTOP2;
+	} else {
+		tail_control(TAIL_ANGLE_STAND_UP);
+	}
+}
+
 void cyc0(VP_INT exinf)
 {
 	isig_sem(EVT_SEM);
@@ -385,17 +423,74 @@ void TaskMain(VP_INT exinf)
 	struct kcontext_t *_ctx = NULL;
 	_ctx = new_context(K_STACK_SIZE);
 	loadByteCode(_ctx);
+	mstate = MWAIT;
+	ecrobot_set_light_sensor_active(NXT_PORT_S3);
+	balance_init();
+	nxt_motor_set_count(NXT_PORT_C, 0);
+	nxt_motor_set_count(NXT_PORT_B, 0);
+	while (mstate != MRUNNING) {
+		tail_control(TAIL_ANGLE_STAND_UP);
+		dly_tsk(10);
+	}
+	sta_cyc(CYC0);
 	execTopLevelExpression(_ctx);
 }
 
 void TaskDisp(VP_INT exinf)
 {
+	T_SERIAL_RPOR rpor;
+	UB buf[4];
+	int wtime = 0;
+	char key;
+	ER ercd;
+
+	vmsk_log(LOG_UPTO(LOG_INFO), LOG_UPTO(LOG_EMERG));
+	syscall(serial_ctl_por(CONSOLE_PORTID,	(IOCTL_CRLF | IOCTL_FCSND | IOCTL_FCRCV)));
+	//show_splash_screen();
 	ecrobot_init_nxtstate();
 	ecrobot_init_sensors();
-	nxt_motor_set_count(NXT_PORT_A, 0);
+	ecrobot_init_sonar_sensor(NXT_PORT_S2); /* 超音波センサ(I2C通信)を初期化 */
+	//show_main_screen();
+	display_status_bar();
+	//ecrobot_sound_tone(1000, 200, 50);
+	mstate = MINIT;
+	keystate = ecrobot_get_touch_sensor(NXT_PORT_S4);
+	nxt_motor_set_count(NXT_PORT_A, 0);		/* 完全停止用モータエンコーダリセット */
 	act_tsk(TASK0);
-	while (1) {
-		dly_tsk(40);
+	mstate = MWAIT;
+	wtime = STOPWAIT;
+	while(1){
+		//ecrobot_poll_nxtstate();
+		//ercd = serial_ref_por(CONSOLE_PORTID, &rpor);
+		//if(ercd == E_OK && rpor.reacnt){
+		//	serial_rea_dat(CONSOLE_PORTID, buf, 1);
+		//	if(buf[0] == 'g' && mstate == MWAIT)
+		//		mstate = MRUNNING;
+		//	else if(buf[0] == 's' && mstate == MRUNNING){
+		//		mstate = MSTOP1;
+		//		wtime = STOPWAIT;
+		//	}
+		//}
+		key = ecrobot_get_touch_sensor(NXT_PORT_S4);
+		if(key != keystate){	/* KEYセンサーの検知 */
+			if(key != 0){
+				if(mstate == MWAIT)
+					mstate = MRUNNING;
+				else if(mstate == MRUNNING){
+					mstate = MSTOP1;
+					wtime = STOPWAIT;
+				}
+			}
+			keystate = key;
+		}
+		if(wtime > 0){
+			if(--wtime <= 0 && mstate >= MSTOP1 && mstate < MPREWAIT){
+				if(++mstate != MPREWAIT)
+					wtime = 1;
+			}
+		}
+		ecrobot_status_monitor("sample JSP"); /* LCD display */
+		dly_tsk(40U); /* 40msec wait */
 	}
 }
 #else

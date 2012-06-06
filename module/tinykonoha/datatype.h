@@ -704,6 +704,7 @@ static kbool_t nxt_init(CTX, kKonohaSpace *ks)
 		_F(System_balanceInit), TY_System, MN_(System_balanceInit),
 		_F(System_dly), TY_System, MN_(System_dly),
 		_F(System_tailControl), TY_System, MN_(System_tailControl),
+		_F(System_manipulateTail), TY_System, MN_(System_manipulateTail),
 		_F(System_ecrobotInitNxtstate), TY_System, MN_(System_ecrobotInitNxtstate),
 		_F(System_ecrobotInitSensors), TY_System, MN_(System_ecrobotInitSensors),
 		_F(System_ecrobotSetLightSensorActive), TY_System, MN_(System_ecrobotSetLightSensorActive),
