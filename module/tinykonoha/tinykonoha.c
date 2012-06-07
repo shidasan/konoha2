@@ -429,15 +429,16 @@ void TaskMain(VP_INT exinf)
 
 	mstate = MWAIT;
 	ecrobot_set_light_sensor_active(NXT_PORT_S3);
-	balance_init();
-	nxt_motor_set_count(NXT_PORT_C, 0);
-	nxt_motor_set_count(NXT_PORT_B, 0);
 	while (mstate != MRUNNING) {
 		tail_control(TAIL_ANGLE_STAND_UP);
 		dly_tsk(10);
 	}
+	balance_init();
+	nxt_motor_set_count(NXT_PORT_C, 0);
+	nxt_motor_set_count(NXT_PORT_B, 0);
 	sta_cyc(CYC0);
 	execTopLevelExpression(_ctx);
+	//act_tsk(TASK0);
 }
 
 void TaskDisp(VP_INT exinf)
@@ -462,17 +463,17 @@ void TaskDisp(VP_INT exinf)
 	mstate = MWAIT;
 	wtime = STOPWAIT;
 	while(1){
-		//ecrobot_poll_nxtstate();
-		//ercd = serial_ref_por(CONSOLE_PORTID, &rpor);
-		//if(ercd == E_OK && rpor.reacnt){
-		//	serial_rea_dat(CONSOLE_PORTID, buf, 1);
-		//	if(buf[0] == 'g' && mstate == MWAIT)
-		//		mstate = MRUNNING;
-		//	else if(buf[0] == 's' && mstate == MRUNNING){
-		//		mstate = MSTOP1;
-		//		wtime = STOPWAIT;
-		//	}
-		//}
+		ecrobot_poll_nxtstate();
+		ercd = serial_ref_por(CONSOLE_PORTID, &rpor);
+		if(ercd == E_OK && rpor.reacnt){
+			serial_rea_dat(CONSOLE_PORTID, buf, 1);
+			if(buf[0] == 'g' && mstate == MWAIT)
+				mstate = MRUNNING;
+			else if(buf[0] == 's' && mstate == MRUNNING){
+				mstate = MSTOP1;
+				wtime = STOPWAIT;
+			}
+		}
 		key = ecrobot_get_touch_sensor(NXT_PORT_S4);
 		if(key != keystate){	/* KEYセンサーの検知 */
 			if(key != 0){

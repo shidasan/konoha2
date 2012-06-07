@@ -240,7 +240,7 @@ struct _kKonohaCode {
 #ifdef K_USING_TINYVM
 
 #define OPEXEC_CHKSTACK() \
-	if(unlikely(_ctx->esp > _ctx->stack->stack_uplimit)) {\
+	if(_ctx->esp > _ctx->stack->stack_uplimit) {\
 		TDBG_s("stack overflow");\
 	}\
 

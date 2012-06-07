@@ -127,7 +127,7 @@ static KMETHOD System_balanceControl(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
 #define GYRO_OFFSET 589
-	signed char pwm_L, pwm_R;
+	static signed char pwm_L, pwm_R;
 	balance_control(
 			Float_to(float, sfp[1]),
 			Float_to(float, sfp[2]),

@@ -424,12 +424,13 @@ static void dumpConstData(CTX, kopl_t *pc, kMethod *mtd)
 	DUMP_P("};\n\n");
 }
 
-static void dumpBYTECODE(CTX, kopl_t *c, kopl_t *pc_start)
+static void dumpBYTECODE(CTX, kopl_t *pc_start, int count)
 {
+	kopl_t *c = pc_start + count;
 	static int constdatasize = 0;
 	size_t i, size = OPDATA[c->opcode].size;
 	const kushort_t *vmt = OPDATA[c->opcode].types;
-	DUMP_P(_TAB "{.op%s = {OPCODE_%s", T_opcode(c->opcode), T_opcode(c->opcode));
+	DUMP_P(_TAB "/* L_%02d */{.op%s = {OPCODE_%s", count, T_opcode(c->opcode), T_opcode(c->opcode));
 	if (size > 0) {
 		DUMP_P(", ");
 	}
@@ -517,13 +518,13 @@ static void tinyvm_dump(CTX, kMethod *mtd)
 		dumpCidMn(_ctx);
 	}
 	DUMP_P("kopl_u opl%zd[] = {\n", _ctx->share->methodDeclSize);
-	kopl_t *pc = mtd->pc_start;
+	size_t i = 0;
 	while(1) {
-		dumpBYTECODE(_ctx, pc, mtd->pc_start);
-		if (pc->opcode == OPCODE_RET) {
+		dumpBYTECODE(_ctx, mtd->pc_start, i);
+		if (mtd->pc_start[i].opcode == OPCODE_RET) {
 			break;
 		}
-		pc++;
+		i++;
 	}
 	DUMP_P("};\n\n");
 	dumpConstData(_ctx, mtd->pc_start, mtd);
