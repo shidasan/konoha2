@@ -39,6 +39,20 @@ static KMETHOD System_dly(CTX, ksfp_t *sfp _RIX)
 	dly_tsk(delay);
 #endif
 }
+static KMETHOD System_actMainTask(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	act_tsk(TASK0);
+#endif
+}
+static KMETHOD System_ecrobotIsRunning(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	RETURNb_(ecrobotIsRunning());
+#else
+	RETURNb_(0);
+#endif
+}
 static KMETHOD System_tailControl(CTX, ksfp_t *sfp _RIX)
 {
 #ifdef K_USING_TOPPERS
@@ -93,6 +107,13 @@ static KMETHOD System_ecrobotGetLightSensor(CTX, ksfp_t *sfp _RIX)
 	RETURNi_(ecrobot_get_light_sensor(NXT_PORT_S3));
 #else
 	RETURNi_(0);
+#endif
+}
+static KMETHOD System_nxtMotorSetSpeed(CTX, ksfp_t *sfp _RIX)
+{
+#ifdef K_USING_TOPPERS
+	int i = Int_to(int, sfp[1]);
+	nxt_motor_set_speed((i == 1) ? NXT_PORT_C : NXT_PORT_B, Int_to(int, sfp[2]), 1);
 #endif
 }
 static KMETHOD System_nxtMotorSetCount(CTX, ksfp_t *sfp _RIX)
@@ -161,6 +182,8 @@ static	kbool_t nxt_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 	intptr_t MethodData[] = {
 			_Public|_Const, _F(System_balanceInit), TY_void, TY_System, MN_("balanceInit"), 0,
 			_Public|_Const, _F(System_dly), TY_void, TY_System, MN_("dly"), 1, TY_Int, FN_x, 
+			_Public|_Const, _F(System_actMainTask), TY_void, TY_System, MN_("actMainTask"), 0, 
+			_Public|_Const, _F(System_ecrobotIsRunning), TY_Boolean, TY_System, MN_("ecrobotIsRunning"), 0, 
 			_Public|_Const, _F(System_tailControl), TY_void, TY_System, MN_("tailControl"), 1, TY_Int, FN_x, 
 			_Public|_Const, _F(System_manipulateTail), TY_void, TY_System, MN_("manipulateTail"), 0,
 			_Public|_Const, _F(System_ecrobotInitNxtstate), TY_void, TY_System, MN_("ecrobotInitNxtstate"), 0,
@@ -168,6 +191,7 @@ static	kbool_t nxt_initPackage(CTX, kKonohaSpace *ks, int argc, const char**args
 			_Public|_Const, _F(System_ecrobotSetLightSensorActive), TY_void, TY_System, MN_("ecrobotSetLightSensorActive"), 0,
 			_Public|_Const, _F(System_ecrobotGetGyroSensor), TY_Int, TY_System, MN_("ecrobotGetGyroSensor"), 0,
 			_Public|_Const, _F(System_ecrobotGetLightSensor), TY_Int, TY_System, MN_("ecrobotGetLightSensor"), 0,
+			_Public|_Const, _F(System_nxtMotorSetSpeed), TY_void, TY_System, MN_("nxtMotorSetSpeed"), 2, TY_Int, FN_x, TY_Int, FN_y,
 			_Public|_Const, _F(System_nxtMotorSetCount), TY_void, TY_System, MN_("nxtMotorSetCount"), 2, TY_Int, FN_x, TY_Int, FN_y,
 			_Public|_Const, _F(System_nxtMotorGetCount), TY_Int, TY_System, MN_("nxtMotorGetCount"), 1, TY_Int, FN_x, 
 			_Public|_Const, _F(System_staCyc), TY_void, TY_System, MN_("staCyc"), 0,

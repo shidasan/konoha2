@@ -393,7 +393,6 @@ static void execTopLevelExpression(CTX)
 static char mstate;				/* 走行体の状態 */
 static char keystate;			/* タッチセンサーの状態 */
 
-
 static void tail_control(signed int angle)
 {
 	float pwm = (float)(angle - nxt_motor_get_count(NXT_PORT_A))*P_GAIN; /* 比例制御 */
@@ -403,6 +402,11 @@ static void tail_control(signed int angle)
 	else if(pwm < -PWM_ABS_MAX)
 		pwm = -PWM_ABS_MAX;
 	nxt_motor_set_speed(NXT_PORT_A, (signed char)pwm, 1);
+}
+
+int ecrobotIsRunning()
+{
+	return mstate < MPREWAIT;
 }
 
 void manipulate_tail()
